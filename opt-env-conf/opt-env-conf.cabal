@@ -35,6 +35,7 @@ test-suite opt-env-conf-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      OptEnvConf.APISpec
       Paths_opt_env_conf
   hs-source-dirs:
       test/

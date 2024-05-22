@@ -1,7 +1,11 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 
-module OptEnvConf where
+module OptEnvConf
+  ( module OptEnvConf,
+    module Control.Applicative,
+  )
+where
 
 import Control.Applicative
 import Data.Aeson as JSON
@@ -38,6 +42,9 @@ instance Alternative Parser where
   empty = ParserEmpty
   (<|>) = ParserAlt
 
+class HasParser a where
+  optEnvParser :: Parser a
+
 envVar :: String -> Parser String
 envVar = ParserEnvVar
 
@@ -49,25 +56,6 @@ strOpt = undefined
 
 confVar :: String -> Parser String
 confVar = undefined
-
-data Example = Example
-  { exampleGreeting :: Maybe String
-  }
-  deriving (Show)
-
-exampleParser :: Parser Example
-exampleParser =
-  Example
-    <$> optional
-      ( strOpt "--greeting"
-          <|> envVar "GREETING"
-          <|> confVar "greeting"
-      )
-
-tryingThings :: IO ()
-tryingThings = do
-  putStrLn $ documentParser exampleParser
-  print $ runParserPure exampleParser ["hello"] [("GREETING", "ho")] Nothing
 
 documentParser :: Parser a -> String
 documentParser = unlines . go
