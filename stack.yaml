@@ -1,0 +1,11 @@
+snapshot: lts-21.22
+packages: 
+- opt-env-conf
+
+ghc-options:
+  "$locals": -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Widentities -Wredundant-constraints -Wcpp-undef
+
+system-ghc: true
+nix:
+  enable: false
+with-hpack: hpack

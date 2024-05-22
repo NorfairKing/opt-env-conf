@@ -1,0 +1,38 @@
+name: opt-env-conf
+version: '0.0.0.0'
+copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
+license: AllRightsReserved
+  
+dependencies:
+- base
+
+library:
+  source-dirs: src/
+  ghc-options: -Wall
+  dependencies:
+  - aeson
+  - envparse
+  - optparse-applicative
+  - path
+  - path-io
+  - text
+  - yaml
+  - autodocodec
+  - autodocodec-yaml
+
+tests:
+  opt-env-conf-test:
+    main: Spec.hs
+    source-dirs: test/
+    build-tools: sydtest-discover
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - envparse
+    - sydtest
+    - optparse-applicative
+    - opt-env-conf
+    - yaml
