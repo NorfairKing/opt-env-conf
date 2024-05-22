@@ -1,0 +1,48 @@
+AnyDocsCommands
+  [ CommandDoc
+      { commandDocArgument = "top"
+      , commandDocHelp = "command without subcommands"
+      , commandDocs =
+          AnyDocsSingle
+            OptDoc
+              { optDocTryArgument = False
+              , optDocTrySwitch = False
+              , optDocTryOption = True
+              , optDocDasheds = [ DashedLong ('n' :| "ame") ]
+              , optDocDefault = Nothing
+              , optDocMetavar = Just "NAME"
+              , optDocHelp = Just "name"
+              }
+      }
+  , CommandDoc
+      { commandDocArgument = "sub"
+      , commandDocHelp = "command with subcommands"
+      , commandDocs =
+          AnyDocsAnd
+            [ AnyDocsCommands
+                [ CommandDoc
+                    { commandDocArgument = "a"
+                    , commandDocHelp = "A"
+                    , commandDocs = AnyDocsAnd []
+                    }
+                , CommandDoc
+                    { commandDocArgument = "b"
+                    , commandDocHelp = "B"
+                    , commandDocs = AnyDocsAnd []
+                    }
+                ]
+            , AnyDocsCommands
+                [ CommandDoc
+                    { commandDocArgument = "c"
+                    , commandDocHelp = "C"
+                    , commandDocs = AnyDocsAnd []
+                    }
+                , CommandDoc
+                    { commandDocArgument = "d"
+                    , commandDocHelp = "D"
+                    , commandDocs = AnyDocsAnd []
+                    }
+                ]
+            ]
+      }
+  ]

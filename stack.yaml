@@ -1,9 +1,24 @@
-snapshot: lts-21.22
+snapshot: lts-22.22
 packages: 
 - opt-env-conf
+- opt-env-conf-test
 
 ghc-options:
   "$locals": -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Widentities -Wredundant-constraints -Wcpp-undef
+
+extra-deps:
+- github: NorfairKing/safe-coloured-text
+  commit: 4161e707b1b0a8090a7149b8195f15943fa29fa9
+  subdirs:
+  - safe-coloured-text
+  - safe-coloured-text-layout
+  - safe-coloured-text-gen
+- github: NorfairKing/autodocodec
+  commit: a818df53b0f65caf3615d5cb9d4734288ff1ca39
+  subdirs:
+    - autodocodec
+    - autodocodec-yaml
+    - autodocodec-schema
 
 system-ghc: true
 nix:

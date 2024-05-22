@@ -1,0 +1,187 @@
+Commands
+  [ Command
+      "one"
+      "first"
+      (Check
+         _
+         (Setting
+            (Just
+               SrcLoc
+                 { srcLocPackage = "main"
+                 , srcLocModule = "OptEnvConf.APISpec"
+                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                 , srcLocStartLine = 223
+                 , srcLocStartCol = 15
+                 , srcLocEndLine = 223
+                 , srcLocEndCol = 22
+                 })
+            (Setting
+               []
+               [ _ ]
+               True
+               Nothing
+               False
+               Nothing
+               Nothing
+               Nothing
+               (Just "STR")
+               (Just "argument"))))
+  , Command
+      "two"
+      "second"
+      (Ap
+         (Check
+            _
+            (Setting
+               (Just
+                  SrcLoc
+                    { srcLocPackage = "main"
+                    , srcLocModule = "OptEnvConf.APISpec"
+                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                    , srcLocStartLine = 231
+                    , srcLocStartCol = 15
+                    , srcLocEndLine = 231
+                    , srcLocEndCol = 22
+                    })
+               (Setting
+                  [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                  [ _ ]
+                  False
+                  Nothing
+                  True
+                  (Just ("NUMBER" :| []))
+                  (Just
+                     [ ( "number" :| []
+                       , BimapCodec
+                           _
+                           _
+                           (NumberCodec
+                              Nothing
+                              (Just
+                                 NumberBounds
+                                   { numberBoundsLower = -9.223372036854775808e18
+                                   , numberBoundsUpper = 9.223372036854775807e18
+                                   }))
+                       )
+                     ])
+                  Nothing
+                  (Just "INT")
+                  (Just "number"))))
+         (Alt
+            (Setting
+               (Just
+                  SrcLoc
+                    { srcLocPackage = "main"
+                    , srcLocModule = "OptEnvConf.APISpec"
+                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                    , srcLocStartLine = 239
+                    , srcLocStartCol = 15
+                    , srcLocEndLine = 239
+                    , srcLocEndCol = 34
+                    })
+               (Setting
+                  [ DashedLong ('(' :| "enable|disable)-enable") ]
+                  []
+                  False
+                  (Just _)
+                  False
+                  Nothing
+                  Nothing
+                  Nothing
+                  Nothing
+                  (Just "enable extra")))
+            (Alt
+               (Setting
+                  (Just
+                     SrcLoc
+                       { srcLocPackage = "main"
+                       , srcLocModule = "OptEnvConf.APISpec"
+                       , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                       , srcLocStartLine = 239
+                       , srcLocStartCol = 15
+                       , srcLocEndLine = 239
+                       , srcLocEndCol = 34
+                       })
+                  (Setting
+                     [ DashedLong ('d' :| "isable-enable") ]
+                     []
+                     False
+                     (Just _)
+                     False
+                     Nothing
+                     Nothing
+                     Nothing
+                     Nothing
+                     Nothing))
+               (Alt
+                  (Setting
+                     (Just
+                        SrcLoc
+                          { srcLocPackage = "main"
+                          , srcLocModule = "OptEnvConf.APISpec"
+                          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                          , srcLocStartLine = 239
+                          , srcLocStartCol = 15
+                          , srcLocEndLine = 239
+                          , srcLocEndCol = 34
+                          })
+                     (Setting
+                        [ DashedLong ('e' :| "nable-enable") ]
+                        []
+                        False
+                        (Just _)
+                        False
+                        Nothing
+                        Nothing
+                        Nothing
+                        Nothing
+                        Nothing))
+                  (Alt
+                     (Setting
+                        (Just
+                           SrcLoc
+                             { srcLocPackage = "main"
+                             , srcLocModule = "OptEnvConf.APISpec"
+                             , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                             , srcLocStartLine = 239
+                             , srcLocStartCol = 15
+                             , srcLocEndLine = 239
+                             , srcLocEndCol = 34
+                             })
+                        (Setting
+                           []
+                           [ _ ]
+                           False
+                           Nothing
+                           False
+                           (Just ("ENABLE" :| []))
+                           Nothing
+                           Nothing
+                           (Just "BOOL")
+                           (Just "enable extra")))
+                     (Alt
+                        (Setting
+                           (Just
+                              SrcLoc
+                                { srcLocPackage = "main"
+                                , srcLocModule = "OptEnvConf.APISpec"
+                                , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                                , srcLocStartLine = 239
+                                , srcLocStartCol = 15
+                                , srcLocEndLine = 239
+                                , srcLocEndCol = 34
+                                })
+                           (Setting
+                              []
+                              []
+                              False
+                              Nothing
+                              False
+                              Nothing
+                              (Just [ ( "enable" :| [] , BoolCodec Nothing ) ])
+                              Nothing
+                              Nothing
+                              (Just "enable extra")))
+                        (Pure _)))))))
+  , Command "three" "third" (Pure _)
+  ]

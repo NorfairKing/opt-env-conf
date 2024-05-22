@@ -1,0 +1,38 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = True
+        , setDocTryOption = False
+        , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Example of an enable/disable switch"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
+        , setDocEnvVars = Just ("EXAMPLE" :| [])
+        , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
+        , setDocMetavar = Just "BOOL"
+        , setDocHelp = Just "Example of an enable/disable switch"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Just (( "example" :| [] , BoolSchema ) :| [])
+        , setDocDefault = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Example of an enable/disable switch"
+        }
+  ]

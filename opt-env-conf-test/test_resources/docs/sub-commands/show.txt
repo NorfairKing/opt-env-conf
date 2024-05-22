@@ -1,0 +1,35 @@
+Commands
+  [ Command
+      "top"
+      "command without subcommands"
+      (Check
+         _
+         (Setting
+            (Just
+               SrcLoc
+                 { srcLocPackage = "main"
+                 , srcLocModule = "OptEnvConf.APISpec"
+                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                 , srcLocStartLine = 256
+                 , srcLocStartCol = 15
+                 , srcLocEndLine = 256
+                 , srcLocEndCol = 22
+                 })
+            (Setting
+               [ DashedLong ('n' :| "ame") ]
+               [ _ ]
+               False
+               Nothing
+               True
+               (Just ("NAME" :| []))
+               (Just [ ( "name" :| [] , BimapCodec _ _ (StringCodec Nothing) ) ])
+               Nothing
+               (Just "NAME")
+               (Just "name"))))
+  , Command
+      "sub"
+      "command with subcommands"
+      (Ap
+         (Commands [ Command "a" "A" (Pure _) , Command "b" "B" (Pure _) ])
+         (Commands [ Command "c" "C" (Pure _) , Command "d" "D" (Pure _) ]))
+  ]

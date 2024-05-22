@@ -1,0 +1,25 @@
+AnyDocsSingle
+  SetDoc
+    { setDocTryArgument = False
+    , setDocTrySwitch = False
+    , setDocTryOption = False
+    , setDocDasheds = []
+    , setDocEnvVars = Nothing
+    , setDocConfKeys =
+        Just
+          (( "big" :| []
+           , MapSchema
+               (MapSchema
+                  (NumberSchema
+                     (Just
+                        NumberBounds
+                          { numberBoundsLower = -9.223372036854775808e18
+                          , numberBoundsUpper = 9.223372036854775807e18
+                          })))
+           ) :|
+             [])
+    , setDocDefault = Nothing
+    , setDocMetavar = Nothing
+    , setDocHelp =
+        Just "multi-line config codec explanation, the same option twice."
+    }

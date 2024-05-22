@@ -1,0 +1,16 @@
+AnyDocsAnd
+  [ AnyDocsSingle
+      EnvDoc
+        { envDocVars = "GREET_GREETING" :| []
+        , envDocDefault = Just "\"Hello\""
+        , envDocMetavar = Just "GREETING"
+        , envDocHelp = Just "Greeting to use"
+        }
+  , AnyDocsSingle
+      EnvDoc
+        { envDocVars = "GREET_POLITE" :| []
+        , envDocDefault = Just "False"
+        , envDocMetavar = Just "ANY"
+        , envDocHelp = Just "Whether to be polite"
+        }
+  ]

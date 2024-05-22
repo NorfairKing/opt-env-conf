@@ -1,0 +1,27 @@
+[36mUsage: [m[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m
+
+[36mAll settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mmulti-line config codec explanation, the same option twice.[m
+  config: [37mbig[m:
+    [37m<key>[m: 
+      [37m<key>[m: 
+        [33m<number>[m # [32m64 bit signed integer[m
+  
+
+[36mOptions[m:
+  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m               
+  [37m--version[m [34mOutput version information: 0.0.0[m 
+
+[36mConfiguration Values[m:
+  [34mmulti-line config codec explanation, the same option twice.[m
+  [37mbig[m:
+    [37m<key>[m: 
+      [37m<key>[m: 
+        [33m<number>[m # [32m64 bit signed integer[m
+

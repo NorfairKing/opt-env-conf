@@ -1,0 +1,10 @@
+AnyDocsSingle
+  OptDoc
+    { optDocTryArgument = False
+    , optDocTrySwitch = True
+    , optDocTryOption = False
+    , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+    , optDocDefault = Nothing
+    , optDocMetavar = Nothing
+    , optDocHelp = Just "Example of an enable/disable switch"
+    }

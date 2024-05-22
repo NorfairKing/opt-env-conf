@@ -6,4 +6,6 @@ roots = [
   "Paths_",
 ]
 root-instances = [
+  {class = 'IsString'},
+  {class = 'IsList'},
 ]

@@ -1,0 +1,49 @@
+AnyDocsCommands
+  [ CommandDoc
+      { commandDocArgument = "one"
+      , commandDocHelp = "first"
+      , commandDocs =
+          AnyDocsSingle
+            OptDoc
+              { optDocTryArgument = True
+              , optDocTrySwitch = False
+              , optDocTryOption = False
+              , optDocDasheds = []
+              , optDocDefault = Nothing
+              , optDocMetavar = Just "STR"
+              , optDocHelp = Just "argument"
+              }
+      }
+  , CommandDoc
+      { commandDocArgument = "two"
+      , commandDocHelp = "second"
+      , commandDocs =
+          AnyDocsAnd
+            [ AnyDocsSingle
+                OptDoc
+                  { optDocTryArgument = False
+                  , optDocTrySwitch = False
+                  , optDocTryOption = True
+                  , optDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                  , optDocDefault = Nothing
+                  , optDocMetavar = Just "INT"
+                  , optDocHelp = Just "number"
+                  }
+            , AnyDocsSingle
+                OptDoc
+                  { optDocTryArgument = False
+                  , optDocTrySwitch = True
+                  , optDocTryOption = False
+                  , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
+                  , optDocDefault = Nothing
+                  , optDocMetavar = Nothing
+                  , optDocHelp = Just "enable extra"
+                  }
+            ]
+      }
+  , CommandDoc
+      { commandDocArgument = "three"
+      , commandDocHelp = "third"
+      , commandDocs = AnyDocsAnd []
+      }
+  ]

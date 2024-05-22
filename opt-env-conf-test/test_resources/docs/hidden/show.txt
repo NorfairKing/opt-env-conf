@@ -1,0 +1,24 @@
+Check
+  _
+  (Setting
+     (Just
+        SrcLoc
+          { srcLocPackage = "main"
+          , srcLocModule = "OptEnvConf.APISpec"
+          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+          , srcLocStartLine = 185
+          , srcLocStartCol = 9
+          , srcLocEndLine = 185
+          , srcLocEndCol = 16
+          })
+     (Setting
+        []
+        [ _ ]
+        True
+        Nothing
+        False
+        Nothing
+        Nothing
+        (Just _)
+        (Just "STR")
+        (Just "Example of a hidden setting")))

@@ -1,19 +1,19 @@
-{ mkDerivation, aeson, autodocodec, autodocodec-yaml, base
-, envparse, lib, optparse-applicative, path, path-io, sydtest
-, sydtest-discover, text, yaml
+{ mkDerivation, aeson, autodocodec, autodocodec-schema
+, autodocodec-yaml, base, containers, filepath, lib, mtl, path
+, path-io, safe-coloured-text, safe-coloured-text-layout
+, safe-coloured-text-terminfo, selective, text, validity
+, validity-containers
 }:
 mkDerivation {
   pname = "opt-env-conf";
   version = "0.0.0.0";
   src = ./.;
   libraryHaskellDepends = [
-    aeson autodocodec autodocodec-yaml base envparse
-    optparse-applicative path path-io text yaml
+    aeson autodocodec autodocodec-schema autodocodec-yaml base
+    containers filepath mtl path path-io safe-coloured-text
+    safe-coloured-text-layout safe-coloured-text-terminfo selective
+    text validity validity-containers
   ];
-  testHaskellDepends = [
-    base envparse optparse-applicative sydtest yaml
-  ];
-  testToolDepends = [ sydtest-discover ];
   license = lib.licenses.unfree;
   hydraPlatforms = lib.platforms.none;
 }

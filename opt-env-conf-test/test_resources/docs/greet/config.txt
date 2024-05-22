@@ -1,0 +1,4 @@
+  [34mGreeting to use[m
+  [37mgreeting[m: [33m<string>[m
+  [34mWhether to be polite[m
+  [37mpolite[m: [33m<boolean>[m

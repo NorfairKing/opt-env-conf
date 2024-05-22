@@ -1,31 +1,62 @@
-# Optparse Template
+# OptEnvConf
 
-This is a template implementation of commands, flags, options, environment variable and configuration file parsing according to best practices.
+## Status
 
-## License
+Ready to try out.
+Not used in production yet.
 
-This template is **not** free to use.
-See https://template.cs-syd.eu/template/NorfairKing/template-optparse for more information.
+## Goals
 
-Copyright (c) 2020-2024 Tom Sydney Kerckhove.
+* Parse command-line arguments, environment variables, and configuration values all together.
+* Self-documenting parsers for correct-by-construction documentation
+* Best-in-class command-line autocompletion
+* Best-in-class errors
+* Formatter-friendly API
 
-All Rights Reserved.
+## Features
 
-## Instructions
+- [x] Parsing
+    - [x] Argument: `progname hello`
+    - [x] Option: `progname --file foo.txt`
+        - [x] Long Option: `progname --file foo.txt`
+        - [x] Short Option: `progname --file foo.txt`
+        - [x] Equals-version of long option: `progname --file=foo.txt`
+        - [x] Shorthand-version of short option: `progname -ffoo.txt`
+    - [x] Switch: `progname --verbose`
+        - [x] Long switch: `progname --verbose`
+        - [x] Short switch: `progname -v`
+- [ ] Documentation
+    - [ ] `--help`
+        - [x] Global `--help` page
+        - [ ] Per-command `--help` page
+    - [x] Generated manpage
+- [ ] Completion
+    - [ ] Bash completion
+    - [ ] Zsh completion
+    - [ ] Fish completion
 
-You can build this template code using `stack build` according to the provided `stack.yaml` file.
-You can also use cabal if you prefer, as long as you can get the appropriate dependencies in place.
+## Comparison to similar projects
 
-To use this template, first choose whether your program will use one command or more commands.
-For the multi-command version, use the `src/OptParse.hs` and `test/OptParseSpec.hs` files.
-Otherwise, use the `src/OptParseOneCommand.hs` and `test/OptParseOneCommandSpec.hs` files.
-Copy the modules into your project and follow instructions inside.
-
-You can use [template-filler](https://github.com/NorfairKing/template-filler) to copy the template into your project, like this:
-
-```
-template-filler --source /path/to/the/OptParse.hs --destination /path/to/your/homeless/shelter/OptParse.hs --find FooBar --replace HomelessShelter
-```
-
-Run `stack haddock` to read the instructions in haddock form.
-Otherwise, continue reading in [the source](src/OptParse.hs) and [the tests](test/OptParseSpec.hs).
+|                                      | `opt-env-conf` | `optparse-applicative` | `envparse` | `autodocodec` |
+|--------------------------------------|----------------|------------------------|------------|---------------|
+| Applicative parsing                  | ✔️              | ✔️                      | ✔️          | ✔️             |                                        
+| Parsing arguments                    | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing long options                 | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing short options                | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing short-hand short options     | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing short-hand long options      | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing long switches                | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing short switches               | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Parsing environment variables        | ✔️              | ✖️                      | ✔️          | ✖️             |                                        
+| Parsing configuration values         | ✔️              | ✖️                      | ✖️          | ✔️             |                                        
+| Generated global `--help` page       | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
+| Coloured global `--help` page        | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
+| Generated per-command `--help` page  | 🚧             | ✔️                      | ✖️          | ✖️             |                                        
+| Coloured per-command `--help` page   | 🚧             | ✖️                      | ✖️          | ✖️             |                                        
+| Helpful parse errors                 | ✔️              | ✔️                      | ✔️          | ✔️             |                                        
+| Coloured parse errors                | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
+| Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
+| Typo suggestions                     | 🚧             | ✖️                      | ✖️          | ✖️             |
+| Bash completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
+| Zsh completion                       | 🚧             | ✔️                      | ✖️          | ✖️             |
+| Fish completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |

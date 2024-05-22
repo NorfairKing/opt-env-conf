@@ -11,28 +11,18 @@ library:
   ghc-options: -Wall
   dependencies:
   - aeson
-  - envparse
-  - optparse-applicative
+  - autodocodec
+  - autodocodec-schema
+  - autodocodec-yaml
+  - containers
+  - filepath
+  - mtl
   - path
   - path-io
+  - safe-coloured-text
+  - safe-coloured-text-layout
+  - safe-coloured-text-terminfo # TODO Don't depend on this on windows
+  - selective
   - text
-  - yaml
-  - autodocodec
-  - autodocodec-yaml
-
-tests:
-  opt-env-conf-test:
-    main: Spec.hs
-    source-dirs: test/
-    build-tools: sydtest-discover
-    ghc-options:
-    - -Wall
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - envparse
-    - sydtest
-    - optparse-applicative
-    - opt-env-conf
-    - yaml
+  - validity
+  - validity-containers

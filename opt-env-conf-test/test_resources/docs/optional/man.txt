@@ -1,0 +1,26 @@
+.Dd $Mdocdate$
+.Dt [33moptional[m 1
+.Os
+.Sh NAME
+.Nm [33moptional[m
+.Nd TODO one line about what it does
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+[33moptional[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [33mARGUMENT[m
+.Sh SETTINGS
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mArgument[m
+  argument: [33mARGUMENT[m
+  
+
+.Sh OPTIONS
+  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m               
+  [37m--version[m [34mOutput version information: 0.0.0[m 
+  [33mARGUMENT[m  [34mArgument[m                          
+

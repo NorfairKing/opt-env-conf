@@ -1,0 +1,25 @@
+Check
+  _
+  (Many
+     (Setting
+        (Just
+           SrcLoc
+             { srcLocPackage = "main"
+             , srcLocModule = "OptEnvConf.APISpec"
+             , srcLocFile = "test/OptEnvConf/APISpec.hs"
+             , srcLocStartLine = 287
+             , srcLocStartCol = 9
+             , srcLocEndLine = 287
+             , srcLocEndCol = 16
+             })
+        (Setting
+           [ DashedShort 'v' ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Verbosity level. Use multiple to increase verbosity"))))
