@@ -30,6 +30,7 @@ library
     , base
     , containers
     , envparse
+    , mtl
     , optparse-applicative
     , path
     , path-io

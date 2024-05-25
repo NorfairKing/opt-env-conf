@@ -19,6 +19,7 @@ library:
   - autodocodec-yaml
   - containers
   - envparse
+  - mtl
   - optparse-applicative
   - path
   - path-io

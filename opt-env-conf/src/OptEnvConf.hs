@@ -10,12 +10,15 @@ where
 import Control.Applicative
 import Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
--- import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
+import qualified OptEnvConf.ArgMap as AM
+import OptEnvConf.EnvMap (EnvMap (..))
+import qualified OptEnvConf.EnvMap as EM
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
 
@@ -59,15 +62,6 @@ data ArgParser a = ArgParser
     argParserShort :: ![Char],
     argParserLong :: ![String]
   }
-
-data ArgMap = ArgMap
-  { argMapArgs :: ![String],
-    argMapOptions :: !(Map String (NonEmpty String)),
-    argMapLeftovers :: ![String]
-  }
-
-parseArgMap :: [String] -> ArgMap
-parseArgMap as = undefined
 
 envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
@@ -123,8 +117,8 @@ showParserABit = ($ "") . go 0
 
 runParser :: Parser a -> IO a
 runParser p = do
-  args <- getArgs
-  envVars <- getEnvironment
+  args <- AM.parse <$> getArgs
+  envVars <- EM.parse <$> getEnvironment
   let mConf = Nothing
 
   -- TODO map
@@ -132,11 +126,11 @@ runParser p = do
     Left err -> die err
     Right a -> pure a
 
-runParserPure :: Parser a -> [String] -> [(String, String)] -> Maybe JSON.Object -> Either String a
+runParserPure :: Parser a -> ArgMap -> EnvMap -> Maybe JSON.Object -> Either String a
 runParserPure p args envVars mConfig = go args envVars mConfig p
   where
     -- TODO maybe use validation instead of either
-    go :: [String] -> [(String, String)] -> Maybe JSON.Object -> Parser a -> Either String a
+    go :: ArgMap -> EnvMap -> Maybe JSON.Object -> Parser a -> Either String a
     go as es mConf = \case
       ParserFmap f p' -> f <$> go as es mConf p'
       ParserPure a -> pure a
@@ -145,11 +139,11 @@ runParserPure p args envVars mConfig = go args envVars mConfig p
       ParserAlt p1 p2 -> case go as es mConf p1 of
         Right a -> pure a
         Left _ -> go as es mConf p2 -- TODO: Maybe collect the error?
-      ParserArg -> case as of
-        [] -> Left "No argument to consume" -- TODO consume the arg
-        (a : _) -> Right a
+      ParserArg -> case AM.consumeArg as of
+        Nothing -> Left "No argument to consume" -- TODO consume the arg
+        Just (a, _) -> Right a
       ParserOpt _ -> undefined
-      ParserEnvVar v -> pure (lookup v es)
+      ParserEnvVar v -> pure (EM.lookup v es)
       ParserConfig key -> case mConf of
         Nothing -> pure Nothing
         Just conf -> case JSON.parseEither (.: Key.fromString key) conf of

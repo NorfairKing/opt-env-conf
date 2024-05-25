@@ -6,6 +6,7 @@ module OptEnvConf.ArgMap
     empty,
     Dashed (..),
     parse,
+    consumeArg,
   )
 where
 
@@ -89,3 +90,8 @@ parse = go
       ('-' : '-' : _) -> True
       ('-' : _) -> True
       _ -> False
+
+consumeArg :: ArgMap -> Maybe (String, ArgMap)
+consumeArg am = case argMapArgs am of
+  [] -> Nothing
+  (a : rest) -> Just (a, am {argMapArgs = rest})

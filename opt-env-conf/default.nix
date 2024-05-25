@@ -1,5 +1,5 @@
 { mkDerivation, aeson, autodocodec, autodocodec-yaml, base
-, containers, envparse, genvalidity-sydtest, lib
+, containers, envparse, genvalidity-sydtest, lib, mtl
 , optparse-applicative, path, path-io, QuickCheck, sydtest
 , sydtest-discover, text, validity, validity-containers, yaml
 }:
@@ -8,7 +8,7 @@ mkDerivation {
   version = "0.0.0.0";
   src = ./.;
   libraryHaskellDepends = [
-    aeson autodocodec autodocodec-yaml base containers envparse
+    aeson autodocodec autodocodec-yaml base containers envparse mtl
     optparse-applicative path path-io text validity validity-containers
     yaml
   ];
