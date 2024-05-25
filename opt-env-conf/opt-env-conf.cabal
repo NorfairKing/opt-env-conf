@@ -9,6 +9,9 @@ version:        0.0.0.0
 copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        AllRightsReserved
 build-type:     Simple
+extra-source-files:
+    test_resources/example/help.log
+    test_resources/example/help.txt
 
 library
   exposed-modules:

@@ -40,7 +40,11 @@ instance Applicative Parser where
 
 instance Alternative Parser where
   empty = ParserEmpty
-  (<|>) = ParserAlt
+  (<|>) p1 p2 = case p1 of
+    ParserEmpty -> p2
+    _ -> case p2 of
+      ParserEmpty -> p1
+      _ -> ParserAlt p1 p2
 
 class HasParser a where
   optEnvParser :: Parser a
@@ -52,10 +56,10 @@ strArg :: Parser String
 strArg = ParserArg
 
 strOpt :: String -> Parser String
-strOpt = undefined
+strOpt = ParserEnvVar
 
 confVar :: String -> Parser String
-confVar = undefined
+confVar = ParserConfig
 
 documentParser :: Parser a -> String
 documentParser = unlines . go
@@ -66,10 +70,25 @@ documentParser = unlines . go
       ParserPure _ -> []
       ParserAp pf pa -> go pf ++ go pa
       ParserEmpty -> []
+      ParserAlt p1 ParserEmpty -> go p1
       ParserAlt p1 p2 -> go p1 ++ ["or"] ++ go p2
       ParserArg -> ["Argument"]
       ParserEnvVar v -> ["Env var: " <> show v]
       ParserConfig key -> ["Config var: " <> show key]
+
+showParserABit :: Parser a -> String
+showParserABit = ($ "") . go 0
+  where
+    go :: Int -> Parser a -> ShowS
+    go d = \case
+      ParserFmap _ p -> showParen (d > 10) $ showString "Fmap _ " . go 11 p
+      ParserPure _ -> showParen (d > 10) $ showString "Pure _"
+      ParserAp pf pa -> showParen (d > 10) $ showString "Ap " . go 11 pf . go 11 pa
+      ParserEmpty -> showString "Empty"
+      ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
+      ParserArg -> showString "Arg"
+      ParserEnvVar v -> showParen (d > 10) $ showString "EnvVar " . showsPrec 11 v
+      ParserConfig key -> showParen (d > 10) $ showString "Config " . showsPrec 11 key
 
 runParser :: Parser a -> IO a
 runParser p = do
