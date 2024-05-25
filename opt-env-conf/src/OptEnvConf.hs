@@ -26,10 +26,11 @@ data Parser a where
   ParserAlt :: Parser a -> Parser a -> Parser a
   -- | Arguments and options
   ParserArg :: Parser String
+  ParserOpt :: String -> Parser (Maybe String)
   -- | Env vars
-  ParserEnvVar :: String -> Parser String
+  ParserEnvVar :: String -> Parser (Maybe String)
   -- | Configuration file
-  ParserConfig :: FromJSON a => String -> Parser a
+  ParserConfig :: FromJSON a => String -> Parser (Maybe a)
 
 instance Functor Parser where
   fmap = ParserFmap
@@ -49,17 +50,26 @@ instance Alternative Parser where
 class HasParser a where
   optEnvParser :: Parser a
 
-envVar :: String -> Parser String
+envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
 
 strArg :: Parser String
 strArg = ParserArg
 
-strOpt :: String -> Parser String
-strOpt = ParserEnvVar
+strOpt :: String -> Parser (Maybe String)
+strOpt = ParserOpt
 
-confVar :: String -> Parser String
+confVar :: String -> Parser (Maybe String)
 confVar = ParserConfig
+
+withDefault :: Parser (Maybe a) -> a -> Parser a
+withDefault = undefined
+
+optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
+optionalFirst = undefined
+
+requiredFirst :: [Parser (Maybe a)] -> Parser a
+requiredFirst = undefined
 
 documentParser :: Parser a -> String
 documentParser = unlines . go
@@ -73,6 +83,7 @@ documentParser = unlines . go
       ParserAlt p1 ParserEmpty -> go p1
       ParserAlt p1 p2 -> go p1 ++ ["or"] ++ go p2
       ParserArg -> ["Argument"]
+      ParserOpt v -> ["Option: " <> show v]
       ParserEnvVar v -> ["Env var: " <> show v]
       ParserConfig key -> ["Config var: " <> show key]
 
@@ -87,6 +98,7 @@ showParserABit = ($ "") . go 0
       ParserEmpty -> showString "Empty"
       ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
       ParserArg -> showString "Arg"
+      ParserOpt v -> showParen (d > 10) $ showString "Opt " . showString v
       ParserEnvVar v -> showParen (d > 10) $ showString "EnvVar " . showsPrec 11 v
       ParserConfig key -> showParen (d > 10) $ showString "Config " . showsPrec 11 key
 
@@ -117,11 +129,10 @@ runParserPure p args envVars mConfig = go args envVars mConfig p
       ParserArg -> case as of
         [] -> Left "No argument to consume" -- TODO consume the arg
         (a : _) -> Right a
-      ParserEnvVar v -> case lookup v es of
-        Nothing -> Left $ "Env var not found: " <> show v
-        Just s -> pure s
+      ParserOpt _ -> undefined
+      ParserEnvVar v -> pure (lookup v es)
       ParserConfig key -> case mConf of
-        Nothing -> Left "No config"
+        Nothing -> pure Nothing
         Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
           Left err -> Left err
-          Right v -> pure v
+          Right v -> pure (Just v)

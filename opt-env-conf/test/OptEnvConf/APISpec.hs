@@ -32,8 +32,8 @@ data Example = Example
 instance HasParser Example where
   optEnvParser =
     Example
-      <$> optional
-        ( strOpt "--greeting"
-            <|> envVar "GREETING"
-            <|> confVar "greeting"
-        )
+      <$> optionalFirst
+        [ strOpt "--greeting",
+          envVar "GREETING",
+          confVar "greeting"
+        ]
