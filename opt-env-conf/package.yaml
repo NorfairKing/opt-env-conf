@@ -15,14 +15,17 @@ library:
   ghc-options: -Wall
   dependencies:
   - aeson
+  - autodocodec
+  - autodocodec-yaml
+  - containers
   - envparse
   - optparse-applicative
   - path
   - path-io
   - text
+  - validity
+  - validity-containers
   - yaml
-  - autodocodec
-  - autodocodec-yaml
 
 tests:
   opt-env-conf-test:
@@ -35,8 +38,11 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - QuickCheck
+    - containers
     - envparse
-    - sydtest
-    - optparse-applicative
+    - genvalidity-sydtest
     - opt-env-conf
+    - optparse-applicative
+    - sydtest
     - yaml

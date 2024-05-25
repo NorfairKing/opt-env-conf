@@ -16,6 +16,7 @@ extra-source-files:
 library
   exposed-modules:
       OptEnvConf
+      OptEnvConf.ArgMap
   other-modules:
       Paths_opt_env_conf
   hs-source-dirs:
@@ -26,11 +27,14 @@ library
     , autodocodec
     , autodocodec-yaml
     , base
+    , containers
     , envparse
     , optparse-applicative
     , path
     , path-io
     , text
+    , validity
+    , validity-containers
     , yaml
   default-language: Haskell2010
 
@@ -39,6 +43,7 @@ test-suite opt-env-conf-test
   main-is: Spec.hs
   other-modules:
       OptEnvConf.APISpec
+      OptEnvConf.ArgMapSpec
       Paths_opt_env_conf
   hs-source-dirs:
       test/
@@ -46,8 +51,11 @@ test-suite opt-env-conf-test
   build-tool-depends:
       sydtest-discover:sydtest-discover
   build-depends:
-      base
+      QuickCheck
+    , base
+    , containers
     , envparse
+    , genvalidity-sydtest
     , opt-env-conf
     , optparse-applicative
     , sydtest

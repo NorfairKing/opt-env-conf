@@ -12,6 +12,10 @@ import Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 -- import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Aeson.Types as JSON
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
+import qualified Data.Map as M
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
 
@@ -49,6 +53,21 @@ instance Alternative Parser where
 
 class HasParser a where
   optEnvParser :: Parser a
+
+data ArgParser a = ArgParser
+  { argParserParse :: !(String -> Either String a),
+    argParserShort :: ![Char],
+    argParserLong :: ![String]
+  }
+
+data ArgMap = ArgMap
+  { argMapArgs :: ![String],
+    argMapOptions :: !(Map String (NonEmpty String)),
+    argMapLeftovers :: ![String]
+  }
+
+parseArgMap :: [String] -> ArgMap
+parseArgMap as = undefined
 
 envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
