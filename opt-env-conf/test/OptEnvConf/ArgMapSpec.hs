@@ -3,28 +3,29 @@ module OptEnvConf.ArgMapSpec (spec) where
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import OptEnvConf.ArgMap
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
+import qualified OptEnvConf.ArgMap as AM
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Validity
 
 spec :: Spec
 spec = do
-  describe "parseArgMap" $ do
+  describe "AM.parse" $ do
     it "produces valid ArgMaps" $
-      producesValid parseArgMap
+      producesValid AM.parse
 
     let annoyingStrings :: Gen [String]
         annoyingStrings = genListOf $ genListOf $ oneof [genValid, pure '-']
     it "produces valid ArgMaps for annoying strings" $
       forAll annoyingStrings $
-        shouldBeValid . parseArgMap
+        shouldBeValid . AM.parse
 
     it "parses empty args as an empty arg map" $
-      parseArgMap [] `shouldBe` emptyArgMap
+      AM.parse [] `shouldBe` AM.empty
 
     it "treats '-' as an argument" $
-      parseArgMap ["-"]
+      AM.parse ["-"]
         `shouldBe` ArgMap
           { argMapArgs = ["-"],
             argMapSwitches = [],
@@ -35,11 +36,11 @@ spec = do
     it "parses anything after -- as leftovers" $
       forAllValid $ \as ->
         forAllValid $ \bs ->
-          argMapLeftovers (parseArgMap (as ++ ["--"] ++ bs)) `shouldBe` bs
+          argMapLeftovers (AM.parse (as ++ ["--"] ++ bs)) `shouldBe` bs
 
     it "parses any string with one dash and no argument as a switch" $
       forAllValid $ \c ->
-        parseArgMap ["-" <> NE.toList c]
+        AM.parse ["-" <> NE.toList c]
           `shouldBe` ArgMap
             { argMapArgs = [],
               argMapSwitches = [DashedShort c],
@@ -49,7 +50,7 @@ spec = do
 
     it "parses any string with two dashes and no argument as a switch" $
       forAllValid $ \s ->
-        parseArgMap ["--" <> NE.toList s]
+        AM.parse ["--" <> NE.toList s]
           `shouldBe` ArgMap
             { argMapArgs = [],
               argMapSwitches = [DashedLong s],
@@ -60,7 +61,7 @@ spec = do
     it "parses any string with a dash and an argument as an option" $
       forAllValid $ \s ->
         forAllValid $ \o ->
-          parseArgMap ["-" <> NE.toList s, o]
+          AM.parse ["-" <> NE.toList s, o]
             `shouldBe` ArgMap
               { argMapArgs = [],
                 argMapSwitches = [],
@@ -71,7 +72,7 @@ spec = do
     it "parses any string with two dashes and an argument as an option" $
       forAllValid $ \s ->
         forAllValid $ \o ->
-          parseArgMap ["--" <> NE.toList s, o]
+          AM.parse ["--" <> NE.toList s, o]
             `shouldBe` ArgMap
               { argMapArgs = [],
                 argMapSwitches = [],

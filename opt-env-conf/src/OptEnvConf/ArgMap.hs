@@ -1,20 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 
 module OptEnvConf.ArgMap
   ( ArgMap (..),
-    emptyArgMap,
+    empty,
     Dashed (..),
-    parseArgMap,
+    parse,
   )
 where
 
-import Control.Applicative
-import Data.Aeson as JSON
-import qualified Data.Aeson.Key as Key
--- import qualified Data.Aeson.KeyMap as KM
-import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -22,8 +16,6 @@ import qualified Data.Map as M
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
-import System.Environment (getArgs, getEnvironment)
-import System.Exit
 
 data ArgMap = ArgMap
   { argMapArgs :: ![String],
@@ -35,8 +27,8 @@ data ArgMap = ArgMap
 
 instance Validity ArgMap
 
-emptyArgMap :: ArgMap
-emptyArgMap =
+empty :: ArgMap
+empty =
   ArgMap
     { argMapArgs = [],
       argMapSwitches = [],
@@ -58,13 +50,13 @@ instance Validity Dashed where
           DashedShort (c :| _) -> declare "does not start with a dash" $ c /= '-'
       ]
 
-parseArgMap :: [String] -> ArgMap
-parseArgMap = go
+parse :: [String] -> ArgMap
+parse = go
   where
     go :: [String] -> ArgMap
     go = \case
-      [] -> emptyArgMap
-      ("--" : leftovers) -> emptyArgMap {argMapLeftovers = leftovers}
+      [] -> empty
+      ("--" : leftovers) -> empty {argMapLeftovers = leftovers}
       ("-" : rest) ->
         let am = go rest
          in am {argMapArgs = "-" : argMapArgs am}
