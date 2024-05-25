@@ -17,6 +17,7 @@ library
   exposed-modules:
       OptEnvConf
       OptEnvConf.ArgMap
+      OptEnvConf.EnvMap
   other-modules:
       Paths_opt_env_conf
   hs-source-dirs:
@@ -44,6 +45,7 @@ test-suite opt-env-conf-test
   other-modules:
       OptEnvConf.APISpec
       OptEnvConf.ArgMapSpec
+      OptEnvConf.EnvMapSpec
       Paths_opt_env_conf
   hs-source-dirs:
       test/
