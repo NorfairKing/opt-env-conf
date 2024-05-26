@@ -18,10 +18,10 @@ exampleParserSpec dir = exampleParserSpec' dir (optEnvParser :: Parser a)
 exampleParserSpec' :: FilePath -> Parser a -> Spec
 exampleParserSpec' dir parser = do
   it "it documents the parser in the same way" $
-    pureGoldenStringFile ("test_resources/" <> dir <> "/help.txt") $
+    pureGoldenStringFile ("test_resources/" <> dir <> "/documentation.txt") $
       documentParser parser
   it "shows the parser in the same way" $
-    pureGoldenStringFile ("test_resources/" <> dir <> "/help.log") $
+    pureGoldenStringFile ("test_resources/" <> dir <> "/show.txt") $
       showParserABit parser
 
 data Example = Example

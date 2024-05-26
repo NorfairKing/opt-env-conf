@@ -1,6 +1,4 @@
-Env var: "--greeting"
-or
+(optional) first of:
+Option: "--greeting"
 Env var: "GREETING"
-or
 Config var: "greeting"
-or

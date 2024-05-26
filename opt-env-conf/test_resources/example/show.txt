@@ -1,0 +1,1 @@
+Fmap _ (OptionalFirst [(Opt --greeting),(EnvVar "GREETING"),(Config "greeting")])

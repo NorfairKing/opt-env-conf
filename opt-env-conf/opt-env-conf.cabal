@@ -10,8 +10,8 @@ copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        AllRightsReserved
 build-type:     Simple
 extra-source-files:
-    test_resources/example/help.log
-    test_resources/example/help.txt
+    test_resources/example/documentation.txt
+    test_resources/example/show.txt
 
 library
   exposed-modules:
