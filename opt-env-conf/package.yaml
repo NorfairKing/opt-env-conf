@@ -23,6 +23,8 @@ library:
   - optparse-applicative
   - path
   - path-io
+  - safe-coloured-text
+  - safe-coloured-text-layout
   - text
   - validity
   - validity-containers

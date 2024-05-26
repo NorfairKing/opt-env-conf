@@ -11,8 +11,10 @@ license:        AllRightsReserved
 build-type:     Simple
 extra-source-files:
     test_resources/args-and-leftovers/documentation.txt
+    test_resources/args-and-leftovers/env.txt
     test_resources/args-and-leftovers/show.txt
     test_resources/example/documentation.txt
+    test_resources/example/env.txt
     test_resources/example/show.txt
 
 library
@@ -36,6 +38,8 @@ library
     , optparse-applicative
     , path
     , path-io
+    , safe-coloured-text
+    , safe-coloured-text-layout
     , text
     , validity
     , validity-containers

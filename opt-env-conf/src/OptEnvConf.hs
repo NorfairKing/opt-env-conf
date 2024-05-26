@@ -15,12 +15,17 @@ import Control.Monad.State
 import Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
+import Data.Maybe
+import Data.Text (Text)
+import qualified Data.Text as T
 import OptEnvConf.ArgMap (ArgMap (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
+import Text.Colour
+import Text.Colour.Layout
 import Text.Show
 
 data Parser a where
@@ -105,6 +110,69 @@ documentParser = unlines . go
       ParserArgLeftovers -> ["Leftover arguments"]
       ParserEnvVar v -> ["Env var: " <> show v]
       ParserConfig key -> ["Config var: " <> show key]
+
+data EnvDocs
+  = EnvDocsAnd ![EnvDocs]
+  | EnvDocsOr ![EnvDocs]
+  | EnvDocsVars ![(String, EnvDoc)]
+
+data EnvDoc = EnvDoc
+  { envDocHelp :: !(Maybe String)
+  }
+
+parserEnvDocs :: Parser a -> EnvDocs
+parserEnvDocs = go
+  where
+    go :: Parser a -> EnvDocs
+    go = \case
+      ParserFmap _ p -> go p
+      ParserPure _ -> EnvDocsVars []
+      ParserAp pf pa -> EnvDocsAnd [go pf, go pa]
+      ParserAlt p1 p2 -> EnvDocsOr [go p1, go p2]
+      ParserOptionalFirst ps -> EnvDocsOr $ map go ps
+      ParserRequiredFirst ps -> EnvDocsOr $ map go ps
+      ParserArg -> EnvDocsVars []
+      ParserArgs -> EnvDocsVars []
+      ParserOpt _ -> EnvDocsVars []
+      ParserArgLeftovers -> EnvDocsVars []
+      ParserEnvVar v -> EnvDocsVars [(v, EnvDoc {envDocHelp = Nothing})]
+      ParserConfig _ -> EnvDocsVars []
+
+renderEnvDocs :: EnvDocs -> Text
+renderEnvDocs =
+  renderChunksText With24BitColours
+    . layoutAsTable
+    . go
+    . simplifyEnvDocs
+  where
+    go :: EnvDocs -> [[Chunk]]
+    go = \case
+      EnvDocsAnd ds -> concatMap go ds
+      EnvDocsOr ds -> concatMap go ds
+      EnvDocsVars vs ->
+        map
+          ( \(key, EnvDoc help) ->
+              [ chunk $ T.pack key,
+                chunk . T.pack $ fromMaybe "" help
+              ]
+          )
+          vs
+
+simplifyEnvDocs :: EnvDocs -> EnvDocs
+simplifyEnvDocs = go
+  where
+    go = \case
+      EnvDocsAnd ds -> EnvDocsAnd $ concatMap goAnd ds
+      EnvDocsOr ds -> EnvDocsOr $ concatMap goOr ds
+      EnvDocsVars vs -> EnvDocsVars vs
+
+    goAnd = \case
+      EnvDocsAnd ds -> concatMap goAnd ds
+      ds -> [ds]
+
+    goOr = \case
+      EnvDocsOr ds -> concatMap goOr ds
+      ds -> [ds]
 
 showParserABit :: Parser a -> String
 showParserABit = ($ "") . go 0
