@@ -4,6 +4,7 @@
 module OptEnvConf.ArgMap
   ( ArgMap (..),
     empty,
+    hasUnconsumed,
     Dashed (..),
     parse,
     consumeArg,
@@ -36,6 +37,12 @@ empty =
       argMapOptions = M.empty,
       argMapLeftovers = []
     }
+
+hasUnconsumed :: ArgMap -> Bool
+hasUnconsumed am =
+  not (null (argMapArgs am))
+    || not (null (argMapSwitches am))
+    || not (null (argMapOptions am))
 
 data Dashed
   = DashedShort !(NonEmpty Char)
@@ -91,7 +98,8 @@ parse = go
       ('-' : _) -> True
       _ -> False
 
-consumeArg :: ArgMap -> Maybe (String, ArgMap)
+-- The type is a bit strange, but it makes dealing with the state monad easier
+consumeArg :: ArgMap -> (Maybe String, ArgMap)
 consumeArg am = case argMapArgs am of
-  [] -> Nothing
-  (a : rest) -> Just (a, am {argMapArgs = rest})
+  [] -> (Nothing, am)
+  (a : rest) -> (Just a, am {argMapArgs = rest})

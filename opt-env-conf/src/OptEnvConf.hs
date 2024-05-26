@@ -10,6 +10,7 @@ where
 import Control.Applicative
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
 import Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
@@ -77,9 +78,6 @@ strOpt = ParserOpt
 confVar :: String -> Parser (Maybe String)
 confVar = ParserConfig
 
-withDefault :: Parser (Maybe a) -> a -> Parser a
-withDefault = undefined
-
 optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
 optionalFirst = undefined
 
@@ -123,32 +121,48 @@ runParser p = do
   envVars <- EM.parse <$> getEnvironment
   let mConf = Nothing
 
-  -- TODO map
+  -- TODO do something with the leftovers
   case runParserPure p args envVars mConf of
     Left err -> die err
-    Right a -> pure a
+    Right (a, _) -> pure a
 
-runParserPure :: Parser a -> ArgMap -> EnvMap -> Maybe JSON.Object -> Either String a
+runParserPure ::
+  Parser a ->
+  ArgMap ->
+  EnvMap ->
+  Maybe JSON.Object ->
+  Either String (a, [String])
 runParserPure p args envVars mConfig =
-  runExcept $
-    runReaderT (go args mConfig p) envVars
+  runExcept $ do
+    (result, unconsumedArgs) <- runStateT (runReaderT (go mConfig p) envVars) args
+    when (AM.hasUnconsumed unconsumedArgs) $ throwError "Unconsumed args"
+    pure (result, AM.argMapLeftovers unconsumedArgs)
   where
     -- TODO maybe use validation instead of either
     -- TODO typed parseError
-    go :: ArgMap -> Maybe JSON.Object -> Parser a -> ReaderT EnvMap (Except String) a
-    go as mConf = \case
-      ParserFmap f p' -> f <$> go as mConf p'
+    go ::
+      Maybe JSON.Object ->
+      Parser a ->
+      PP a
+    go mConf = \case
+      ParserFmap f p' -> f <$> go mConf p'
       ParserPure a -> pure a
-      ParserAp ff fa -> go as mConf ff <*> go as mConf fa
+      ParserAp ff fa -> go mConf ff <*> go mConf fa
       ParserEmpty -> throwError "ParserEmpty"
       ParserAlt p1 p2 -> do
-        env <- ask
-        case runExcept $ runReaderT (go as mConf p1) env of
-          Right a -> pure a
-          Left _ -> go as mConf p2 -- TODO: Maybe collect the error?
-      ParserArg -> case AM.consumeArg as of
-        Nothing -> throwError "No argument to consume" -- TODO consume the arg
-        Just (a, _) -> pure a
+        as <- get
+        es <- ask
+        case runPP (go mConf p1) as es of
+          Right (a, as') -> do
+            put as'
+            pure a
+          -- Note that args are not consumed if the alternative failed.
+          Left _ -> go mConf p2 -- TODO: Maybe collect the error?
+      ParserArg -> do
+        mA <- ppArg
+        case mA of
+          Nothing -> throwError "No argument to consume"
+          Just a -> pure a
       ParserOpt _ -> undefined
       ParserEnvVar v -> do
         es <- ask
@@ -158,3 +172,16 @@ runParserPure p args envVars mConfig =
         Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
           Left err -> throwError err
           Right v -> pure (Just v)
+
+type PP a = ReaderT EnvMap (StateT ArgMap (Except String)) a
+
+runPP ::
+  PP a ->
+  ArgMap ->
+  EnvMap ->
+  Either String (a, ArgMap)
+runPP p args envVars =
+  runExcept $ runStateT (runReaderT p envVars) args
+
+ppArg :: PP (Maybe String)
+ppArg = state AM.consumeArg
