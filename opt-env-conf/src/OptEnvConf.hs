@@ -8,6 +8,8 @@ module OptEnvConf
 where
 
 import Control.Applicative
+import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
@@ -127,25 +129,32 @@ runParser p = do
     Right a -> pure a
 
 runParserPure :: Parser a -> ArgMap -> EnvMap -> Maybe JSON.Object -> Either String a
-runParserPure p args envVars mConfig = go args envVars mConfig p
+runParserPure p args envVars mConfig =
+  runExcept $
+    runReaderT (go args mConfig p) envVars
   where
     -- TODO maybe use validation instead of either
-    go :: ArgMap -> EnvMap -> Maybe JSON.Object -> Parser a -> Either String a
-    go as es mConf = \case
-      ParserFmap f p' -> f <$> go as es mConf p'
+    -- TODO typed parseError
+    go :: ArgMap -> Maybe JSON.Object -> Parser a -> ReaderT EnvMap (Except String) a
+    go as mConf = \case
+      ParserFmap f p' -> f <$> go as mConf p'
       ParserPure a -> pure a
-      ParserAp ff fa -> go as es mConf ff <*> go as es mConf fa
-      ParserEmpty -> Left "ParserEmpty"
-      ParserAlt p1 p2 -> case go as es mConf p1 of
-        Right a -> pure a
-        Left _ -> go as es mConf p2 -- TODO: Maybe collect the error?
+      ParserAp ff fa -> go as mConf ff <*> go as mConf fa
+      ParserEmpty -> throwError "ParserEmpty"
+      ParserAlt p1 p2 -> do
+        env <- ask
+        case runExcept $ runReaderT (go as mConf p1) env of
+          Right a -> pure a
+          Left _ -> go as mConf p2 -- TODO: Maybe collect the error?
       ParserArg -> case AM.consumeArg as of
-        Nothing -> Left "No argument to consume" -- TODO consume the arg
-        Just (a, _) -> Right a
+        Nothing -> throwError "No argument to consume" -- TODO consume the arg
+        Just (a, _) -> pure a
       ParserOpt _ -> undefined
-      ParserEnvVar v -> pure (EM.lookup v es)
+      ParserEnvVar v -> do
+        es <- ask
+        pure (EM.lookup v es)
       ParserConfig key -> case mConf of
         Nothing -> pure Nothing
         Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
-          Left err -> Left err
+          Left err -> throwError err
           Right v -> pure (Just v)
