@@ -35,7 +35,9 @@ data Parser a where
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
   ParserArg :: Parser String
+  ParserArgs :: Parser [String]
   ParserOpt :: String -> Parser (Maybe String)
+  ParserArgLeftovers :: Parser [String]
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
   -- | Configuration file
@@ -63,8 +65,18 @@ envVar = ParserEnvVar
 strArg :: Parser String
 strArg = ParserArg
 
+strArgs :: Parser [String]
+strArgs = ParserArgs
+
 strOpt :: String -> Parser (Maybe String)
 strOpt = ParserOpt
+
+argLeftovers :: Parser [String]
+argLeftovers = ParserArgLeftovers
+
+-- Arguments _and_ leftovers
+allArgs :: Parser [String]
+allArgs = (++) <$> strArgs <*> argLeftovers
 
 confVar :: String -> Parser (Maybe String)
 confVar = ParserConfig
@@ -87,7 +99,9 @@ documentParser = unlines . go
       ParserOptionalFirst ps -> "(optional) first of:" : concatMap go ps
       ParserRequiredFirst ps -> "(required) first of:" : concatMap go ps
       ParserArg -> ["Argument"]
+      ParserArgs -> ["Arguments"]
       ParserOpt v -> ["Option: " <> show v]
+      ParserArgLeftovers -> ["Leftover arguments"]
       ParserEnvVar v -> ["Env var: " <> show v]
       ParserConfig key -> ["Config var: " <> show key]
 
@@ -103,7 +117,9 @@ showParserABit = ($ "") . go 0
       ParserOptionalFirst ps -> showParen (d > 10) $ showString "OptionalFirst " . showListWith (go 11) ps
       ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
       ParserArg -> showString "Arg"
+      ParserArgs -> showString "Args"
       ParserOpt v -> showParen (d > 10) $ showString "Opt " . showString v
+      ParserArgLeftovers -> showString "ArgLeftovers"
       ParserEnvVar v -> showParen (d > 10) $ showString "EnvVar " . showsPrec 11 v
       ParserConfig key -> showParen (d > 10) $ showString "Config " . showsPrec 11 key
 
@@ -178,7 +194,9 @@ runParserPure p args envVars mConfig =
         case mA of
           Nothing -> throwError "No argument to consume"
           Just a -> pure a
+      ParserArgs -> gets AM.argMapArgs -- Don't consume these args (?)
       ParserOpt _ -> undefined
+      ParserArgLeftovers -> gets AM.argMapLeftovers
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
         pure (EM.lookup v es)
