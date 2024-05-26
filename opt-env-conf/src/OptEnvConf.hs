@@ -8,6 +8,7 @@ module OptEnvConf
 where
 
 import Control.Applicative
+import Control.Exception
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -131,20 +132,34 @@ runParser p = do
 
   -- TODO do something with the leftovers
   case runParserPure p args envVars mConf of
-    Left err -> die err
+    Left err -> die $ displayException err
     Right (a, _) -> pure a
+
+data ParseError
+  = ParseErrorUnconsumed
+  | ParseErrorRequired
+  | ParseErrorMissingArgument
+  | ParseErrorConfigParseError !String
+  deriving (Show)
+
+instance Exception ParseError where
+  displayException = \case
+    ParseErrorUnconsumed -> "Unconsumed arguments"
+    ParseErrorRequired -> "Missing required setting" -- TODO show which ones
+    ParseErrorMissingArgument -> "Missing required argument"
+    ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
 
 runParserPure ::
   Parser a ->
   ArgMap ->
   EnvMap ->
   Maybe JSON.Object ->
-  Either String (a, [String])
+  Either ParseError (a, [String])
 runParserPure p args envVars mConfig =
   runExcept $ do
     let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     (result, unconsumedArgs) <- runStateT (runReaderT (go p) ppEnv) args
-    when (AM.hasUnconsumed unconsumedArgs) $ throwError "Unconsumed args"
+    when (AM.hasUnconsumed unconsumedArgs) $ throwError ParseErrorUnconsumed
     pure (result, AM.argMapLeftovers unconsumedArgs)
   where
     -- TODO maybe use validation instead of either
@@ -178,7 +193,7 @@ runParserPure p args envVars mConfig =
                 put s' -- Record the state
                 pure (Just a)
       ParserRequiredFirst pss -> case pss of
-        [] -> throwError "Required one." -- TODO nicer error
+        [] -> throwError ParseErrorRequired
         (p' : ps) -> do
           s <- get
           env <- ask
@@ -192,7 +207,7 @@ runParserPure p args envVars mConfig =
       ParserArg -> do
         mA <- ppArg
         case mA of
-          Nothing -> throwError "No argument to consume"
+          Nothing -> throwError ParseErrorMissingArgument
           Just a -> pure a
       ParserArgs -> gets AM.argMapArgs -- Don't consume these args (?)
       ParserOpt _ -> undefined
@@ -205,10 +220,10 @@ runParserPure p args envVars mConfig =
         case mConf of
           Nothing -> pure Nothing
           Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
-            Left err -> throwError err
+            Left err -> throwError $ ParseErrorConfigParseError err
             Right v -> pure (Just v)
 
-type PP a = ReaderT PPEnv (StateT ArgMap (Except String)) a
+type PP a = ReaderT PPEnv (StateT ArgMap (Except ParseError)) a
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
@@ -219,7 +234,7 @@ runPP ::
   PP a ->
   ArgMap ->
   PPEnv ->
-  Either String (a, ArgMap)
+  Either ParseError (a, ArgMap)
 runPP p args envVars =
   runExcept $ runStateT (runReaderT p envVars) args
 
