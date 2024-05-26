@@ -134,30 +134,30 @@ runParserPure ::
   Either String (a, [String])
 runParserPure p args envVars mConfig =
   runExcept $ do
-    (result, unconsumedArgs) <- runStateT (runReaderT (go mConfig p) envVars) args
+    let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
+    (result, unconsumedArgs) <- runStateT (runReaderT (go p) ppEnv) args
     when (AM.hasUnconsumed unconsumedArgs) $ throwError "Unconsumed args"
     pure (result, AM.argMapLeftovers unconsumedArgs)
   where
     -- TODO maybe use validation instead of either
     -- TODO typed parseError
     go ::
-      Maybe JSON.Object ->
       Parser a ->
       PP a
-    go mConf = \case
-      ParserFmap f p' -> f <$> go mConf p'
+    go = \case
+      ParserFmap f p' -> f <$> go p'
       ParserPure a -> pure a
-      ParserAp ff fa -> go mConf ff <*> go mConf fa
+      ParserAp ff fa -> go ff <*> go fa
       ParserEmpty -> throwError "ParserEmpty"
       ParserAlt p1 p2 -> do
         as <- get
-        es <- ask
-        case runPP (go mConf p1) as es of
+        env <- ask
+        case runPP (go p1) as env of
           Right (a, as') -> do
             put as'
             pure a
           -- Note that args are not consumed if the alternative failed.
-          Left _ -> go mConf p2 -- TODO: Maybe collect the error?
+          Left _ -> go p2 -- TODO: Maybe collect the error?
       ParserArg -> do
         mA <- ppArg
         case mA of
@@ -165,20 +165,27 @@ runParserPure p args envVars mConfig =
           Just a -> pure a
       ParserOpt _ -> undefined
       ParserEnvVar v -> do
-        es <- ask
+        es <- asks ppEnvEnv
         pure (EM.lookup v es)
-      ParserConfig key -> case mConf of
-        Nothing -> pure Nothing
-        Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
-          Left err -> throwError err
-          Right v -> pure (Just v)
+      ParserConfig key -> do
+        mConf <- asks ppEnvConf
+        case mConf of
+          Nothing -> pure Nothing
+          Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
+            Left err -> throwError err
+            Right v -> pure (Just v)
 
-type PP a = ReaderT EnvMap (StateT ArgMap (Except String)) a
+type PP a = ReaderT PPEnv (StateT ArgMap (Except String)) a
+
+data PPEnv = PPEnv
+  { ppEnvEnv :: !EnvMap,
+    ppEnvConf :: !(Maybe JSON.Object)
+  }
 
 runPP ::
   PP a ->
   ArgMap ->
-  EnvMap ->
+  PPEnv ->
   Either String (a, ArgMap)
 runPP p args envVars =
   runExcept $ runStateT (runReaderT p envVars) args
