@@ -38,9 +38,18 @@ spec = do
         forAllValid $ \bs ->
           argMapLeftovers (AM.parse (as ++ ["--"] ++ bs)) `shouldBe` bs
 
+    it "parses -a -b the same as -ab" $
+      forAllValid $ \c1 ->
+        forAllValid $ \c2 ->
+          forAllValid $ \b ->
+            forAllValid $ \m ->
+              forAllValid $ \a ->
+                AM.parse (concat [b, [['-', c1]], m, [['-', c2]], a])
+                  `shouldBe` AM.parse (concat [b, m, [['-', c1, c2]], a])
+
     it "parses any string with one dash and no argument as a switch" $
       forAllValid $ \c ->
-        AM.parse ["-" <> NE.toList c]
+        AM.parse [['-', c]]
           `shouldBe` ArgMap
             { argMapArgs = [],
               argMapSwitches = [DashedShort c],
@@ -59,13 +68,13 @@ spec = do
             }
 
     it "parses any string with a dash and an argument as an option" $
-      forAllValid $ \s ->
+      forAllValid $ \c ->
         forAllValid $ \o ->
-          AM.parse ["-" <> NE.toList s, o]
+          AM.parse [['-', c], o]
             `shouldBe` ArgMap
               { argMapArgs = [],
                 argMapSwitches = [],
-                argMapOptions = M.singleton (DashedShort s) (o :| []),
+                argMapOptions = M.singleton (DashedShort c) (o :| []),
                 argMapLeftovers = []
               }
 

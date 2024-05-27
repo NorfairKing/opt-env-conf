@@ -45,18 +45,11 @@ hasUnconsumed am =
     || not (null (argMapOptions am))
 
 data Dashed
-  = DashedShort !(NonEmpty Char)
+  = DashedShort !Char
   | DashedLong !(NonEmpty Char)
   deriving (Show, Eq, Ord, Generic)
 
-instance Validity Dashed where
-  validate d =
-    mconcat
-      [ genericValidate d,
-        case d of
-          DashedLong _ -> valid
-          DashedShort (c :| _) -> declare "does not start with a dash" $ c /= '-'
-      ]
+instance Validity Dashed
 
 parse :: [String] -> ArgMap
 parse = go
@@ -71,24 +64,25 @@ parse = go
       (('-' : opt) : rest) ->
         let asSwitch =
               let am = go rest
-                  d = parseDashed opt
-               in am {argMapSwitches = d : argMapSwitches am}
+                  d = parseDasheds opt
+               in am {argMapSwitches = d <> argMapSwitches am}
          in case rest of
               [] -> asSwitch
               (next : others)
                 | isFlag next -> asSwitch
                 | otherwise ->
                     let am = go others
-                        d = parseDashed opt
-                     in am {argMapOptions = M.insertWith (<>) d (next :| []) (argMapOptions am)}
+                        ds = parseDasheds opt
+                        m = M.fromList $ map (\d -> (d, next :| [])) ds
+                     in am {argMapOptions = M.unionWith (<>) m (argMapOptions am)}
       (a : rest) ->
         let am = go rest
          in am {argMapArgs = a : argMapArgs am}
 
-    parseDashed :: String -> Dashed
-    parseDashed = \case
-      '-' : rest -> DashedLong $ NE.fromList rest
-      rest -> DashedShort $ NE.fromList rest
+    parseDasheds :: String -> [Dashed]
+    parseDasheds = \case
+      '-' : rest -> [DashedLong (NE.fromList rest)]
+      rest -> map DashedShort rest
 
     isFlag :: String -> Bool
     isFlag = \case
