@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf
   ( module OptEnvConf,
@@ -15,10 +16,11 @@ import Control.Monad.State
 import Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
-import OptEnvConf.ArgMap (ArgMap (..))
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
@@ -61,8 +63,13 @@ class HasParser a where
 
 data ArgParser a = ArgParser
   { argParserParse :: !(String -> Either String a),
-    argParserShort :: ![Char],
+    argParserShort :: ![Char], -- TODO use dashed?
     argParserLong :: ![String]
+  }
+
+data EnvParser a = EnvParser
+  { envParserParse :: !(String -> Either String a),
+    envParserVar :: !String
   }
 
 envVar :: String -> Parser (Maybe String)
@@ -111,13 +118,24 @@ documentParser = unlines . go
       ParserEnvVar v -> ["Env var: " <> show v]
       ParserConfig key -> ["Config var: " <> show key]
 
+data OptDocs
+  = OptDocsAnd ![OptDocs]
+  | OptDocsOr ![OptDocs]
+  | OptDocsVars ![OptDoc]
+
+data OptDoc = OptDoc
+  { optDocFlags :: !(NonEmpty Dashed),
+    optDocHelp :: !(Maybe String)
+  }
+
 data EnvDocs
   = EnvDocsAnd ![EnvDocs]
   | EnvDocsOr ![EnvDocs]
-  | EnvDocsVars ![(String, EnvDoc)]
+  | EnvDocsVars ![EnvDoc]
 
 data EnvDoc = EnvDoc
-  { envDocHelp :: !(Maybe String)
+  { envDocVar :: !String,
+    envDocHelp :: !(Maybe String)
   }
 
 parserEnvDocs :: Parser a -> EnvDocs
@@ -135,7 +153,7 @@ parserEnvDocs = go
       ParserArgs -> EnvDocsVars []
       ParserOpt _ -> EnvDocsVars []
       ParserArgLeftovers -> EnvDocsVars []
-      ParserEnvVar v -> EnvDocsVars [(v, EnvDoc {envDocHelp = Nothing})]
+      ParserEnvVar v -> EnvDocsVars [EnvDoc {envDocVar = v, envDocHelp = Nothing}]
       ParserConfig _ -> EnvDocsVars []
 
 renderEnvDocs :: EnvDocs -> Text
@@ -151,9 +169,9 @@ renderEnvDocs =
       EnvDocsOr ds -> concatMap go ds
       EnvDocsVars vs ->
         map
-          ( \(key, EnvDoc help) ->
-              [ chunk $ T.pack key,
-                chunk . T.pack $ fromMaybe "" help
+          ( \EnvDoc {..} ->
+              [ chunk $ T.pack envDocVar,
+                chunk . T.pack $ fromMaybe "undocumented" envDocHelp
               ]
           )
           vs
