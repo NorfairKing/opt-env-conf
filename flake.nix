@@ -7,6 +7,16 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.11";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    validity.url = "github:NorfairKing/validity";
+    validity.flake = false;
+    autodocodec.url = "github:NorfairKing/autodocodec";
+    autodocodec.flake = false;
+    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
+    safe-coloured-text.flake = false;
+    fast-myers-diff.url = "github:NorfairKing/fast-myers-diff";
+    fast-myers-diff.flake = false;
+    sydtest.url = "github:NorfairKing/sydtest";
+    sydtest.flake = false;
     weeder-nix.url = "github:NorfairKing/weeder-nix";
     weeder-nix.flake = false;
     dekking.url = "github:NorfairKing/dekking";
@@ -17,6 +27,11 @@
     { self
     , nixpkgs
     , pre-commit-hooks
+    , validity
+    , autodocodec
+    , safe-coloured-text
+    , fast-myers-diff
+    , sydtest
     , weeder-nix
     , dekking
     }:
@@ -27,6 +42,11 @@
         config.allowUnfree = true;
         overlays = [
           self.overlays.${system}
+          (import (validity + "/nix/overlay.nix"))
+          (import (autodocodec + "/nix/overlay.nix"))
+          (import (safe-coloured-text + "/nix/overlay.nix"))
+          (import (fast-myers-diff + "/nix/overlay.nix"))
+          (import (sydtest + "/nix/overlay.nix"))
           (import (dekking + "/nix/overlay.nix"))
           (import (weeder-nix + "/nix/overlay.nix"))
         ];
