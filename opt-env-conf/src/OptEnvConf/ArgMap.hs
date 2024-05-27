@@ -65,22 +65,28 @@ parse = go
               ArgBareDash -> am {argMapArgs = "-" : argMapArgs am}
               ArgDashed isLong opt ->
                 let ds = parseDasheds isLong opt
-                    asSwitch = am {argMapSwitches = ds <> argMapSwitches am}
+                    asSwitch = am {argMapSwitches = NE.toList ds <> argMapSwitches am}
                  in case rest of
                       [] -> asSwitch
                       (next : others)
                         | isDashed (parseSingleArg next) -> asSwitch
                         | otherwise ->
+                            -- The last of the dashed should be considered an option
+                            -- While the others before should be considered switches.
                             let am' = go others
-                                m = M.fromList $ map (\d -> (d, next :| [])) ds
-                             in am' {argMapOptions = M.unionWith (<>) m (argMapOptions am)}
+                                lastDash = NE.last ds
+                                beforeDashes = NE.init ds
+                             in am'
+                                  { argMapOptions = M.insertWith (<>) lastDash (next :| []) (argMapOptions am),
+                                    argMapSwitches = beforeDashes <> argMapSwitches am
+                                  }
               ArgPlain plainArg -> am {argMapArgs = plainArg : argMapArgs am}
 
-    parseDasheds :: Bool -> NonEmpty Char -> [Dashed]
+    parseDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
     parseDasheds b s =
       if b
-        then [DashedLong s]
-        else map DashedShort (NE.toList s)
+        then DashedLong s :| []
+        else NE.map DashedShort s
 
     isDashed :: Arg -> Bool
     isDashed = \case
