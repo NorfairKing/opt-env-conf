@@ -118,20 +118,19 @@ documentParser = unlines . go
       ParserEnvVar v -> ["Env var: " <> show v]
       ParserConfig key -> ["Config var: " <> show key]
 
-data OptDocs
-  = OptDocsAnd ![OptDocs]
-  | OptDocsOr ![OptDocs]
-  | OptDocsVars ![OptDoc]
+data AnyDocs a
+  = AnyDocsAnd ![AnyDocs a]
+  | AnyDocsOr ![AnyDocs a]
+  | AnyDocsSingle ![a]
+
+type OptDocs = AnyDocs OptDoc
 
 data OptDoc = OptDoc
   { optDocFlags :: !(NonEmpty Dashed),
     optDocHelp :: !(Maybe String)
   }
 
-data EnvDocs
-  = EnvDocsAnd ![EnvDocs]
-  | EnvDocsOr ![EnvDocs]
-  | EnvDocsVars ![EnvDoc]
+type EnvDocs = AnyDocs EnvDoc
 
 data EnvDoc = EnvDoc
   { envDocVar :: !String,
@@ -144,30 +143,36 @@ parserEnvDocs = go
     go :: Parser a -> EnvDocs
     go = \case
       ParserFmap _ p -> go p
-      ParserPure _ -> EnvDocsVars []
-      ParserAp pf pa -> EnvDocsAnd [go pf, go pa]
-      ParserAlt p1 p2 -> EnvDocsOr [go p1, go p2]
-      ParserOptionalFirst ps -> EnvDocsOr $ map go ps
-      ParserRequiredFirst ps -> EnvDocsOr $ map go ps
-      ParserArg -> EnvDocsVars []
-      ParserArgs -> EnvDocsVars []
-      ParserOpt _ -> EnvDocsVars []
-      ParserArgLeftovers -> EnvDocsVars []
-      ParserEnvVar v -> EnvDocsVars [EnvDoc {envDocVar = v, envDocHelp = Nothing}]
-      ParserConfig _ -> EnvDocsVars []
+      ParserPure _ -> AnyDocsSingle []
+      ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
+      ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
+      ParserOptionalFirst ps -> AnyDocsOr $ map go ps
+      ParserRequiredFirst ps -> AnyDocsOr $ map go ps
+      ParserArg -> AnyDocsSingle []
+      ParserArgs -> AnyDocsSingle []
+      ParserOpt _ -> AnyDocsSingle []
+      ParserArgLeftovers -> AnyDocsSingle []
+      ParserEnvVar v ->
+        AnyDocsSingle
+          [ EnvDoc
+              { envDocVar = v,
+                envDocHelp = Nothing
+              }
+          ]
+      ParserConfig _ -> AnyDocsSingle []
 
 renderEnvDocs :: EnvDocs -> Text
 renderEnvDocs =
   renderChunksText With24BitColours
     . layoutAsTable
     . go
-    . simplifyEnvDocs
+    . simplifyAnyDocs
   where
     go :: EnvDocs -> [[Chunk]]
     go = \case
-      EnvDocsAnd ds -> concatMap go ds
-      EnvDocsOr ds -> concatMap go ds
-      EnvDocsVars vs ->
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle vs ->
         map
           ( \EnvDoc {..} ->
               [ chunk $ T.pack envDocVar,
@@ -176,20 +181,20 @@ renderEnvDocs =
           )
           vs
 
-simplifyEnvDocs :: EnvDocs -> EnvDocs
-simplifyEnvDocs = go
+simplifyAnyDocs :: AnyDocs a -> AnyDocs a
+simplifyAnyDocs = go
   where
     go = \case
-      EnvDocsAnd ds -> EnvDocsAnd $ concatMap goAnd ds
-      EnvDocsOr ds -> EnvDocsOr $ concatMap goOr ds
-      EnvDocsVars vs -> EnvDocsVars vs
+      AnyDocsAnd ds -> AnyDocsAnd $ concatMap goAnd ds
+      AnyDocsOr ds -> AnyDocsOr $ concatMap goOr ds
+      AnyDocsSingle vs -> AnyDocsSingle vs
 
     goAnd = \case
-      EnvDocsAnd ds -> concatMap goAnd ds
+      AnyDocsAnd ds -> concatMap goAnd ds
       ds -> [ds]
 
     goOr = \case
-      EnvDocsOr ds -> concatMap goOr ds
+      AnyDocsOr ds -> concatMap goOr ds
       ds -> [ds]
 
 showParserABit :: Parser a -> String
