@@ -21,6 +21,10 @@ exampleParserSpec' dir parser = do
   it "it documents the parser in the same way" $
     pureGoldenStringFile ("test_resources/" <> dir <> "/documentation.txt") $
       documentParser parser
+  it "it documents the opt parser in the same way" $
+    pureGoldenTextFile ("test_resources/" <> dir <> "/opt.txt") $
+      renderOptDocs $
+        parserOptDocs parser
   it "it documents the env parser in the same way" $
     pureGoldenTextFile ("test_resources/" <> dir <> "/env.txt") $
       renderEnvDocs $

@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf
@@ -135,6 +136,44 @@ data OptDoc = OptDoc
   { optDocFlags :: !(NonEmpty Dashed),
     optDocHelp :: !(Maybe String)
   }
+
+parserOptDocs :: Parser a -> OptDocs
+parserOptDocs = go
+  where
+    go :: Parser a -> OptDocs
+    go = \case
+      ParserFmap _ p -> go p
+      ParserPure _ -> AnyDocsSingle []
+      ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
+      ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
+      ParserOptionalFirst ps -> AnyDocsOr $ map go ps
+      ParserRequiredFirst ps -> AnyDocsOr $ map go ps
+      ParserArg -> AnyDocsSingle []
+      ParserArgs -> AnyDocsSingle []
+      ParserOpt _ -> AnyDocsSingle []
+      ParserArgLeftovers -> AnyDocsSingle []
+      ParserEnvVar _ -> AnyDocsSingle []
+      ParserConfig _ -> AnyDocsSingle []
+
+renderOptDocs :: OptDocs -> Text
+renderOptDocs =
+  renderChunksText With24BitColours
+    . layoutAsTable
+    . go
+    . simplifyAnyDocs
+  where
+    go :: OptDocs -> [[Chunk]]
+    go = \case
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle vs ->
+        map
+          ( \OptDoc {..} ->
+              [ "",
+                chunk . T.pack $ fromMaybe "undocumented" optDocHelp
+              ]
+          )
+          vs
 
 type EnvDocs = AnyDocs EnvDoc
 
