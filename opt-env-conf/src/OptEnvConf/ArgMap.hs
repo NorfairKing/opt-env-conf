@@ -8,6 +8,7 @@ module OptEnvConf.ArgMap
     Dashed (..),
     parse,
     consumeArg,
+    parseSingleArg,
   )
 where
 
@@ -57,39 +58,33 @@ parse = go
     go :: [String] -> ArgMap
     go = \case
       [] -> empty
-      ("--" : leftovers) -> empty {argMapLeftovers = leftovers}
-      ("-" : rest) ->
-        let am = go rest
-         in am {argMapArgs = "-" : argMapArgs am}
-      (('-' : opt) : rest) ->
-        let asSwitch =
-              let am = go rest
-                  d = parseDasheds opt
-               in am {argMapSwitches = d <> argMapSwitches am}
-         in case rest of
-              [] -> asSwitch
-              (next : others)
-                | isFlag next -> asSwitch
-                | otherwise ->
-                    let am = go others
-                        ds = parseDasheds opt
-                        m = M.fromList $ map (\d -> (d, next :| [])) ds
-                     in am {argMapOptions = M.unionWith (<>) m (argMapOptions am)}
       (a : rest) ->
         let am = go rest
-         in am {argMapArgs = a : argMapArgs am}
+         in case parseSingleArg a of
+              ArgBareDoubleDash -> empty {argMapLeftovers = rest}
+              ArgBareDash -> am {argMapArgs = "-" : argMapArgs am}
+              ArgDashed isLong opt ->
+                let ds = parseDasheds isLong opt
+                    asSwitch = am {argMapSwitches = ds <> argMapSwitches am}
+                 in case rest of
+                      [] -> asSwitch
+                      (next : others)
+                        | isDashed (parseSingleArg next) -> asSwitch
+                        | otherwise ->
+                            let am' = go others
+                                m = M.fromList $ map (\d -> (d, next :| [])) ds
+                             in am' {argMapOptions = M.unionWith (<>) m (argMapOptions am)}
+              ArgPlain plainArg -> am {argMapArgs = plainArg : argMapArgs am}
 
-    parseDasheds :: String -> [Dashed]
-    parseDasheds = \case
-      '-' : rest -> [DashedLong (NE.fromList rest)]
-      rest -> map DashedShort rest
+    parseDasheds :: Bool -> NonEmpty Char -> [Dashed]
+    parseDasheds b s =
+      if b
+        then [DashedLong s]
+        else map DashedShort (NE.toList s)
 
-    isFlag :: String -> Bool
-    isFlag = \case
-      "--" -> False
-      "-" -> False
-      ('-' : '-' : _) -> True
-      ('-' : _) -> True
+    isDashed :: Arg -> Bool
+    isDashed = \case
+      ArgDashed _ _ -> True
       _ -> False
 
 -- The type is a bit strange, but it makes dealing with the state monad easier
@@ -97,3 +92,32 @@ consumeArg :: ArgMap -> (Maybe String, ArgMap)
 consumeArg am = case argMapArgs am of
   [] -> (Nothing, am)
   (a : rest) -> (Just a, am {argMapArgs = rest})
+
+data Arg
+  = ArgBareDoubleDash
+  | ArgBareDash
+  | ArgDashed !Bool !(NonEmpty Char) -- True means long
+  | ArgPlain !String
+  deriving (Show, Eq, Generic)
+
+instance Validity Arg where
+  validate arg =
+    mconcat
+      [ genericValidate arg,
+        case arg of
+          ArgDashed False (c :| _) -> declare "The first character of a short dashed is not a dash" $ c /= '-'
+          ArgPlain s -> declare "does not start with a dash" $ case s of
+            ('-' : _) -> False
+            _ -> True
+          _ -> valid
+      ]
+
+parseSingleArg :: String -> Arg
+parseSingleArg = \case
+  '-' : '-' : rest -> case NE.nonEmpty rest of
+    Nothing -> ArgBareDoubleDash
+    Just ne -> ArgDashed True ne
+  '-' : rest -> case NE.nonEmpty rest of
+    Nothing -> ArgBareDash
+    Just ne -> ArgDashed False ne
+  s -> ArgPlain s

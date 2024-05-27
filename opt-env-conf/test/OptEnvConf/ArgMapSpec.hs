@@ -11,6 +11,10 @@ import Test.Syd.Validity
 
 spec :: Spec
 spec = do
+  describe "parseSingleArg" $
+    it "produces valid args" $
+      producesValid AM.parseSingleArg
+
   describe "AM.parse" $ do
     it "produces valid ArgMaps" $
       producesValid AM.parse
@@ -43,10 +47,12 @@ spec = do
         forAllValid $ \c2 ->
           forAllValid $ \b ->
             forAllValid $ \m ->
-              forAllValid $ \a ->
-                AM.parse (concat [b, [['-', c1]], m, [['-', c2]], a])
-                  `shouldBe` AM.parse (concat [b, m, [['-', c1, c2]], a])
-
+              forAllValid $ \a -> do
+                let actualArgs = concat [b, [['-', c1]], m, [['-', c2]], a]
+                let expectedArgs = concat [b, m, [['-', c1, c2]], a]
+                context ("actual: " <> show actualArgs) $
+                  context ("expected: " <> show expectedArgs) $
+                    AM.parse actualArgs `shouldBe` AM.parse expectedArgs
     it "parses any string with one dash and no argument as a switch" $
       forAllValid $ \c ->
         AM.parse [['-', c]]
