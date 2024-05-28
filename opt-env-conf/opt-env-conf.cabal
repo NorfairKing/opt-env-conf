@@ -16,12 +16,12 @@ extra-source-files:
     test_resources/args/opt-short.txt
     test_resources/args/opt.txt
     test_resources/args/show.txt
-    test_resources/example/docs.txt
-    test_resources/example/env.txt
-    test_resources/example/opt-long.txt
-    test_resources/example/opt-short.txt
-    test_resources/example/opt.txt
-    test_resources/example/show.txt
+    test_resources/greet/docs.txt
+    test_resources/greet/env.txt
+    test_resources/greet/opt-long.txt
+    test_resources/greet/opt-short.txt
+    test_resources/greet/opt.txt
+    test_resources/greet/show.txt
 
 library
   exposed-modules:

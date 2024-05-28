@@ -12,7 +12,7 @@ import Text.Colour
 
 spec :: Spec
 spec = do
-  exampleParserSpec @Example "example"
+  exampleParserSpec @Greet "greet"
   exampleParserSpec @Args "args"
   pure ()
 
@@ -54,14 +54,14 @@ pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
 pureGoldenChunksFile fp cs =
   pureGoldenTextFile fp $ renderChunksText With24BitColours cs
 
-data Example = Example
-  { exampleGreeting :: Maybe String
+data Greet = Greet
+  { greetGreeting :: Maybe String
   }
   deriving (Show)
 
-instance HasParser Example where
+instance HasParser Greet where
   optEnvParser =
-    Example
+    Greet
       <$> optionalFirst
         [ strOption [long "greeting"],
           envVar "GREETING",
