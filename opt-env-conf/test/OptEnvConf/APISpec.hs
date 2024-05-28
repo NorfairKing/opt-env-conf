@@ -13,7 +13,7 @@ import Text.Colour
 spec :: Spec
 spec = do
   exampleParserSpec @Example "example"
-  exampleParserSpec @ArgsAndLeftovers "args-and-leftovers"
+  exampleParserSpec @Args "args"
   pure ()
 
 exampleParserSpec :: forall a. HasParser a => FilePath -> Spec
@@ -63,16 +63,15 @@ instance HasParser Example where
   optEnvParser =
     Example
       <$> optionalFirst
-        [ strOpt "--greeting",
+        [ strOption [long "greeting"],
           envVar "GREETING",
           confVar "greeting"
         ]
 
-data ArgsAndLeftovers = ArgsAndLeftovers [String] [String]
+data Args = Args [String]
   deriving (Show)
 
-instance HasParser ArgsAndLeftovers where
+instance HasParser Args where
   optEnvParser =
-    ArgsAndLeftovers
+    Args
       <$> strArgs
-      <*> argLeftovers

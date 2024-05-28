@@ -3,8 +3,9 @@
 
 module OptEnvConf
   ( module OptEnvConf,
-    module OptEnvConf.Run,
     module OptEnvConf.Doc,
+    module OptEnvConf.Opt,
+    module OptEnvConf.Run,
     Parser,
     HasParser (..),
     module Control.Applicative,
@@ -25,36 +26,17 @@ envVar = ParserEnvVar
 strArgument :: [ArgumentBuilder String] -> Parser String
 strArgument = argument . (reader str :)
 
-strOption :: [OptionBuilder String] -> Parser String
+strOption :: [OptionBuilder String] -> Parser (Maybe String)
 strOption = option . (reader str :)
 
 argument :: [ArgumentBuilder a] -> Parser a
 argument = undefined
 
-option :: [OptionBuilder a] -> Parser a
+option :: [OptionBuilder a] -> Parser (Maybe a)
 option = undefined
-
-strArg :: Parser String
-strArg = ParserArg Nothing
 
 strArgs :: Parser [String]
 strArgs = ParserArgs Nothing
-
-strOpt :: String -> Parser (Maybe String)
-strOpt s =
-  ParserOpt
-    ( NE.singleton
-        . DashedLong
-        $ NE.fromList s -- TODO unsafe
-    )
-    Nothing
-
-argLeftovers :: Parser [String]
-argLeftovers = ParserArgLeftovers
-
--- Arguments _and_ leftovers
-allArgs :: Parser [String]
-allArgs = (++) <$> strArgs <*> argLeftovers
 
 confVar :: String -> Parser (Maybe String)
 confVar = ParserConfig

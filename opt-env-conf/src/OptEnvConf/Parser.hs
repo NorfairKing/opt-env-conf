@@ -16,11 +16,8 @@ import Data.Aeson (FromJSON)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
+import OptEnvConf.Opt
 import Text.Show
-
-type Metavar = String
-
-type Help = String
 
 data Parser a where
   -- Functor
@@ -36,11 +33,7 @@ data Parser a where
   -- | Arguments and options
   ParserArg :: !(Maybe Metavar) -> Parser String
   ParserArgs :: !(Maybe Metavar) -> Parser [String]
-  ParserOpt ::
-    !(NonEmpty Dashed) ->
-    !(Maybe Metavar) ->
-    Parser (Maybe String)
-  ParserArgLeftovers :: Parser [String]
+  ParserOpt :: !(OptionParser a) -> Parser (Maybe a)
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
   -- | Configuration file
@@ -73,14 +66,10 @@ showParserABit = ($ "") . go 0
       ParserArgs metavar ->
         showString "Args "
           . showsPrec 10 metavar
-      ParserOpt v metavar ->
+      ParserOpt p ->
         showParen (d > 10) $
           showString "Opt "
-            . showList (NE.toList v)
-            . showString " "
-            . showsPrec 10 metavar
-      ParserArgLeftovers ->
-        showString "ArgLeftovers"
+            . showOptionParserABit p
       ParserEnvVar v ->
         showParen (d > 10) $
           showString "EnvVar " . showsPrec 11 v

@@ -110,8 +110,7 @@ runParserPure p args envVars mConfig =
           Nothing -> ppError ParseErrorMissingArgument
           Just a -> pure a
       ParserArgs _ -> gets AM.argMapArgs -- TODO consume these args (?)
-      ParserOpt _ _ -> undefined
-      ParserArgLeftovers -> gets AM.argMapLeftovers
+      ParserOpt _ -> undefined
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
         pure (EM.lookup v es)

@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Opt where
 
@@ -7,11 +8,26 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
 
+type Metavar = String
+
+type Help = String
+
 data OptionGenerals f = OptionGenerals
   -- TODO Completer
   { optionGeneralSpecifics :: f,
     optionGeneralHelp :: !(Maybe String)
   }
+
+showOptionGeneralsABitWith :: (f -> ShowS) -> OptionGenerals f -> ShowS
+showOptionGeneralsABitWith func OptionGenerals {..} =
+  showParen True $
+    showString "OptionGenerals "
+      . showParen
+        True
+        ( func optionGeneralSpecifics
+            . showString "OptionGenerals "
+            . showsPrec 11 optionGeneralHelp
+        )
 
 newtype Builder f = Builder {unBuilder :: OptionGenerals f -> OptionGenerals f}
 
@@ -27,8 +43,14 @@ instance HasReader a f => HasReader a (OptionGenerals f) where
 class HasLong a where
   addLong :: NonEmpty Char -> a -> a
 
+instance HasLong f => HasLong (OptionGenerals f) where
+  addLong s op = op {optionGeneralSpecifics = addLong s (optionGeneralSpecifics op)}
+
 class HasShort a where
   addShort :: Char -> a -> a
+
+instance HasShort f => HasShort (OptionGenerals f) where
+  addShort c op = op {optionGeneralSpecifics = addShort c (optionGeneralSpecifics op)}
 
 -- data SwitchSpecifics = SwitchSpecifics
 --
@@ -39,7 +61,8 @@ class HasShort a where
 data OptionSpecifics a = OptionSpecifics
   -- TODO completer
   { optionSpecificsReader :: !(Maybe (Reader a)),
-    optionSpecificsDasheds :: ![Dashed]
+    optionSpecificsDasheds :: ![Dashed],
+    optionSpecificsMetavar :: !(Maybe Metavar)
   }
 
 instance HasReader a (OptionSpecifics a) where
@@ -53,11 +76,23 @@ instance HasShort (OptionSpecifics a) where
 
 type OptionParser a = OptionGenerals (OptionSpecifics a)
 
+showOptionParserABit :: OptionParser a -> ShowS
+showOptionParserABit = showOptionGeneralsABitWith $ \OptionSpecifics {..} ->
+  showString "OptionSpecifics "
+    . showString
+      ( case optionSpecificsReader of
+          Nothing -> "Nothing"
+          Just _ -> "(Just _)"
+      )
+    . showString " "
+    . showsPrec 11 optionSpecificsDasheds
+
 type OptionBuilder a = Builder (OptionParser a)
 
 data ArgumentSpecifics a = ArgumentSpecifics
   -- TODO Completer
-  { argumentSpecificsReader :: !(Maybe (Reader a))
+  { argumentSpecificsReader :: !(Maybe (Reader a)),
+    argumentSpecificsMetavar :: !(Maybe Metavar)
   }
 
 instance HasReader a (ArgumentSpecifics a) where
