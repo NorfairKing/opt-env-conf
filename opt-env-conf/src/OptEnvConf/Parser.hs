@@ -12,6 +12,7 @@ module OptEnvConf.Parser
   )
 where
 
+import Control.Applicative
 import Data.Aeson (FromJSON)
 import OptEnvConf.Opt
 import Text.Show
@@ -29,7 +30,7 @@ data Parser a where
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
-  ParserArg :: !(Maybe Metavar) -> Parser String
+  ParserArg :: !(ArgumentParser a) -> Parser a
   ParserArgs :: !(Maybe Metavar) -> Parser [String]
   ParserOpt :: !(OptionParser a) -> Parser (Maybe a)
   -- | Env vars
@@ -43,6 +44,21 @@ instance Functor Parser where
 instance Applicative Parser where
   pure = ParserPure
   (<*>) = ParserAp
+
+instance Alternative Parser where
+  empty = ParserEmpty
+  (<|>) p1 p2 =
+    let isEmpty :: Parser a -> Bool
+        isEmpty = \case
+          ParserEmpty -> True
+          ParserFmap _ p' -> isEmpty p'
+          ParserRequiredFirst [] -> True
+          _ -> False
+     in case (isEmpty p1, isEmpty p2) of
+          (True, True) -> ParserEmpty
+          (True, False) -> p2
+          (False, True) -> p1
+          (False, False) -> ParserAlt p1 p2
 
 class HasParser a where
   optEnvParser :: Parser a
@@ -59,9 +75,9 @@ showParserABit = ($ "") . go 0
       ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
       ParserOptionalFirst ps -> showParen (d > 10) $ showString "OptionalFirst " . showListWith (go 11) ps
       ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
-      ParserArg metavar ->
+      ParserArg p ->
         showString "Arg "
-          . showsPrec 10 metavar
+          . showArgumentParserABit p
       ParserArgs metavar ->
         showString "Args "
           . showsPrec 10 metavar

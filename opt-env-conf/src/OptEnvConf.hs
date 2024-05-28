@@ -28,7 +28,7 @@ strOption :: [OptionBuilder String] -> Parser (Maybe String)
 strOption = option . (reader str :)
 
 argument :: [ArgumentBuilder a] -> Parser a
-argument = undefined
+argument = ParserArg . completeBuilder . mconcat
 
 option :: [OptionBuilder a] -> Parser (Maybe a)
 option = ParserOpt . completeBuilder . mconcat

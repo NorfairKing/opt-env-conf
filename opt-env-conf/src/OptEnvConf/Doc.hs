@@ -6,7 +6,7 @@
 
 module OptEnvConf.Doc where
 
-import Data.List (intercalate)
+import Data.List (intercalate, intersperse)
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -87,13 +87,13 @@ parserDocs = go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg mMetavar ->
+      ParserArg OptionGenerals {..} ->
         AnyDocsSingle
           [ AnyDocOpt $
               OptDoc
                 { optDocDasheds = [],
-                  optDocMetavar = mMetavar,
-                  optDocHelp = Nothing
+                  optDocMetavar = argumentSpecificsMetavar optionGeneralSpecifics,
+                  optDocHelp = optionGeneralHelp
                 }
           ]
       ParserArgs mMetavar ->
@@ -191,10 +191,16 @@ renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong =
   (: [])
     . \OptDoc {..} ->
-      [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds,
-        chunk . T.pack $ fromMaybe "[ARGS]" optDocMetavar,
-        chunk . T.pack $ fromMaybe "undocumented" optDocHelp
-      ]
+      intersperse
+        " "
+        $ concat
+          [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
+              | not (null optDocDasheds)
+            ],
+            [ chunk . T.pack $ fromMaybe "[ARGS]" optDocMetavar,
+              chunk . T.pack $ fromMaybe "undocumented" optDocHelp
+            ]
+          ]
 
 parserEnvDocs :: Parser a -> EnvDocs
 parserEnvDocs =

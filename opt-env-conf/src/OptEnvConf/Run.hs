@@ -22,6 +22,7 @@ import OptEnvConf.ArgMap (ArgMap (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
+import OptEnvConf.Opt
 import OptEnvConf.Parser
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
@@ -40,6 +41,7 @@ runParser p = do
 data ParseError
   = ParseErrorEmpty
   | ParseErrorUnconsumed
+  | ParseErrorArgumentRead !String
   | ParseErrorRequired
   | ParseErrorMissingArgument
   | ParseErrorConfigParseError !String
@@ -49,6 +51,7 @@ instance Exception ParseError where
   displayException = \case
     ParseErrorEmpty -> "empty"
     ParseErrorUnconsumed -> "Unconsumed arguments"
+    ParseErrorArgumentRead err -> "Unable to read argument: " <> show err
     ParseErrorRequired -> "Missing required setting" -- TODO show which ones
     ParseErrorMissingArgument -> "Missing required argument"
     ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
@@ -107,11 +110,15 @@ runParserPure p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserArg _ -> do
-        mA <- ppArg
-        case mA of
+      ParserArg o -> do
+        mS <- ppArg
+        case mS of
           Nothing -> ppError ParseErrorMissingArgument
-          Just a -> pure a
+          Just s -> case argumentSpecificsReader $ optionGeneralSpecifics o of
+            Nothing -> error "missing reader"
+            Just r -> case r s of
+              Left err -> ppError $ ParseErrorArgumentRead err
+              Right a -> pure a
       ParserArgs _ -> gets AM.argMapArgs -- TODO consume these args (?)
       ParserOpt _ -> undefined
       ParserEnvVar v -> do

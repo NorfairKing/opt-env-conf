@@ -112,6 +112,8 @@ showOptionParserABit = showOptionGeneralsABitWith $ \OptionSpecifics {..} ->
       )
     . showString " "
     . showsPrec 11 optionSpecificsDasheds
+    . showString " "
+    . showsPrec 11 optionSpecificsMetavar
 
 type OptionBuilder a = Builder (OptionSpecifics a)
 
@@ -124,7 +126,29 @@ data ArgumentSpecifics a = ArgumentSpecifics
 instance HasReader a (ArgumentSpecifics a) where
   setReader r os = os {argumentSpecificsReader = Just r}
 
+instance CanComplete (ArgumentSpecifics a) where
+  completeBuilder b = unBuilder b emptyArgumentParser
+
 type ArgumentParser a = OptionGenerals (ArgumentSpecifics a)
+
+emptyArgumentParser :: ArgumentParser a
+emptyArgumentParser =
+  emptyOptionGeneralsWith
+    ArgumentSpecifics
+      { argumentSpecificsReader = Nothing,
+        argumentSpecificsMetavar = Nothing
+      }
+
+showArgumentParserABit :: ArgumentParser a -> ShowS
+showArgumentParserABit = showOptionGeneralsABitWith $ \ArgumentSpecifics {..} ->
+  showString "ArgumentSpecifics "
+    . showString
+      ( case argumentSpecificsReader of
+          Nothing -> "Nothing"
+          Just _ -> "(Just _)"
+      )
+    . showString " "
+    . showsPrec 11 argumentSpecificsMetavar
 
 type ArgumentBuilder a = Builder (ArgumentSpecifics a)
 

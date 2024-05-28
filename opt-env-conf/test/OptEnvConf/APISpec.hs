@@ -55,15 +55,17 @@ pureGoldenChunksFile fp cs =
   pureGoldenTextFile fp $ renderChunksText With24BitColours cs
 
 data Greet = Greet
-  { greetGreeting :: Maybe String
+  { greetGreetee :: Maybe String,
+    greetGreeting :: Maybe String
   }
   deriving (Show)
 
 instance HasParser Greet where
   optEnvParser =
     Greet
-      <$> optionalFirst
-        [ strOption [long "greeting"],
+      <$> optional (strArgument [help "Who to greet"])
+      <*> optionalFirst
+        [ strOption [long "greeting", help "Greeting to use"],
           envVar "GREETING",
           confVar "greeting"
         ]

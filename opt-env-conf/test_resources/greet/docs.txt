@@ -1,2 +1,3 @@
---greeting[ARGS]undocumented
+[ARGS] Who to greet
+--greeting [ARGS] Greeting to use
 GREETINGundocumented
