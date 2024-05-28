@@ -23,7 +23,15 @@ exampleParserSpec' dir parser = do
       documentParser parser
   it "it documents the opt parser in the same way" $
     pureGoldenTextFile ("test_resources/" <> dir <> "/opt.txt") $
-      renderOptDocs $
+      renderCompleteOptDocs $
+        parserOptDocs parser
+  it "it documents the opt parser in the same way" $
+    pureGoldenTextFile ("test_resources/" <> dir <> "/short-opt.txt") $
+      renderShortOptDocs $
+        parserOptDocs parser
+  it "it documents the opt parser in the same way" $
+    pureGoldenTextFile ("test_resources/" <> dir <> "/long-opt.txt") $
+      renderLongOptDocs $
         parserOptDocs parser
   it "it documents the env parser in the same way" $
     pureGoldenTextFile ("test_resources/" <> dir <> "/env.txt") $

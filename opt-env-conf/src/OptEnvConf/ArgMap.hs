@@ -6,6 +6,7 @@ module OptEnvConf.ArgMap
     empty,
     hasUnconsumed,
     Dashed (..),
+    renderDashed,
     parse,
     consumeArg,
     parseSingleArg,
@@ -51,6 +52,11 @@ data Dashed
   deriving (Show, Eq, Ord, Generic)
 
 instance Validity Dashed
+
+renderDashed :: Dashed -> String
+renderDashed = \case
+  DashedShort c -> ['-', c]
+  DashedLong cs -> '-' : NE.toList cs
 
 parse :: [String] -> ArgMap
 parse = go

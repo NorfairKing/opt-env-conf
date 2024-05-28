@@ -12,11 +12,15 @@ build-type:     Simple
 extra-source-files:
     test_resources/args-and-leftovers/documentation.txt
     test_resources/args-and-leftovers/env.txt
+    test_resources/args-and-leftovers/long-opt.txt
     test_resources/args-and-leftovers/opt.txt
+    test_resources/args-and-leftovers/short-opt.txt
     test_resources/args-and-leftovers/show.txt
     test_resources/example/documentation.txt
     test_resources/example/env.txt
+    test_resources/example/long-opt.txt
     test_resources/example/opt.txt
+    test_resources/example/short-opt.txt
     test_resources/example/show.txt
 
 library

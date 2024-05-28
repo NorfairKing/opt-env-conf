@@ -20,6 +20,7 @@ import Data.Aeson (FromJSON, (.:))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
+import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -132,10 +133,11 @@ data AnyDocs a
 
 type OptDocs = AnyDocs OptDoc
 
-data OptDoc = OptDoc
-  { optDocFlags :: !(NonEmpty Dashed),
-    optDocHelp :: !(Maybe String)
-  }
+data OptDoc
+  = OptDocArg !(Maybe String)
+  | OptDocArgs !(Maybe String)
+  | OptDoc !(NonEmpty Dashed) !(Maybe String)
+  | OptDocLeftovers !(Maybe String)
 
 parserOptDocs :: Parser a -> OptDocs
 parserOptDocs = go
@@ -148,15 +150,49 @@ parserOptDocs = go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg -> AnyDocsSingle []
-      ParserArgs -> AnyDocsSingle []
+      ParserArg -> AnyDocsSingle [OptDocArg Nothing]
+      ParserArgs -> AnyDocsSingle [OptDocArgs Nothing]
       ParserOpt _ -> AnyDocsSingle []
-      ParserArgLeftovers -> AnyDocsSingle []
+      ParserArgLeftovers -> AnyDocsSingle [OptDocLeftovers Nothing]
       ParserEnvVar _ -> AnyDocsSingle []
       ParserConfig _ -> AnyDocsSingle []
 
-renderOptDocs :: OptDocs -> Text
-renderOptDocs =
+renderCompleteOptDocs :: OptDocs -> Text
+renderCompleteOptDocs optDocs =
+  renderShortOptDocs optDocs
+    <> renderLongOptDocs optDocs
+
+renderShortOptDocs :: OptDocs -> Text
+renderShortOptDocs =
+  renderChunksText With24BitColours
+    . go
+    . simplifyAnyDocs
+  where
+    go :: OptDocs -> [Chunk]
+    go = \case
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle vs ->
+        intercalate [" "] $
+          map
+            ( \case
+                OptDocArg _ ->
+                  [ "ARG"
+                  ]
+                OptDocArgs _ ->
+                  [ "[ARG]"
+                  ]
+                OptDoc flags _ ->
+                  [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags
+                  ]
+                OptDocLeftovers _ ->
+                  [ "LEFTOVERS"
+                  ]
+            )
+            vs
+
+renderLongOptDocs :: OptDocs -> Text
+renderLongOptDocs =
   renderChunksText With24BitColours
     . layoutAsTable
     . go
@@ -168,10 +204,23 @@ renderOptDocs =
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle vs ->
         map
-          ( \OptDoc {..} ->
-              [ "",
-                chunk . T.pack $ fromMaybe "undocumented" optDocHelp
-              ]
+          ( \case
+              OptDocArg mDoc ->
+                [ "ARG",
+                  chunk . T.pack $ fromMaybe "undocumented" mDoc
+                ]
+              OptDocArgs mDoc ->
+                [ "[ARG]",
+                  chunk . T.pack $ fromMaybe "undocumented" mDoc
+                ]
+              OptDoc flags mDoc ->
+                [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags,
+                  chunk . T.pack $ fromMaybe "undocumented" mDoc
+                ]
+              OptDocLeftovers mDoc ->
+                [ "leftovers",
+                  chunk . T.pack $ fromMaybe "undocumented" mDoc
+                ]
           )
           vs
 
@@ -345,7 +394,7 @@ runParserPure p args envVars mConfig =
         case mA of
           Nothing -> ppError ParseErrorMissingArgument
           Just a -> pure a
-      ParserArgs -> gets AM.argMapArgs -- Don't consume these args (?)
+      ParserArgs -> gets AM.argMapArgs -- TODO consume these args (?)
       ParserOpt _ -> undefined
       ParserArgLeftovers -> gets AM.argMapLeftovers
       ParserEnvVar v -> do
