@@ -6,6 +6,7 @@ module OptEnvConf.APISpec (spec) where
 
 import Data.Text (Text)
 import OptEnvConf
+import OptEnvConf.Parser
 import Test.Syd
 import Text.Colour
 
@@ -24,22 +25,27 @@ exampleParserSpec' dir parser = describe dir $ do
     pureGoldenChunksFile ("test_resources/" <> dir <> "/docs.txt") $
       renderDocs $
         parserDocs parser
+
   it "it documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/" <> dir <> "/opt.txt") $
       renderCompleteOptDocs $
         parserOptDocs parser
+
   it "it documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs $
         parserOptDocs parser
+
   it "it documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/" <> dir <> "/opt-long.txt") $
       renderLongOptDocs $
         parserOptDocs parser
+
   it "it documents the env parser in the same way" $
     pureGoldenTextFile ("test_resources/" <> dir <> "/env.txt") $
       renderEnvDocs $
         parserEnvDocs parser
+
   it "shows the parser in the same way" $
     pureGoldenStringFile ("test_resources/" <> dir <> "/show.txt") $
       showParserABit parser
