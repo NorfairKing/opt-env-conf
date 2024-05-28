@@ -159,8 +159,10 @@ parserOptDocs = go
 
 renderCompleteOptDocs :: OptDocs -> Text
 renderCompleteOptDocs optDocs =
-  renderShortOptDocs optDocs
-    <> renderLongOptDocs optDocs
+  T.unlines
+    [ renderShortOptDocs optDocs,
+      renderLongOptDocs optDocs
+    ]
 
 renderShortOptDocs :: OptDocs -> Text
 renderShortOptDocs =
@@ -170,10 +172,10 @@ renderShortOptDocs =
   where
     go :: OptDocs -> [Chunk]
     go = \case
-      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsAnd ds -> unwordsChunks $ map go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle vs ->
-        intercalate [" "] $
+        unwordsChunks $
           map
             ( \case
                 OptDocArg _ ->
@@ -190,6 +192,9 @@ renderShortOptDocs =
                   ]
             )
             vs
+
+unwordsChunks :: [[Chunk]] -> [Chunk]
+unwordsChunks = intercalate [" "]
 
 renderLongOptDocs :: OptDocs -> Text
 renderLongOptDocs =

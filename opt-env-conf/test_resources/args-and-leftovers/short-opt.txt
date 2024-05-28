@@ -1,2 +1,1 @@
-[ARG]     undocumented
-leftovers undocumented
+[ARG] LEFTOVERS
