@@ -52,7 +52,7 @@ data Parser a where
   -- | Arguments and options
   ParserArg :: Parser String
   ParserArgs :: Parser [String]
-  ParserOpt :: String -> Parser (Maybe String)
+  ParserOpt :: NonEmpty Dashed -> Parser (Maybe String)
   ParserArgLeftovers :: Parser [String]
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
@@ -90,7 +90,7 @@ strArgs :: Parser [String]
 strArgs = ParserArgs
 
 strOpt :: String -> Parser (Maybe String)
-strOpt = ParserOpt
+strOpt = ParserOpt . NE.singleton . DashedLong . NE.fromList -- TODO unsafe
 
 argLeftovers :: Parser [String]
 argLeftovers = ParserArgLeftovers
@@ -108,41 +108,10 @@ optionalFirst = ParserOptionalFirst
 requiredFirst :: [Parser (Maybe a)] -> Parser a
 requiredFirst = ParserRequiredFirst
 
-documentParser :: Parser a -> [Chunk]
-documentParser = unlinesChunks . go
+parserDocs :: Parser a -> AnyDocs AnyDoc
+parserDocs = go
   where
-    go :: Parser a -> [[Chunk]]
-    go = \case
-      ParserFmap _ p -> go p
-      ParserPure _ -> []
-      ParserAp pf pa -> go pf ++ go pa
-      ParserAlt p1 p2 -> go p1 ++ [["or"]] ++ go p2
-      ParserOptionalFirst ps -> ["(optional) first of:"] : concatMap go ps
-      ParserRequiredFirst ps -> ["(required) first of:"] : concatMap go ps
-      ParserArg -> [["Argument"]]
-      ParserArgs -> [["Arguments"]]
-      ParserOpt v -> [["Option: ", chunk $ T.pack $ show v]]
-      ParserArgLeftovers -> [["Leftover arguments"]]
-      ParserEnvVar v -> [["Env var: ", chunk $ T.pack $ show v]]
-      ParserConfig key -> [["Config var: ", chunk $ T.pack $ show key]]
-
-data AnyDocs a
-  = AnyDocsAnd ![AnyDocs a]
-  | AnyDocsOr ![AnyDocs a]
-  | AnyDocsSingle ![a]
-
-type OptDocs = AnyDocs OptDoc
-
-data OptDoc
-  = OptDocArg !(Maybe String)
-  | OptDocArgs !(Maybe String)
-  | OptDoc !(NonEmpty Dashed) !(Maybe String)
-  | OptDocLeftovers !(Maybe String)
-
-parserOptDocs :: Parser a -> OptDocs
-parserOptDocs = go
-  where
-    go :: Parser a -> OptDocs
+    go :: Parser a -> AnyDocs AnyDoc
     go = \case
       ParserFmap _ p -> go p
       ParserPure _ -> AnyDocsSingle []
@@ -150,12 +119,81 @@ parserOptDocs = go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg -> AnyDocsSingle [OptDocArg Nothing]
-      ParserArgs -> AnyDocsSingle [OptDocArgs Nothing]
-      ParserOpt _ -> AnyDocsSingle []
-      ParserArgLeftovers -> AnyDocsSingle [OptDocLeftovers Nothing]
-      ParserEnvVar _ -> AnyDocsSingle []
+      ParserArg -> AnyDocsSingle [AnyDocOpt $ OptDocArg Nothing]
+      ParserArgs -> AnyDocsSingle [AnyDocOpt $ OptDocArgs Nothing]
+      ParserOpt d -> AnyDocsSingle [AnyDocOpt $ OptDocOpt d Nothing]
+      ParserArgLeftovers -> AnyDocsSingle [AnyDocOpt $ OptDocLeftovers Nothing]
+      ParserEnvVar v ->
+        AnyDocsSingle
+          [ AnyDocEnv $
+              EnvDoc
+                { envDocVar = v,
+                  envDocHelp = Nothing
+                }
+          ]
       ParserConfig _ -> AnyDocsSingle []
+
+renderDocs :: AnyDocs AnyDoc -> [Chunk]
+renderDocs =
+  unlinesChunks
+    . go
+    . simplifyAnyDocs
+  where
+    go :: AnyDocs AnyDoc -> [[Chunk]]
+    go = \case
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle vs -> concatMap renderAnyDoc vs
+
+data AnyDoc
+  = AnyDocOpt !OptDoc
+  | AnyDocEnv !EnvDoc
+
+renderAnyDoc :: AnyDoc -> [[Chunk]]
+renderAnyDoc = \case
+  AnyDocOpt d -> renderOptDocLong d
+  AnyDocEnv d -> renderEnvDoc d
+
+data AnyDocs a
+  = AnyDocsAnd ![AnyDocs a]
+  | AnyDocsOr ![AnyDocs a]
+  | AnyDocsSingle ![a]
+
+instance Functor AnyDocs where
+  fmap f = \case
+    AnyDocsAnd as -> AnyDocsAnd $ fmap (fmap f) as
+    AnyDocsOr as -> AnyDocsOr $ fmap (fmap f) as
+    AnyDocsSingle as -> AnyDocsSingle $ fmap f as
+
+instance Foldable AnyDocs where
+  foldMap f = \case
+    AnyDocsAnd as -> foldMap (foldMap f) as
+    AnyDocsOr as -> foldMap (foldMap f) as
+    AnyDocsSingle as -> foldMap f as
+
+instance Traversable AnyDocs where
+  traverse f = \case
+    AnyDocsAnd as -> AnyDocsAnd <$> traverse (traverse f) as
+    AnyDocsOr as -> AnyDocsOr <$> traverse (traverse f) as
+    AnyDocsSingle as -> AnyDocsSingle <$> traverse f as
+
+type OptDocs = AnyDocs OptDoc
+
+data OptDoc
+  = OptDocArg !(Maybe String)
+  | OptDocArgs !(Maybe String)
+  | OptDocOpt !(NonEmpty Dashed) !(Maybe String)
+  | OptDocLeftovers !(Maybe String)
+
+parserOptDocs :: Parser a -> OptDocs
+parserOptDocs =
+  fromMaybe (AnyDocsSingle [])
+    . traverse
+      ( \case
+          AnyDocOpt d -> Just d
+          _ -> Nothing
+      )
+    . parserDocs
 
 renderCompleteOptDocs :: OptDocs -> [Chunk]
 renderCompleteOptDocs optDocs =
@@ -165,9 +203,7 @@ renderCompleteOptDocs optDocs =
     ]
 
 renderShortOptDocs :: OptDocs -> [Chunk]
-renderShortOptDocs =
-  go
-    . simplifyAnyDocs
+renderShortOptDocs = go . simplifyAnyDocs
   where
     go :: OptDocs -> [Chunk]
     go = \case
@@ -183,7 +219,7 @@ renderShortOptDocs =
                 OptDocArgs _ ->
                   [ "[ARG]"
                   ]
-                OptDoc flags _ ->
+                OptDocOpt flags _ ->
                   [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags
                   ]
                 OptDocLeftovers _ ->
@@ -205,27 +241,27 @@ renderLongOptDocs =
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs ->
-        map
-          ( \case
-              OptDocArg mDoc ->
-                [ "ARG",
-                  chunk . T.pack $ fromMaybe "undocumented" mDoc
-                ]
-              OptDocArgs mDoc ->
-                [ "[ARG]",
-                  chunk . T.pack $ fromMaybe "undocumented" mDoc
-                ]
-              OptDoc flags mDoc ->
-                [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags,
-                  chunk . T.pack $ fromMaybe "undocumented" mDoc
-                ]
-              OptDocLeftovers mDoc ->
-                [ "leftovers",
-                  chunk . T.pack $ fromMaybe "undocumented" mDoc
-                ]
-          )
-          vs
+      AnyDocsSingle vs -> concatMap renderOptDocLong vs
+
+renderOptDocLong :: OptDoc -> [[Chunk]]
+renderOptDocLong =
+  (: []) . \case
+    OptDocArg mDoc ->
+      [ "ARG",
+        chunk . T.pack $ fromMaybe "undocumented" mDoc
+      ]
+    OptDocArgs mDoc ->
+      [ "[ARG]",
+        chunk . T.pack $ fromMaybe "undocumented" mDoc
+      ]
+    OptDocOpt flags mDoc ->
+      [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags,
+        chunk . T.pack $ fromMaybe "undocumented" mDoc
+      ]
+    OptDocLeftovers mDoc ->
+      [ "leftovers",
+        chunk . T.pack $ fromMaybe "undocumented" mDoc
+      ]
 
 type EnvDocs = AnyDocs EnvDoc
 
@@ -235,28 +271,14 @@ data EnvDoc = EnvDoc
   }
 
 parserEnvDocs :: Parser a -> EnvDocs
-parserEnvDocs = go
-  where
-    go :: Parser a -> EnvDocs
-    go = \case
-      ParserFmap _ p -> go p
-      ParserPure _ -> AnyDocsSingle []
-      ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
-      ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
-      ParserOptionalFirst ps -> AnyDocsOr $ map go ps
-      ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg -> AnyDocsSingle []
-      ParserArgs -> AnyDocsSingle []
-      ParserOpt _ -> AnyDocsSingle []
-      ParserArgLeftovers -> AnyDocsSingle []
-      ParserEnvVar v ->
-        AnyDocsSingle
-          [ EnvDoc
-              { envDocVar = v,
-                envDocHelp = Nothing
-              }
-          ]
-      ParserConfig _ -> AnyDocsSingle []
+parserEnvDocs =
+  fromMaybe (AnyDocsSingle [])
+    . traverse
+      ( \case
+          AnyDocEnv d -> Just d
+          _ -> Nothing
+      )
+    . parserDocs
 
 renderEnvDocs :: EnvDocs -> Text
 renderEnvDocs =
@@ -269,14 +291,14 @@ renderEnvDocs =
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs ->
-        map
-          ( \EnvDoc {..} ->
-              [ chunk $ T.pack envDocVar,
-                chunk . T.pack $ fromMaybe "undocumented" envDocHelp
-              ]
-          )
-          vs
+      AnyDocsSingle vs -> concatMap renderEnvDoc vs
+
+renderEnvDoc :: EnvDoc -> [[Chunk]]
+renderEnvDoc EnvDoc {..} =
+  [ [ chunk $ T.pack envDocVar,
+      chunk . T.pack $ fromMaybe "undocumented" envDocHelp
+    ]
+  ]
 
 simplifyAnyDocs :: AnyDocs a -> AnyDocs a
 simplifyAnyDocs = go
@@ -307,7 +329,7 @@ showParserABit = ($ "") . go 0
       ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
       ParserArg -> showString "Arg"
       ParserArgs -> showString "Args"
-      ParserOpt v -> showParen (d > 10) $ showString "Opt " . showString v
+      ParserOpt v -> showParen (d > 10) $ showString "Opt " . showList (NE.toList v)
       ParserArgLeftovers -> showString "ArgLeftovers"
       ParserEnvVar v -> showParen (d > 10) $ showString "EnvVar " . showsPrec 11 v
       ParserConfig key -> showParen (d > 10) $ showString "Config " . showsPrec 11 key

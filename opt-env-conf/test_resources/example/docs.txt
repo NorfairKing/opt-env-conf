@@ -1,4 +1,2 @@
-(optional) first of:
-Option: "--greeting"
-Env var: "GREETING"
-Config var: "greeting"
+---greetingundocumented
+GREETINGundocumented

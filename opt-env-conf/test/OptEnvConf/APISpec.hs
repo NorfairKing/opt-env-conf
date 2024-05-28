@@ -22,7 +22,8 @@ exampleParserSpec' :: FilePath -> Parser a -> Spec
 exampleParserSpec' dir parser = do
   it "it documents the parser in the same way" $
     pureGoldenChunksFile ("test_resources/" <> dir <> "/docs.txt") $
-      documentParser parser
+      renderDocs $
+        parserDocs parser
   it "it documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/" <> dir <> "/opt.txt") $
       renderCompleteOptDocs $
