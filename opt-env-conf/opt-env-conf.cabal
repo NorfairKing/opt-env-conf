@@ -28,6 +28,7 @@ library
       OptEnvConf
       OptEnvConf.ArgMap
       OptEnvConf.EnvMap
+      OptEnvConf.Parser
   other-modules:
       Paths_opt_env_conf
   hs-source-dirs:
