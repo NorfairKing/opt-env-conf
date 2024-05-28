@@ -19,7 +19,7 @@ exampleParserSpec :: forall a. HasParser a => FilePath -> Spec
 exampleParserSpec dir = exampleParserSpec' dir (optEnvParser :: Parser a)
 
 exampleParserSpec' :: FilePath -> Parser a -> Spec
-exampleParserSpec' dir parser = do
+exampleParserSpec' dir parser = describe dir $ do
   it "it documents the parser in the same way" $
     pureGoldenChunksFile ("test_resources/" <> dir <> "/docs.txt") $
       renderDocs $
