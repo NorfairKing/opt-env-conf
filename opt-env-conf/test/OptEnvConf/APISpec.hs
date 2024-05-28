@@ -24,15 +24,15 @@ exampleParserSpec' dir parser = do
     pureGoldenChunksFile ("test_resources/" <> dir <> "/docs.txt") $
       documentParser parser
   it "it documents the opt parser in the same way" $
-    pureGoldenTextFile ("test_resources/" <> dir <> "/opt.txt") $
+    pureGoldenChunksFile ("test_resources/" <> dir <> "/opt.txt") $
       renderCompleteOptDocs $
         parserOptDocs parser
   it "it documents the opt parser in the same way" $
-    pureGoldenTextFile ("test_resources/" <> dir <> "/opt-short.txt") $
+    pureGoldenChunksFile ("test_resources/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs $
         parserOptDocs parser
   it "it documents the opt parser in the same way" $
-    pureGoldenTextFile ("test_resources/" <> dir <> "/opt-long.txt") $
+    pureGoldenChunksFile ("test_resources/" <> dir <> "/opt-long.txt") $
       renderLongOptDocs $
         parserOptDocs parser
   it "it documents the env parser in the same way" $

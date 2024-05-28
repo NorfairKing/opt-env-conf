@@ -157,17 +157,16 @@ parserOptDocs = go
       ParserEnvVar _ -> AnyDocsSingle []
       ParserConfig _ -> AnyDocsSingle []
 
-renderCompleteOptDocs :: OptDocs -> Text
+renderCompleteOptDocs :: OptDocs -> [Chunk]
 renderCompleteOptDocs optDocs =
-  T.unlines
+  unlinesChunks
     [ renderShortOptDocs optDocs,
       renderLongOptDocs optDocs
     ]
 
-renderShortOptDocs :: OptDocs -> Text
+renderShortOptDocs :: OptDocs -> [Chunk]
 renderShortOptDocs =
-  renderChunksText With24BitColours
-    . go
+  go
     . simplifyAnyDocs
   where
     go :: OptDocs -> [Chunk]
@@ -196,10 +195,9 @@ renderShortOptDocs =
 unwordsChunks :: [[Chunk]] -> [Chunk]
 unwordsChunks = intercalate [" "]
 
-renderLongOptDocs :: OptDocs -> Text
+renderLongOptDocs :: OptDocs -> [Chunk]
 renderLongOptDocs =
-  renderChunksText With24BitColours
-    . layoutAsTable
+  layoutAsTable
     . go
     . simplifyAnyDocs
   where
