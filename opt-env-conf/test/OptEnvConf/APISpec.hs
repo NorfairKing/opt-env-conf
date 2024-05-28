@@ -63,9 +63,18 @@ data Greet = Greet
 instance HasParser Greet where
   optEnvParser =
     Greet
-      <$> optional (strArgument [help "Who to greet"])
+      <$> optional
+        ( strArgument
+            [ help "Who to greet",
+              metavar "SUBJECT"
+            ]
+        )
       <*> optionalFirst
-        [ strOption [long "greeting", help "Greeting to use"],
+        [ strOption
+            [ long "greeting",
+              metavar "GREETING",
+              help "Greeting to use"
+            ],
           envVar "GREETING",
           confVar "greeting"
         ]
@@ -76,4 +85,9 @@ data Args = Args [String]
 instance HasParser Args where
   optEnvParser =
     Args
-      <$> strArgs
+      <$> many
+        ( strArgument
+            [ help "Argument",
+              metavar "ARGUMENT"
+            ]
+        )

@@ -86,6 +86,8 @@ runParserPure p args envVars mConfig =
             pure a
           -- Note that args are not consumed if the alternative failed.
           Left _ -> go p2 -- TODO: Maybe collect the error?
+      ParserMany _ -> undefined
+      ParserSome _ -> undefined
       ParserOptionalFirst pss -> case pss of
         [] -> pure Nothing
         (p' : ps) -> do
@@ -119,7 +121,6 @@ runParserPure p args envVars mConfig =
             Just r -> case r s of
               Left err -> ppError $ ParseErrorArgumentRead err
               Right a -> pure a
-      ParserArgs _ -> gets AM.argMapArgs -- TODO consume these args (?)
       ParserOpt _ -> undefined
       ParserEnvVar v -> do
         es <- asks ppEnvEnv

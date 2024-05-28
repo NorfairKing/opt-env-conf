@@ -26,12 +26,13 @@ data Parser a where
   -- Alternative
   ParserEmpty :: Parser a
   ParserAlt :: Parser a -> Parser a -> Parser a
+  ParserMany :: Parser a -> Parser [a]
+  ParserSome :: Parser a -> Parser [a]
   -- Combining
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
   ParserArg :: !(ArgumentParser a) -> Parser a
-  ParserArgs :: !(Maybe Metavar) -> Parser [String]
   ParserOpt :: !(OptionParser a) -> Parser (Maybe a)
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
@@ -59,6 +60,8 @@ instance Alternative Parser where
           (True, False) -> p2
           (False, True) -> p1
           (False, False) -> ParserAlt p1 p2
+  many = ParserMany
+  some = ParserSome
 
 class HasParser a where
   optEnvParser :: Parser a
@@ -73,14 +76,13 @@ showParserABit = ($ "") . go 0
       ParserAp pf pa -> showParen (d > 10) $ showString "Ap " . go 11 pf . go 11 pa
       ParserEmpty -> showString "Empty"
       ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
+      ParserMany p -> showParen (d > 10) $ showString "Many " . go 11 p
+      ParserSome p -> showParen (d > 10) $ showString "Some " . go 11 p
       ParserOptionalFirst ps -> showParen (d > 10) $ showString "OptionalFirst " . showListWith (go 11) ps
       ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
       ParserArg p ->
         showString "Arg "
           . showArgumentParserABit p
-      ParserArgs metavar ->
-        showString "Args "
-          . showsPrec 10 metavar
       ParserOpt p ->
         showParen (d > 10) $
           showString "Opt "

@@ -85,6 +85,8 @@ parserDocs = go
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
       ParserEmpty -> AnyDocsSingle []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
+      ParserMany p -> go p -- TODO: is this right?
+      ParserSome p -> go p -- TODO: is this right?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserArg OptionGenerals {..} ->
@@ -94,15 +96,6 @@ parserDocs = go
                 { optDocDasheds = [],
                   optDocMetavar = argumentSpecificsMetavar optionGeneralSpecifics,
                   optDocHelp = optionGeneralHelp
-                }
-          ]
-      ParserArgs mMetavar ->
-        AnyDocsSingle
-          [ AnyDocOpt $
-              OptDoc
-                { optDocDasheds = [],
-                  optDocMetavar = mMetavar,
-                  optDocHelp = Nothing
                 }
           ]
       ParserOpt OptionGenerals {..} ->

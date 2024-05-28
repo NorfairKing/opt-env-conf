@@ -1,3 +1,3 @@
-[ARGS] Who to greet
---greeting [ARGS] Greeting to use
+SUBJECT Who to greet
+--greeting GREETING Greeting to use
 GREETINGundocumented

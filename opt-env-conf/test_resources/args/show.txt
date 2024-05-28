@@ -1,1 +1,1 @@
-Fmap _ Args Nothing
+Fmap _ (Many Arg (OptionGenerals (ArgumentSpecifics (Just _) (Just "ARGUMENT")OptionGenerals (Just "Argument"))))

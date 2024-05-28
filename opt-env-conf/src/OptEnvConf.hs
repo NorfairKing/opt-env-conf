@@ -33,9 +33,6 @@ argument = ParserArg . completeBuilder . mconcat
 option :: [OptionBuilder a] -> Parser (Maybe a)
 option = ParserOpt . completeBuilder . mconcat
 
-strArgs :: Parser [String]
-strArgs = ParserArgs Nothing
-
 confVar :: String -> Parser (Maybe String)
 confVar = ParserConfig
 

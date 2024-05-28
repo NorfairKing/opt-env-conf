@@ -66,6 +66,9 @@ class HasShort a where
 instance HasShort f => HasShort (OptionGenerals f) where
   addShort c op = op {optionGeneralSpecifics = addShort c (optionGeneralSpecifics op)}
 
+class HasMetavar a where
+  setMetavar :: Metavar -> a -> a
+
 -- data SwitchSpecifics = SwitchSpecifics
 --
 -- type SwitchParser = OptionGenerals SwitchSpecifics
@@ -87,6 +90,9 @@ instance HasLong (OptionSpecifics a) where
 
 instance HasShort (OptionSpecifics a) where
   addShort c os = os {optionSpecificsDasheds = DashedShort c : optionSpecificsDasheds os}
+
+instance HasMetavar (OptionSpecifics a) where
+  setMetavar mv os = os {optionSpecificsMetavar = Just mv}
 
 instance CanComplete (OptionSpecifics a) where
   completeBuilder b = unBuilder b emptyOptionParser
@@ -123,11 +129,14 @@ data ArgumentSpecifics a = ArgumentSpecifics
     argumentSpecificsMetavar :: !(Maybe Metavar)
   }
 
+instance CanComplete (ArgumentSpecifics a) where
+  completeBuilder b = unBuilder b emptyArgumentParser
+
 instance HasReader a (ArgumentSpecifics a) where
   setReader r os = os {argumentSpecificsReader = Just r}
 
-instance CanComplete (ArgumentSpecifics a) where
-  completeBuilder b = unBuilder b emptyArgumentParser
+instance HasMetavar (ArgumentSpecifics a) where
+  setMetavar mv os = os {argumentSpecificsMetavar = Just mv}
 
 type ArgumentParser a = OptionGenerals (ArgumentSpecifics a)
 
@@ -162,6 +171,9 @@ reader r = Builder $ setReader r
 
 help :: String -> Builder f
 help s = Builder $ \op -> op {optionGeneralHelp = Just s}
+
+metavar :: HasMetavar f => String -> Builder f
+metavar s = Builder $ \op -> op {optionGeneralSpecifics = setMetavar s (optionGeneralSpecifics op)}
 
 long :: HasLong f => String -> Builder f
 long "" = error "Cannot use an empty long-form option."
