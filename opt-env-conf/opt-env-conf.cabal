@@ -27,6 +27,7 @@ library
   exposed-modules:
       OptEnvConf
       OptEnvConf.ArgMap
+      OptEnvConf.Doc
       OptEnvConf.EnvMap
       OptEnvConf.Parser
       OptEnvConf.Run
