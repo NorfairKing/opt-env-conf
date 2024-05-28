@@ -29,10 +29,11 @@ showOptionGeneralsABitWith :: (f -> ShowS) -> OptionGenerals f -> ShowS
 showOptionGeneralsABitWith func OptionGenerals {..} =
   showParen True $
     showString "OptionGenerals "
+      . func optionGeneralSpecifics
+      . showString " "
       . showParen
         True
-        ( func optionGeneralSpecifics
-            . showString "OptionGenerals "
+        ( showString "OptionGenerals "
             . showsPrec 11 optionGeneralHelp
         )
 

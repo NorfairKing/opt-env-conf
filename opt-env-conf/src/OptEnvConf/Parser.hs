@@ -71,18 +71,43 @@ showParserABit = ($ "") . go 0
   where
     go :: Int -> Parser a -> ShowS
     go d = \case
-      ParserFmap _ p -> showParen (d > 10) $ showString "Fmap _ " . go 11 p
+      ParserFmap _ p ->
+        showParen (d > 10) $
+          showString "Fmap _ "
+            . go 11 p
       ParserPure _ -> showParen (d > 10) $ showString "Pure _"
-      ParserAp pf pa -> showParen (d > 10) $ showString "Ap " . go 11 pf . go 11 pa
+      ParserAp pf pa ->
+        showParen (d > 10) $
+          showString "Ap "
+            . go 11 pf
+            . go 11 pa
       ParserEmpty -> showString "Empty"
-      ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
-      ParserMany p -> showParen (d > 10) $ showString "Many " . go 11 p
-      ParserSome p -> showParen (d > 10) $ showString "Some " . go 11 p
-      ParserOptionalFirst ps -> showParen (d > 10) $ showString "OptionalFirst " . showListWith (go 11) ps
-      ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
+      ParserAlt p1 p2 ->
+        showParen (d > 10) $
+          showString "Alt "
+            . go 11 p1
+            . showString " "
+            . go 11 p2
+      ParserMany p ->
+        showParen (d > 10) $
+          showString "Many "
+            . go 11 p
+      ParserSome p ->
+        showParen (d > 10) $
+          showString "Some "
+            . go 11 p
+      ParserOptionalFirst ps ->
+        showParen (d > 10) $
+          showString "OptionalFirst "
+            . showListWith (go 11) ps
+      ParserRequiredFirst ps ->
+        showParen (d > 10) $
+          showString "RequiredFirst "
+            . showListWith (go 11) ps
       ParserArg p ->
-        showString "Arg "
-          . showArgumentParserABit p
+        showParen (d > 10) $
+          showString "Arg "
+            . showArgumentParserABit p
       ParserOpt p ->
         showParen (d > 10) $
           showString "Opt "
@@ -90,4 +115,7 @@ showParserABit = ($ "") . go 0
       ParserEnvVar v ->
         showParen (d > 10) $
           showString "EnvVar " . showsPrec 11 v
-      ParserConfig key -> showParen (d > 10) $ showString "Config " . showsPrec 11 key
+      ParserConfig key ->
+        showParen (d > 10) $
+          showString "Config "
+            . showsPrec 11 key

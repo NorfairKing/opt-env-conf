@@ -1,0 +1,1 @@
+Fmap _ (Alt (Fmap _ (Arg (OptionGenerals ArgumentSpecifics (Just _) (Just "ARGUMENT") (OptionGenerals (Just "Argument"))))) (Pure _))

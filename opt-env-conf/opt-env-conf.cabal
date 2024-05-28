@@ -22,6 +22,12 @@ extra-source-files:
     test_resources/greet/opt-short.txt
     test_resources/greet/opt.txt
     test_resources/greet/show.txt
+    test_resources/optional/docs.txt
+    test_resources/optional/env.txt
+    test_resources/optional/opt-long.txt
+    test_resources/optional/opt-short.txt
+    test_resources/optional/opt.txt
+    test_resources/optional/show.txt
 
 library
   exposed-modules:

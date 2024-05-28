@@ -14,6 +14,7 @@ spec :: Spec
 spec = do
   exampleParserSpec @Greet "greet"
   exampleParserSpec @Args "args"
+  exampleParserSpec @Optional "optional"
   pure ()
 
 exampleParserSpec :: forall a. HasParser a => FilePath -> Spec
@@ -86,6 +87,18 @@ instance HasParser Args where
   optEnvParser =
     Args
       <$> many
+        ( strArgument
+            [ help "Argument",
+              metavar "ARGUMENT"
+            ]
+        )
+
+data Optional = Optional (Maybe String)
+
+instance HasParser Optional where
+  optEnvParser =
+    Optional
+      <$> optional
         ( strArgument
             [ help "Argument",
               metavar "ARGUMENT"
