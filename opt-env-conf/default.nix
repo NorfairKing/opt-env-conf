@@ -15,7 +15,7 @@ mkDerivation {
   ];
   testHaskellDepends = [
     base containers envparse genvalidity-sydtest optparse-applicative
-    QuickCheck sydtest yaml
+    QuickCheck safe-coloured-text sydtest text yaml
   ];
   testToolDepends = [ sydtest-discover ];
   license = lib.licenses.unfree;

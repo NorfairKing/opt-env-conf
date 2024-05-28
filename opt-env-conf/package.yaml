@@ -47,5 +47,7 @@ tests:
     - genvalidity-sydtest
     - opt-env-conf
     - optparse-applicative
+    - safe-coloured-text
     - sydtest
+    - text
     - yaml

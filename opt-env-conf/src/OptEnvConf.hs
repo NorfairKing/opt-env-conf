@@ -108,23 +108,23 @@ optionalFirst = ParserOptionalFirst
 requiredFirst :: [Parser (Maybe a)] -> Parser a
 requiredFirst = ParserRequiredFirst
 
-documentParser :: Parser a -> String
-documentParser = unlines . go
+documentParser :: Parser a -> [Chunk]
+documentParser = unlinesChunks . go
   where
-    go :: Parser a -> [String]
+    go :: Parser a -> [[Chunk]]
     go = \case
       ParserFmap _ p -> go p
       ParserPure _ -> []
       ParserAp pf pa -> go pf ++ go pa
-      ParserAlt p1 p2 -> go p1 ++ ["or"] ++ go p2
-      ParserOptionalFirst ps -> "(optional) first of:" : concatMap go ps
-      ParserRequiredFirst ps -> "(required) first of:" : concatMap go ps
-      ParserArg -> ["Argument"]
-      ParserArgs -> ["Arguments"]
-      ParserOpt v -> ["Option: " <> show v]
-      ParserArgLeftovers -> ["Leftover arguments"]
-      ParserEnvVar v -> ["Env var: " <> show v]
-      ParserConfig key -> ["Config var: " <> show key]
+      ParserAlt p1 p2 -> go p1 ++ [["or"]] ++ go p2
+      ParserOptionalFirst ps -> ["(optional) first of:"] : concatMap go ps
+      ParserRequiredFirst ps -> ["(required) first of:"] : concatMap go ps
+      ParserArg -> [["Argument"]]
+      ParserArgs -> [["Arguments"]]
+      ParserOpt v -> [["Option: ", chunk $ T.pack $ show v]]
+      ParserArgLeftovers -> [["Leftover arguments"]]
+      ParserEnvVar v -> [["Env var: ", chunk $ T.pack $ show v]]
+      ParserConfig key -> [["Config var: ", chunk $ T.pack $ show key]]
 
 data AnyDocs a
   = AnyDocsAnd ![AnyDocs a]

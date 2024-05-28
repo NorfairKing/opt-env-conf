@@ -10,17 +10,17 @@ copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        AllRightsReserved
 build-type:     Simple
 extra-source-files:
-    test_resources/args-and-leftovers/documentation.txt
+    test_resources/args-and-leftovers/docs.txt
     test_resources/args-and-leftovers/env.txt
-    test_resources/args-and-leftovers/long-opt.txt
+    test_resources/args-and-leftovers/opt-long.txt
+    test_resources/args-and-leftovers/opt-short.txt
     test_resources/args-and-leftovers/opt.txt
-    test_resources/args-and-leftovers/short-opt.txt
     test_resources/args-and-leftovers/show.txt
-    test_resources/example/documentation.txt
+    test_resources/example/docs.txt
     test_resources/example/env.txt
-    test_resources/example/long-opt.txt
+    test_resources/example/opt-long.txt
+    test_resources/example/opt-short.txt
     test_resources/example/opt.txt
-    test_resources/example/short-opt.txt
     test_resources/example/show.txt
 
 library
@@ -73,6 +73,8 @@ test-suite opt-env-conf-test
     , genvalidity-sydtest
     , opt-env-conf
     , optparse-applicative
+    , safe-coloured-text
     , sydtest
+    , text
     , yaml
   default-language: Haskell2010

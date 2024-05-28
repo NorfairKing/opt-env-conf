@@ -5,6 +5,13 @@ packages:
 ghc-options:
   "$locals": -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Widentities -Wredundant-constraints -Wcpp-undef
 
+extra-deps:
+- github: NorfairKing/safe-coloured-text
+  commit: 4161e707b1b0a8090a7149b8195f15943fa29fa9
+  subdirs:
+  - safe-coloured-text
+  - safe-coloured-text-gen
+
 system-ghc: true
 nix:
   enable: false
