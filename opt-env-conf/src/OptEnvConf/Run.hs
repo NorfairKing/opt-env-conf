@@ -104,13 +104,13 @@ runParserPure p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserArg -> do
+      ParserArg _ -> do
         mA <- ppArg
         case mA of
           Nothing -> ppError ParseErrorMissingArgument
           Just a -> pure a
-      ParserArgs -> gets AM.argMapArgs -- TODO consume these args (?)
-      ParserOpt _ -> undefined
+      ParserArgs _ -> gets AM.argMapArgs -- TODO consume these args (?)
+      ParserOpt _ _ -> undefined
       ParserArgLeftovers -> gets AM.argMapLeftovers
       ParserEnvVar v -> do
         es <- asks ppEnvEnv

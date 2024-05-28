@@ -1,1 +1,1 @@
-Fmap _ (OptionalFirst [(Opt [DashedLong ('-' :| "-greeting")]),(EnvVar "GREETING"),(Config "greeting")])
+Fmap _ (OptionalFirst [(Opt [DashedLong ('-' :| "-greeting")] Nothing),(EnvVar "GREETING"),(Config "greeting")])

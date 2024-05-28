@@ -33,13 +33,19 @@ envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
 
 strArg :: Parser String
-strArg = ParserArg
+strArg = ParserArg Nothing
 
 strArgs :: Parser [String]
-strArgs = ParserArgs
+strArgs = ParserArgs Nothing
 
 strOpt :: String -> Parser (Maybe String)
-strOpt = ParserOpt . NE.singleton . DashedLong . NE.fromList -- TODO unsafe
+strOpt s =
+  ParserOpt
+    ( NE.singleton
+        . DashedLong
+        $ NE.fromList s -- TODO unsafe
+    )
+    Nothing
 
 argLeftovers :: Parser [String]
 argLeftovers = ParserArgLeftovers

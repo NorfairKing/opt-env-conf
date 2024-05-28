@@ -5,6 +5,8 @@
 
 module OptEnvConf.Parser
   ( Parser (..),
+    Metavar,
+    Help,
     HasParser (..),
     showParserABit,
   )
@@ -15,6 +17,10 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
 import Text.Show
+
+type Metavar = String
+
+type Help = String
 
 data Parser a where
   -- Functor
@@ -28,9 +34,12 @@ data Parser a where
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
-  ParserArg :: Parser String
-  ParserArgs :: Parser [String]
-  ParserOpt :: NonEmpty Dashed -> Parser (Maybe String)
+  ParserArg :: !(Maybe Metavar) -> Parser String
+  ParserArgs :: !(Maybe Metavar) -> Parser [String]
+  ParserOpt ::
+    !(NonEmpty Dashed) ->
+    !(Maybe Metavar) ->
+    Parser (Maybe String)
   ParserArgLeftovers :: Parser [String]
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
@@ -58,9 +67,21 @@ showParserABit = ($ "") . go 0
       ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
       ParserOptionalFirst ps -> showParen (d > 10) $ showString "OptionalFirst " . showListWith (go 11) ps
       ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
-      ParserArg -> showString "Arg"
-      ParserArgs -> showString "Args"
-      ParserOpt v -> showParen (d > 10) $ showString "Opt " . showList (NE.toList v)
-      ParserArgLeftovers -> showString "ArgLeftovers"
-      ParserEnvVar v -> showParen (d > 10) $ showString "EnvVar " . showsPrec 11 v
+      ParserArg metavar ->
+        showString "Arg "
+          . showsPrec 10 metavar
+      ParserArgs metavar ->
+        showString "Args "
+          . showsPrec 10 metavar
+      ParserOpt v metavar ->
+        showParen (d > 10) $
+          showString "Opt "
+            . showList (NE.toList v)
+            . showString " "
+            . showsPrec 10 metavar
+      ParserArgLeftovers ->
+        showString "ArgLeftovers"
+      ParserEnvVar v ->
+        showParen (d > 10) $
+          showString "EnvVar " . showsPrec 11 v
       ParserConfig key -> showParen (d > 10) $ showString "Config " . showsPrec 11 key

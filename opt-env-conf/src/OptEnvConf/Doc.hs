@@ -23,9 +23,16 @@ data AnyDoc
   | AnyDocEnv !EnvDoc
 
 data OptDoc
-  = OptDocArg !(Maybe String)
-  | OptDocArgs !(Maybe String)
-  | OptDocOpt !(NonEmpty Dashed) !(Maybe String)
+  = OptDocArg
+      !(Maybe Metavar)
+      !(Maybe String)
+  | OptDocArgs
+      !(Maybe Metavar)
+      !(Maybe String)
+  | OptDocOpt
+      !(NonEmpty Dashed)
+      !(Maybe Metavar)
+      !(Maybe String)
   | OptDocLeftovers !(Maybe String)
 
 data EnvDoc = EnvDoc
@@ -87,10 +94,26 @@ parserDocs = go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg -> AnyDocsSingle [AnyDocOpt $ OptDocArg Nothing]
-      ParserArgs -> AnyDocsSingle [AnyDocOpt $ OptDocArgs Nothing]
-      ParserOpt d -> AnyDocsSingle [AnyDocOpt $ OptDocOpt d Nothing]
-      ParserArgLeftovers -> AnyDocsSingle [AnyDocOpt $ OptDocLeftovers Nothing]
+      ParserArg mMetavar ->
+        AnyDocsSingle
+          [ AnyDocOpt $
+              OptDocArg mMetavar Nothing
+          ]
+      ParserArgs mMetavar ->
+        AnyDocsSingle
+          [ AnyDocOpt $
+              OptDocArgs mMetavar Nothing
+          ]
+      ParserOpt d mMetavar ->
+        AnyDocsSingle
+          [ AnyDocOpt $
+              OptDocOpt d mMetavar Nothing
+          ]
+      ParserArgLeftovers ->
+        AnyDocsSingle
+          [ AnyDocOpt $
+              OptDocLeftovers Nothing
+          ]
       ParserEnvVar v ->
         AnyDocsSingle
           [ AnyDocEnv $
@@ -146,17 +169,18 @@ renderShortOptDocs = go . simplifyAnyDocs
         unwordsChunks $
           map
             ( \case
-                OptDocArg _ ->
-                  [ "ARG"
+                OptDocArg mMetavar _ ->
+                  [ chunk $ T.pack $ fromMaybe "ARG" mMetavar
                   ]
-                OptDocArgs _ ->
-                  [ "[ARG]"
+                OptDocArgs mMetavar _ ->
+                  [ chunk $ T.pack $ fromMaybe "[ARGS]" mMetavar
                   ]
-                OptDocOpt flags _ ->
-                  [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags
+                OptDocOpt flags mMetavar _ ->
+                  [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags,
+                    chunk $ T.pack $ fromMaybe "OPT" mMetavar
                   ]
                 OptDocLeftovers _ ->
-                  [ "LEFTOVERS"
+                  [ chunk $ T.pack "LEFTOVERS"
                   ]
             )
             vs
@@ -176,16 +200,17 @@ renderLongOptDocs =
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong =
   (: []) . \case
-    OptDocArg mDoc ->
-      [ "ARG",
+    OptDocArg mMetavar mDoc ->
+      [ chunk . T.pack $ fromMaybe "ARG" mMetavar,
         chunk . T.pack $ fromMaybe "undocumented" mDoc
       ]
-    OptDocArgs mDoc ->
-      [ "[ARG]",
+    OptDocArgs mMetavar mDoc ->
+      [ chunk . T.pack $ fromMaybe "[ARGS]" mMetavar,
         chunk . T.pack $ fromMaybe "undocumented" mDoc
       ]
-    OptDocOpt flags mDoc ->
+    OptDocOpt flags mMetavar mDoc ->
       [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed $ NE.toList flags,
+        chunk . T.pack $ fromMaybe "[ARGS]" mMetavar,
         chunk . T.pack $ fromMaybe "undocumented" mDoc
       ]
     OptDocLeftovers mDoc ->

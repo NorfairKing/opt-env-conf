@@ -1,4 +1,4 @@
-[ARG] LEFTOVERS
-[ARG]     undocumented
+[ARGS] LEFTOVERS
+[ARGS]    undocumented
 leftovers undocumented
 
