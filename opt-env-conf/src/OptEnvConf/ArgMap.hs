@@ -56,7 +56,7 @@ instance Validity Dashed
 renderDashed :: Dashed -> String
 renderDashed = \case
   DashedShort c -> ['-', c]
-  DashedLong cs -> '-' : NE.toList cs
+  DashedLong cs -> '-' : '-' : NE.toList cs
 
 parse :: [String] -> ArgMap
 parse = go

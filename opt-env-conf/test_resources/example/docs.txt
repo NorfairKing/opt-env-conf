@@ -1,2 +1,2 @@
----greeting[ARGS]undocumented
+--greeting[ARGS]undocumented
 GREETINGundocumented

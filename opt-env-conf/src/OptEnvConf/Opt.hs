@@ -18,6 +18,13 @@ data OptionGenerals f = OptionGenerals
     optionGeneralHelp :: !(Maybe String)
   }
 
+emptyOptionGeneralsWith :: f -> OptionGenerals f
+emptyOptionGeneralsWith f =
+  OptionGenerals
+    { optionGeneralSpecifics = f,
+      optionGeneralHelp = Nothing
+    }
+
 showOptionGeneralsABitWith :: (f -> ShowS) -> OptionGenerals f -> ShowS
 showOptionGeneralsABitWith func OptionGenerals {..} =
   showParen True $
@@ -31,8 +38,15 @@ showOptionGeneralsABitWith func OptionGenerals {..} =
 
 newtype Builder f = Builder {unBuilder :: OptionGenerals f -> OptionGenerals f}
 
+class CanComplete f where
+  completeBuilder :: Builder f -> OptionGenerals f
+
 instance Semigroup (Builder f) where
   (<>) (Builder f1) (Builder f2) = Builder (f2 . f1)
+
+instance Monoid (Builder f) where
+  mempty = Builder id
+  mappend = (<>)
 
 class HasReader r a where
   setReader :: Reader r -> a -> a
@@ -74,7 +88,19 @@ instance HasLong (OptionSpecifics a) where
 instance HasShort (OptionSpecifics a) where
   addShort c os = os {optionSpecificsDasheds = DashedShort c : optionSpecificsDasheds os}
 
+instance CanComplete (OptionSpecifics a) where
+  completeBuilder b = unBuilder b emptyOptionParser
+
 type OptionParser a = OptionGenerals (OptionSpecifics a)
+
+emptyOptionParser :: OptionParser a
+emptyOptionParser =
+  emptyOptionGeneralsWith
+    OptionSpecifics
+      { optionSpecificsReader = Nothing,
+        optionSpecificsDasheds = [],
+        optionSpecificsMetavar = Nothing
+      }
 
 showOptionParserABit :: OptionParser a -> ShowS
 showOptionParserABit = showOptionGeneralsABitWith $ \OptionSpecifics {..} ->
@@ -87,7 +113,7 @@ showOptionParserABit = showOptionGeneralsABitWith $ \OptionSpecifics {..} ->
     . showString " "
     . showsPrec 11 optionSpecificsDasheds
 
-type OptionBuilder a = Builder (OptionParser a)
+type OptionBuilder a = Builder (OptionSpecifics a)
 
 data ArgumentSpecifics a = ArgumentSpecifics
   -- TODO Completer
@@ -100,7 +126,7 @@ instance HasReader a (ArgumentSpecifics a) where
 
 type ArgumentParser a = OptionGenerals (ArgumentSpecifics a)
 
-type ArgumentBuilder a = Builder (ArgumentParser a)
+type ArgumentBuilder a = Builder (ArgumentSpecifics a)
 
 type Reader a = String -> Either String a
 

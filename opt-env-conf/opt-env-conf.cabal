@@ -10,6 +10,12 @@ copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        AllRightsReserved
 build-type:     Simple
 extra-source-files:
+    test_resources/args/docs.txt
+    test_resources/args/env.txt
+    test_resources/args/opt-long.txt
+    test_resources/args/opt-short.txt
+    test_resources/args/opt.txt
+    test_resources/args/show.txt
     test_resources/example/docs.txt
     test_resources/example/env.txt
     test_resources/example/opt-long.txt

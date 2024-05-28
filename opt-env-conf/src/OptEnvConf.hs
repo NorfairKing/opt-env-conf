@@ -33,7 +33,7 @@ argument :: [ArgumentBuilder a] -> Parser a
 argument = undefined
 
 option :: [OptionBuilder a] -> Parser (Maybe a)
-option = undefined
+option = ParserOpt . completeBuilder . mconcat
 
 strArgs :: Parser [String]
 strArgs = ParserArgs Nothing
