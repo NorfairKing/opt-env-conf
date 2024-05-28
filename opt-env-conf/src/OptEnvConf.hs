@@ -15,22 +15,24 @@ import Control.Applicative
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Doc
+import OptEnvConf.Opt
 import OptEnvConf.Parser
 import OptEnvConf.Run
 
-data ArgParser a = ArgParser
-  { argParserParse :: !(String -> Either String a),
-    argParserShort :: ![Char], -- TODO use dashed?
-    argParserLong :: ![String]
-  }
-
-data EnvParser a = EnvParser
-  { envParserParse :: !(String -> Either String a),
-    envParserVar :: !String
-  }
-
 envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
+
+strArgument :: [ArgumentBuilder String] -> Parser String
+strArgument = argument . (reader str :)
+
+strOption :: [OptionBuilder String] -> Parser String
+strOption = option . (reader str :)
+
+argument :: [ArgumentBuilder a] -> Parser a
+argument = undefined
+
+option :: [OptionBuilder a] -> Parser a
+option = undefined
 
 strArg :: Parser String
 strArg = ParserArg Nothing

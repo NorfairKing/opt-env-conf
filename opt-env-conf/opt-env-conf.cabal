@@ -29,6 +29,7 @@ library
       OptEnvConf.ArgMap
       OptEnvConf.Doc
       OptEnvConf.EnvMap
+      OptEnvConf.Opt
       OptEnvConf.Parser
       OptEnvConf.Run
   other-modules:
