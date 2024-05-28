@@ -38,7 +38,8 @@ runParser p = do
     Right (a, _) -> pure a
 
 data ParseError
-  = ParseErrorUnconsumed
+  = ParseErrorEmpty
+  | ParseErrorUnconsumed
   | ParseErrorRequired
   | ParseErrorMissingArgument
   | ParseErrorConfigParseError !String
@@ -46,6 +47,7 @@ data ParseError
 
 instance Exception ParseError where
   displayException = \case
+    ParseErrorEmpty -> "empty"
     ParseErrorUnconsumed -> "Unconsumed arguments"
     ParseErrorRequired -> "Missing required setting" -- TODO show which ones
     ParseErrorMissingArgument -> "Missing required argument"
@@ -71,6 +73,7 @@ runParserPure p args envVars mConfig =
       ParserFmap f p' -> f <$> go p'
       ParserPure a -> pure a
       ParserAp ff fa -> go ff <*> go fa
+      ParserEmpty -> ppError ParseErrorEmpty
       ParserAlt p1 p2 -> do
         s <- get
         env <- ask

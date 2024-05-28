@@ -7,8 +7,6 @@
 module OptEnvConf.Doc where
 
 import Data.List (intercalate)
-import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -85,6 +83,7 @@ parserDocs = go
       ParserFmap _ p -> go p
       ParserPure _ -> AnyDocsSingle []
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
+      ParserEmpty -> AnyDocsSingle []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps

@@ -13,8 +13,6 @@ module OptEnvConf
 where
 
 import Control.Applicative
-import qualified Data.List.NonEmpty as NE
-import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Doc
 import OptEnvConf.Opt
 import OptEnvConf.Parser

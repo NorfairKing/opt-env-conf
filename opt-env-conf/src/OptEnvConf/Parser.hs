@@ -13,9 +13,6 @@ module OptEnvConf.Parser
 where
 
 import Data.Aeson (FromJSON)
-import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
-import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Opt
 import Text.Show
 
@@ -26,6 +23,7 @@ data Parser a where
   ParserFmap :: (a -> b) -> Parser a -> Parser b
   ParserAp :: Parser (a -> b) -> Parser a -> Parser b
   -- Alternative
+  ParserEmpty :: Parser a
   ParserAlt :: Parser a -> Parser a -> Parser a
   -- Combining
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
@@ -57,6 +55,7 @@ showParserABit = ($ "") . go 0
       ParserFmap _ p -> showParen (d > 10) $ showString "Fmap _ " . go 11 p
       ParserPure _ -> showParen (d > 10) $ showString "Pure _"
       ParserAp pf pa -> showParen (d > 10) $ showString "Ap " . go 11 pf . go 11 pa
+      ParserEmpty -> showString "Empty"
       ParserAlt p1 p2 -> showParen (d > 10) $ showString "Alt " . go 11 p1 . showString " " . go 11 p2
       ParserOptionalFirst ps -> showParen (d > 10) $ showString "OptionalFirst " . showListWith (go 11) ps
       ParserRequiredFirst ps -> showParen (d > 10) $ showString "RequiredFirst " . showListWith (go 11) ps
