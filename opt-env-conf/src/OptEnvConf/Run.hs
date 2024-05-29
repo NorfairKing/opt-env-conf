@@ -22,6 +22,7 @@ import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
+import OptEnvConf.Opt
 import OptEnvConf.Parser
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
@@ -70,6 +71,11 @@ runParserPure p args envVars mConfig =
     when (AM.hasUnconsumed unconsumedArgs) $ Failure $ NE.singleton ParseErrorUnconsumed
     pure (result, AM.argMapLeftovers unconsumedArgs)
   where
+    tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
+    tryPP pp = do
+      s <- get
+      e <- ask
+      pure $ runPP pp s e
     go ::
       Parser a ->
       PP a
@@ -79,18 +85,16 @@ runParserPure p args envVars mConfig =
       ParserAp ff fa -> go ff <*> go fa
       ParserEmpty -> ppError ParseErrorEmpty
       ParserAlt p1 p2 -> do
-        s <- get
-        env <- ask
-        case runPP (go p1) s env of
+        eor <- tryPP (go p1)
+        case eor of
           Right (a, s') -> do
             put s'
             pure a
           -- Note that args are not consumed if the alternative failed.
           Left _ -> go p2 -- TODO: Maybe collect the error?
       ParserMany p' -> do
-        s <- get
-        env <- ask
-        case runPP (go p') s env of
+        eor <- tryPP $ go p'
+        case eor of
           Left _ -> pure [] -- Err if fails, the end
           Right (a, s') -> do
             put s'
@@ -103,9 +107,8 @@ runParserPure p args envVars mConfig =
       ParserOptionalFirst pss -> case pss of
         [] -> pure Nothing
         (p' : ps) -> do
-          s <- get
-          env <- ask
-          case runPP (go p') s env of
+          eor <- tryPP $ go p'
+          case eor of
             Left err -> ppErrors err -- Error if any fails, don't ignore it.
             Right (mA, s') -> case mA of
               Nothing -> go $ ParserOptionalFirst ps -- Don't record the state and continue to try to parse the next
@@ -115,9 +118,8 @@ runParserPure p args envVars mConfig =
       ParserRequiredFirst pss -> case pss of
         [] -> ppError ParseErrorRequired
         (p' : ps) -> do
-          s <- get
-          env <- ask
-          case runPP (go p') s env of
+          eor <- tryPP $ go p'
+          case eor of
             Left err -> ppErrors err -- Error if any fails, don't ignore it.
             Right (mA, s') -> case mA of
               Nothing -> go $ ParserRequiredFirst ps -- Don't record the state and continue to try to parse the next
@@ -131,12 +133,26 @@ runParserPure p args envVars mConfig =
           Just s -> case r s of
             Left err -> ppError $ ParseErrorArgumentRead err
             Right a -> pure a
-      ParserOpt r _ -> do
-        mS <- ppOpt undefined
-        forM mS $ \s ->
-          case r s of
-            Left err -> ppError $ ParseErrorOptionRead err
-            Right a -> pure a
+      ParserOpt r o -> do
+        let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
+        let goD d = do
+              mS <- ppOpt d
+              forM mS $ \s ->
+                case r s of
+                  Left err -> ppError $ ParseErrorOptionRead err
+                  Right a -> pure a
+
+        let goDs = \case
+              [] -> pure Nothing
+              (d : rest) -> do
+                eor <- tryPP $ goD d
+                case eor of
+                  Left err -> undefined
+                  Right (Nothing, _) -> goDs rest -- Don't record the state and continue with the other options
+                  Right (Just a, s') -> do
+                    put s'
+                    pure $ Just a
+        goDs ds
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
         pure (EM.lookup v es)
@@ -148,7 +164,9 @@ runParserPure p args envVars mConfig =
             Left err -> ppError $ ParseErrorConfigParseError err
             Right v -> pure (Just v)
 
-type PP a = ReaderT PPEnv (StateT ArgMap (Validation ParseError)) a
+type PP a = ReaderT PPEnv (StateT PPState (Validation ParseError)) a
+
+type PPState = ArgMap
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
