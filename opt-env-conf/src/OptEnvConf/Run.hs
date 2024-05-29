@@ -22,7 +22,6 @@ import OptEnvConf.ArgMap (ArgMap (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
-import OptEnvConf.Opt
 import OptEnvConf.Parser
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
@@ -112,16 +111,14 @@ runParserPure p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserArg o -> do
+      ParserArg r _ -> do
         mS <- ppArg
         case mS of
           Nothing -> ppError ParseErrorMissingArgument
-          Just s -> case argumentSpecificsReader $ optionGeneralSpecifics o of
-            Nothing -> error "missing reader"
-            Just r -> case r s of
-              Left err -> ppError $ ParseErrorArgumentRead err
-              Right a -> pure a
-      ParserOpt _ -> undefined
+          Just s -> case r s of
+            Left err -> ppError $ ParseErrorArgumentRead err
+            Right a -> pure a
+      ParserOpt _ _ -> undefined
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
         pure (EM.lookup v es)

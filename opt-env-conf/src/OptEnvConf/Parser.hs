@@ -32,8 +32,8 @@ data Parser a where
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
-  ParserArg :: !(ArgumentParser a) -> Parser a
-  ParserOpt :: !(OptionParser a) -> Parser (Maybe a)
+  ParserArg :: !(Reader a) -> !(ArgumentParser a) -> Parser a
+  ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser (Maybe a)
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
   -- | Configuration file
@@ -104,13 +104,13 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "RequiredFirst "
             . showListWith (go 11) ps
-      ParserArg p ->
+      ParserArg _ p ->
         showParen (d > 10) $
-          showString "Arg "
+          showString "Arg _ "
             . showArgumentParserABit p
-      ParserOpt p ->
+      ParserOpt _ p ->
         showParen (d > 10) $
-          showString "Opt "
+          showString "Opt _ "
             . showOptionParserABit p
       ParserEnvVar v ->
         showParen (d > 10) $

@@ -49,12 +49,6 @@ instance Monoid (Builder f) where
   mempty = Builder id
   mappend = (<>)
 
-class HasReader r a where
-  setReader :: Reader r -> a -> a
-
-instance HasReader a f => HasReader a (OptionGenerals f) where
-  setReader r op = op {optionGeneralSpecifics = setReader r (optionGeneralSpecifics op)}
-
 class HasLong a where
   addLong :: NonEmpty Char -> a -> a
 
@@ -78,13 +72,9 @@ class HasMetavar a where
 
 data OptionSpecifics a = OptionSpecifics
   -- TODO completer
-  { optionSpecificsReader :: !(Maybe (Reader a)),
-    optionSpecificsDasheds :: ![Dashed],
+  { optionSpecificsDasheds :: ![Dashed],
     optionSpecificsMetavar :: !(Maybe Metavar)
   }
-
-instance HasReader a (OptionSpecifics a) where
-  setReader r os = os {optionSpecificsReader = Just r}
 
 instance HasLong (OptionSpecifics a) where
   addLong s os = os {optionSpecificsDasheds = DashedLong s : optionSpecificsDasheds os}
@@ -104,20 +94,13 @@ emptyOptionParser :: OptionParser a
 emptyOptionParser =
   emptyOptionGeneralsWith
     OptionSpecifics
-      { optionSpecificsReader = Nothing,
-        optionSpecificsDasheds = [],
+      { optionSpecificsDasheds = [],
         optionSpecificsMetavar = Nothing
       }
 
 showOptionParserABit :: OptionParser a -> ShowS
 showOptionParserABit = showOptionGeneralsABitWith $ \OptionSpecifics {..} ->
   showString "OptionSpecifics "
-    . showString
-      ( case optionSpecificsReader of
-          Nothing -> "Nothing"
-          Just _ -> "(Just _)"
-      )
-    . showString " "
     . showsPrec 11 optionSpecificsDasheds
     . showString " "
     . showsPrec 11 optionSpecificsMetavar
@@ -126,15 +109,11 @@ type OptionBuilder a = Builder (OptionSpecifics a)
 
 data ArgumentSpecifics a = ArgumentSpecifics
   -- TODO Completer
-  { argumentSpecificsReader :: !(Maybe (Reader a)),
-    argumentSpecificsMetavar :: !(Maybe Metavar)
+  { argumentSpecificsMetavar :: !(Maybe Metavar)
   }
 
 instance CanComplete (ArgumentSpecifics a) where
   completeBuilder b = unBuilder b emptyArgumentParser
-
-instance HasReader a (ArgumentSpecifics a) where
-  setReader r os = os {argumentSpecificsReader = Just r}
 
 instance HasMetavar (ArgumentSpecifics a) where
   setMetavar mv os = os {argumentSpecificsMetavar = Just mv}
@@ -145,19 +124,12 @@ emptyArgumentParser :: ArgumentParser a
 emptyArgumentParser =
   emptyOptionGeneralsWith
     ArgumentSpecifics
-      { argumentSpecificsReader = Nothing,
-        argumentSpecificsMetavar = Nothing
+      { argumentSpecificsMetavar = Nothing
       }
 
 showArgumentParserABit :: ArgumentParser a -> ShowS
 showArgumentParserABit = showOptionGeneralsABitWith $ \ArgumentSpecifics {..} ->
   showString "ArgumentSpecifics "
-    . showString
-      ( case argumentSpecificsReader of
-          Nothing -> "Nothing"
-          Just _ -> "(Just _)"
-      )
-    . showString " "
     . showsPrec 11 argumentSpecificsMetavar
 
 type ArgumentBuilder a = Builder (ArgumentSpecifics a)
@@ -166,9 +138,6 @@ type Reader a = String -> Either String a
 
 str :: Reader String
 str = Right
-
-reader :: HasReader a f => Reader a -> Builder f
-reader r = Builder $ setReader r
 
 help :: String -> Builder f
 help s = Builder $ \op -> op {optionGeneralHelp = Just s}

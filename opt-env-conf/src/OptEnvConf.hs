@@ -22,16 +22,16 @@ envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
 
 strArgument :: [ArgumentBuilder String] -> Parser String
-strArgument = argument . (reader str :)
+strArgument = argument str
 
 strOption :: [OptionBuilder String] -> Parser (Maybe String)
-strOption = option . (reader str :)
+strOption = option str
 
-argument :: [ArgumentBuilder a] -> Parser a
-argument = ParserArg . completeBuilder . mconcat
+argument :: Reader a -> [ArgumentBuilder a] -> Parser a
+argument r = ParserArg r . completeBuilder . mconcat
 
-option :: [OptionBuilder a] -> Parser (Maybe a)
-option = ParserOpt . completeBuilder . mconcat
+option :: Reader a -> [OptionBuilder a] -> Parser (Maybe a)
+option r = ParserOpt r . completeBuilder . mconcat
 
 confVar :: String -> Parser (Maybe String)
 confVar = ParserConfig

@@ -89,7 +89,7 @@ parserDocs = go
       ParserSome p -> go p -- TODO: is this right?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg OptionGenerals {..} ->
+      ParserArg _ OptionGenerals {..} ->
         AnyDocsSingle
           [ AnyDocOpt $
               OptDoc
@@ -98,7 +98,7 @@ parserDocs = go
                   optDocHelp = optionGeneralHelp
                 }
           ]
-      ParserOpt OptionGenerals {..} ->
+      ParserOpt _ OptionGenerals {..} ->
         AnyDocsSingle
           [ AnyDocOpt $
               OptDoc
