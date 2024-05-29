@@ -2,6 +2,8 @@ module OptEnvConf.RunSpec (spec) where
 
 import Control.Applicative
 import Data.Aeson as JSON (Object)
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KeyMap
 import Data.GenValidity.Aeson ()
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -11,10 +13,9 @@ import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as ArgMap
 import OptEnvConf.ArgMap.Gen ()
 import OptEnvConf.EnvMap (EnvMap (..))
+import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Parser
-import OptEnvConf.Run
-import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Validity
 
@@ -130,11 +131,26 @@ spec = do
               let p = many $ strOption [long $ NE.toList l]
               let expected = NE.toList rs
               shouldParse p args env mConf expected
+
     describe "EnvVar" $ do
-      pure ()
+      it "can parse a single env var" $
+        forAllValid $ \env' ->
+          forAllValid $ \mConf ->
+            forAllValid $ \(key, val) -> do
+              let env = EnvMap.insert key val env'
+              let p = envVar key
+              let expected = Just val
+              shouldParse p ArgMap.empty env mConf expected
 
     describe "Config" $ do
-      pure ()
+      it "can parse a single config var" $
+        forAllValid $ \env ->
+          forAllValid $ \conf ->
+            forAllValid $ \(key, val) -> do
+              let mConf = Just $ KeyMap.insert (Key.fromString key) val conf
+              let p = confVar key
+              let expected = Just val
+              shouldParse p ArgMap.empty env mConf expected
 
 shouldParse ::
   (Show a, Eq a) =>
@@ -150,7 +166,7 @@ shouldParse p args env mConf expected =
     Right (actual, _) -> actual `shouldBe` expected
 
 shouldFail ::
-  (Show a, Eq a) =>
+  (Show a) =>
   Parser a ->
   ArgMap ->
   EnvMap ->

@@ -13,6 +13,7 @@ module OptEnvConf
 where
 
 import Control.Applicative
+import Data.Aeson as JSON
 import OptEnvConf.Doc
 import OptEnvConf.Opt
 import OptEnvConf.Parser
@@ -33,7 +34,7 @@ argument r = ParserArg r . completeBuilder . mconcat
 option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
 
-confVar :: String -> Parser (Maybe String)
+confVar :: FromJSON a => String -> Parser (Maybe a)
 confVar = ParserConfig
 
 optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)

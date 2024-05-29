@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module OptEnvConf.EnvMap.Gen where
 
 import Data.GenValidity

@@ -5,6 +5,7 @@ module OptEnvConf.EnvMap
     empty,
     parse,
     lookup,
+    insert,
   )
 where
 
@@ -28,3 +29,6 @@ parse = EnvMap . M.fromList -- TODO fail if there are duplicate keys.
 
 lookup :: String -> EnvMap -> Maybe String
 lookup v (EnvMap m) = M.lookup v m
+
+insert :: String -> String -> EnvMap -> EnvMap
+insert k v (EnvMap m) = EnvMap (M.insert k v m)
