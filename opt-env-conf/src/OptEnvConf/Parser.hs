@@ -45,6 +45,7 @@ data Parser a where
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
   ParserArg :: !(Reader a) -> !(ArgumentParser a) -> Parser a
+  -- TODO consider getting rid of ParserOpt and "just" giving Arg a possibly-empty list of dasheds to parse
   ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser a
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)

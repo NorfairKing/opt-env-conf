@@ -194,6 +194,37 @@ spec = do
               let expected = Just val
               shouldParse p ArgMap.empty env mConf expected
 
+    describe "arguments" $ do
+      argParseSpec
+        ["--foo", "bar"]
+        (strOption [long "foo"])
+        "bar"
+      argParseSpec
+        ["--foo", "bar"]
+        (many $ strOption [long "foo"])
+        ["bar"]
+      argParseSpec
+        ["--foo", "bar", "--foo", "quux"]
+        (many $ strOption [long "foo"])
+        ["bar", "quux"]
+      argParseSpec
+        ["--foo", "bar", "-f", "quux"]
+        (many $ strOption [short 'f', long "foo"])
+        ["bar", "quux"]
+      argParseSpec
+        ["-f", "bar", "--foo", "quux"]
+        (many $ strOption [short 'f', long "foo"])
+        ["bar", "quux"]
+
+argParseSpec :: (Show a, Eq a) => [String] -> Parser a -> a -> Spec
+argParseSpec args p expected = do
+  it (unwords ["parses ", show args, "as", show expected]) $ do
+    let argMap = ArgMap.parse args
+    errOrRes <- runParserOn p argMap EnvMap.empty Nothing
+    case errOrRes of
+      Left err -> expectationFailure $ show err
+      Right (actual, _) -> actual `shouldBe` expected
+
 shouldParse ::
   (Show a, Eq a) =>
   Parser a ->
