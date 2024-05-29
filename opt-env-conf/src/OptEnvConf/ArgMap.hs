@@ -9,6 +9,7 @@ module OptEnvConf.ArgMap
     renderDashed,
     parse,
     consumeArg,
+    consumeOpt,
     parseSingleArg,
   )
 where
@@ -104,6 +105,20 @@ consumeArg :: ArgMap -> (Maybe String, ArgMap)
 consumeArg am = case argMapArgs am of
   [] -> (Nothing, am)
   (a : rest) -> (Just a, am {argMapArgs = rest})
+
+consumeOpt :: Dashed -> ArgMap -> (Maybe String, ArgMap)
+consumeOpt dashed am =
+  let m = argMapOptions am
+   in case M.lookup dashed m of
+        Nothing -> (Nothing, am)
+        Just (v :| vs) ->
+          ( Just v,
+            am
+              { argMapOptions = case NE.nonEmpty vs of
+                  Nothing -> M.delete dashed m
+                  Just ne -> M.insert dashed ne m
+              }
+          )
 
 data Arg
   = ArgBareDoubleDash

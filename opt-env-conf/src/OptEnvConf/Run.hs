@@ -18,7 +18,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Validity hiding (Validation)
 import GHC.Generics (Generic)
-import OptEnvConf.ArgMap (ArgMap (..))
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
@@ -41,6 +41,7 @@ data ParseError
   = ParseErrorEmpty
   | ParseErrorUnconsumed
   | ParseErrorArgumentRead !String
+  | ParseErrorOptionRead !String
   | ParseErrorRequired
   | ParseErrorMissingArgument
   | ParseErrorConfigParseError !String
@@ -51,6 +52,7 @@ instance Exception ParseError where
     ParseErrorEmpty -> "empty"
     ParseErrorUnconsumed -> "Unconsumed arguments"
     ParseErrorArgumentRead err -> "Unable to read argument: " <> show err
+    ParseErrorOptionRead err -> "Unable to read option: " <> show err
     ParseErrorRequired -> "Missing required setting" -- TODO show which ones
     ParseErrorMissingArgument -> "Missing required argument"
     ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
@@ -129,7 +131,12 @@ runParserPure p args envVars mConfig =
           Just s -> case r s of
             Left err -> ppError $ ParseErrorArgumentRead err
             Right a -> pure a
-      ParserOpt _ _ -> undefined
+      ParserOpt r _ -> do
+        mS <- ppOpt undefined
+        forM mS $ \s ->
+          case r s of
+            Left err -> ppError $ ParseErrorOptionRead err
+            Right a -> pure a
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
         pure (EM.lookup v es)
@@ -158,6 +165,9 @@ runPP p args envVars =
 
 ppArg :: PP (Maybe String)
 ppArg = state AM.consumeArg
+
+ppOpt :: Dashed -> PP (Maybe String)
+ppOpt d = state $ AM.consumeOpt d
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . Failure
