@@ -6,6 +6,7 @@ module OptEnvConf
     module OptEnvConf.Doc,
     module OptEnvConf.Opt,
     module OptEnvConf.Run,
+    module OptEnvConf.Reader,
     Parser,
     HasParser (..),
     module Control.Applicative,
@@ -17,6 +18,7 @@ import Data.Aeson as JSON
 import OptEnvConf.Doc
 import OptEnvConf.Opt
 import OptEnvConf.Parser
+import OptEnvConf.Reader
 import OptEnvConf.Run
 
 envVar :: String -> Parser (Maybe String)

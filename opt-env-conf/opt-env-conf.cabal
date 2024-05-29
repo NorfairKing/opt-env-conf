@@ -37,6 +37,7 @@ library
       OptEnvConf.EnvMap
       OptEnvConf.Opt
       OptEnvConf.Parser
+      OptEnvConf.Reader
       OptEnvConf.Run
       OptEnvConf.Validation
   other-modules:

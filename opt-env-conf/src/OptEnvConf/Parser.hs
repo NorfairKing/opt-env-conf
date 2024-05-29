@@ -15,6 +15,7 @@ where
 import Control.Applicative
 import Data.Aeson (FromJSON)
 import OptEnvConf.Opt
+import OptEnvConf.Reader
 import Text.Show
 
 data Parser a where

@@ -134,11 +134,6 @@ showArgumentParserABit = showOptionGeneralsABitWith $ \ArgumentSpecifics {..} ->
 
 type ArgumentBuilder a = Builder (ArgumentSpecifics a)
 
-type Reader a = String -> Either String a
-
-str :: Reader String
-str = Right
-
 help :: String -> Builder f
 help s = Builder $ \op -> op {optionGeneralHelp = Just s}
 
