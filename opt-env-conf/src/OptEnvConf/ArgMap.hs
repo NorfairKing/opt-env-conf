@@ -107,18 +107,18 @@ parseOpts = go
       (s : rest) -> case parseSingleArg s of
         ArgBareDoubleDash -> [OptLeftovers rest]
         ArgBareDash -> OptArg "-" : go rest
-        ArgPlain s -> OptArg s : go rest
+        ArgPlain a -> OptArg a : go rest
         ArgDashed isLong key ->
           let ds = parseDasheds isLong key
               asSwitches = map OptSwitch (NE.toList ds) ++ go rest
            in case NE.nonEmpty rest of
                 Nothing -> asSwitches
-                Just (s :| others) ->
+                Just (a :| others) ->
                   let asOption v =
                         let ss = NE.init ds
                             o = NE.last ds
                          in map OptSwitch ss ++ [OptOption o v] ++ go others
-                   in case parseSingleArg s of
+                   in case parseSingleArg a of
                         ArgBareDoubleDash -> asSwitches
                         ArgDashed _ _ -> asSwitches
                         ArgPlain val -> asOption val
