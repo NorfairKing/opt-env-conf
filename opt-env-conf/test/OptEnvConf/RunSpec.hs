@@ -98,10 +98,52 @@ spec = do
               shouldParse p args env mConf expected
 
     describe "OptionalFirst" $ do
-      pure ()
+      it "parses nothing for an empty list of options" $
+        forAllValid $ \env ->
+          forAllValid $ \mConf -> do
+            let p = optionalFirst [] :: Parser (Maybe Int)
+            shouldParse p ArgMap.empty env mConf Nothing
+
+      it "parses the first option if both are possible" $
+        forAllValid $ \env' ->
+          forAllValid $ \mConf ->
+            forAllValid $ \(l, arg) ->
+              forAllValid $ \(var, val) -> do
+                let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (arg :| [])}
+                let env = EnvMap.insert var val env'
+                let p =
+                      optionalFirst
+                        [ optional $
+                            strOption
+                              [ long $ NE.toList l
+                              ],
+                          envVar var
+                        ]
+                shouldParse p args env mConf (Just arg)
 
     describe "RequiredFirst" $ do
-      pure ()
+      it "fails to parse for an empty list of options" $
+        forAllValid $ \env ->
+          forAllValid $ \mConf -> do
+            let p = requiredFirst [] :: Parser (Maybe Int)
+            shouldFail p ArgMap.empty env mConf (ParseErrorRequired :| [])
+
+      it "parses the first option if both are possible" $
+        forAllValid $ \env' ->
+          forAllValid $ \mConf ->
+            forAllValid $ \(l, arg) ->
+              forAllValid $ \(var, val) -> do
+                let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (arg :| [])}
+                let env = EnvMap.insert var val env'
+                let p =
+                      requiredFirst
+                        [ optional $
+                            strOption
+                              [ long $ NE.toList l
+                              ],
+                          envVar var
+                        ]
+                shouldParse p args env mConf arg
 
     describe "Arg" $ do
       it "can parse a single arg" $
