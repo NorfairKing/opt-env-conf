@@ -60,45 +60,18 @@ renderDashed = \case
   DashedLong cs -> '-' : '-' : NE.toList cs
 
 parse :: [String] -> ArgMap
-parse = go
+parse = go . parseOpts
   where
-    go :: [String] -> ArgMap
+    go :: [Opt] -> ArgMap
     go = \case
       [] -> empty
       (a : rest) ->
         let am = go rest
-         in case parseSingleArg a of
-              ArgBareDoubleDash -> empty {argMapLeftovers = rest}
-              ArgBareDash -> am {argMapArgs = "-" : argMapArgs am}
-              ArgDashed isLong opt ->
-                let ds = parseDasheds isLong opt
-                    asSwitch = am {argMapSwitches = NE.toList ds <> argMapSwitches am}
-                 in case rest of
-                      [] -> asSwitch
-                      (next : others)
-                        | isDashed (parseSingleArg next) -> asSwitch
-                        | otherwise ->
-                            -- The last of the dashed should be considered an option
-                            -- While the others before should be considered switches.
-                            let am' = go others
-                                lastDash = NE.last ds
-                                beforeDashes = NE.init ds
-                             in am'
-                                  { argMapOptions = M.insertWith (<>) lastDash (next :| []) (argMapOptions am),
-                                    argMapSwitches = beforeDashes <> argMapSwitches am
-                                  }
-              ArgPlain plainArg -> am {argMapArgs = plainArg : argMapArgs am}
-
-    parseDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
-    parseDasheds b s =
-      if b
-        then DashedLong s :| []
-        else NE.map DashedShort s
-
-    isDashed :: Arg -> Bool
-    isDashed = \case
-      ArgDashed _ _ -> True
-      _ -> False
+         in case a of
+              OptArg s -> am {argMapArgs = s : argMapArgs am}
+              OptSwitch d -> am {argMapSwitches = d : argMapSwitches am}
+              OptOption d v -> am {argMapOptions = M.insertWith (<>) d (v :| []) (argMapOptions am)}
+              OptLeftovers ls -> am {argMapLeftovers = ls}
 
 -- The type is a bit strange, but it makes dealing with the state monad easier
 consumeArg :: ArgMap -> (Maybe String, ArgMap)
@@ -119,6 +92,43 @@ consumeOpt dashed am =
                   Just ne -> M.insert dashed ne m
               }
           )
+
+data Opt
+  = OptArg String
+  | OptSwitch !Dashed
+  | OptOption !Dashed !String
+  | OptLeftovers ![String]
+
+parseOpts :: [String] -> [Opt]
+parseOpts = go
+  where
+    go = \case
+      [] -> []
+      (s : rest) -> case parseSingleArg s of
+        ArgBareDoubleDash -> [OptLeftovers rest]
+        ArgBareDash -> OptArg "-" : go rest
+        ArgPlain s -> OptArg s : go rest
+        ArgDashed isLong key ->
+          let ds = parseDasheds isLong key
+              asSwitches = map OptSwitch (NE.toList ds) ++ go rest
+           in case NE.nonEmpty rest of
+                Nothing -> asSwitches
+                Just (s :| others) ->
+                  let asOption v =
+                        let ss = NE.init ds
+                            o = NE.last ds
+                         in map OptSwitch ss ++ [OptOption o v] ++ go others
+                   in case parseSingleArg s of
+                        ArgBareDoubleDash -> asSwitches
+                        ArgDashed _ _ -> asSwitches
+                        ArgPlain val -> asOption val
+                        ArgBareDash -> asOption "-"
+
+    parseDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
+    parseDasheds b s =
+      if b
+        then DashedLong s :| []
+        else NE.map DashedShort s
 
 data Arg
   = ArgBareDoubleDash
