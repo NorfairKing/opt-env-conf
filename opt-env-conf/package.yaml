@@ -42,8 +42,12 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - QuickCheck
+    - aeson 
     - containers
     - envparse
+    - genvalidity
+    - genvalidity-aeson
+    - genvalidity-containers
     - genvalidity-sydtest
     - opt-env-conf
     - optparse-applicative

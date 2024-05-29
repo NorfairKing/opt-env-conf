@@ -44,7 +44,7 @@ data ParseError
   | ParseErrorRequired
   | ParseErrorMissingArgument
   | ParseErrorConfigParseError !String
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance Exception ParseError where
   displayException = \case
@@ -85,7 +85,15 @@ runParserPure p args envVars mConfig =
             pure a
           -- Note that args are not consumed if the alternative failed.
           Left _ -> go p2 -- TODO: Maybe collect the error?
-      ParserMany _ -> undefined
+      ParserMany p' -> do
+        s <- get
+        env <- ask
+        case runPP (go p') s env of
+          Left _ -> pure [] -- Err if fails, the end
+          Right (a, s') -> do
+            put s'
+            as <- go (ParserMany p')
+            pure (a : as)
       ParserSome _ -> undefined
       ParserOptionalFirst pss -> case pss of
         [] -> pure Nothing

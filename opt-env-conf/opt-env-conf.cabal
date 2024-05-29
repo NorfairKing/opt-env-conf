@@ -67,8 +67,11 @@ test-suite opt-env-conf-test
   main-is: Spec.hs
   other-modules:
       OptEnvConf.APISpec
+      OptEnvConf.ArgMap.Gen
       OptEnvConf.ArgMapSpec
+      OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec
+      OptEnvConf.RunSpec
       Paths_opt_env_conf
   hs-source-dirs:
       test/
@@ -77,9 +80,13 @@ test-suite opt-env-conf-test
       sydtest-discover:sydtest-discover
   build-depends:
       QuickCheck
+    , aeson
     , base
     , containers
     , envparse
+    , genvalidity
+    , genvalidity-aeson
+    , genvalidity-containers
     , genvalidity-sydtest
     , opt-env-conf
     , optparse-applicative
