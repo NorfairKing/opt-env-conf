@@ -29,7 +29,9 @@ data Parser a where
   ParserMany :: Parser a -> Parser [a]
   ParserSome :: Parser a -> Parser [a]
   -- Combining
+  -- TODO Maybe we can get rid of this constructor using 'optional requiredFirst'
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
+  -- TODO maybe we can get rid of this constructor using Alt
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
   ParserArg :: !(Reader a) -> !(ArgumentParser a) -> Parser a
