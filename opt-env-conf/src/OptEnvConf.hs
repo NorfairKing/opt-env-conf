@@ -24,13 +24,13 @@ envVar = ParserEnvVar
 strArgument :: [ArgumentBuilder String] -> Parser String
 strArgument = argument str
 
-strOption :: [OptionBuilder String] -> Parser (Maybe String)
+strOption :: [OptionBuilder String] -> Parser String
 strOption = option str
 
 argument :: Reader a -> [ArgumentBuilder a] -> Parser a
 argument r = ParserArg r . completeBuilder . mconcat
 
-option :: Reader a -> [OptionBuilder a] -> Parser (Maybe a)
+option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
 
 confVar :: String -> Parser (Maybe String)

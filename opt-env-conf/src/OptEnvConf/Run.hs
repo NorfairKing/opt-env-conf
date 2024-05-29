@@ -45,6 +45,7 @@ data ParseError
   | ParseErrorOptionRead !String
   | ParseErrorRequired
   | ParseErrorMissingArgument
+  | ParseErrorMissingOption
   | ParseErrorConfigParseError !String
   deriving (Show, Eq)
 
@@ -56,6 +57,7 @@ instance Exception ParseError where
     ParseErrorOptionRead err -> "Unable to read option: " <> show err
     ParseErrorRequired -> "Missing required setting" -- TODO show which ones
     ParseErrorMissingArgument -> "Missing required argument"
+    ParseErrorMissingOption -> "Missing required option"
     ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
 
 runParserPure ::
@@ -137,21 +139,27 @@ runParserPure p args envVars mConfig =
         let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
         let goD d = do
               mS <- ppOpt d
-              forM mS $ \s ->
-                case r s of
-                  Left err -> ppError $ ParseErrorOptionRead err
-                  Right a -> pure a
+              case mS of
+                Nothing -> ppError ParseErrorMissingOption
+                Just s -> do
+                  case r s of
+                    Left err -> ppError $ ParseErrorOptionRead err
+                    Right a -> pure a
 
         let goDs = \case
-              [] -> pure Nothing
+              [] -> ppError ParseErrorMissingOption
               (d : rest) -> do
                 eor <- tryPP $ goD d
                 case eor of
-                  Left err -> undefined
-                  Right (Nothing, _) -> goDs rest -- Don't record the state and continue with the other options
-                  Right (Just a, s') -> do
+                  -- Parse failed
+                  Left es@(e :| _) -> case e of
+                    -- If this dashed was missing, try the rest
+                    ParseErrorMissingOption -> goDs rest
+                    _ -> ppErrors es -- Record the errors
+                    -- parse succeeded, record the state and finish
+                  Right (a, s') -> do
                     put s'
-                    pure $ Just a
+                    pure a
         goDs ds
       ParserEnvVar v -> do
         es <- asks ppEnvEnv

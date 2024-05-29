@@ -71,11 +71,12 @@ instance HasParser Greet where
             ]
         )
       <*> optionalFirst
-        [ strOption
-            [ long "greeting",
-              metavar "GREETING",
-              help "Greeting to use"
-            ],
+        [ optional $
+            strOption
+              [ long "greeting",
+                metavar "GREETING",
+                help "Greeting to use"
+              ],
           envVar "GREETING",
           confVar "greeting"
         ]

@@ -33,7 +33,7 @@ data Parser a where
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Arguments and options
   ParserArg :: !(Reader a) -> !(ArgumentParser a) -> Parser a
-  ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser (Maybe a)
+  ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser a
   -- | Env vars
   ParserEnvVar :: String -> Parser (Maybe String)
   -- | Configuration file

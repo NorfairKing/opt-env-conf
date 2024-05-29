@@ -119,10 +119,17 @@ spec = do
             forAllValid $ \(l, r) -> do
               let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (r :| [])}
               let p = strOption [long $ NE.toList l]
-              let expected = Just r
+              let expected = r
               shouldParse p args env mConf expected
 
-      pending "can parse a many opt"
+      it "can parse a many of the same option" $
+        forAllValid $ \env ->
+          forAllValid $ \mConf ->
+            forAllValid $ \(l, rs) -> do
+              let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) rs}
+              let p = many $ strOption [long $ NE.toList l]
+              let expected = NE.toList rs
+              shouldParse p args env mConf expected
     describe "EnvVar" $ do
       pure ()
 
