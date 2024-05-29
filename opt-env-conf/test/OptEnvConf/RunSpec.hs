@@ -81,22 +81,20 @@ spec = do
 
     describe "Some" $ do
       it "fails to parse zero args" $
-        forAllValid $ \args' ->
-          forAllValid $ \env ->
-            forAllValid $ \mConf -> do
-              let args = args' {argMapArgs = []}
-              let p = some $ strArgument []
-              shouldFail p args env mConf (ParseErrorEmpty :| [])
+        forAllValid $ \env ->
+          forAllValid $ \mConf -> do
+            let args = ArgMap.empty {argMapArgs = []}
+            let p = some $ strArgument []
+            shouldFail p args env mConf (ParseErrorMissingArgument :| [])
 
       it "can parse some args" $
-        forAllValid $ \args' ->
-          forAllValid $ \env ->
-            forAllValid $ \mConf ->
-              forAllValid $ \ls -> do
-                let args = args' {argMapArgs = NE.toList ls}
-                let p = some $ strArgument []
-                let expected = NE.toList ls
-                shouldParse p args env mConf expected
+        forAllValid $ \env ->
+          forAllValid $ \mConf ->
+            forAllValid $ \ls -> do
+              let args = ArgMap.empty {argMapArgs = NE.toList ls}
+              let p = some $ strArgument []
+              let expected = NE.toList ls
+              shouldParse p args env mConf expected
 
     describe "OptionalFirst" $ do
       pure ()
@@ -115,8 +113,16 @@ spec = do
               shouldParse p args env mConf expected
 
     describe "Opt" $ do
-      pure ()
+      it "can parse a single option" $
+        forAllValid $ \env ->
+          forAllValid $ \mConf ->
+            forAllValid $ \(l, r) -> do
+              let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (r :| [])}
+              let p = strOption [long $ NE.toList l]
+              let expected = Just r
+              shouldParse p args env mConf expected
 
+      pending "can parse a many opt"
     describe "EnvVar" $ do
       pure ()
 

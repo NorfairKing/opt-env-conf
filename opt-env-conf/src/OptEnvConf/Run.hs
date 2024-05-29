@@ -94,7 +94,10 @@ runParserPure p args envVars mConfig =
             put s'
             as <- go (ParserMany p')
             pure (a : as)
-      ParserSome _ -> undefined
+      ParserSome p' -> do
+        a <- go p'
+        as <- go $ ParserMany p'
+        pure $ a : as
       ParserOptionalFirst pss -> case pss of
         [] -> pure Nothing
         (p' : ps) -> do
