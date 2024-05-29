@@ -60,7 +60,10 @@ renderDashed = \case
   DashedLong cs -> '-' : '-' : NE.toList cs
 
 parse :: [String] -> ArgMap
-parse = go . parseOpts
+parse args =
+  let (os, leftovers) = parseOpts args
+      am = go os
+   in am {argMapLeftovers = leftovers}
   where
     go :: [Opt] -> ArgMap
     go = \case
@@ -71,7 +74,6 @@ parse = go . parseOpts
               OptArg s -> am {argMapArgs = s : argMapArgs am}
               OptSwitch d -> am {argMapSwitches = d : argMapSwitches am}
               OptOption d v -> am {argMapOptions = M.insertWith (<>) d (v :| []) (argMapOptions am)}
-              OptLeftovers ls -> am {argMapLeftovers = ls}
 
 -- The type is a bit strange, but it makes dealing with the state monad easier
 consumeArg :: ArgMap -> (Maybe String, ArgMap)
@@ -97,32 +99,34 @@ data Opt
   = OptArg String
   | OptSwitch !Dashed
   | OptOption !Dashed !String
-  | OptLeftovers ![String]
 
-parseOpts :: [String] -> [Opt]
+parseOpts :: [String] -> ([Opt], [String])
 parseOpts = go
   where
     go = \case
-      [] -> []
-      (s : rest) -> case parseSingleArg s of
-        ArgBareDoubleDash -> [OptLeftovers rest]
-        ArgBareDash -> OptArg "-" : go rest
-        ArgPlain a -> OptArg a : go rest
-        ArgDashed isLong key ->
-          let ds = parseDasheds isLong key
-              asSwitches = map OptSwitch (NE.toList ds) ++ go rest
-           in case NE.nonEmpty rest of
-                Nothing -> asSwitches
-                Just (a :| others) ->
-                  let asOption v =
-                        let ss = NE.init ds
-                            o = NE.last ds
-                         in map OptSwitch ss ++ [OptOption o v] ++ go others
-                   in case parseSingleArg a of
-                        ArgBareDoubleDash -> asSwitches
-                        ArgDashed _ _ -> asSwitches
-                        ArgPlain val -> asOption val
-                        ArgBareDash -> asOption "-"
+      [] -> ([], [])
+      (s : rest) ->
+        let combs ls (ls', leftovers) = (ls ++ ls', leftovers)
+            comb l = combs [l]
+         in case parseSingleArg s of
+              ArgBareDoubleDash -> ([], rest)
+              ArgBareDash -> OptArg "-" `comb` go rest
+              ArgPlain a -> OptArg a `comb` go rest
+              ArgDashed isLong key ->
+                let ds = parseDasheds isLong key
+                    asSwitches = map OptSwitch (NE.toList ds) `combs` go rest
+                 in case NE.nonEmpty rest of
+                      Nothing -> asSwitches
+                      Just (a :| others) ->
+                        let asOption v =
+                              let ss = NE.init ds
+                                  o = NE.last ds
+                               in (map OptSwitch ss ++ [OptOption o v]) `combs` go others
+                         in case parseSingleArg a of
+                              ArgBareDoubleDash -> asSwitches
+                              ArgDashed _ _ -> asSwitches
+                              ArgPlain val -> asOption val
+                              ArgBareDash -> asOption "-"
 
     parseDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
     parseDasheds b s =
