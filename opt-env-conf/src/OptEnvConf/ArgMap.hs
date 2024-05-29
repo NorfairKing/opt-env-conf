@@ -8,8 +8,9 @@ module OptEnvConf.ArgMap
     Dashed (..),
     renderDashed,
     parse,
-    consumeArg,
-    consumeOpt,
+    consumeArgument,
+    consumeOption,
+    Opt (..),
     parseSingleArg,
   )
 where
@@ -23,9 +24,7 @@ import Data.Validity.Containers ()
 import GHC.Generics (Generic)
 
 data ArgMap = ArgMap
-  { argMapArgs :: ![String],
-    argMapSwitches :: ![Dashed],
-    argMapOptions :: !(Map Dashed (NonEmpty String)),
+  { argMapOpts :: ![Opt],
     argMapLeftovers :: ![String]
   }
   deriving (Show, Eq, Generic)
@@ -35,17 +34,13 @@ instance Validity ArgMap
 empty :: ArgMap
 empty =
   ArgMap
-    { argMapArgs = [],
-      argMapSwitches = [],
-      argMapOptions = M.empty,
+    { argMapOpts = [],
       argMapLeftovers = []
     }
 
 hasUnconsumed :: ArgMap -> Bool
 hasUnconsumed am =
-  not (null (argMapArgs am))
-    || not (null (argMapSwitches am))
-    || not (null (argMapOptions am))
+  not (null (argMapOpts am))
 
 data Dashed
   = DashedShort !Char
@@ -61,44 +56,45 @@ renderDashed = \case
 
 parse :: [String] -> ArgMap
 parse args =
-  let (os, leftovers) = parseOpts args
-      am = go os
-   in am {argMapLeftovers = leftovers}
-  where
-    go :: [Opt] -> ArgMap
-    go = \case
-      [] -> empty
-      (a : rest) ->
-        let am = go rest
-         in case a of
-              OptArg s -> am {argMapArgs = s : argMapArgs am}
-              OptSwitch d -> am {argMapSwitches = d : argMapSwitches am}
-              OptOption d v -> am {argMapOptions = M.insertWith (<>) d (v :| []) (argMapOptions am)}
+  let (opts, leftovers) = parseOpts args
+   in ArgMap {argMapOpts = opts, argMapLeftovers = leftovers}
 
 -- The type is a bit strange, but it makes dealing with the state monad easier
-consumeArg :: ArgMap -> (Maybe String, ArgMap)
-consumeArg am = case argMapArgs am of
-  [] -> (Nothing, am)
-  (a : rest) -> (Just a, am {argMapArgs = rest})
+consumeArgument :: ArgMap -> (Maybe String, ArgMap)
+consumeArgument am =
+  let (mS, opts') = go $ argMapOpts am
+   in (mS, am {argMapOpts = opts'})
+  where
+    go =
+      \case
+        [] -> (Nothing, [])
+        (o : rest) -> case o of
+          OptArg v -> (Just v, rest)
+          _ ->
+            let (mS, os) = go rest
+             in (mS, o : os)
 
-consumeOpt :: Dashed -> ArgMap -> (Maybe String, ArgMap)
-consumeOpt dashed am =
-  let m = argMapOptions am
-   in case M.lookup dashed m of
-        Nothing -> (Nothing, am)
-        Just (v :| vs) ->
-          ( Just v,
-            am
-              { argMapOptions = case NE.nonEmpty vs of
-                  Nothing -> M.delete dashed m
-                  Just ne -> M.insert dashed ne m
-              }
-          )
+consumeOption :: Dashed -> ArgMap -> (Maybe String, ArgMap)
+consumeOption dashed am =
+  let (mS, opts') = go $ argMapOpts am
+   in (mS, am {argMapOpts = opts'})
+  where
+    go =
+      \case
+        [] -> (Nothing, [])
+        (o : rest) -> case o of
+          OptOption k v | k == dashed -> (Just v, rest)
+          _ ->
+            let (mS, os) = go rest
+             in (mS, o : os)
 
 data Opt
   = OptArg String
   | OptSwitch !Dashed
   | OptOption !Dashed !String
+  deriving (Show, Eq, Generic)
+
+instance Validity Opt
 
 parseOpts :: [String] -> ([Opt], [String])
 parseOpts = go

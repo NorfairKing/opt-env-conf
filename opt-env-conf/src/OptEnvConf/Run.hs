@@ -192,10 +192,10 @@ runPP p args envVars =
   validationToEither <$> runValidationT (runStateT (runReaderT p envVars) args)
 
 ppArg :: PP (Maybe String)
-ppArg = state AM.consumeArg
+ppArg = state AM.consumeArgument
 
 ppOpt :: Dashed -> PP (Maybe String)
-ppOpt d = state $ AM.consumeOpt d
+ppOpt d = state $ AM.consumeOption d
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . ValidationT . pure . Failure

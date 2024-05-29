@@ -9,7 +9,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import OptEnvConf
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
 import OptEnvConf.ArgMap.Gen ()
 import OptEnvConf.EnvMap (EnvMap (..))
@@ -75,7 +75,7 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = ArgMap.empty {argMapArgs = ls}
+              let args = ArgMap.empty {argMapOpts = map OptArg ls}
               let p = many $ strArgument []
               let expected = ls
               shouldParse p args env mConf expected
@@ -84,7 +84,7 @@ spec = do
       it "fails to parse zero args" $
         forAllValid $ \env ->
           forAllValid $ \mConf -> do
-            let args = ArgMap.empty {argMapArgs = []}
+            let args = ArgMap.empty {argMapOpts = []}
             let p = some $ strArgument []
             shouldFail p args env mConf (ParseErrorMissingArgument :| [])
 
@@ -92,7 +92,7 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = ArgMap.empty {argMapArgs = NE.toList ls}
+              let args = ArgMap.empty {argMapOpts = map OptArg $ NE.toList ls}
               let p = some $ strArgument []
               let expected = NE.toList ls
               shouldParse p args env mConf expected
@@ -109,7 +109,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \(l, arg) ->
               forAllValid $ \(var, val) -> do
-                let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (arg :| [])}
+                let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) arg]}
                 let env = EnvMap.insert var val env'
                 let p =
                       optionalFirst
@@ -133,7 +133,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \(l, arg) ->
               forAllValid $ \(var, val) -> do
-                let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (arg :| [])}
+                let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) arg]}
                 let env = EnvMap.insert var val env'
                 let p =
                       requiredFirst
@@ -150,7 +150,7 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf ->
             forAllValid $ \arg -> do
-              let args = ArgMap.empty {argMapArgs = [arg]}
+              let args = ArgMap.empty {argMapOpts = [OptArg arg]}
               let p = strArgument []
               let expected = arg
               shouldParse p args env mConf expected
@@ -160,7 +160,7 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
-              let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) (r :| [])}
+              let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) r]}
               let p = strOption [long $ NE.toList l]
               let expected = r
               shouldParse p args env mConf expected
@@ -169,9 +169,9 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
-              let args = ArgMap.empty {argMapOptions = M.singleton (DashedLong l) rs}
+              let args = ArgMap.empty {argMapOpts = map (OptOption (DashedLong l)) rs}
               let p = many $ strOption [long $ NE.toList l]
-              let expected = NE.toList rs
+              let expected = rs
               shouldParse p args env mConf expected
 
     describe "EnvVar" $ do

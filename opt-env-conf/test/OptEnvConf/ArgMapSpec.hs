@@ -3,7 +3,7 @@ module OptEnvConf.ArgMapSpec (spec) where
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as AM
 import Test.QuickCheck
 import Test.Syd
@@ -31,9 +31,7 @@ spec = do
     it "treats '-' as an argument" $
       AM.parse ["-"]
         `shouldBe` ArgMap
-          { argMapArgs = ["-"],
-            argMapSwitches = [],
-            argMapOptions = M.empty,
+          { argMapOpts = [OptArg "-"],
             argMapLeftovers = []
           }
 
@@ -56,9 +54,7 @@ spec = do
       forAllValid $ \c ->
         AM.parse [['-', c]]
           `shouldBe` ArgMap
-            { argMapArgs = [],
-              argMapSwitches = [DashedShort c],
-              argMapOptions = M.empty,
+            { argMapOpts = [OptSwitch (DashedShort c)],
               argMapLeftovers = []
             }
 
@@ -66,9 +62,7 @@ spec = do
       forAllValid $ \s ->
         AM.parse ["--" <> NE.toList s]
           `shouldBe` ArgMap
-            { argMapArgs = [],
-              argMapSwitches = [DashedLong s],
-              argMapOptions = M.empty,
+            { argMapOpts = [OptSwitch (DashedLong s)],
               argMapLeftovers = []
             }
 
@@ -77,9 +71,7 @@ spec = do
         forAllValid $ \o ->
           AM.parse [['-', c], o]
             `shouldBe` ArgMap
-              { argMapArgs = [],
-                argMapSwitches = [],
-                argMapOptions = M.singleton (DashedShort c) (o :| []),
+              { argMapOpts = [OptOption (DashedShort c) o],
                 argMapLeftovers = []
               }
 
@@ -88,8 +80,6 @@ spec = do
         forAllValid $ \o ->
           AM.parse ["--" <> NE.toList s, o]
             `shouldBe` ArgMap
-              { argMapArgs = [],
-                argMapSwitches = [],
-                argMapOptions = M.singleton (DashedLong s) (o :| []),
+              { argMapOpts = [OptOption (DashedLong s) o],
                 argMapLeftovers = []
               }
