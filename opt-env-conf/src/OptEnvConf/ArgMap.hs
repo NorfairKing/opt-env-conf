@@ -17,8 +17,6 @@ where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import Data.Map (Map)
-import qualified Data.Map as M
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
@@ -74,8 +72,10 @@ consumeArgument am =
             let (mS, os) = go rest
              in (mS, o : os)
 
-consumeOption :: Dashed -> ArgMap -> (Maybe String, ArgMap)
-consumeOption dashed am =
+-- This may be accidentally cubic.
+-- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
+consumeOption :: [Dashed] -> ArgMap -> (Maybe String, ArgMap)
+consumeOption dasheds am =
   let (mS, opts') = go $ argMapOpts am
    in (mS, am {argMapOpts = opts'})
   where
@@ -83,7 +83,7 @@ consumeOption dashed am =
       \case
         [] -> (Nothing, [])
         (o : rest) -> case o of
-          OptOption k v | k == dashed -> (Just v, rest)
+          OptOption k v | k `elem` dasheds -> (Just v, rest)
           _ ->
             let (mS, os) = go rest
              in (mS, o : os)

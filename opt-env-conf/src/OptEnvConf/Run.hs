@@ -70,6 +70,7 @@ runParserOn p args envVars mConfig =
   validationToEither <$> do
     let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     resultValidation <- runValidationT $ runStateT (runReaderT (go p) ppEnv) args
+    -- TODO unconsumed options
     pure $ second AM.argMapLeftovers <$> resultValidation
   where
     tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
@@ -139,30 +140,13 @@ runParserOn p args envVars mConfig =
             Right a -> pure a
       ParserOpt r o -> do
         let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
-        let goD d = do
-              mS <- ppOpt d
-              case mS of
-                Nothing -> ppError ParseErrorMissingOption
-                Just s -> do
-                  case r s of
-                    Left err -> ppError $ ParseErrorOptionRead err
-                    Right a -> pure a
-
-        let goDs = \case
-              [] -> ppError ParseErrorMissingOption
-              (d : rest) -> do
-                eor <- tryPP $ goD d
-                case eor of
-                  -- Parse failed
-                  Left es@(e :| _) -> case e of
-                    -- If this dashed was missing, try the rest
-                    ParseErrorMissingOption -> goDs rest
-                    _ -> ppErrors es -- Record the errors
-                    -- parse succeeded, record the state and finish
-                  Right (a, s') -> do
-                    put s'
-                    pure a
-        goDs ds
+        mS <- ppOpt ds
+        case mS of
+          Nothing -> ppError ParseErrorMissingOption
+          Just s -> do
+            case r s of
+              Left err -> ppError $ ParseErrorOptionRead err
+              Right a -> pure a
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
         pure (EM.lookup v es)
@@ -194,8 +178,8 @@ runPP p args envVars =
 ppArg :: PP (Maybe String)
 ppArg = state AM.consumeArgument
 
-ppOpt :: Dashed -> PP (Maybe String)
-ppOpt d = state $ AM.consumeOption d
+ppOpt :: [Dashed] -> PP (Maybe String)
+ppOpt ds = state $ AM.consumeOption ds
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . ValidationT . pure . Failure

@@ -7,7 +7,6 @@ import qualified Data.Aeson.KeyMap as KeyMap
 import Data.GenValidity.Aeson ()
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map as M
 import OptEnvConf
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
