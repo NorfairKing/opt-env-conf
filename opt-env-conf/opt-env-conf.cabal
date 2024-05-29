@@ -38,6 +38,7 @@ library
       OptEnvConf.Opt
       OptEnvConf.Parser
       OptEnvConf.Run
+      OptEnvConf.Validation
   other-modules:
       Paths_opt_env_conf
   hs-source-dirs:

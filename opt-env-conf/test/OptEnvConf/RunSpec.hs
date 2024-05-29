@@ -202,8 +202,9 @@ shouldParse ::
   Maybe JSON.Object ->
   a ->
   IO ()
-shouldParse p args env mConf expected =
-  case runParserPure p args env mConf of
+shouldParse p args env mConf expected = do
+  errOrRes <- runParserOn p args env mConf
+  case errOrRes of
     Left err -> expectationFailure $ show err
     Right (actual, _) -> actual `shouldBe` expected
 
@@ -215,7 +216,8 @@ shouldFail ::
   Maybe JSON.Object ->
   NonEmpty ParseError ->
   IO ()
-shouldFail p args env mConf expected =
-  case runParserPure p args env mConf of
+shouldFail p args env mConf expected = do
+  errOrRes <- runParserOn p args env mConf
+  case errOrRes of
     Left err -> err `shouldBe` expected
     Right (actual, _) -> expectationFailure $ show actual

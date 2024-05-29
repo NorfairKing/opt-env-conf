@@ -28,6 +28,15 @@ data Parser a where
   ParserAlt :: Parser a -> Parser a -> Parser a
   ParserMany :: Parser a -> Parser [a]
   ParserSome :: Parser a -> Parser [a]
+  -- IO
+  --
+
+  -- | Apply a computation to the result of a parser
+  --
+  -- This is intended for use-cases like resolving a file to an absolute path.
+  -- It is morally ok for read-only IO actions but you will
+  -- have a bad time if the action is not read-only.
+  ParserMapIO :: (a -> IO b) -> Parser a -> Parser b
   -- Combining
   -- TODO Maybe we can get rid of this constructor using 'optional requiredFirst'
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
@@ -97,6 +106,10 @@ showParserABit = ($ "") . go 0
       ParserSome p ->
         showParen (d > 10) $
           showString "Some "
+            . go 11 p
+      ParserMapIO _ p ->
+        showParen (d > 10) $
+          showString "MapIO _ "
             . go 11 p
       ParserOptionalFirst ps ->
         showParen (d > 10) $

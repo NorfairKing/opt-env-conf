@@ -1,11 +1,11 @@
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.Run where
 
+import Control.Arrow (second)
 import Control.Exception
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -16,14 +16,13 @@ import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import Data.Validity hiding (Validation)
-import GHC.Generics (Generic)
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
 import OptEnvConf.Opt
 import OptEnvConf.Parser
+import OptEnvConf.Validation
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
 
@@ -34,7 +33,8 @@ runParser p = do
   let mConf = Nothing
 
   -- TODO do something with the leftovers
-  case runParserPure p args envVars mConf of
+  errOrResult <- runParserOn p args envVars mConf
+  case errOrResult of
     Left err -> die $ unlines $ map displayException $ NE.toList err
     Right (a, _) -> pure a
 
@@ -60,24 +60,23 @@ instance Exception ParseError where
     ParseErrorMissingOption -> "Missing required option"
     ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
 
-runParserPure ::
+runParserOn ::
   Parser a ->
   ArgMap ->
   EnvMap ->
   Maybe JSON.Object ->
-  Either (NonEmpty ParseError) (a, [String])
-runParserPure p args envVars mConfig =
-  validationToEither $ do
+  IO (Either (NonEmpty ParseError) (a, [String]))
+runParserOn p args envVars mConfig =
+  validationToEither <$> do
     let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
-    (result, unconsumedArgs) <- runStateT (runReaderT (go p) ppEnv) args
-    when (AM.hasUnconsumed unconsumedArgs) $ Failure $ NE.singleton ParseErrorUnconsumed
-    pure (result, AM.argMapLeftovers unconsumedArgs)
+    resultValidation <- runValidationT $ runStateT (runReaderT (go p) ppEnv) args
+    pure $ second AM.argMapLeftovers <$> resultValidation
   where
     tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
     tryPP pp = do
       s <- get
       e <- ask
-      pure $ runPP pp s e
+      liftIO $ runPP pp s e
     go ::
       Parser a ->
       PP a
@@ -106,6 +105,9 @@ runParserPure p args envVars mConfig =
         a <- go p'
         as <- go $ ParserMany p'
         pure $ a : as
+      ParserMapIO f p' -> do
+        a <- go p'
+        liftIO $ f a
       ParserOptionalFirst pss -> case pss of
         [] -> pure Nothing
         (p' : ps) -> do
@@ -172,7 +174,7 @@ runParserPure p args envVars mConfig =
             Left err -> ppError $ ParseErrorConfigParseError err
             Right v -> pure (Just v)
 
-type PP a = ReaderT PPEnv (StateT PPState (Validation ParseError)) a
+type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 
 type PPState = ArgMap
 
@@ -185,9 +187,9 @@ runPP ::
   PP a ->
   ArgMap ->
   PPEnv ->
-  Either (NonEmpty ParseError) (a, ArgMap)
+  IO (Either (NonEmpty ParseError) (a, PPState))
 runPP p args envVars =
-  validationToEither $ runStateT (runReaderT p envVars) args
+  validationToEither <$> runValidationT (runStateT (runReaderT p envVars) args)
 
 ppArg :: PP (Maybe String)
 ppArg = state AM.consumeArg
@@ -196,36 +198,7 @@ ppOpt :: Dashed -> PP (Maybe String)
 ppOpt d = state $ AM.consumeOpt d
 
 ppErrors :: NonEmpty ParseError -> PP a
-ppErrors = lift . lift . Failure
+ppErrors = lift . lift . ValidationT . pure . Failure
 
 ppError :: ParseError -> PP a
 ppError = ppErrors . NE.singleton
-
-data Validation e a
-  = Failure !(NonEmpty e)
-  | Success !a
-  deriving (Generic, Show)
-
-instance (Validity e, Validity a) => Validity (Validation e a)
-
-instance Functor (Validation e) where
-  fmap _ (Failure e) = Failure e
-  fmap f (Success a) = Success (f a)
-
-instance Applicative (Validation e) where
-  pure = Success
-  Failure e1 <*> b = Failure $ case b of
-    Failure e2 -> e1 `NE.append` e2
-    Success _ -> e1
-  Success _ <*> Failure e2 = Failure e2
-  Success f <*> Success a = Success (f a)
-
-instance Monad (Validation e) where
-  return = pure
-  Success a >>= f = f a
-  Failure es >>= _ = Failure es
-
-validationToEither :: Validation e a -> Either (NonEmpty e) a
-validationToEither = \case
-  Success a -> Right a
-  Failure ne -> Left ne

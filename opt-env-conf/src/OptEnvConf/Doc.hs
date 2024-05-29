@@ -87,6 +87,7 @@ parserDocs = go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
       ParserSome p -> go p -- TODO: is this right?
+      ParserMapIO _ p -> go p -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserArg _ OptionGenerals {..} ->
