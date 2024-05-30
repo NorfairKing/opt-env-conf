@@ -26,6 +26,7 @@ data OptDoc = OptDoc
     optDocHelp :: !(Maybe String),
     optDocDasheds :: ![Dashed]
   }
+  deriving (Show, Eq)
 
 data EnvDoc = EnvDoc
   { envDocVar :: !String,
@@ -90,24 +91,8 @@ parserDocs = go
       ParserMapIO _ p -> go p -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg _ OptionGenerals {..} ->
-        AnyDocsSingle
-          [ AnyDocOpt $
-              OptDoc
-                { optDocDasheds = [],
-                  optDocMetavar = argumentSpecificsMetavar optionGeneralSpecifics,
-                  optDocHelp = optionGeneralHelp
-                }
-          ]
-      ParserOpt _ OptionGenerals {..} ->
-        AnyDocsSingle
-          [ AnyDocOpt $
-              OptDoc
-                { optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
-                  optDocMetavar = optionSpecificsMetavar optionGeneralSpecifics,
-                  optDocHelp = optionGeneralHelp
-                }
-          ]
+      ParserArg _ o -> AnyDocsSingle [AnyDocOpt $ argumentOptDoc o]
+      ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
       ParserEnvVar v ->
         AnyDocsSingle
           [ AnyDocEnv $
@@ -117,6 +102,22 @@ parserDocs = go
                 }
           ]
       ParserConfig _ -> AnyDocsSingle []
+
+argumentOptDoc :: ArgumentParser a -> OptDoc
+argumentOptDoc OptionGenerals {..} =
+  OptDoc
+    { optDocDasheds = [],
+      optDocMetavar = argumentSpecificsMetavar optionGeneralSpecifics,
+      optDocHelp = optionGeneralHelp
+    }
+
+optionOptDoc :: OptionParser a -> OptDoc
+optionOptDoc OptionGenerals {..} =
+  OptDoc
+    { optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
+      optDocMetavar = optionSpecificsMetavar optionGeneralSpecifics,
+      optDocHelp = optionGeneralHelp
+    }
 
 renderAnyDoc :: AnyDoc -> [[Chunk]]
 renderAnyDoc = \case
@@ -163,9 +164,13 @@ renderShortOptDocs = go . simplifyAnyDocs
         unwordsChunks $
           map
             ( \OptDoc {..} ->
-                [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds,
-                  chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
-                ]
+                concat
+                  [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
+                      | not (null optDocDasheds)
+                    ],
+                    [ chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
+                    ]
+                  ]
             )
             vs
 
@@ -191,7 +196,7 @@ renderOptDocLong =
           [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
               | not (null optDocDasheds)
             ],
-            [ chunk . T.pack $ fromMaybe "[ARGS]" optDocMetavar,
+            [ chunk . T.pack $ fromMaybe "[ARG]" optDocMetavar,
               chunk . T.pack $ fromMaybe "undocumented" optDocHelp
             ]
           ]

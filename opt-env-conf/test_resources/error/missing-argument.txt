@@ -1,1 +1,2 @@
-Missing argument
+Missing argument:
+ARGUMENT example argument

@@ -23,32 +23,32 @@ exampleParserSpec dir = exampleParserSpec' dir (optEnvParser :: Parser a)
 exampleParserSpec' :: FilePath -> Parser a -> Spec
 exampleParserSpec' dir parser = describe dir $ do
   it "it documents the parser in the same way" $
-    pureGoldenChunksFile ("test_resources/" <> dir <> "/docs.txt") $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/docs.txt") $
       renderDocs $
         parserDocs parser
 
   it "it documents the opt parser in the same way" $
-    pureGoldenChunksFile ("test_resources/" <> dir <> "/opt.txt") $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt.txt") $
       renderCompleteOptDocs $
         parserOptDocs parser
 
   it "it documents the opt parser in the same way" $
-    pureGoldenChunksFile ("test_resources/" <> dir <> "/opt-short.txt") $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs $
         parserOptDocs parser
 
   it "it documents the opt parser in the same way" $
-    pureGoldenChunksFile ("test_resources/" <> dir <> "/opt-long.txt") $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-long.txt") $
       renderLongOptDocs $
         parserOptDocs parser
 
   it "it documents the env parser in the same way" $
-    pureGoldenTextFile ("test_resources/" <> dir <> "/env.txt") $
+    pureGoldenTextFile ("test_resources/docs/" <> dir <> "/env.txt") $
       renderEnvDocs $
         parserEnvDocs parser
 
   it "shows the parser in the same way" $
-    pureGoldenStringFile ("test_resources/" <> dir <> "/show.txt") $
+    pureGoldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
       showParserABit parser
 
 pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text

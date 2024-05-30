@@ -19,6 +19,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
+import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
 import OptEnvConf.Opt
@@ -55,10 +56,10 @@ renderError = \case
     [["Failed to read option:", chunk $ T.pack $ show s]]
   ParseErrorRequired ->
     [["Required"]]
-  ParseErrorMissingArgument ->
-    [["Missing argument"]]
-  ParseErrorMissingOption ->
-    [["Missing option"]]
+  ParseErrorMissingArgument o ->
+    ["Missing argument:"] : renderOptDocLong o
+  ParseErrorMissingOption o ->
+    ["Missing option:"] : renderOptDocLong o
   ParseErrorConfigParseError s ->
     [["Failed to parse configuration:", chunk $ T.pack $ show s]]
 
@@ -68,8 +69,8 @@ data ParseError
   | ParseErrorArgumentRead !String
   | ParseErrorOptionRead !String
   | ParseErrorRequired
-  | ParseErrorMissingArgument
-  | ParseErrorMissingOption
+  | ParseErrorMissingArgument !OptDoc
+  | ParseErrorMissingOption !OptDoc
   | ParseErrorConfigParseError !String
   deriving (Show, Eq)
 
@@ -80,8 +81,8 @@ instance Exception ParseError where
     ParseErrorArgumentRead err -> "Unable to read argument: " <> show err
     ParseErrorOptionRead err -> "Unable to read option: " <> show err
     ParseErrorRequired -> "Missing required setting" -- TODO show which ones
-    ParseErrorMissingArgument -> "Missing required argument"
-    ParseErrorMissingOption -> "Missing required option"
+    ParseErrorMissingArgument _ -> "Missing required argument"
+    ParseErrorMissingOption _ -> "Missing required option"
     ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
 
 runParserOn ::
@@ -155,10 +156,10 @@ runParserOn p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserArg r _ -> do
+      ParserArg r o -> do
         mS <- ppArg
         case mS of
-          Nothing -> ppError ParseErrorMissingArgument
+          Nothing -> ppError $ ParseErrorMissingArgument $ argumentOptDoc o
           Just s -> case r s of
             Left err -> ppError $ ParseErrorArgumentRead err
             Right a -> pure a
@@ -166,7 +167,7 @@ runParserOn p args envVars mConfig =
         let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
         mS <- ppOpt ds
         case mS of
-          Nothing -> ppError ParseErrorMissingOption
+          Nothing -> ppError $ ParseErrorMissingOption $ optionOptDoc o
           Just s -> do
             case r s of
               Left err -> ppError $ ParseErrorOptionRead err

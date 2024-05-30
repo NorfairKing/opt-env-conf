@@ -1,1 +1,2 @@
-Missing option
+Missing option:
+--foo FOO example option

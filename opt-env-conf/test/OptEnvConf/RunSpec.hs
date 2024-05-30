@@ -15,6 +15,7 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Parser
+import OptEnvConf.Reader as Reader
 import Test.Syd
 import Test.Syd.Validity
 
@@ -84,8 +85,9 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf -> do
             let args = ArgMap.empty {argMapOpts = []}
-            let p = some $ strArgument []
-            shouldFail p args env mConf (ParseErrorMissingArgument :| [])
+            let ap = emptyArgumentParser
+            let p = some $ ParserArg Reader.str ap
+            shouldFail p args env mConf (ParseErrorMissingArgument (argumentOptDoc ap) :| [])
 
       it "can parse some args" $
         forAllValid $ \env ->

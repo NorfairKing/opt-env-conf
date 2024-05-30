@@ -10,26 +10,26 @@ copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        AllRightsReserved
 build-type:     Simple
 extra-source-files:
-    test_resources/args/docs.txt
-    test_resources/args/env.txt
-    test_resources/args/opt-long.txt
-    test_resources/args/opt-short.txt
-    test_resources/args/opt.txt
-    test_resources/args/show.txt
+    test_resources/docs/args/docs.txt
+    test_resources/docs/args/env.txt
+    test_resources/docs/args/opt-long.txt
+    test_resources/docs/args/opt-short.txt
+    test_resources/docs/args/opt.txt
+    test_resources/docs/args/show.txt
+    test_resources/docs/greet/docs.txt
+    test_resources/docs/greet/env.txt
+    test_resources/docs/greet/opt-long.txt
+    test_resources/docs/greet/opt-short.txt
+    test_resources/docs/greet/opt.txt
+    test_resources/docs/greet/show.txt
+    test_resources/docs/optional/docs.txt
+    test_resources/docs/optional/env.txt
+    test_resources/docs/optional/opt-long.txt
+    test_resources/docs/optional/opt-short.txt
+    test_resources/docs/optional/opt.txt
+    test_resources/docs/optional/show.txt
     test_resources/error/missing-argument.txt
     test_resources/error/missing-option.txt
-    test_resources/greet/docs.txt
-    test_resources/greet/env.txt
-    test_resources/greet/opt-long.txt
-    test_resources/greet/opt-short.txt
-    test_resources/greet/opt.txt
-    test_resources/greet/show.txt
-    test_resources/optional/docs.txt
-    test_resources/optional/env.txt
-    test_resources/optional/opt-long.txt
-    test_resources/optional/opt-short.txt
-    test_resources/optional/opt.txt
-    test_resources/optional/show.txt
 
 library
   exposed-modules:
