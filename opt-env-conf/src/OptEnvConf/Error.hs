@@ -14,9 +14,10 @@ data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
   | ParseErrorMissingArgument !OptDoc
-  | ParseErrorMissingOption !OptDoc
   | ParseErrorArgumentRead !String
+  | ParseErrorMissingOption !OptDoc
   | ParseErrorOptionRead !String
+  | ParseErrorMissingEnvVar !String
   | ParseErrorEnvRead !String
   | ParseErrorRequired
   | ParseErrorConfigParseError !String
@@ -47,6 +48,8 @@ renderError = \case
     ["Missing argument:"] : renderOptDocLong o
   ParseErrorMissingOption o ->
     ["Missing option:"] : renderOptDocLong o
+  ParseErrorMissingEnvVar v ->
+    [["Missing option: ", chunk $ T.pack $ show v]]
   ParseErrorArgumentRead s ->
     [["Failed to read argument: ", chunk $ T.pack $ show s]]
   ParseErrorOptionRead s ->

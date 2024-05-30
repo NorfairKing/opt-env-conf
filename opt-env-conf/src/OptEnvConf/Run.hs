@@ -184,10 +184,12 @@ runParserOn p args envVars mConfig =
               Right a -> pure a
       ParserEnvVar r v -> do
         es <- asks ppEnvEnv
-        forM (EnvMap.lookup v es) $ \s ->
-          case r s of
-            Left err -> ppError $ ParseErrorEnvRead err
-            Right a -> pure a
+        case EnvMap.lookup v es of
+          Nothing -> ppError $ ParseErrorMissingEnvVar v
+          Just s ->
+            case r s of
+              Left err -> ppError $ ParseErrorEnvRead err
+              Right a -> pure a
       ParserConfig key -> do
         mConf <- asks ppEnvConf
         case mConf of

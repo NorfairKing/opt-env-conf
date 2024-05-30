@@ -162,7 +162,7 @@ spec = do
                             strOption
                               [ long $ NE.toList l
                               ],
-                          envVar str var
+                          optional $ envVar str var
                         ]
                 shouldParse p args env mConf (Just arg)
 
@@ -187,7 +187,7 @@ spec = do
                             strOption
                               [ long $ NE.toList l
                               ],
-                          envVar str var
+                          optional $ envVar str var
                         ]
                 shouldParse p args env mConf arg
 
@@ -228,7 +228,7 @@ spec = do
               forAllValid $ \(key, val) -> do
                 let env = EnvMap.insert key val env'
                 let p = envVar str key
-                let expected = Just val
+                let expected = val
                 shouldParse p args env mConf expected
 
     describe "Config" $ do
