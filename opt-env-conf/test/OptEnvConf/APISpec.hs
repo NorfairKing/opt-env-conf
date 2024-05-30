@@ -78,7 +78,7 @@ instance HasParser Greet where
                 help "Greeting to use"
               ],
           optional $ envVar str "GREETING",
-          confVar "greeting"
+          confVal "greeting"
         ]
 
 data Args = Args [String]

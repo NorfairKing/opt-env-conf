@@ -52,7 +52,7 @@ data Parser a where
   -- | Env vars
   ParserEnvVar :: !(Reader a) -> !String -> Parser a
   -- | Configuration file
-  ParserConfig :: FromJSON a => String -> Parser (Maybe a)
+  ParserConfig :: FromJSON a => String -> Parser a
 
 instance Functor Parser where
   fmap = ParserFmap

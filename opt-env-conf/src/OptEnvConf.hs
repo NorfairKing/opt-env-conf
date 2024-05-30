@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
+{-# OPTIONS_GHC -Wno-duplicate-exports #-}
 
 module OptEnvConf
   ( module OptEnvConf,
@@ -9,6 +10,7 @@ module OptEnvConf
     module OptEnvConf.Reader,
     Parser,
     HasParser (..),
+    optional,
     module Control.Applicative,
   )
 where
@@ -38,8 +40,8 @@ option r = ParserOpt r . completeBuilder . mconcat
 envVar :: Reader a -> String -> Parser a
 envVar = ParserEnvVar
 
-confVar :: FromJSON a => String -> Parser (Maybe a)
-confVar = ParserConfig
+confVal :: FromJSON a => String -> Parser a
+confVal = ParserConfig
 
 optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
 optionalFirst = ParserOptionalFirst
@@ -62,5 +64,5 @@ optEnvConf r key h =
           ],
       optional $
         envVar r key, -- TODO just using the key doesn't work, needs to be UPPER_SNAKE_CASE
-      confVar key -- TODO just using the key doesn't work, needs to be kebab-case
+      optional $ confVal key -- TODO just using the key doesn't work, needs to be kebab-case
     ]

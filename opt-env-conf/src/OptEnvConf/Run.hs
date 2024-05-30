@@ -193,10 +193,10 @@ runParserOn p args envVars mConfig =
       ParserConfig key -> do
         mConf <- asks ppEnvConf
         case mConf of
-          Nothing -> pure Nothing
+          Nothing -> ppError $ ParseErrorMissingConfig key
           Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
-            Left err -> ppError $ ParseErrorConfigParseError err
-            Right v -> pure (Just v)
+            Left err -> ppError $ ParseErrorConfigRead err
+            Right v -> pure v
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 

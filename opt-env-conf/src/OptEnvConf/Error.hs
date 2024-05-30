@@ -19,8 +19,9 @@ data ParseError
   | ParseErrorOptionRead !String
   | ParseErrorMissingEnvVar !String
   | ParseErrorEnvRead !String
+  | ParseErrorMissingConfig !String
+  | ParseErrorConfigRead !String
   | ParseErrorRequired
-  | ParseErrorConfigParseError !String
   deriving (Show, Eq)
 
 renderErrors :: NonEmpty ParseError -> [Chunk]
@@ -46,17 +47,19 @@ renderError = \case
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorMissingArgument o ->
     ["Missing argument:"] : renderOptDocLong o
-  ParseErrorMissingOption o ->
-    ["Missing option:"] : renderOptDocLong o
-  ParseErrorMissingEnvVar v ->
-    [["Missing option: ", chunk $ T.pack $ show v]]
   ParseErrorArgumentRead s ->
     [["Failed to read argument: ", chunk $ T.pack $ show s]]
+  ParseErrorMissingOption o ->
+    ["Missing option:"] : renderOptDocLong o
   ParseErrorOptionRead s ->
     [["Failed to read option: ", chunk $ T.pack $ show s]]
+  ParseErrorMissingEnvVar v ->
+    [["Missing option: ", chunk $ T.pack $ show v]]
   ParseErrorEnvRead s ->
     [["Failed to env var: ", chunk $ T.pack $ show s]]
+  ParseErrorMissingConfig v ->
+    [["Missing configuration: ", chunk $ T.pack $ show v]]
+  ParseErrorConfigRead s ->
+    [["Failed to parse configuration:", chunk $ T.pack $ show s]]
   ParseErrorRequired ->
     [["Required"]]
-  ParseErrorConfigParseError s ->
-    [["Failed to parse configuration:", chunk $ T.pack $ show s]]

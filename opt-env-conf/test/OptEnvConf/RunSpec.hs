@@ -238,8 +238,8 @@ spec = do
             forAllValid $ \conf ->
               forAllValid $ \(key, val) -> do
                 let mConf = Just $ KeyMap.insert (Key.fromString key) val conf
-                let p = confVar key
-                let expected = Just val
+                let p = confVal key
+                let expected = val
                 shouldParse p args env mConf expected
 
     describe "arguments" $ do
