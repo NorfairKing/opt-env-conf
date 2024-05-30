@@ -1,0 +1,2 @@
+Unexpected option: --quux "bar"
+This option is not expected to be parsed.

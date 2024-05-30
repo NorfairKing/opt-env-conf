@@ -27,13 +27,19 @@ renderErrors = unlinesChunks . concatMap renderError . NE.toList
 renderError :: ParseError -> [[Chunk]]
 renderError = \case
   ParseErrorUnrecognised opt ->
-    [ [ "Unrecognised argument:",
-        case opt of
-          OptArg s -> chunk $ T.pack $ show s
-          OptSwitch d -> chunk $ T.pack $ renderDashed d
-          OptOption d v -> chunk $ T.pack $ unwords [renderDashed d, show v]
-      ]
-    ]
+    case opt of
+      OptArg s ->
+        [ ["Unexpected argument: ", chunk $ T.pack $ show s],
+          ["No arguments are expected to be parsed."]
+        ]
+      OptSwitch d ->
+        [ ["Unexpected switch: ", chunk $ T.pack $ renderDashed d],
+          ["This option is not expected to be parsed."]
+        ]
+      OptOption d v ->
+        [ ["Unexpected option: ", chunk $ T.pack $ unwords [renderDashed d, show v]],
+          ["This option is not expected to be parsed."]
+        ]
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorArgumentRead s ->

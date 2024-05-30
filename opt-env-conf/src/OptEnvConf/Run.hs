@@ -39,18 +39,25 @@ runParser p = do
 
   tc <- getTerminalCapabilitiesFromHandle stderr
 
-  case NE.nonEmpty $ unrecognisedOptions p args of
-    Just unrecogniseds -> do
-      hPutChunksLocaleWith tc stderr $ renderErrors $ NE.map ParseErrorUnrecognised unrecogniseds
+  -- TODO do something with the leftovers
+  errOrResult <- runParserComplete p args envVars mConf
+  case errOrResult of
+    Left errs -> do
+      hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
-    Nothing -> do
-      -- TODO do something with the leftovers
-      errOrResult <- runParserOn p args envVars mConf
-      case errOrResult of
-        Left errs -> do
-          hPutChunksLocaleWith tc stderr $ renderErrors errs
-          exitFailure
-        Right (a, _) -> pure a
+    Right (a, _) -> pure a
+
+-- 'runParserOn' _and_ 'unrecognisedOptions'
+runParserComplete ::
+  Parser a ->
+  ArgMap ->
+  EnvMap ->
+  Maybe JSON.Object ->
+  IO (Either (NonEmpty ParseError) (a, [String]))
+runParserComplete p args env mConf =
+  case NE.nonEmpty $ unrecognisedOptions p args of
+    Just unrecogniseds -> pure $ Left $ NE.map ParseErrorUnrecognised unrecogniseds
+    Nothing -> runParserOn p args env mConf
 
 unrecognisedOptions :: Parser a -> ArgMap -> [Opt]
 unrecognisedOptions p args =

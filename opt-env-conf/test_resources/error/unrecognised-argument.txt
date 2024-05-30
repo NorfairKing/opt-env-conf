@@ -1,0 +1,4 @@
+Unexpected argument: "arg1"
+No arguments are expected to be parsed.
+Unexpected argument: "arg2"
+No arguments are expected to be parsed.
