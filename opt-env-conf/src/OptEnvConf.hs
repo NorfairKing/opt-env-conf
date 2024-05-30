@@ -15,6 +15,7 @@ where
 
 import Control.Applicative
 import Data.Aeson as JSON
+import Data.String
 import OptEnvConf.Doc
 import OptEnvConf.Opt
 import OptEnvConf.Parser
@@ -24,10 +25,10 @@ import OptEnvConf.Run
 envVar :: String -> Parser (Maybe String)
 envVar = ParserEnvVar
 
-strArgument :: [ArgumentBuilder String] -> Parser String
+strArgument :: IsString string => [ArgumentBuilder string] -> Parser string
 strArgument = argument str
 
-strOption :: [OptionBuilder String] -> Parser String
+strOption :: IsString string => [OptionBuilder string] -> Parser string
 strOption = option str
 
 argument :: Reader a -> [ArgumentBuilder a] -> Parser a

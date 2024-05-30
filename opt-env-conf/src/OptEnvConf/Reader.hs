@@ -1,11 +1,12 @@
 module OptEnvConf.Reader where
 
+import Data.String
 import Text.Read
 
 type Reader a = String -> Either String a
 
-str :: Reader String
-str = Right
+str :: IsString s => Reader s
+str = Right . fromString
 
 auto :: Read a => Reader a
 auto s = case readMaybe s of

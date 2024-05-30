@@ -21,15 +21,15 @@ spec = do
     ["--foo", "bar"]
   parseErrorSpec
     "unrecognised-option-other"
-    (strOption [long "foo"])
+    (strOption [long "foo"] :: Parser String)
     ["--quux", "bar"]
   parseErrorSpec
     "missing-argument"
-    (strArgument [help "example argument", metavar "ARGUMENT"])
+    (strArgument [help "example argument", metavar "ARGUMENT"] :: Parser String)
     []
   parseErrorSpec
     "missing-option"
-    (strOption [long "foo", help "example option", metavar "FOO"])
+    (strOption [long "foo", help "example option", metavar "FOO"] :: Parser String)
     []
 
 parseErrorSpec :: Show a => FilePath -> Parser a -> [String] -> Spec

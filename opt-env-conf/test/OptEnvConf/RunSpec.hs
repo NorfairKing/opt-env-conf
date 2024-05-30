@@ -31,7 +31,7 @@ spec = do
 
     it "recognises arguments when they would be parsed" $
       forAllValid $ \arg -> do
-        let p = strArgument []
+        let p = strArgument [] :: Parser String
         let args = [arg]
         unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
@@ -46,7 +46,7 @@ spec = do
       forAllValid $ \l1 -> do
         forAll (genValid `suchThat` (/= l1)) $ \l2 -> do
           forAllValid $ \v -> do
-            let p = strOption [long (NE.toList l1)]
+            let p = strOption [long (NE.toList l1)] :: Parser String
             let d = DashedLong l2
             let args = [ArgMap.renderDashed d, v]
             unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` [OptOption d v]
@@ -54,7 +54,7 @@ spec = do
     it "recognises an option that would be parsed" $
       forAllValid $ \l -> do
         forAllValid $ \v -> do
-          let p = strOption [long $ NE.toList l]
+          let p = strOption [long $ NE.toList l] :: Parser String
           let args = [ArgMap.renderDashed (DashedLong l), v]
           unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
@@ -129,7 +129,7 @@ spec = do
           forAllValid $ \mConf -> do
             let args = ArgMap.empty {argMapOpts = []}
             let ap = emptyArgumentParser
-            let p = some $ ParserArg Reader.str ap
+            let p = some $ ParserArg Reader.str ap :: Parser [String]
             shouldFail p args env mConf (ParseErrorMissingArgument (argumentOptDoc ap) :| [])
 
       it "can parse some args" $
