@@ -15,6 +15,7 @@ where
 
 import Control.Applicative
 import Data.Aeson as JSON
+import Data.List.NonEmpty (NonEmpty)
 import Data.String
 import OptEnvConf.Doc
 import OptEnvConf.Opt
@@ -45,3 +46,6 @@ optionalFirst = ParserOptionalFirst
 
 requiredFirst :: [Parser (Maybe a)] -> Parser a
 requiredFirst = ParserRequiredFirst
+
+someNonEmpty :: Parser a -> Parser (NonEmpty a)
+someNonEmpty = ParserSome

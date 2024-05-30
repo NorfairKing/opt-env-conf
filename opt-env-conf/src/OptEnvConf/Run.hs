@@ -140,7 +140,7 @@ runParserOn p args envVars mConfig =
       ParserSome p' -> do
         a <- go p'
         as <- go $ ParserMany p'
-        pure $ a : as
+        pure $ a :| as
       ParserMapIO f p' -> do
         a <- go p'
         liftIO $ f a

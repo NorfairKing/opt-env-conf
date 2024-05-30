@@ -14,6 +14,8 @@ where
 
 import Control.Applicative
 import Data.Aeson (FromJSON)
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 import OptEnvConf.Opt
 import OptEnvConf.Reader
 import Text.Show
@@ -28,7 +30,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: Parser a -> Parser a -> Parser a
   ParserMany :: Parser a -> Parser [a]
-  ParserSome :: Parser a -> Parser [a]
+  ParserSome :: Parser a -> Parser (NonEmpty a)
   -- IO
   --
 
@@ -76,7 +78,7 @@ instance Alternative Parser where
   many = ParserMany
 
   -- TODO maybe we can get rid of the some constructor by using (:) <$> p <$> many p
-  some = ParserSome
+  some = fmap NE.toList . ParserSome
 
 class HasParser a where
   optEnvParser :: Parser a
