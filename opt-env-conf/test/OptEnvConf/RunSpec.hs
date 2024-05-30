@@ -27,20 +27,20 @@ spec = do
     it "says that any argument is unrecognised when no arguments would be parsed" $
       forAllValid $ \args -> do
         let p = pure 'a'
-        unrecognisedOptions p (ArgMap.parse args) `shouldBe` map OptArg args
+        unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` map OptArg args
 
     it "recognises arguments when they would be parsed" $
       forAllValid $ \arg -> do
         let p = strArgument []
         let args = [arg]
-        unrecognisedOptions p (ArgMap.parse args) `shouldBe` []
+        unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
     it "says that an option is unrecognised when no options would not parsed" $
       forAllValid $ \d ->
         forAllValid $ \v -> do
           let p = pure 'a'
           let args = [ArgMap.renderDashed d, v]
-          unrecognisedOptions p (ArgMap.parse args) `shouldBe` [OptOption d v]
+          unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` [OptOption d v]
 
     it "says that an option is unrecognised when that options would not parsed" $
       forAllValid $ \l1 -> do
@@ -49,14 +49,14 @@ spec = do
             let p = strOption [long (NE.toList l1)]
             let d = DashedLong l2
             let args = [ArgMap.renderDashed d, v]
-            unrecognisedOptions p (ArgMap.parse args) `shouldBe` [OptOption d v]
+            unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` [OptOption d v]
 
     it "recognises an option that would be parsed" $
       forAllValid $ \l -> do
         forAllValid $ \v -> do
           let p = strOption [long $ NE.toList l]
           let args = [ArgMap.renderDashed (DashedLong l), v]
-          unrecognisedOptions p (ArgMap.parse args) `shouldBe` []
+          unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
   describe "runParser" $ do
     describe "Pure" $ do
@@ -267,11 +267,11 @@ spec = do
 argParseSpec :: (Show a, Eq a) => [String] -> Parser a -> a -> Spec
 argParseSpec args p expected = do
   it (unwords ["parses ", show args, "as", show expected]) $ do
-    let argMap = ArgMap.parse args
+    let argMap = ArgMap.parse_ args
     errOrRes <- runParserOn p argMap EnvMap.empty Nothing
     case errOrRes of
       Left err -> expectationFailure $ show err
-      Right (actual, _) -> actual `shouldBe` expected
+      Right actual -> actual `shouldBe` expected
 
 shouldParse ::
   (Show a, Eq a) =>
@@ -285,7 +285,7 @@ shouldParse p args env mConf expected = do
   errOrRes <- runParserOn p args env mConf
   case errOrRes of
     Left err -> expectationFailure $ show err
-    Right (actual, _) -> actual `shouldBe` expected
+    Right actual -> actual `shouldBe` expected
 
 shouldFail ::
   (Show a) =>
@@ -299,4 +299,4 @@ shouldFail p args env mConf expected = do
   errOrRes <- runParserOn p args env mConf
   case errOrRes of
     Left err -> err `shouldBe` expected
-    Right (actual, _) -> expectationFailure $ show actual
+    Right actual -> expectationFailure $ show actual

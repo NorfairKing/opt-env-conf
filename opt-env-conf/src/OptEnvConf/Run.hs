@@ -17,10 +17,10 @@ import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
-import qualified OptEnvConf.ArgMap as AM
+import qualified OptEnvConf.ArgMap as ArgMap
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
-import qualified OptEnvConf.EnvMap as EM
+import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Opt
 import OptEnvConf.Parser
@@ -32,20 +32,23 @@ import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
 runParser :: Parser a -> IO a
-runParser p = do
-  args <- AM.parse <$> getArgs
-  envVars <- EM.parse <$> getEnvironment
+runParser = fmap fst . runParserWithLeftovers
+
+runParserWithLeftovers :: Parser a -> IO (a, [String])
+runParserWithLeftovers p = do
+  args <- getArgs
+  let (argMap, leftovers) = ArgMap.parse args
+  envVars <- EnvMap.parse <$> getEnvironment
   let mConf = Nothing
 
   tc <- getTerminalCapabilitiesFromHandle stderr
 
-  -- TODO do something with the leftovers
-  errOrResult <- runParserComplete p args envVars mConf
+  errOrResult <- runParserComplete p argMap envVars mConf
   case errOrResult of
     Left errs -> do
       hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
-    Right (a, _) -> pure a
+    Right a -> pure (a, leftovers)
 
 -- 'runParserOn' _and_ 'unrecognisedOptions'
 runParserComplete ::
@@ -53,7 +56,7 @@ runParserComplete ::
   ArgMap ->
   EnvMap ->
   Maybe JSON.Object ->
-  IO (Either (NonEmpty ParseError) (a, [String]))
+  IO (Either (NonEmpty ParseError) a)
 runParserComplete p args env mConf =
   case NE.nonEmpty $ unrecognisedOptions p args of
     Just unrecogniseds -> pure $ Left $ NE.map ParseErrorUnrecognised unrecogniseds
@@ -100,12 +103,11 @@ runParserOn ::
   ArgMap ->
   EnvMap ->
   Maybe JSON.Object ->
-  IO (Either (NonEmpty ParseError) (a, [String]))
+  IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig =
   validationToEither <$> do
     let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
-    resultValidation <- runValidationT $ runStateT (runReaderT (go p) ppEnv) args
-    pure $ second AM.argMapLeftovers <$> resultValidation
+    runValidationT $ evalStateT (runReaderT (go p) ppEnv) args
   where
     tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
     tryPP pp = do
@@ -183,7 +185,7 @@ runParserOn p args envVars mConfig =
               Right a -> pure a
       ParserEnvVar v -> do
         es <- asks ppEnvEnv
-        pure (EM.lookup v es)
+        pure (EnvMap.lookup v es)
       ParserConfig key -> do
         mConf <- asks ppEnvConf
         case mConf of
@@ -210,10 +212,10 @@ runPP p args envVars =
   validationToEither <$> runValidationT (runStateT (runReaderT p envVars) args)
 
 ppArg :: PP (Maybe String)
-ppArg = state AM.consumeArgument
+ppArg = state ArgMap.consumeArgument
 
 ppOpt :: [Dashed] -> PP (Maybe String)
-ppOpt ds = state $ AM.consumeOption ds
+ppOpt ds = state $ ArgMap.consumeOption ds
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . ValidationT . pure . Failure

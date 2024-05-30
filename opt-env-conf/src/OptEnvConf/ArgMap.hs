@@ -7,6 +7,7 @@ module OptEnvConf.ArgMap
     Dashed (..),
     renderDashed,
     parse,
+    parse_,
     consumeArgument,
     consumeOption,
     Opt (..),
@@ -20,20 +21,15 @@ import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
 
-data ArgMap = ArgMap
-  { argMapOpts :: ![Opt],
-    argMapLeftovers :: ![String]
+newtype ArgMap = ArgMap
+  { argMapOpts :: [Opt]
   }
   deriving (Show, Eq, Generic)
 
 instance Validity ArgMap
 
 empty :: ArgMap
-empty =
-  ArgMap
-    { argMapOpts = [],
-      argMapLeftovers = []
-    }
+empty = ArgMap []
 
 data Dashed
   = DashedShort !Char
@@ -47,11 +43,17 @@ renderDashed = \case
   DashedShort c -> ['-', c]
   DashedLong cs -> '-' : '-' : NE.toList cs
 
-parse :: [String] -> ArgMap
+parse :: [String] -> (ArgMap, [String])
 parse args =
   let (opts, leftovers) = parseOpts args
-   in ArgMap {argMapOpts = opts, argMapLeftovers = leftovers}
+   in (ArgMap opts, leftovers)
 
+parse_ :: [String] -> ArgMap
+parse_ = fst . parse
+
+-- This may be accidentally quadratic.
+-- We can probably make it faster by having a stack of only args
+--
 -- The type is a bit strange, but it makes dealing with the state monad easier
 consumeArgument :: ArgMap -> (Maybe String, ArgMap)
 consumeArgument am =
@@ -69,6 +71,8 @@ consumeArgument am =
 
 -- This may be accidentally cubic.
 -- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
+--
+-- The type is a bit strange, but it makes dealing with the state monad easier
 consumeOption :: [Dashed] -> ArgMap -> (Maybe String, ArgMap)
 consumeOption dasheds am =
   let (mS, opts') = go $ argMapOpts am
