@@ -4,7 +4,6 @@
 module OptEnvConf.ArgMap
   ( ArgMap (..),
     empty,
-    hasUnconsumed,
     Dashed (..),
     renderDashed,
     parse,
@@ -35,10 +34,6 @@ empty =
     { argMapOpts = [],
       argMapLeftovers = []
     }
-
-hasUnconsumed :: ArgMap -> Bool
-hasUnconsumed am =
-  not (null (argMapOpts am))
 
 data Dashed
   = DashedShort !Char

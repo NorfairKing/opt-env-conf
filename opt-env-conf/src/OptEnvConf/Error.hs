@@ -6,11 +6,13 @@ module OptEnvConf.Error where
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
+import OptEnvConf.ArgMap (Opt (..), renderDashed)
 import OptEnvConf.Doc
 import Text.Colour
 
 data ParseError
-  = ParseErrorEmpty
+  = ParseErrorUnrecognised !Opt
+  | ParseErrorEmpty
   | ParseErrorArgumentRead !String
   | ParseErrorOptionRead !String
   | ParseErrorRequired
@@ -24,6 +26,14 @@ renderErrors = unlinesChunks . concatMap renderError . NE.toList
 
 renderError :: ParseError -> [[Chunk]]
 renderError = \case
+  ParseErrorUnrecognised opt ->
+    [ [ "Unrecognised argument:",
+        case opt of
+          OptArg s -> chunk $ T.pack $ show s
+          OptSwitch d -> chunk $ T.pack $ renderDashed d
+          OptOption d v -> chunk $ T.pack $ unwords [renderDashed d, show v]
+      ]
+    ]
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorArgumentRead s ->

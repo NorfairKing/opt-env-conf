@@ -74,6 +74,8 @@ instance Alternative Parser where
           (False, True) -> p1
           (False, False) -> ParserAlt p1 p2
   many = ParserMany
+
+  -- TODO maybe we can get rid of the some constructor by using (:) <$> p <$> many p
   some = ParserSome
 
 class HasParser a where

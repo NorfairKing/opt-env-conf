@@ -17,11 +17,47 @@ import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Error
 import OptEnvConf.Parser
 import OptEnvConf.Reader as Reader
+import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Validity
 
 spec :: Spec
 spec = do
+  describe "unrecognisedOptions" $ do
+    it "says that any argument is unrecognised when no arguments would be parsed" $
+      forAllValid $ \args -> do
+        let p = pure 'a'
+        unrecognisedOptions p (ArgMap.parse args) `shouldBe` map OptArg args
+
+    it "recognises arguments when they would be parsed" $
+      forAllValid $ \arg -> do
+        let p = strArgument []
+        let args = [arg]
+        unrecognisedOptions p (ArgMap.parse args) `shouldBe` []
+
+    it "says that an option is unrecognised when no options would not parsed" $
+      forAllValid $ \d ->
+        forAllValid $ \v -> do
+          let p = pure 'a'
+          let args = [ArgMap.renderDashed d, v]
+          unrecognisedOptions p (ArgMap.parse args) `shouldBe` [OptOption d v]
+
+    it "says that an option is unrecognised when that options would not parsed" $
+      forAllValid $ \l1 -> do
+        forAll (genValid `suchThat` (/= l1)) $ \l2 -> do
+          forAllValid $ \v -> do
+            let p = strOption [long (NE.toList l1)]
+            let d = DashedLong l2
+            let args = [ArgMap.renderDashed d, v]
+            unrecognisedOptions p (ArgMap.parse args) `shouldBe` [OptOption d v]
+
+    it "recognises an option that would be parsed" $
+      forAllValid $ \l -> do
+        forAllValid $ \v -> do
+          let p = strOption [long $ NE.toList l]
+          let args = [ArgMap.renderDashed (DashedLong l), v]
+          unrecognisedOptions p (ArgMap.parse args) `shouldBe` []
+
   describe "runParser" $ do
     describe "Pure" $ do
       it "can parse a pure value from anything" $

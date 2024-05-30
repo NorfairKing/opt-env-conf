@@ -14,7 +14,9 @@ import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
+import Data.Set (Set)
+import qualified Data.Set as S
+import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
@@ -36,17 +38,55 @@ runParser p = do
   let mConf = Nothing
 
   tc <- getTerminalCapabilitiesFromHandle stderr
-  -- TODO do something with the leftovers
-  errOrResult <- runParserOn p args envVars mConf
-  case errOrResult of
-    Left errs -> do
-      hPutChunksLocaleWith tc stderr $ renderErrors errs
-      exitFailure
-    Right (a, _) -> pure a
 
-recogniseOptions :: Parser a -> ArgMap -> PP ()
-recogniseOptions p args = do
-  pure ()
+  case NE.nonEmpty $ unrecognisedOptions p args of
+    Just unrecogniseds -> do
+      hPutChunksLocaleWith tc stderr $ renderErrors $ NE.map ParseErrorUnrecognised unrecogniseds
+      exitFailure
+    Nothing -> do
+      -- TODO do something with the leftovers
+      errOrResult <- runParserOn p args envVars mConf
+      case errOrResult of
+        Left errs -> do
+          hPutChunksLocaleWith tc stderr $ renderErrors errs
+          exitFailure
+        Right (a, _) -> pure a
+
+unrecognisedOptions :: Parser a -> ArgMap -> [Opt]
+unrecognisedOptions p args =
+  let possibleOpts = collectPossibleOpts p
+      isRecognised =
+        (`S.member` possibleOpts) . \case
+          OptArg _ -> PossibleArg
+          OptSwitch d -> PossibleSwitch d
+          OptOption d _ -> PossibleOption d
+   in filter (not . isRecognised) (argMapOpts args)
+
+data PossibleOpt
+  = PossibleArg
+  | PossibleSwitch !Dashed
+  | PossibleOption !Dashed
+  deriving (Show, Eq, Ord)
+
+collectPossibleOpts :: Parser a -> Set PossibleOpt
+collectPossibleOpts = go
+  where
+    go :: Parser a -> Set PossibleOpt
+    go = \case
+      ParserPure _ -> S.empty
+      ParserFmap _ p -> go p
+      ParserAp p1 p2 -> go p1 `S.union` go p2
+      ParserEmpty -> S.empty
+      ParserAlt p1 p2 -> go p1 `S.union` go p2
+      ParserMany p -> go p
+      ParserSome p -> go p
+      ParserMapIO _ p -> go p
+      ParserOptionalFirst p -> S.unions $ map go p
+      ParserRequiredFirst p -> S.unions $ map go p
+      ParserArg _ _ -> S.singleton PossibleArg
+      ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
+      ParserEnvVar _ -> S.empty
+      ParserConfig _ -> S.empty
 
 runParserOn ::
   Parser a ->
