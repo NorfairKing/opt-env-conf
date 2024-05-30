@@ -18,7 +18,7 @@ spec = do
   pure ()
 
 exampleParserSpec :: forall a. HasParser a => FilePath -> Spec
-exampleParserSpec dir = exampleParserSpec' dir (optEnvParser :: Parser a)
+exampleParserSpec dir = exampleParserSpec' dir (optEnvConfParser :: Parser a)
 
 exampleParserSpec' :: FilePath -> Parser a -> Spec
 exampleParserSpec' dir parser = describe dir $ do
@@ -62,7 +62,7 @@ data Greet = Greet
   deriving (Show)
 
 instance HasParser Greet where
-  optEnvParser =
+  optEnvConfParser =
     Greet
       <$> optional
         ( strArgument
@@ -85,7 +85,7 @@ data Args = Args [String]
   deriving (Show)
 
 instance HasParser Args where
-  optEnvParser =
+  optEnvConfParser =
     Args
       <$> many
         ( strArgument
@@ -97,7 +97,7 @@ instance HasParser Args where
 data Optional = Optional (Maybe String)
 
 instance HasParser Optional where
-  optEnvParser =
+  optEnvConfParser =
     Optional
       <$> optional
         ( strArgument

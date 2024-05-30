@@ -23,9 +23,6 @@ import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Run
 
-envVar :: String -> Parser (Maybe String)
-envVar = ParserEnvVar
-
 strArgument :: IsString string => [ArgumentBuilder string] -> Parser string
 strArgument = argument str
 
@@ -38,6 +35,9 @@ argument r = ParserArg r . completeBuilder . mconcat
 option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
 
+envVar :: String -> Parser (Maybe String)
+envVar = ParserEnvVar
+
 confVar :: FromJSON a => String -> Parser (Maybe a)
 confVar = ParserConfig
 
@@ -49,3 +49,18 @@ requiredFirst = ParserRequiredFirst
 
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty = ParserSome
+
+-- TODO make make an OptEnvConfBuilder for this?
+optEnvConf :: FromJSON a => Reader a -> String -> String -> Parser a
+optEnvConf r key h =
+  requiredFirst
+    [ optional $
+        option
+          r
+          [ long key,
+            help h
+          ],
+      -- TODO reader for the env var
+      -- envVar key, -- TODO just using the key doesn't work, needs to be UPPER_SNAKE_CASE
+      confVar key -- TODO just using the key doesn't work, needs to be kebab-case
+    ]

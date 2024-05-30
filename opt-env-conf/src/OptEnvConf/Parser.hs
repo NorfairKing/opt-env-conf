@@ -81,7 +81,7 @@ instance Alternative Parser where
   some = fmap NE.toList . ParserSome
 
 class HasParser a where
-  optEnvParser :: Parser a
+  optEnvConfParser :: Parser a
 
 showParserABit :: Parser a -> String
 showParserABit = ($ "") . go 0
