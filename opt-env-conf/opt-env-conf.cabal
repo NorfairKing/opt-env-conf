@@ -60,6 +60,7 @@ library
     , path-io
     , safe-coloured-text
     , safe-coloured-text-layout
+    , safe-coloured-text-terminfo
     , text
     , validity
     , validity-containers

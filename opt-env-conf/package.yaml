@@ -25,6 +25,7 @@ library:
   - path-io
   - safe-coloured-text
   - safe-coloured-text-layout
+  - safe-coloured-text-terminfo # TODO Don't depend on this on windows
   - text
   - validity
   - validity-containers

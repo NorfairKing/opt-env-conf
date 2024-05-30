@@ -27,7 +27,10 @@ import OptEnvConf.Parser
 import OptEnvConf.Validation
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
+import System.IO
 import Text.Colour
+import Text.Colour.Capabilities.FromEnv
+import Text.Colour.Term
 
 runParser :: Parser a -> IO a
 runParser p = do
@@ -35,10 +38,13 @@ runParser p = do
   envVars <- EM.parse <$> getEnvironment
   let mConf = Nothing
 
+  tc <- getTerminalCapabilitiesFromHandle stderr
   -- TODO do something with the leftovers
   errOrResult <- runParserOn p args envVars mConf
   case errOrResult of
-    Left err -> die $ unlines $ map displayException $ NE.toList err
+    Left errs -> do
+      hPutChunksLocaleWith tc stderr $ renderErrors errs
+      exitFailure
     Right (a, _) -> pure a
 
 renderErrors :: NonEmpty ParseError -> [Chunk]
@@ -73,17 +79,6 @@ data ParseError
   | ParseErrorMissingOption !OptDoc
   | ParseErrorConfigParseError !String
   deriving (Show, Eq)
-
-instance Exception ParseError where
-  displayException = \case
-    ParseErrorEmpty -> "empty"
-    ParseErrorUnconsumed -> "Unconsumed arguments"
-    ParseErrorArgumentRead err -> "Unable to read argument: " <> show err
-    ParseErrorOptionRead err -> "Unable to read option: " <> show err
-    ParseErrorRequired -> "Missing required setting" -- TODO show which ones
-    ParseErrorMissingArgument _ -> "Missing required argument"
-    ParseErrorMissingOption _ -> "Missing required option"
-    ParseErrorConfigParseError err -> "Failed to parse configuration: " <> show err
 
 runParserOn ::
   Parser a ->
