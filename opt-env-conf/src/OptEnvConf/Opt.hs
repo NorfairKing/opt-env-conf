@@ -61,8 +61,17 @@ class HasShort a where
 instance HasShort f => HasShort (OptionGenerals f) where
   addShort c op = op {optionGeneralSpecifics = addShort c (optionGeneralSpecifics op)}
 
+class HasEnvVar a where
+  addEnvVar :: String -> a -> a
+
+instance HasEnvVar f => HasEnvVar (OptionGenerals f) where
+  addEnvVar v op = op {optionGeneralSpecifics = addEnvVar v (optionGeneralSpecifics op)}
+
 class HasMetavar a where
   setMetavar :: Metavar -> a -> a
+
+instance HasMetavar f => HasMetavar (OptionGenerals f) where
+  setMetavar v op = op {optionGeneralSpecifics = setMetavar v (optionGeneralSpecifics op)}
 
 -- data SwitchSpecifics = SwitchSpecifics
 --
@@ -134,15 +143,51 @@ showArgumentParserABit = showOptionGeneralsABitWith $ \ArgumentSpecifics {..} ->
 
 type ArgumentBuilder a = Builder (ArgumentSpecifics a)
 
+data EnvSpecifics a = EnvSpecifics
+  { envSpecificsVars :: ![String],
+    envSpecificsMetavar :: !(Maybe Metavar)
+  }
+
+instance CanComplete (EnvSpecifics a) where
+  completeBuilder b = unBuilder b emptyEnvParser
+
+instance HasEnvVar (EnvSpecifics a) where
+  addEnvVar v os = os {envSpecificsVars = v : envSpecificsVars os}
+
+instance HasMetavar (EnvSpecifics a) where
+  setMetavar mv os = os {envSpecificsMetavar = Just mv}
+
+type EnvParser a = OptionGenerals (EnvSpecifics a)
+
+emptyEnvParser :: EnvParser a
+emptyEnvParser =
+  emptyOptionGeneralsWith
+    EnvSpecifics
+      { envSpecificsVars = [],
+        envSpecificsMetavar = Nothing
+      }
+
+showEnvParserABit :: EnvParser a -> ShowS
+showEnvParserABit = showOptionGeneralsABitWith $ \EnvSpecifics {..} ->
+  showString "OptionSpecifics "
+    . showsPrec 11 envSpecificsVars
+    . showString " "
+    . showsPrec 11 envSpecificsMetavar
+
+type EnvBuilder a = Builder (EnvSpecifics a)
+
 help :: String -> Builder f
 help s = Builder $ \op -> op {optionGeneralHelp = Just s}
 
 metavar :: HasMetavar f => String -> Builder f
-metavar s = Builder $ \op -> op {optionGeneralSpecifics = setMetavar s (optionGeneralSpecifics op)}
+metavar s = Builder $ setMetavar s
 
 long :: HasLong f => String -> Builder f
 long "" = error "Cannot use an empty long-form option."
-long s = Builder $ \op -> op {optionGeneralSpecifics = addLong (NE.fromList s) (optionGeneralSpecifics op)}
+long s = Builder $ addLong (NE.fromList s)
 
 short :: HasShort f => Char -> Builder f
-short c = Builder $ \op -> op {optionGeneralSpecifics = addShort c (optionGeneralSpecifics op)}
+short c = Builder $ addShort c
+
+var :: HasEnvVar f => String -> Builder f
+var v = Builder $ addEnvVar v

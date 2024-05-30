@@ -182,10 +182,10 @@ runParserOn p args envVars mConfig =
             case r s of
               Left err -> ppError $ ParseErrorOptionRead err
               Right a -> pure a
-      ParserEnvVar r v -> do
+      ParserEnvVar r o -> do
         es <- asks ppEnvEnv
-        case EnvMap.lookup v es of
-          Nothing -> ppError $ ParseErrorMissingEnvVar v
+        case msum $ map (`EnvMap.lookup` es) (envSpecificsVars (optionGeneralSpecifics o)) of
+          Nothing -> ppError $ ParseErrorMissingEnvVar $ envEnvDoc o
           Just s ->
             case r s of
               Left err -> ppError $ ParseErrorEnvRead err

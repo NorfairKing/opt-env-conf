@@ -17,7 +17,7 @@ data ParseError
   | ParseErrorArgumentRead !String
   | ParseErrorMissingOption !OptDoc
   | ParseErrorOptionRead !String
-  | ParseErrorMissingEnvVar !String
+  | ParseErrorMissingEnvVar !EnvDoc
   | ParseErrorEnvRead !String
   | ParseErrorMissingConfig !String
   | ParseErrorConfigRead !String

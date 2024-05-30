@@ -37,8 +37,8 @@ argument r = ParserArg r . completeBuilder . mconcat
 option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
 
-envVar :: Reader a -> String -> Parser a
-envVar = ParserEnvVar
+envVar :: Reader a -> [EnvBuilder a] -> Parser a
+envVar r = ParserEnvVar r . completeBuilder . mconcat
 
 confVal :: FromJSON a => String -> Parser a
 confVal = ParserConfig
@@ -63,6 +63,9 @@ optEnvConf r key h =
             help h
           ],
       optional $
-        envVar r key, -- TODO just using the key doesn't work, needs to be UPPER_SNAKE_CASE
+        envVar
+          r
+          [ var key
+          ], -- TODO just using the key doesn't work, needs to be UPPER_SNAKE_CASE
       optional $ confVal key -- TODO just using the key doesn't work, needs to be kebab-case
     ]

@@ -153,16 +153,20 @@ spec = do
         forAllValid $ \env' ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, arg) ->
-              forAllValid $ \(var, val) -> do
+              forAllValid $ \(v, val) -> do
                 let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) arg]}
-                let env = EnvMap.insert var val env'
+                let env = EnvMap.insert v val env'
                 let p =
                       optionalFirst
                         [ optional $
                             strOption
                               [ long $ NE.toList l
                               ],
-                          optional $ envVar str var
+                          optional $
+                            envVar
+                              str
+                              [ var v
+                              ]
                         ]
                 shouldParse p args env mConf (Just arg)
 
@@ -178,16 +182,20 @@ spec = do
         forAllValid $ \env' ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, arg) ->
-              forAllValid $ \(var, val) -> do
+              forAllValid $ \(v, val) -> do
                 let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) arg]}
-                let env = EnvMap.insert var val env'
+                let env = EnvMap.insert v val env'
                 let p =
                       requiredFirst
                         [ optional $
                             strOption
                               [ long $ NE.toList l
                               ],
-                          optional $ envVar str var
+                          optional $
+                            envVar
+                              str
+                              [ var v
+                              ]
                         ]
                 shouldParse p args env mConf arg
 
@@ -227,7 +235,7 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \(key, val) -> do
                 let env = EnvMap.insert key val env'
-                let p = envVar str key
+                let p = envVar str [var key]
                 let expected = val
                 shouldParse p args env mConf expected
 

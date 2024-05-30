@@ -22,16 +22,18 @@ data AnyDoc
   | AnyDocEnv !EnvDoc
 
 data OptDoc = OptDoc
-  { optDocMetavar :: !(Maybe Metavar),
-    optDocHelp :: !(Maybe String),
-    optDocDasheds :: ![Dashed]
+  { optDocDasheds :: ![Dashed],
+    optDocMetavar :: !(Maybe Metavar),
+    optDocHelp :: !(Maybe String)
   }
   deriving (Show, Eq)
 
 data EnvDoc = EnvDoc
-  { envDocVar :: !String,
+  { envDocVars :: ![String],
+    envDocMetavar :: !(Maybe Metavar),
     envDocHelp :: !(Maybe String)
   }
+  deriving (Show, Eq)
 
 data AnyDocs a
   = AnyDocsAnd ![AnyDocs a]
@@ -93,14 +95,7 @@ parserDocs = go
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserArg _ o -> AnyDocsSingle [AnyDocOpt $ argumentOptDoc o]
       ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
-      ParserEnvVar _ v ->
-        AnyDocsSingle
-          [ AnyDocEnv $
-              EnvDoc
-                { envDocVar = v,
-                  envDocHelp = Nothing
-                }
-          ]
+      ParserEnvVar _ o -> AnyDocsSingle [AnyDocEnv $ envEnvDoc o]
       ParserConfig _ -> AnyDocsSingle []
 
 argumentOptDoc :: ArgumentParser a -> OptDoc
@@ -117,6 +112,14 @@ optionOptDoc OptionGenerals {..} =
     { optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
       optDocMetavar = optionSpecificsMetavar optionGeneralSpecifics,
       optDocHelp = optionGeneralHelp
+    }
+
+envEnvDoc :: EnvParser a -> EnvDoc
+envEnvDoc OptionGenerals {..} =
+  EnvDoc
+    { envDocVars = envSpecificsVars optionGeneralSpecifics,
+      envDocMetavar = envSpecificsMetavar optionGeneralSpecifics,
+      envDocHelp = optionGeneralHelp
     }
 
 renderAnyDoc :: AnyDoc -> [[Chunk]]
@@ -187,19 +190,18 @@ renderLongOptDocs =
       AnyDocsSingle vs -> concatMap renderOptDocLong vs
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
-renderOptDocLong =
-  (: [])
-    . \OptDoc {..} ->
-      intersperse
-        " "
-        $ concat
-          [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
-              | not (null optDocDasheds)
-            ],
-            [ chunk . T.pack $ fromMaybe "[ARG]" optDocMetavar,
-              chunk . T.pack $ fromMaybe "undocumented" optDocHelp
-            ]
+renderOptDocLong OptDoc {..} =
+  [ intersperse
+      " "
+      $ concat
+        [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
+            | not (null optDocDasheds)
+          ],
+          [ chunk . T.pack $ fromMaybe "[ARG]" optDocMetavar,
+            chunk . T.pack $ fromMaybe "undocumented" optDocHelp
           ]
+        ]
+  ]
 
 parserEnvDocs :: Parser a -> EnvDocs
 parserEnvDocs =
@@ -226,9 +228,14 @@ renderEnvDocs =
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
-  [ [ chunk $ T.pack envDocVar,
-      chunk . T.pack $ fromMaybe "undocumented" envDocHelp
-    ]
+  [ intersperse " " $
+      concat
+        [ [ chunk . T.pack $ intercalate "|" envDocVars
+            | not (null envDocVars)
+          ],
+          [ chunk . T.pack $ fromMaybe "undocumented" envDocHelp
+          ]
+        ]
   ]
 
 unwordsChunks :: [[Chunk]] -> [Chunk]
