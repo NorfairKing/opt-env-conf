@@ -16,6 +16,8 @@ extra-source-files:
     test_resources/args/opt-short.txt
     test_resources/args/opt.txt
     test_resources/args/show.txt
+    test_resources/error/missing-argument.txt
+    test_resources/error/missing-option.txt
     test_resources/greet/docs.txt
     test_resources/greet/env.txt
     test_resources/greet/opt-long.txt
@@ -73,6 +75,7 @@ test-suite opt-env-conf-test
       OptEnvConf.ArgMapSpec
       OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec
+      OptEnvConf.ErrorSpec
       OptEnvConf.RunSpec
       Paths_opt_env_conf
   hs-source-dirs:
