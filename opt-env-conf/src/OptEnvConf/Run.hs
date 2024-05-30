@@ -4,6 +4,7 @@
 
 module OptEnvConf.Run where
 
+import Autodocodec
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -95,7 +96,7 @@ collectPossibleOpts = go
       ParserArg _ _ -> S.singleton PossibleArg
       ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
       ParserEnvVar _ _ -> S.empty
-      ParserConfig _ -> S.empty
+      ParserConfig _ _ -> S.empty
 
 runParserOn ::
   Parser a ->
@@ -190,13 +191,15 @@ runParserOn p args envVars mConfig =
             case r s of
               Left err -> ppError $ ParseErrorEnvRead err
               Right a -> pure a
-      ParserConfig key -> do
+      ParserConfig key c -> do
         mConf <- asks ppEnvConf
         case mConf of
           Nothing -> ppError $ ParseErrorMissingConfig key
           Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
             Left err -> ppError $ ParseErrorConfigRead err
-            Right v -> pure v
+            Right v -> case JSON.parseEither (parseJSONVia c) v of
+              Left err -> ppError $ ParseErrorConfigRead err
+              Right a -> pure a
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 

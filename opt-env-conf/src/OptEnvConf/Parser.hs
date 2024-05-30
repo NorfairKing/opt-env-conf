@@ -12,8 +12,8 @@ module OptEnvConf.Parser
   )
 where
 
+import Autodocodec
 import Control.Applicative
-import Data.Aeson (FromJSON)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.Opt
@@ -52,7 +52,7 @@ data Parser a where
   -- | Env vars
   ParserEnvVar :: !(Reader a) -> !(EnvParser a) -> Parser a
   -- | Configuration file
-  ParserConfig :: FromJSON a => String -> Parser a
+  ParserConfig :: String -> ValueCodec void a -> Parser a
 
 instance Functor Parser where
   fmap = ParserFmap
@@ -137,7 +137,9 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "EnvVar _  "
             . showEnvParserABit p
-      ParserConfig key ->
+      ParserConfig key c ->
         showParen (d > 10) $
           showString "Config "
             . showsPrec 11 key
+            . showString " "
+            . showParen True (showString (showCodecABit c))

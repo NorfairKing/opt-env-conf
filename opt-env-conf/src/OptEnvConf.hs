@@ -15,8 +15,8 @@ module OptEnvConf
   )
 where
 
+import Autodocodec
 import Control.Applicative
-import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty)
 import Data.String
 import OptEnvConf.Doc
@@ -40,8 +40,11 @@ option r = ParserOpt r . completeBuilder . mconcat
 envVar :: Reader a -> [EnvBuilder a] -> Parser a
 envVar r = ParserEnvVar r . completeBuilder . mconcat
 
-confVal :: FromJSON a => String -> Parser a
-confVal = ParserConfig
+confVal :: HasCodec a => String -> Parser a
+confVal k = confValWith k codec
+
+confValWith :: String -> ValueCodec void a -> Parser a
+confValWith = ParserConfig
 
 optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
 optionalFirst = ParserOptionalFirst
@@ -53,7 +56,7 @@ someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty = ParserSome
 
 -- TODO make make an OptEnvConfBuilder for this?
-optEnvConf :: FromJSON a => Reader a -> String -> String -> Parser a
+optEnvConf :: HasCodec a => Reader a -> String -> String -> Parser a
 optEnvConf r key h =
   requiredFirst
     [ optional $

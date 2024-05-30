@@ -96,7 +96,7 @@ parserDocs = go
       ParserArg _ o -> AnyDocsSingle [AnyDocOpt $ argumentOptDoc o]
       ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
       ParserEnvVar _ o -> AnyDocsSingle [AnyDocEnv $ envEnvDoc o]
-      ParserConfig _ -> AnyDocsSingle []
+      ParserConfig _ _ -> AnyDocsSingle []
 
 argumentOptDoc :: ArgumentParser a -> OptDoc
 argumentOptDoc OptionGenerals {..} =
