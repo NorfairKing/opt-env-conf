@@ -44,6 +44,10 @@ runParser p = do
       exitFailure
     Right (a, _) -> pure a
 
+recogniseOptions :: Parser a -> ArgMap -> PP ()
+recogniseOptions p args = do
+  pure ()
+
 runParserOn ::
   Parser a ->
   ArgMap ->
@@ -54,7 +58,6 @@ runParserOn p args envVars mConfig =
   validationToEither <$> do
     let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     resultValidation <- runValidationT $ runStateT (runReaderT (go p) ppEnv) args
-    -- TODO unconsumed options
     pure $ second AM.argMapLeftovers <$> resultValidation
   where
     tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))

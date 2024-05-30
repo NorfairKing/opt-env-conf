@@ -11,7 +11,6 @@ import Text.Colour
 
 data ParseError
   = ParseErrorEmpty
-  | ParseErrorUnconsumed
   | ParseErrorArgumentRead !String
   | ParseErrorOptionRead !String
   | ParseErrorRequired
@@ -27,8 +26,6 @@ renderError :: ParseError -> [[Chunk]]
 renderError = \case
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
-  ParseErrorUnconsumed ->
-    [["Unconsumed arguments or options. TODO remove this error."]]
   ParseErrorArgumentRead s ->
     [["Failed to read argument:", chunk $ T.pack $ show s]]
   ParseErrorOptionRead s ->

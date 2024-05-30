@@ -25,51 +25,57 @@ spec = do
   describe "runParser" $ do
     describe "Pure" $ do
       it "can parse a pure value from anything" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf ->
-            forAllValid $ \expected ->
-              shouldParse (pure expected) ArgMap.empty env mConf (expected :: Int)
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf ->
+              forAllValid $ \expected ->
+                shouldParse (pure expected) args env mConf (expected :: Int)
 
     describe "Fmap" $ do
       it "can parse a mapped value from anything" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf ->
-            forAllValid $ \i -> do
-              let expected = succ i
-              shouldParse (ParserFmap succ $ pure i) ArgMap.empty env mConf (expected :: Int)
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let expected = succ i
+                shouldParse (ParserFmap succ $ pure i) args env mConf (expected :: Int)
 
     describe "Ap" $ do
       it "can parse two values with ap" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf ->
-            forAllValid $ \i -> do
-              let p = (,) <$> pure (succ i) <*> pure i
-              let expected = (succ i, i :: Int)
-              shouldParse p ArgMap.empty env mConf expected
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = (,) <$> pure (succ i) <*> pure i
+                let expected = (succ i, i :: Int)
+                shouldParse p args env mConf expected
 
     describe "Empty" $ do
       it "can fail to parse an empty value" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf -> do
-            let p = empty :: Parser Int
-            shouldFail p ArgMap.empty env mConf (ParseErrorEmpty :| [])
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf -> do
+              let p = empty :: Parser Int
+              shouldFail p args env mConf (ParseErrorEmpty :| [])
 
     describe "Alt" $ do
-      it "can parse a Left value with Alt" $ do
-        forAllValid $ \env ->
-          forAllValid $ \mConf ->
-            forAllValid $ \i -> do
-              let p = (Left <$> pure i) <|> (Right <$> pure (succ i))
-              let expected = Left (i :: Int)
-              shouldParse p ArgMap.empty env mConf expected
+      it "can parse a Left value with Alt" $
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = (Left <$> pure i) <|> (Right <$> pure (succ i))
+                let expected = Left (i :: Int)
+                shouldParse p args env mConf expected
 
       it "can parse a Right value with Alt" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf ->
-            forAllValid $ \i -> do
-              let p = empty `ParserAlt` (Right <$> pure i)
-              let expected = Right (i :: Int) :: Either Int Int
-              shouldParse p ArgMap.empty env mConf expected
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = empty `ParserAlt` (Right <$> pure i)
+                let expected = Right (i :: Int) :: Either Int Int
+                shouldParse p args env mConf expected
 
     describe "Many" $ do
       it "can pass many args" $
@@ -101,10 +107,11 @@ spec = do
 
     describe "OptionalFirst" $ do
       it "parses nothing for an empty list of options" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf -> do
-            let p = optionalFirst [] :: Parser (Maybe Int)
-            shouldParse p ArgMap.empty env mConf Nothing
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf -> do
+              let p = optionalFirst [] :: Parser (Maybe Int)
+              shouldParse p args env mConf Nothing
 
       it "parses the first option if both are possible" $
         forAllValid $ \env' ->
@@ -125,10 +132,11 @@ spec = do
 
     describe "RequiredFirst" $ do
       it "fails to parse for an empty list of options" $
-        forAllValid $ \env ->
-          forAllValid $ \mConf -> do
-            let p = requiredFirst [] :: Parser (Maybe Int)
-            shouldFail p ArgMap.empty env mConf (ParseErrorRequired :| [])
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \mConf -> do
+              let p = requiredFirst [] :: Parser (Maybe Int)
+              shouldFail p args env mConf (ParseErrorRequired :| [])
 
       it "parses the first option if both are possible" $
         forAllValid $ \env' ->
@@ -178,23 +186,25 @@ spec = do
 
     describe "EnvVar" $ do
       it "can parse a single env var" $
-        forAllValid $ \env' ->
-          forAllValid $ \mConf ->
-            forAllValid $ \(key, val) -> do
-              let env = EnvMap.insert key val env'
-              let p = envVar key
-              let expected = Just val
-              shouldParse p ArgMap.empty env mConf expected
+        forAllValid $ \args ->
+          forAllValid $ \env' ->
+            forAllValid $ \mConf ->
+              forAllValid $ \(key, val) -> do
+                let env = EnvMap.insert key val env'
+                let p = envVar key
+                let expected = Just val
+                shouldParse p args env mConf expected
 
     describe "Config" $ do
       it "can parse a single config var" $
-        forAllValid $ \env ->
-          forAllValid $ \conf ->
-            forAllValid $ \(key, val) -> do
-              let mConf = Just $ KeyMap.insert (Key.fromString key) val conf
-              let p = confVar key
-              let expected = Just val
-              shouldParse p ArgMap.empty env mConf expected
+        forAllValid $ \args ->
+          forAllValid $ \env ->
+            forAllValid $ \conf ->
+              forAllValid $ \(key, val) -> do
+                let mConf = Just $ KeyMap.insert (Key.fromString key) val conf
+                let p = confVar key
+                let expected = Just val
+                shouldParse p args env mConf expected
 
     describe "arguments" $ do
       argParseSpec
