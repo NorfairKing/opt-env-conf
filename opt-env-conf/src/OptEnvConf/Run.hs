@@ -1,12 +1,10 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.Run where
 
 import Control.Arrow (second)
-import Control.Exception
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -16,12 +14,12 @@ import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Text as T
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EM
+import OptEnvConf.Error
 import OptEnvConf.Opt
 import OptEnvConf.Parser
 import OptEnvConf.Validation
@@ -30,7 +28,6 @@ import System.Exit
 import System.IO
 import Text.Colour
 import Text.Colour.Capabilities.FromEnv
-import Text.Colour.Term
 
 runParser :: Parser a -> IO a
 runParser p = do
@@ -46,39 +43,6 @@ runParser p = do
       hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
     Right (a, _) -> pure a
-
-renderErrors :: NonEmpty ParseError -> [Chunk]
-renderErrors = unlinesChunks . concatMap renderError . NE.toList
-
-renderError :: ParseError -> [[Chunk]]
-renderError = \case
-  ParseErrorEmpty ->
-    [["Hit the 'empty' case of the Parser type, this should not happen."]]
-  ParseErrorUnconsumed ->
-    [["Unconsumed arguments or options. TODO remove this error."]]
-  ParseErrorArgumentRead s ->
-    [["Failed to read argument:", chunk $ T.pack $ show s]]
-  ParseErrorOptionRead s ->
-    [["Failed to read option:", chunk $ T.pack $ show s]]
-  ParseErrorRequired ->
-    [["Required"]]
-  ParseErrorMissingArgument o ->
-    ["Missing argument:"] : renderOptDocLong o
-  ParseErrorMissingOption o ->
-    ["Missing option:"] : renderOptDocLong o
-  ParseErrorConfigParseError s ->
-    [["Failed to parse configuration:", chunk $ T.pack $ show s]]
-
-data ParseError
-  = ParseErrorEmpty
-  | ParseErrorUnconsumed
-  | ParseErrorArgumentRead !String
-  | ParseErrorOptionRead !String
-  | ParseErrorRequired
-  | ParseErrorMissingArgument !OptDoc
-  | ParseErrorMissingOption !OptDoc
-  | ParseErrorConfigParseError !String
-  deriving (Show, Eq)
 
 runParserOn ::
   Parser a ->

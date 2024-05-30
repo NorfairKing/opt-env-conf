@@ -37,6 +37,7 @@ library
       OptEnvConf.ArgMap
       OptEnvConf.Doc
       OptEnvConf.EnvMap
+      OptEnvConf.Error
       OptEnvConf.Opt
       OptEnvConf.Parser
       OptEnvConf.Reader

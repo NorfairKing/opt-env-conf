@@ -14,6 +14,7 @@ import OptEnvConf.ArgMap.Gen ()
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
+import OptEnvConf.Error
 import OptEnvConf.Parser
 import OptEnvConf.Reader as Reader
 import Test.Syd

@@ -1,23 +1,12 @@
 module OptEnvConf.ErrorSpec (spec) where
 
-import Control.Applicative
-import Data.Aeson as JSON (Object)
-import qualified Data.Aeson.Key as Key
-import qualified Data.Aeson.KeyMap as KeyMap
 import Data.GenValidity.Aeson ()
-import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import OptEnvConf
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
-import OptEnvConf.ArgMap.Gen ()
-import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
-import OptEnvConf.EnvMap.Gen ()
-import OptEnvConf.Parser
+import OptEnvConf.Error
 import Test.Syd
-import Test.Syd.Validity
 import Text.Colour
 
 spec :: Spec
