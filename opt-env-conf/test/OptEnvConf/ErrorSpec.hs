@@ -24,6 +24,10 @@ spec = do
     (strOption [long "foo"] :: Parser String)
     ["--quux", "bar"]
   parseErrorSpec
+    "empty"
+    (empty :: Parser String)
+    []
+  parseErrorSpec
     "missing-argument"
     (strArgument [help "example argument", metavar "ARGUMENT"] :: Parser String)
     []
@@ -31,6 +35,22 @@ spec = do
     "missing-option"
     (strOption [long "foo", help "example option", metavar "FOO"] :: Parser String)
     []
+  parseErrorSpec
+    "read-int-argument"
+    (argument auto [help "integer option", metavar "INT"] :: Parser Int)
+    ["five"]
+  parseErrorSpec
+    "read-int-option"
+    (option auto [long "num", help "integer option", metavar "INT"] :: Parser Int)
+    ["--num", "five"]
+  parseErrorSpec
+    "some-none"
+    (some $ strArgument [] :: Parser [String])
+    []
+
+  -- Missing tests
+  pending "RequiredFirst"
+  pending "ConfigParse"
 
 parseErrorSpec :: Show a => FilePath -> Parser a -> [String] -> Spec
 parseErrorSpec fp p args =

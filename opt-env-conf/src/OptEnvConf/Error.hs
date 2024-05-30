@@ -13,11 +13,11 @@ import Text.Colour
 data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
+  | ParseErrorMissingArgument !OptDoc
+  | ParseErrorMissingOption !OptDoc
   | ParseErrorArgumentRead !String
   | ParseErrorOptionRead !String
   | ParseErrorRequired
-  | ParseErrorMissingArgument !OptDoc
-  | ParseErrorMissingOption !OptDoc
   | ParseErrorConfigParseError !String
   deriving (Show, Eq)
 
@@ -42,15 +42,15 @@ renderError = \case
         ]
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
-  ParseErrorArgumentRead s ->
-    [["Failed to read argument:", chunk $ T.pack $ show s]]
-  ParseErrorOptionRead s ->
-    [["Failed to read option:", chunk $ T.pack $ show s]]
-  ParseErrorRequired ->
-    [["Required"]]
   ParseErrorMissingArgument o ->
     ["Missing argument:"] : renderOptDocLong o
   ParseErrorMissingOption o ->
     ["Missing option:"] : renderOptDocLong o
+  ParseErrorArgumentRead s ->
+    [["Failed to read argument: ", chunk $ T.pack $ show s]]
+  ParseErrorOptionRead s ->
+    [["Failed to read option: ", chunk $ T.pack $ show s]]
+  ParseErrorRequired ->
+    [["Required"]]
   ParseErrorConfigParseError s ->
     [["Failed to parse configuration:", chunk $ T.pack $ show s]]

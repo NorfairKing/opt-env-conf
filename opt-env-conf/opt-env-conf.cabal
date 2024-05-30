@@ -28,8 +28,12 @@ extra-source-files:
     test_resources/docs/optional/opt-short.txt
     test_resources/docs/optional/opt.txt
     test_resources/docs/optional/show.txt
+    test_resources/error/empty.txt
     test_resources/error/missing-argument.txt
     test_resources/error/missing-option.txt
+    test_resources/error/read-int-argument.txt
+    test_resources/error/read-int-option.txt
+    test_resources/error/some-none.txt
     test_resources/error/unrecognised-argument.txt
     test_resources/error/unrecognised-option-none.txt
     test_resources/error/unrecognised-option-other.txt

@@ -4,7 +4,6 @@
 
 module OptEnvConf.Run where
 
-import Control.Arrow (second)
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
