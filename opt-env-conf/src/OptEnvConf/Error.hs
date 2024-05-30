@@ -17,6 +17,7 @@ data ParseError
   | ParseErrorMissingOption !OptDoc
   | ParseErrorArgumentRead !String
   | ParseErrorOptionRead !String
+  | ParseErrorEnvRead !String
   | ParseErrorRequired
   | ParseErrorConfigParseError !String
   deriving (Show, Eq)
@@ -50,6 +51,8 @@ renderError = \case
     [["Failed to read argument: ", chunk $ T.pack $ show s]]
   ParseErrorOptionRead s ->
     [["Failed to read option: ", chunk $ T.pack $ show s]]
+  ParseErrorEnvRead s ->
+    [["Failed to env var: ", chunk $ T.pack $ show s]]
   ParseErrorRequired ->
     [["Required"]]
   ParseErrorConfigParseError s ->

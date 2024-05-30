@@ -77,7 +77,7 @@ instance HasParser Greet where
                 metavar "GREETING",
                 help "Greeting to use"
               ],
-          envVar "GREETING",
+          envVar str "GREETING",
           confVar "greeting"
         ]
 

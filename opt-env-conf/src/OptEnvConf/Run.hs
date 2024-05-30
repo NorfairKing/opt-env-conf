@@ -94,7 +94,7 @@ collectPossibleOpts = go
       ParserRequiredFirst p -> S.unions $ map go p
       ParserArg _ _ -> S.singleton PossibleArg
       ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
-      ParserEnvVar _ -> S.empty
+      ParserEnvVar _ _ -> S.empty
       ParserConfig _ -> S.empty
 
 runParserOn ::
@@ -182,9 +182,12 @@ runParserOn p args envVars mConfig =
             case r s of
               Left err -> ppError $ ParseErrorOptionRead err
               Right a -> pure a
-      ParserEnvVar v -> do
+      ParserEnvVar r v -> do
         es <- asks ppEnvEnv
-        pure (EnvMap.lookup v es)
+        forM (EnvMap.lookup v es) $ \s ->
+          case r s of
+            Left err -> ppError $ ParseErrorEnvRead err
+            Right a -> pure a
       ParserConfig key -> do
         mConf <- asks ppEnvConf
         case mConf of

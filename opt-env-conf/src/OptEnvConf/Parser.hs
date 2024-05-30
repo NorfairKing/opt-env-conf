@@ -50,7 +50,7 @@ data Parser a where
   -- TODO consider getting rid of ParserOpt and "just" giving Arg a possibly-empty list of dasheds to parse
   ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser a
   -- | Env vars
-  ParserEnvVar :: String -> Parser (Maybe String)
+  ParserEnvVar :: !(Reader a) -> !String -> Parser (Maybe a)
   -- | Configuration file
   ParserConfig :: FromJSON a => String -> Parser (Maybe a)
 
@@ -133,9 +133,9 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Opt _ "
             . showOptionParserABit p
-      ParserEnvVar v ->
+      ParserEnvVar _ v ->
         showParen (d > 10) $
-          showString "EnvVar " . showsPrec 11 v
+          showString "EnvVar _ " . showsPrec 11 v
       ParserConfig key ->
         showParen (d > 10) $
           showString "Config "

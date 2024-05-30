@@ -35,7 +35,7 @@ argument r = ParserArg r . completeBuilder . mconcat
 option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
 
-envVar :: String -> Parser (Maybe String)
+envVar :: Reader a -> String -> Parser (Maybe a)
 envVar = ParserEnvVar
 
 confVar :: FromJSON a => String -> Parser (Maybe a)

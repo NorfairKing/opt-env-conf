@@ -93,7 +93,7 @@ parserDocs = go
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserArg _ o -> AnyDocsSingle [AnyDocOpt $ argumentOptDoc o]
       ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
-      ParserEnvVar v ->
+      ParserEnvVar _ v ->
         AnyDocsSingle
           [ AnyDocEnv $
               EnvDoc
