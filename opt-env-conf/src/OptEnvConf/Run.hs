@@ -10,6 +10,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Selective (select)
 import Data.Aeson ((.:))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
@@ -118,6 +119,7 @@ collectPossibleOpts = go
       ParserPure _ -> S.empty
       ParserFmap _ p -> go p
       ParserAp p1 p2 -> go p1 `S.union` go p2
+      ParserSelect p1 p2 -> go p1 `S.union` go p2
       ParserEmpty -> S.empty
       ParserAlt p1 p2 -> go p1 `S.union` go p2
       ParserMany p -> go p
@@ -155,6 +157,7 @@ runParserOn p args envVars mConfig =
       ParserPure a -> pure a
       ParserAp ff fa -> go ff <*> go fa
       ParserEmpty -> ppError ParseErrorEmpty
+      ParserSelect fe ff -> select (go fe) (go ff)
       ParserAlt p1 p2 -> do
         eor <- tryPP (go p1)
         case eor of

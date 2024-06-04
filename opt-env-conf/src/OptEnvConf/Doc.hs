@@ -86,6 +86,7 @@ parserDocs = go
       ParserFmap _ p -> go p
       ParserPure _ -> AnyDocsSingle []
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
+      ParserSelect p1 p2 -> AnyDocsAnd [go p1, go p2]
       ParserEmpty -> AnyDocsSingle []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?

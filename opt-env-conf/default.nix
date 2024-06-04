@@ -3,8 +3,8 @@
 , genvalidity-containers, genvalidity-sydtest, lib, mtl
 , optparse-applicative, path, path-io, QuickCheck
 , safe-coloured-text, safe-coloured-text-layout
-, safe-coloured-text-terminfo, sydtest, sydtest-discover, text
-, validity, validity-containers, yaml
+, safe-coloured-text-terminfo, selective, sydtest, sydtest-discover
+, text, validity, validity-containers, yaml
 }:
 mkDerivation {
   pname = "opt-env-conf";
@@ -13,8 +13,8 @@ mkDerivation {
   libraryHaskellDepends = [
     aeson autodocodec autodocodec-yaml base containers envparse mtl
     optparse-applicative path path-io safe-coloured-text
-    safe-coloured-text-layout safe-coloured-text-terminfo text validity
-    validity-containers yaml
+    safe-coloured-text-layout safe-coloured-text-terminfo selective
+    text validity validity-containers yaml
   ];
   testHaskellDepends = [
     aeson base containers envparse genvalidity genvalidity-aeson

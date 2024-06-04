@@ -28,6 +28,7 @@ where
 
 import Autodocodec
 import Control.Applicative
+import Control.Selective
 import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -42,6 +43,8 @@ data Parser a where
   -- Applicative
   ParserFmap :: (a -> b) -> Parser a -> Parser b
   ParserAp :: Parser (a -> b) -> Parser a -> Parser b
+  -- Selective
+  ParserSelect :: Parser (Either a b) -> Parser (a -> b) -> Parser b
   -- Alternative
   ParserEmpty :: Parser a
   ParserAlt :: Parser a -> Parser a -> Parser a
@@ -76,6 +79,9 @@ instance Applicative Parser where
   pure = ParserPure
   (<*>) = ParserAp
 
+instance Selective Parser where
+  select = ParserSelect
+
 instance Alternative Parser where
   empty = ParserEmpty
   (<|>) p1 p2 =
@@ -84,6 +90,7 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserFmap _ p' -> isEmpty p'
           ParserAp pf pa -> isEmpty pf && isEmpty pa
+          ParserSelect pe pf -> isEmpty pe && isEmpty pf
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserRequiredFirst [] -> True
@@ -112,7 +119,14 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Ap "
             . go 11 pf
+            . showString " "
             . go 11 pa
+      ParserSelect pe pf ->
+        showParen (d > 10) $
+          showString "Select "
+            . go 11 pe
+            . showString " "
+            . go 11 pf
       ParserEmpty -> showString "Empty"
       ParserAlt p1 p2 ->
         showParen (d > 10) $
