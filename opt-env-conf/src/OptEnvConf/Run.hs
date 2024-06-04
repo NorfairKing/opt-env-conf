@@ -5,13 +5,15 @@
 module OptEnvConf.Run where
 
 import Autodocodec
+import Autodocodec.Yaml
+import Control.Applicative
+import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Aeson ((.:))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
-import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
@@ -24,7 +26,10 @@ import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Opt
 import OptEnvConf.Parser
+import OptEnvConf.Reader
 import OptEnvConf.Validation
+import Path
+import Path.IO
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
 import System.IO
@@ -39,16 +44,43 @@ runParserWithLeftovers p = do
   args <- getArgs
   let (argMap, leftovers) = ArgMap.parse args
   envVars <- EnvMap.parse <$> getEnvironment
-  let mConf = Nothing
+
+  errOrConfResult <- runParserComplete defaultConfigFileParser argMap envVars Nothing
 
   tc <- getTerminalCapabilitiesFromHandle stderr
 
-  errOrResult <- runParserComplete p argMap envVars mConf
-  case errOrResult of
+  -- TODO try using selective for the parser so we only need to run the parser
+  -- once and all the docs happen automatically?
+  case errOrConfResult of
     Left errs -> do
       hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
-    Right a -> pure (a, leftovers)
+    Right mConfigFile -> do
+      mConf <- fmap join $ mapM readYamlConfigFile mConfigFile
+
+      errOrResult <- runParserComplete p argMap envVars mConf
+      case errOrResult of
+        Left errs -> do
+          hPutChunksLocaleWith tc stderr $ renderErrors errs
+          exitFailure
+        Right a -> pure (a, leftovers)
+
+defaultConfigFileParser :: Parser (Maybe (Path Abs File))
+defaultConfigFileParser =
+  mapIO (mapM resolveFile') $
+    optionalFirst
+      [ optional $
+          strOption
+            [ long "config-file",
+              help "Configuration file path"
+            ],
+        optional $
+          envVar
+            str
+            [ var "CONFIG_FILE",
+              help "Configuration file path"
+            ]
+      ]
 
 -- 'runParserOn' _and_ 'unrecognisedOptions'
 runParserComplete ::
