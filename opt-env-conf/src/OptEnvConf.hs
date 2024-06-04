@@ -7,6 +7,7 @@ module OptEnvConf
     strOption,
     argument,
     option,
+    switch,
     envVar,
     confVal,
     confValWith,

@@ -10,6 +10,7 @@ module OptEnvConf.ArgMap
     parse_,
     consumeArgument,
     consumeOption,
+    consumeSwitch,
     Opt (..),
     parseSingleArg,
   )
@@ -83,6 +84,20 @@ consumeOption dasheds am =
         [] -> (Nothing, [])
         (o : rest) -> case o of
           OptOption k v | k `elem` dasheds -> (Just v, rest)
+          _ ->
+            let (mS, os) = go rest
+             in (mS, o : os)
+
+consumeSwitch :: [Dashed] -> ArgMap -> (Maybe (), ArgMap)
+consumeSwitch dasheds am =
+  let (mS, opts') = go $ argMapOpts am
+   in (mS, am {argMapOpts = opts'})
+  where
+    go =
+      \case
+        [] -> (Nothing, [])
+        (o : rest) -> case o of
+          OptSwitch k | k `elem` dasheds -> (Just (), rest)
           _ ->
             let (mS, os) = go rest
              in (mS, o : os)

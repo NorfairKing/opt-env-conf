@@ -2,6 +2,7 @@
 
 module OptEnvConf.APISpec (spec) where
 
+import Data.Maybe
 import Data.Text (Text)
 import OptEnvConf
 import OptEnvConf.Parser
@@ -52,7 +53,8 @@ pureGoldenChunksFile fp cs =
 
 data Greet = Greet
   { greetGreetee :: Maybe String,
-    greetGreeting :: Maybe String
+    greetGreeting :: Maybe String,
+    greetPolite :: Bool
   }
   deriving (Show)
 
@@ -69,6 +71,7 @@ greetParser =
       [ optional $
           strOption
             [ long "greeting",
+              short 'g',
               metavar "GREETING",
               help "Greeting to use"
             ],
@@ -80,6 +83,16 @@ greetParser =
             ],
         confVal "greeting"
       ]
+    <*> ( fromMaybe False
+            <$> optional
+              ( switch
+                  True
+                  [ long "polite",
+                    short 'p',
+                    help "Whether to be polite"
+                  ]
+              )
+        )
 
 data Args = Args [String]
   deriving (Show)

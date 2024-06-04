@@ -143,6 +143,34 @@ showArgumentParserABit = showOptionGeneralsABitWith $ \ArgumentSpecifics {..} ->
 
 type ArgumentBuilder a = Builder (ArgumentSpecifics a)
 
+data SwitchSpecifics a = SwitchSpecifics
+  { switchSpecificsDasheds :: ![Dashed]
+  }
+
+instance CanComplete (SwitchSpecifics a) where
+  completeBuilder b = unBuilder b emptySwitchParser
+
+instance HasLong (SwitchSpecifics a) where
+  addLong s os = os {switchSpecificsDasheds = DashedLong s : switchSpecificsDasheds os}
+
+instance HasShort (SwitchSpecifics a) where
+  addShort c os = os {switchSpecificsDasheds = DashedShort c : switchSpecificsDasheds os}
+
+type SwitchParser a = OptionGenerals (SwitchSpecifics a)
+
+emptySwitchParser :: SwitchParser a
+emptySwitchParser =
+  emptyOptionGeneralsWith
+    SwitchSpecifics
+      { switchSpecificsDasheds = []
+      }
+
+showSwitchParserABit :: SwitchParser a -> ShowS
+showSwitchParserABit = showOptionGeneralsABitWith $ \SwitchSpecifics {} ->
+  showString "SwitchSpecifics"
+
+type SwitchBuilder a = Builder (SwitchSpecifics a)
+
 data EnvSpecifics a = EnvSpecifics
   { envSpecificsVars :: ![String],
     envSpecificsMetavar :: !(Maybe Metavar)

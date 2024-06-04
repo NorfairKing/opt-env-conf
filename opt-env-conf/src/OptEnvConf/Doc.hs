@@ -97,6 +97,7 @@ parserDocs = go
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserArg _ o -> AnyDocsSingle [AnyDocOpt $ argumentOptDoc o]
       ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
+      ParserSwitch _ o -> AnyDocsSingle [AnyDocOpt $ switchOptDoc o]
       ParserEnvVar _ o -> AnyDocsSingle [AnyDocEnv $ envEnvDoc o]
       ParserConfig _ _ -> AnyDocsSingle []
 
@@ -113,6 +114,14 @@ optionOptDoc OptionGenerals {..} =
   OptDoc
     { optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
       optDocMetavar = optionSpecificsMetavar optionGeneralSpecifics,
+      optDocHelp = optionGeneralHelp
+    }
+
+switchOptDoc :: SwitchParser a -> OptDoc
+switchOptDoc OptionGenerals {..} =
+  OptDoc
+    { optDocDasheds = switchSpecificsDasheds optionGeneralSpecifics,
+      optDocMetavar = Nothing,
       optDocHelp = optionGeneralHelp
     }
 

@@ -1,3 +1,4 @@
 SUBJECT Who to greet
---greeting GREETING Greeting to use
+-g|--greeting GREETING Greeting to use
 GREETING Greeting to use
+-p|--polite [ARG] Whether to be polite

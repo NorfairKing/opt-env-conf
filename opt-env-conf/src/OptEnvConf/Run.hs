@@ -5,8 +5,6 @@
 module OptEnvConf.Run where
 
 import Autodocodec
-import Autodocodec.Yaml
-import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State
@@ -27,10 +25,7 @@ import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Opt
 import OptEnvConf.Parser
-import OptEnvConf.Reader
 import OptEnvConf.Validation
-import Path
-import Path.IO
 import System.Environment (getArgs, getEnvironment)
 import System.Exit
 import System.IO
@@ -46,42 +41,14 @@ runParserWithLeftovers p = do
   let (argMap, leftovers) = ArgMap.parse args
   envVars <- EnvMap.parse <$> getEnvironment
 
-  errOrConfResult <- runParserComplete defaultConfigFileParser argMap envVars Nothing
-
   tc <- getTerminalCapabilitiesFromHandle stderr
 
-  -- TODO try using selective for the parser so we only need to run the parser
-  -- once and all the docs happen automatically?
-  case errOrConfResult of
+  errOrResult <- runParserComplete p argMap envVars Nothing
+  case errOrResult of
     Left errs -> do
       hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
-    Right mConfigFile -> do
-      mConf <- fmap join $ mapM readYamlConfigFile mConfigFile
-
-      errOrResult <- runParserComplete p argMap envVars mConf
-      case errOrResult of
-        Left errs -> do
-          hPutChunksLocaleWith tc stderr $ renderErrors errs
-          exitFailure
-        Right a -> pure (a, leftovers)
-
-defaultConfigFileParser :: Parser (Maybe (Path Abs File))
-defaultConfigFileParser =
-  mapIO (mapM resolveFile') $
-    optionalFirst
-      [ optional $
-          strOption
-            [ long "config-file",
-              help "Configuration file path"
-            ],
-        optional $
-          envVar
-            str
-            [ var "CONFIG_FILE",
-              help "Configuration file path"
-            ]
-      ]
+    Right a -> pure (a, leftovers)
 
 -- 'runParserOn' _and_ 'unrecognisedOptions'
 runParserComplete ::
@@ -130,6 +97,7 @@ collectPossibleOpts = go
       ParserRequiredFirst p -> S.unions $ map go p
       ParserArg _ _ -> S.singleton PossibleArg
       ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
+      ParserSwitch _ o -> S.fromList $ map PossibleSwitch $ switchSpecificsDasheds $ optionGeneralSpecifics o
       ParserEnvVar _ _ -> S.empty
       ParserConfig _ _ -> S.empty
 
@@ -222,6 +190,12 @@ runParserOn p args envVars mConfig =
             case r s of
               Left err -> ppError $ ParseErrorOptionRead err
               Right a -> pure a
+      ParserSwitch a o -> do
+        let ds = switchSpecificsDasheds $ optionGeneralSpecifics o
+        mS <- ppSwitch ds
+        case mS of
+          Nothing -> ppError $ ParseErrorMissingSwitch $ switchOptDoc o
+          Just () -> pure a
       ParserEnvVar r o -> do
         es <- asks ppEnvEnv
         case msum $ map (`EnvMap.lookup` es) (envSpecificsVars (optionGeneralSpecifics o)) of
@@ -262,6 +236,9 @@ ppArg = state ArgMap.consumeArgument
 
 ppOpt :: [Dashed] -> PP (Maybe String)
 ppOpt ds = state $ ArgMap.consumeOption ds
+
+ppSwitch :: [Dashed] -> PP (Maybe ())
+ppSwitch ds = state $ ArgMap.consumeSwitch ds
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . ValidationT . pure . Failure

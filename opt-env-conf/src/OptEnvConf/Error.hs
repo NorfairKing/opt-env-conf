@@ -19,6 +19,7 @@ data ParseError
   | ParseErrorOptionRead !String
   | ParseErrorMissingEnvVar !EnvDoc
   | ParseErrorEnvRead !String
+  | ParseErrorMissingSwitch !OptDoc
   | ParseErrorMissingConfig !String
   | ParseErrorConfigRead !String
   | ParseErrorRequired
@@ -51,6 +52,8 @@ renderError = \case
     [["Failed to read argument: ", chunk $ T.pack $ show s]]
   ParseErrorMissingOption o ->
     ["Missing option:"] : renderOptDocLong o
+  ParseErrorMissingSwitch o ->
+    ["Missing switch:"] : renderOptDocLong o
   ParseErrorOptionRead s ->
     [["Failed to read option: ", chunk $ T.pack $ show s]]
   ParseErrorMissingEnvVar v ->

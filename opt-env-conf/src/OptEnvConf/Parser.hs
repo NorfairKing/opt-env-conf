@@ -9,6 +9,7 @@ module OptEnvConf.Parser
     strOption,
     argument,
     option,
+    switch,
     envVar,
     confVal,
     confValWith,
@@ -69,10 +70,11 @@ data Parser a where
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   -- TODO maybe we can get rid of this constructor using Alt
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
-  -- | Arguments and options
+  -- | Arguments, options and switches
   ParserArg :: !(Reader a) -> !(ArgumentParser a) -> Parser a
   -- TODO consider getting rid of ParserOpt and "just" giving Arg a possibly-empty list of dasheds to parse
   ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser a
+  ParserSwitch :: !a -> !(SwitchParser a) -> Parser a
   -- | Env vars
   ParserEnvVar :: !(Reader a) -> !(EnvParser a) -> Parser a
   -- | Configuration file
@@ -174,6 +176,10 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Opt _ "
             . showOptionParserABit p
+      ParserSwitch _ p ->
+        showParen (d > 10) $
+          showString "Switch _ "
+            . showSwitchParserABit p
       ParserEnvVar _ p ->
         showParen (d > 10) $
           showString "EnvVar _  "
@@ -196,6 +202,9 @@ argument r = ParserArg r . completeBuilder . mconcat
 
 option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
+
+switch :: a -> [SwitchBuilder a] -> Parser a
+switch a = ParserSwitch a . completeBuilder . mconcat
 
 envVar :: Reader a -> [EnvBuilder a] -> Parser a
 envVar r = ParserEnvVar r . completeBuilder . mconcat
@@ -225,11 +234,10 @@ withYamlConfig :: Parser (Maybe FilePath) -> Parser a -> Parser a
 withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >=> readYamlConfigFile)) pathParser
 
 xdgYamlConfigFile :: FilePath -> Parser FilePath
-xdgYamlConfigFile subdir = do
-  xdgDir <-
-    envVar
+xdgYamlConfigFile subdir =
+  (\xdgDir -> xdgDir </> subdir </> "config.yaml")
+    <$> envVar
       str
       [ var "XDG_CONFIG_HOME",
         metavar "DIRECTORY"
       ]
-  pure $ xdgDir </> subdir </> "config.yaml"
