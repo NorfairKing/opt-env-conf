@@ -99,6 +99,7 @@ collectPossibleOpts = go
       ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
       ParserSwitch _ o -> S.fromList $ map PossibleSwitch $ switchSpecificsDasheds $ optionGeneralSpecifics o
       ParserEnvVar _ _ -> S.empty
+      ParserPrefixed _ p -> go p
       ParserConfig _ _ -> S.empty
 
 runParserOn ::
@@ -109,7 +110,7 @@ runParserOn ::
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig =
   validationToEither <$> do
-    let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
+    let ppEnv = PPEnv {ppEnvPrefix = "", ppEnvEnv = envVars, ppEnvConf = mConfig}
     runValidationT $ evalStateT (runReaderT (go p) ppEnv) args
   where
     tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
@@ -197,13 +198,16 @@ runParserOn p args envVars mConfig =
           Nothing -> ppError $ ParseErrorMissingSwitch $ switchOptDoc o
           Just () -> pure a
       ParserEnvVar r o -> do
+        prefix <- asks ppEnvPrefix
         es <- asks ppEnvEnv
-        case msum $ map (`EnvMap.lookup` es) (envSpecificsVars (optionGeneralSpecifics o)) of
+        case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) (envSpecificsVars (optionGeneralSpecifics o)) of
           Nothing -> ppError $ ParseErrorMissingEnvVar $ envEnvDoc o
           Just s ->
             case r s of
               Left err -> ppError $ ParseErrorEnvRead err
               Right a -> pure a
+      ParserPrefixed prefix p' ->
+        local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
       ParserConfig key c -> do
         mConf <- asks ppEnvConf
         case mConf of
@@ -219,7 +223,8 @@ type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 type PPState = ArgMap
 
 data PPEnv = PPEnv
-  { ppEnvEnv :: !EnvMap,
+  { ppEnvPrefix :: !String,
+    ppEnvEnv :: !EnvMap,
     ppEnvConf :: !(Maybe JSON.Object)
   }
 

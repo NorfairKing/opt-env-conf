@@ -11,6 +11,7 @@ module OptEnvConf.Parser
     option,
     switch,
     envVar,
+    prefixed,
     confVal,
     confValWith,
     optionalFirst,
@@ -77,8 +78,9 @@ data Parser a where
   ParserSwitch :: !a -> !(SwitchParser a) -> Parser a
   -- | Env vars
   ParserEnvVar :: !(Reader a) -> !(EnvParser a) -> Parser a
+  ParserPrefixed :: !String -> !(Parser a) -> Parser a
   -- | Configuration file
-  ParserConfig :: String -> ValueCodec void a -> Parser a
+  ParserConfig :: !String -> !(ValueCodec void a) -> Parser a
 
 instance Functor Parser where
   fmap = ParserFmap
@@ -95,14 +97,24 @@ instance Alternative Parser where
   (<|>) p1 p2 =
     let isEmpty :: Parser a -> Bool
         isEmpty = \case
-          ParserEmpty -> True
           ParserFmap _ p' -> isEmpty p'
+          ParserPure _ -> False
           ParserAp pf pa -> isEmpty pf && isEmpty pa
           ParserSelect pe pf -> isEmpty pe && isEmpty pf
+          ParserEmpty -> True
+          ParserAlt _ _ -> False
+          ParserMany _ -> False
+          ParserSome _ -> False
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
-          ParserRequiredFirst [] -> True
-          _ -> False
+          ParserOptionalFirst _ -> False
+          ParserRequiredFirst ps -> null ps
+          ParserArg _ _ -> False
+          ParserOpt _ _ -> False
+          ParserSwitch _ _ -> False
+          ParserEnvVar _ _ -> False
+          ParserPrefixed _ p -> isEmpty p
+          ParserConfig _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty
           (True, False) -> p2
@@ -182,8 +194,14 @@ showParserABit = ($ "") . go 0
             . showSwitchParserABit p
       ParserEnvVar _ p ->
         showParen (d > 10) $
-          showString "EnvVar _  "
+          showString "EnvVar _ "
             . showEnvParserABit p
+      ParserPrefixed prefix p ->
+        showParen (d > 10) $
+          showString "Prefixed "
+            . showsPrec 11 prefix
+            . showString " "
+            . go 11 p
       ParserConfig key c ->
         showParen (d > 10) $
           showString "Config "
@@ -208,6 +226,9 @@ switch a = ParserSwitch a . completeBuilder . mconcat
 
 envVar :: Reader a -> [EnvBuilder a] -> Parser a
 envVar r = ParserEnvVar r . completeBuilder . mconcat
+
+prefixed :: String -> Parser a -> Parser a
+prefixed = ParserPrefixed
 
 confVal :: (HasCodec a) => String -> Parser a
 confVal k = confValWith k codec

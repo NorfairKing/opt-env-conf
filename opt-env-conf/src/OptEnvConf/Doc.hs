@@ -99,7 +99,13 @@ parserDocs = go
       ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
       ParserSwitch _ o -> AnyDocsSingle [AnyDocOpt $ switchOptDoc o]
       ParserEnvVar _ o -> AnyDocsSingle [AnyDocEnv $ envEnvDoc o]
+      ParserPrefixed prefix p -> anyDocPrefixed prefix <$> go p
       ParserConfig _ _ -> AnyDocsSingle []
+
+anyDocPrefixed :: String -> AnyDoc -> AnyDoc
+anyDocPrefixed prefix = \case
+  AnyDocEnv ed -> AnyDocEnv $ ed {envDocVars = map (prefix <>) (envDocVars ed)}
+  ad -> ad
 
 argumentOptDoc :: ArgumentParser a -> OptDoc
 argumentOptDoc OptionGenerals {..} =

@@ -60,39 +60,40 @@ data Greet = Greet
 
 greetParser :: Parser Greet
 greetParser =
-  Greet
-    <$> optional
-      ( strArgument
-          [ help "Who to greet",
-            metavar "SUBJECT"
-          ]
-      )
-    <*> optionalFirst
-      [ optional $
-          strOption
-            [ long "greeting",
-              short 'g',
-              metavar "GREETING",
-              help "Greeting to use"
-            ],
-        optional $
-          envVar
-            str
-            [ var "GREETING",
-              help "Greeting to use"
-            ],
-        confVal "greeting"
-      ]
-    <*> ( fromMaybe False
-            <$> optional
-              ( switch
-                  True
-                  [ long "polite",
-                    short 'p',
-                    help "Whether to be polite"
-                  ]
-              )
+  prefixed "GREET_" $
+    Greet
+      <$> optional
+        ( strArgument
+            [ help "Who to greet",
+              metavar "SUBJECT"
+            ]
         )
+      <*> optionalFirst
+        [ optional $
+            strOption
+              [ long "greeting",
+                short 'g',
+                metavar "GREETING",
+                help "Greeting to use"
+              ],
+          optional $
+            envVar
+              str
+              [ var "GREETING",
+                help "Greeting to use"
+              ],
+          confVal "greeting"
+        ]
+      <*> ( fromMaybe False
+              <$> optional
+                ( switch
+                    True
+                    [ long "polite",
+                      short 'p',
+                      help "Whether to be polite"
+                    ]
+                )
+          )
 
 data Args = Args [String]
   deriving (Show)
