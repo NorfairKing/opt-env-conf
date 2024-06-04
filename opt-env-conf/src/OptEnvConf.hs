@@ -17,6 +17,7 @@ module OptEnvConf
     mapIO,
     withConfig,
     withYamlConfig,
+    xdgYamlConfigFile,
     module OptEnvConf,
     module OptEnvConf.Doc,
     module OptEnvConf.Opt,

@@ -18,6 +18,7 @@ module OptEnvConf.Parser
     mapIO,
     withConfig,
     withYamlConfig,
+    xdgYamlConfigFile,
 
     -- * Parser implementation
     Parser (..),
@@ -39,6 +40,7 @@ import Data.String
 import OptEnvConf.Opt
 import OptEnvConf.Reader
 import Path.IO
+import System.FilePath
 import Text.Show
 
 data Parser a where
@@ -219,5 +221,15 @@ mapIO = ParserMapIO
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
 
-withYamlConfig :: Parser FilePath -> Parser a -> Parser a
-withYamlConfig pathParser = withConfig $ mapIO (resolveFile' >=> readYamlConfigFile) pathParser
+withYamlConfig :: Parser (Maybe FilePath) -> Parser a -> Parser a
+withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >=> readYamlConfigFile)) pathParser
+
+xdgYamlConfigFile :: FilePath -> Parser FilePath
+xdgYamlConfigFile subdir = do
+  xdgDir <-
+    envVar
+      str
+      [ var "XDG_CONFIG_HOME",
+        metavar "DIRECTORY"
+      ]
+  pure $ xdgDir </> subdir </> "config.yaml"
