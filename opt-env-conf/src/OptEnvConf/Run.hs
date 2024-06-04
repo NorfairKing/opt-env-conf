@@ -123,6 +123,7 @@ collectPossibleOpts = go
       ParserMany p -> go p
       ParserSome p -> go p
       ParserMapIO _ p -> go p
+      ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
       ParserArg _ _ -> S.singleton PossibleArg
@@ -177,6 +178,9 @@ runParserOn p args envVars mConfig =
       ParserMapIO f p' -> do
         a <- go p'
         liftIO $ f a
+      ParserWithConfig pc pa -> do
+        mNewConfig <- go pc
+        local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
       ParserOptionalFirst pss -> case pss of
         [] -> pure Nothing
         (p' : ps) -> do

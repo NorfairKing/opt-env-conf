@@ -15,6 +15,7 @@ module OptEnvConf
     someNonEmpty,
     optEnvConf,
     mapIO,
+    withConfig,
     module OptEnvConf,
     module OptEnvConf.Doc,
     module OptEnvConf.Opt,

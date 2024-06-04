@@ -16,6 +16,7 @@ module OptEnvConf.Parser
     requiredFirst,
     someNonEmpty,
     mapIO,
+    withConfig,
 
     -- * Parser implementation
     Parser (..),
@@ -27,6 +28,7 @@ where
 
 import Autodocodec
 import Control.Applicative
+import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.String
@@ -51,6 +53,8 @@ data Parser a where
   -- It is morally ok for read-only IO actions but you will
   -- have a bad time if the action is not read-only.
   ParserMapIO :: (a -> IO b) -> Parser a -> Parser b
+  -- | Load a configuration value and use it for the continuing parser
+  ParserWithConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
   -- Combining
   -- TODO Maybe we can get rid of this constructor using 'optional requiredFirst'
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
@@ -79,6 +83,9 @@ instance Alternative Parser where
         isEmpty = \case
           ParserEmpty -> True
           ParserFmap _ p' -> isEmpty p'
+          ParserAp pf pa -> isEmpty pf && isEmpty pa
+          ParserMapIO _ p' -> isEmpty p'
+          ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserRequiredFirst [] -> True
           _ -> False
      in case (isEmpty p1, isEmpty p2) of
@@ -125,6 +132,12 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "MapIO _ "
             . go 11 p
+      ParserWithConfig p1 p2 ->
+        showParen (d > 10) $
+          showString "WithConfig _ "
+            . go 11 p1
+            . showString " "
+            . go 11 p2
       ParserOptionalFirst ps ->
         showParen (d > 10) $
           showString "OptionalFirst "
@@ -184,3 +197,6 @@ someNonEmpty = ParserSome
 
 mapIO :: (a -> IO b) -> Parser a -> Parser b
 mapIO = ParserMapIO
+
+withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
+withConfig = ParserWithConfig
