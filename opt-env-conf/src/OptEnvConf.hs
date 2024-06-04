@@ -72,3 +72,6 @@ optEnvConf r key h =
           ], -- TODO just using the key doesn't work, needs to be UPPER_SNAKE_CASE
       optional $ confVal key -- TODO just using the key doesn't work, needs to be kebab-case
     ]
+
+mapIO :: (a -> IO b) -> Parser a -> Parser b
+mapIO = ParserMapIO
