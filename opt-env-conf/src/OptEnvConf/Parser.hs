@@ -17,6 +17,7 @@ module OptEnvConf.Parser
     someNonEmpty,
     mapIO,
     withConfig,
+    withYamlConfig,
 
     -- * Parser implementation
     Parser (..),
@@ -27,7 +28,9 @@ module OptEnvConf.Parser
 where
 
 import Autodocodec
+import Autodocodec.Yaml
 import Control.Applicative
+import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
@@ -35,6 +38,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.String
 import OptEnvConf.Opt
 import OptEnvConf.Reader
+import Path.IO
 import Text.Show
 
 data Parser a where
@@ -214,3 +218,6 @@ mapIO = ParserMapIO
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
+
+withYamlConfig :: Parser FilePath -> Parser a -> Parser a
+withYamlConfig pathParser = withConfig $ mapIO (resolveFile' >=> readYamlConfigFile) pathParser
