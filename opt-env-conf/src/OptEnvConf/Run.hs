@@ -5,13 +5,13 @@
 module OptEnvConf.Run where
 
 import Autodocodec
-import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Aeson ((.:))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
+import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)

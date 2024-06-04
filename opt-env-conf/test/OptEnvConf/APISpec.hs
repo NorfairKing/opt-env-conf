@@ -17,7 +17,7 @@ spec = do
   exampleParserSpec @Optional "optional"
   pure ()
 
-exampleParserSpec :: forall a. HasParser a => FilePath -> Spec
+exampleParserSpec :: forall a. (HasParser a) => FilePath -> Spec
 exampleParserSpec dir = exampleParserSpec' dir (optEnvConfParser :: Parser a)
 
 exampleParserSpec' :: FilePath -> Parser a -> Spec

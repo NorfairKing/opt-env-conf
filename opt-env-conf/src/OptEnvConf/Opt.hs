@@ -52,25 +52,25 @@ instance Monoid (Builder f) where
 class HasLong a where
   addLong :: NonEmpty Char -> a -> a
 
-instance HasLong f => HasLong (OptionGenerals f) where
+instance (HasLong f) => HasLong (OptionGenerals f) where
   addLong s op = op {optionGeneralSpecifics = addLong s (optionGeneralSpecifics op)}
 
 class HasShort a where
   addShort :: Char -> a -> a
 
-instance HasShort f => HasShort (OptionGenerals f) where
+instance (HasShort f) => HasShort (OptionGenerals f) where
   addShort c op = op {optionGeneralSpecifics = addShort c (optionGeneralSpecifics op)}
 
 class HasEnvVar a where
   addEnvVar :: String -> a -> a
 
-instance HasEnvVar f => HasEnvVar (OptionGenerals f) where
+instance (HasEnvVar f) => HasEnvVar (OptionGenerals f) where
   addEnvVar v op = op {optionGeneralSpecifics = addEnvVar v (optionGeneralSpecifics op)}
 
 class HasMetavar a where
   setMetavar :: Metavar -> a -> a
 
-instance HasMetavar f => HasMetavar (OptionGenerals f) where
+instance (HasMetavar f) => HasMetavar (OptionGenerals f) where
   setMetavar v op = op {optionGeneralSpecifics = setMetavar v (optionGeneralSpecifics op)}
 
 -- data SwitchSpecifics = SwitchSpecifics
@@ -179,15 +179,15 @@ type EnvBuilder a = Builder (EnvSpecifics a)
 help :: String -> Builder f
 help s = Builder $ \op -> op {optionGeneralHelp = Just s}
 
-metavar :: HasMetavar f => String -> Builder f
+metavar :: (HasMetavar f) => String -> Builder f
 metavar s = Builder $ setMetavar s
 
-long :: HasLong f => String -> Builder f
+long :: (HasLong f) => String -> Builder f
 long "" = error "Cannot use an empty long-form option."
 long s = Builder $ addLong (NE.fromList s)
 
-short :: HasShort f => Char -> Builder f
+short :: (HasShort f) => Char -> Builder f
 short c = Builder $ addShort c
 
-var :: HasEnvVar f => String -> Builder f
+var :: (HasEnvVar f) => String -> Builder f
 var v = Builder $ addEnvVar v

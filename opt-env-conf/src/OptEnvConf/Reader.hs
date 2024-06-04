@@ -5,10 +5,10 @@ import Text.Read
 
 type Reader a = String -> Either String a
 
-str :: IsString s => Reader s
+str :: (IsString s) => Reader s
 str = Right . fromString
 
-auto :: Read a => Reader a
+auto :: (Read a) => Reader a
 auto s = case readMaybe s of
   Nothing -> Left $ "Un-Read-able value: " <> show s
   Just a -> a

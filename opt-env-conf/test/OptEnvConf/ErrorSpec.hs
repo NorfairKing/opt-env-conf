@@ -52,7 +52,7 @@ spec = do
   pending "RequiredFirst"
   pending "ConfigParse"
 
-parseErrorSpec :: Show a => FilePath -> Parser a -> [String] -> Spec
+parseErrorSpec :: (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseErrorSpec fp p args =
   it (unwords ["renders the", fp, "error the same as before"]) $
     let path = "test_resources/error/" <> fp <> ".txt"
