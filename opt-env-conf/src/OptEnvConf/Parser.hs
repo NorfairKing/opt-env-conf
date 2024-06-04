@@ -7,7 +7,6 @@ module OptEnvConf.Parser
   ( Parser (..),
     Metavar,
     Help,
-    HasParser (..),
     showParserABit,
   )
 where
@@ -79,9 +78,6 @@ instance Alternative Parser where
 
   -- TODO maybe we can get rid of the some constructor by using (:) <$> p <$> many p
   some = fmap NE.toList . ParserSome
-
-class HasParser a where
-  optEnvConfParser :: Parser a
 
 showParserABit :: Parser a -> String
 showParserABit = ($ "") . go 0

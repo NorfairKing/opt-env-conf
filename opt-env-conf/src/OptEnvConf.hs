@@ -9,7 +9,6 @@ module OptEnvConf
     module OptEnvConf.Run,
     module OptEnvConf.Reader,
     Parser,
-    HasParser (..),
     optional,
     module Control.Applicative,
   )

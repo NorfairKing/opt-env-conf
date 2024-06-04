@@ -1,6 +1,4 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 module OptEnvConf.APISpec (spec) where
 
@@ -12,16 +10,13 @@ import Text.Colour
 
 spec :: Spec
 spec = do
-  exampleParserSpec @Greet "greet"
-  exampleParserSpec @Args "args"
-  exampleParserSpec @Optional "optional"
+  exampleParserSpec "greet" greetParser
+  exampleParserSpec "args" argsParser
+  exampleParserSpec "optional" optionalParser
   pure ()
 
-exampleParserSpec :: forall a. (HasParser a) => FilePath -> Spec
-exampleParserSpec dir = exampleParserSpec' dir (optEnvConfParser :: Parser a)
-
-exampleParserSpec' :: FilePath -> Parser a -> Spec
-exampleParserSpec' dir parser = describe dir $ do
+exampleParserSpec :: FilePath -> Parser a -> Spec
+exampleParserSpec dir parser = describe dir $ do
   it "it documents the parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/docs.txt") $
       renderDocs $
@@ -61,52 +56,52 @@ data Greet = Greet
   }
   deriving (Show)
 
-instance HasParser Greet where
-  optEnvConfParser =
-    Greet
-      <$> optional
-        ( strArgument
-            [ help "Who to greet",
-              metavar "SUBJECT"
-            ]
-        )
-      <*> optionalFirst
-        [ optional $
-            strOption
-              [ long "greeting",
-                metavar "GREETING",
-                help "Greeting to use"
-              ],
-          optional $
-            envVar
-              str
-              [ var "GREETING",
-                help "Greeting to use"
-              ],
-          confVal "greeting"
-        ]
+greetParser :: Parser Greet
+greetParser =
+  Greet
+    <$> optional
+      ( strArgument
+          [ help "Who to greet",
+            metavar "SUBJECT"
+          ]
+      )
+    <*> optionalFirst
+      [ optional $
+          strOption
+            [ long "greeting",
+              metavar "GREETING",
+              help "Greeting to use"
+            ],
+        optional $
+          envVar
+            str
+            [ var "GREETING",
+              help "Greeting to use"
+            ],
+        confVal "greeting"
+      ]
 
 data Args = Args [String]
   deriving (Show)
 
-instance HasParser Args where
-  optEnvConfParser =
-    Args
-      <$> many
-        ( strArgument
-            [ help "Argument",
-              metavar "ARGUMENT"
-            ]
-        )
+argsParser :: Parser Args
+argsParser =
+  Args
+    <$> many
+      ( strArgument
+          [ help "Argument",
+            metavar "ARGUMENT"
+          ]
+      )
 
 data Optional = Optional (Maybe String)
 
-instance HasParser Optional where
-  optEnvConfParser =
-    Optional
-      <$> optional
-        ( strArgument
-            [ help "Argument",
-              metavar "ARGUMENT"
-            ]
-        )
+optionalParser :: Parser Optional
+optionalParser =
+  Optional
+    <$> optional
+      ( strArgument
+          [ help "Argument",
+            metavar "ARGUMENT"
+          ]
+      )
