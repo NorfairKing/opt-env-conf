@@ -128,7 +128,13 @@ collectPossibleOpts = go
       ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
       ParserSwitch _ o -> S.fromList $ map PossibleSwitch $ switchSpecificsDasheds $ optionGeneralSpecifics o
       ParserEnvVar _ _ -> S.empty
-      ParserSetting p -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ optionGeneralSpecifics p
+      ParserSetting p ->
+        case settingSpecificsDasheds (optionGeneralSpecifics p) of
+          [] -> S.singleton PossibleArg
+          ds ->
+            case settingSpecificsSwitchValue (optionGeneralSpecifics p) of
+              Nothing -> S.fromList $ map PossibleOption ds
+              Just _ -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ optionGeneralSpecifics p
       ParserPrefixed _ p -> go p
       ParserConfig _ _ -> S.empty
 
@@ -208,7 +214,7 @@ runParserOn p args envVars mConfig =
       ParserArg r o -> do
         mS <- ppArg
         case mS of
-          Nothing -> ppError $ ParseErrorMissingArgument $ argumentOptDoc o
+          Nothing -> ppError $ ParseErrorMissingArgument $ Just $ argumentOptDoc o
           Just s -> case r s of
             Left err -> ppError $ ParseErrorArgumentRead err
             Right a -> pure a
@@ -216,7 +222,7 @@ runParserOn p args envVars mConfig =
         let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
         mS <- ppOpt ds
         case mS of
-          Nothing -> ppError $ ParseErrorMissingOption $ optionOptDoc o
+          Nothing -> ppError $ ParseErrorMissingOption $ Just $ optionOptDoc o
           Just s -> do
             case r s of
               Left err -> ppError $ ParseErrorOptionRead err
@@ -225,7 +231,7 @@ runParserOn p args envVars mConfig =
         let ds = switchSpecificsDasheds $ optionGeneralSpecifics o
         mS <- ppSwitch ds
         case mS of
-          Nothing -> ppError $ ParseErrorMissingSwitch $ switchOptDoc o
+          Nothing -> ppError $ ParseErrorMissingSwitch $ Just $ switchOptDoc o
           Just () -> pure a
       ParserEnvVar r o -> do
         prefix <- asks ppEnvPrefix
@@ -236,7 +242,35 @@ runParserOn p args envVars mConfig =
             case r s of
               Left err -> ppError $ ParseErrorEnvRead err
               Right a -> pure a
-      ParserSetting _ -> undefined
+      ParserSetting o -> do
+        let s = optionGeneralSpecifics o
+        let rs = settingSpecificsReaders s
+        -- TODO try the readers in order
+        let (r : _) = rs
+        case settingSpecificsDasheds s of
+          [] -> do
+            mS <- ppArg
+            case mS of
+              Nothing -> ppError $ ParseErrorMissingArgument $ settingOptDoc o
+              Just argStr -> do
+                case r argStr of
+                  Left err -> ppError $ ParseErrorArgumentRead err
+                  Right a -> pure a
+          ds ->
+            case settingSpecificsSwitchValue s of
+              Just a -> do
+                mS <- ppSwitch ds
+                case mS of
+                  Nothing -> ppError $ ParseErrorMissingSwitch $ settingOptDoc o
+                  Just () -> pure a
+              Nothing -> do
+                mS <- ppOpt ds
+                case mS of
+                  Nothing -> ppError $ ParseErrorMissingOption $ settingOptDoc o
+                  Just optionStr -> do
+                    case r optionStr of
+                      Left err -> ppError $ ParseErrorOptionRead err
+                      Right a -> pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
       ParserConfig key c -> do

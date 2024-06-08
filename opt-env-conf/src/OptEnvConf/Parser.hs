@@ -5,10 +5,6 @@
 
 module OptEnvConf.Parser
   ( -- * Parser API
-    strArgument,
-    strOption,
-    argument,
-    option,
     envVar,
     setting,
     prefixed,
@@ -38,7 +34,6 @@ import Control.Selective
 import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import Data.String
 import OptEnvConf.Opt
 import OptEnvConf.Reader
 import Path.IO
@@ -215,18 +210,6 @@ showParserABit = ($ "") . go 0
             . showsPrec 11 key
             . showString " "
             . showParen True (showString (showCodecABit c))
-
-strArgument :: (IsString string) => [ArgumentBuilder string] -> Parser string
-strArgument = argument str
-
-strOption :: (IsString string) => [OptionBuilder string] -> Parser string
-strOption = option str
-
-argument :: Reader a -> [ArgumentBuilder a] -> Parser a
-argument r = ParserArg r . completeBuilder . mconcat
-
-option :: Reader a -> [OptionBuilder a] -> Parser a
-option r = ParserOpt r . completeBuilder . mconcat
 
 envVar :: Reader a -> [EnvBuilder a] -> Parser a
 envVar r = ParserEnvVar r . completeBuilder . mconcat

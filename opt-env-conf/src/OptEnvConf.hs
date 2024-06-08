@@ -7,6 +7,7 @@ module OptEnvConf
     strOption,
     argument,
     option,
+    reader,
     switch,
     envVar,
     setting,
@@ -15,12 +16,10 @@ module OptEnvConf
     optionalFirst,
     requiredFirst,
     someNonEmpty,
-    optEnvConf,
     mapIO,
     withConfig,
     withYamlConfig,
     xdgYamlConfigFile,
-    module OptEnvConf,
     module OptEnvConf.Doc,
     module OptEnvConf.Opt,
     module OptEnvConf.Run,
@@ -31,27 +30,9 @@ module OptEnvConf
   )
 where
 
-import Autodocodec
 import Control.Applicative
 import OptEnvConf.Doc
 import OptEnvConf.Opt
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Run
-
-optEnvConf :: (HasCodec a) => Reader a -> String -> String -> Parser a
-optEnvConf r key h =
-  requiredFirst
-    [ optional $
-        option
-          r
-          [ long key,
-            help h
-          ],
-      optional $
-        envVar
-          r
-          [ var key
-          ], -- TODO just using the key doesn't work, needs to be UPPER_SNAKE_CASE
-      optional $ confVal key -- TODO just using the key doesn't work, needs to be kebab-case
-    ]

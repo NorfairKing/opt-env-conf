@@ -13,13 +13,13 @@ import Text.Colour
 data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
-  | ParseErrorMissingArgument !OptDoc
+  | ParseErrorMissingArgument !(Maybe OptDoc)
   | ParseErrorArgumentRead !String
-  | ParseErrorMissingOption !OptDoc
+  | ParseErrorMissingOption !(Maybe OptDoc)
   | ParseErrorOptionRead !String
   | ParseErrorMissingEnvVar !EnvDoc
   | ParseErrorEnvRead !String
-  | ParseErrorMissingSwitch !OptDoc
+  | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfig !String
   | ParseErrorConfigRead !String
   | ParseErrorRequired
@@ -47,13 +47,13 @@ renderError = \case
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorMissingArgument o ->
-    ["Missing argument:" : unwordsChunks (renderOptDocLong o)]
+    ["Missing argument:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorArgumentRead s ->
     [["Failed to read argument: ", chunk $ T.pack $ show s]]
   ParseErrorMissingOption o ->
-    ["Missing option:" : unwordsChunks (renderOptDocLong o)]
+    ["Missing option:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorMissingSwitch o ->
-    ["Missing switch:" : unwordsChunks (renderOptDocLong o)]
+    ["Missing switch:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorOptionRead s ->
     [["Failed to read option: ", chunk $ T.pack $ show s]]
   ParseErrorMissingEnvVar v ->

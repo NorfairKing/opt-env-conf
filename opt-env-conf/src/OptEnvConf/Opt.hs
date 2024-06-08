@@ -6,6 +6,7 @@ module OptEnvConf.Opt where
 
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import Data.String
 import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Reader
 import Text.Show
@@ -213,18 +214,18 @@ showEnvParserABit = showOptionGeneralsABitWith $ \EnvSpecifics {..} ->
 type EnvBuilder a = Builder (EnvSpecifics a)
 
 data SettingSpecifics a = SettingSpecifics
-  { -- Nothing means this is not a switch.
-
+  { -- | Which dashed values are required for parsing
+    --
+    -- No dashed values means this is an argument.
+    settingSpecificsDasheds :: ![Dashed],
     -- | What value to parse when the switch exists.
+    --
+    -- Nothing means this is not a switch.
     settingSpecificsSwitchValue :: !(Maybe a),
     -- | How to read a string into a value.
     --
     -- An empty list means it doesn't take an argument.
     settingSpecificsReaders :: ![Reader a],
-    -- | Which dashed values are required for parsing
-    --
-    -- No dashed values means this is an argument.
-    settingSpecificsDasheds :: ![Dashed],
     -- | Which env vars can be read.
     --
     -- Requires at least one Reader.
@@ -236,17 +237,17 @@ data SettingSpecifics a = SettingSpecifics
 instance CanComplete (SettingSpecifics a) where
   completeBuilder b = unBuilder b emptySettingParser
 
-instance IsSwitch a (SettingSpecifics a) where
-  setSwitchValue a os = os {settingSpecificsSwitchValue = Just a}
-
-instance HasReader a (SettingSpecifics a) where
-  addReader a os = os {settingSpecificsReaders = a : settingSpecificsReaders os}
-
 instance HasLong (SettingSpecifics a) where
   addLong s os = os {settingSpecificsDasheds = DashedLong s : settingSpecificsDasheds os}
 
 instance HasShort (SettingSpecifics a) where
   addShort c os = os {settingSpecificsDasheds = DashedShort c : settingSpecificsDasheds os}
+
+instance IsSwitch a (SettingSpecifics a) where
+  setSwitchValue a os = os {settingSpecificsSwitchValue = Just a}
+
+instance HasReader a (SettingSpecifics a) where
+  addReader a os = os {settingSpecificsReaders = a : settingSpecificsReaders os}
 
 instance HasEnvVar (SettingSpecifics a) where
   addEnvVar v os = os {settingSpecificsEnvVars = v : settingSpecificsEnvVars os}
@@ -260,9 +261,9 @@ emptySettingParser :: SettingParser a
 emptySettingParser =
   emptyOptionGeneralsWith
     SettingSpecifics
-      { settingSpecificsSwitchValue = Nothing,
+      { settingSpecificsDasheds = [],
+        settingSpecificsSwitchValue = Nothing,
         settingSpecificsReaders = [],
-        settingSpecificsDasheds = [],
         settingSpecificsEnvVars = [],
         settingSpecificsMetavar = Nothing
       }
@@ -270,11 +271,11 @@ emptySettingParser =
 showSettingParserABit :: SettingParser a -> ShowS
 showSettingParserABit = showOptionGeneralsABitWith $ \SettingSpecifics {..} ->
   showString "OptionSpecifics "
+    . showsPrec 11 settingSpecificsDasheds
+    . showString " "
     . showMaybeWith (\_ -> showString "_") settingSpecificsSwitchValue
     . showString " "
     . showListWith (\_ -> showString "_") settingSpecificsReaders
-    . showString " "
-    . showsPrec 11 settingSpecificsDasheds
     . showString " "
     . showsPrec 11 settingSpecificsEnvVars
     . showString " "
@@ -291,6 +292,18 @@ help s = Builder $ \op -> op {optionGeneralHelp = Just s}
 
 metavar :: (HasMetavar f) => String -> Builder f
 metavar s = Builder $ setMetavar s
+
+strArgument :: (IsString string) => Builder (SettingSpecifics string)
+strArgument = argument str
+
+argument :: Reader a -> Builder (SettingSpecifics a)
+argument = reader
+
+strOption :: (IsString string) => Builder (SettingSpecifics string)
+strOption = option str
+
+option :: Reader a -> Builder (SettingSpecifics a)
+option = reader
 
 reader :: Reader a -> Builder (SettingSpecifics a)
 reader b = Builder $ addReader b

@@ -115,7 +115,7 @@ argsParser =
   Args
     <$> many
       ( setting
-          [ reader str,
+          [ strArgument,
             help "Argument",
             metavar "ARGUMENT"
           ]
@@ -127,8 +127,9 @@ optionalParser :: Parser Optional
 optionalParser =
   Optional
     <$> optional
-      ( strArgument
-          [ help "Argument",
+      ( setting
+          [ strArgument,
+            help "Argument",
             metavar "ARGUMENT"
           ]
       )
