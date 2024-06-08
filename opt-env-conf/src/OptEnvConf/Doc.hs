@@ -6,7 +6,7 @@
 
 module OptEnvConf.Doc where
 
-import Data.List (intersperse, sort)
+import Data.List (intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -277,7 +277,7 @@ dashedChunks :: [Dashed] -> Maybe [Chunk]
 dashedChunks = fmap dashedChunksNE . NE.nonEmpty
 
 dashedChunksNE :: NonEmpty Dashed -> [Chunk]
-dashedChunksNE = intersperse "|" . map dashedChunk . sort . NE.toList
+dashedChunksNE = intersperse "|" . map dashedChunk . NE.toList
 
 dashedChunk :: Dashed -> Chunk
 dashedChunk = fore white . chunk . T.pack . AM.renderDashed

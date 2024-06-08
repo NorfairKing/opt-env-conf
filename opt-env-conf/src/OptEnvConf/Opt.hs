@@ -43,7 +43,7 @@ class CanComplete f where
   completeBuilder :: Builder f -> OptionGenerals f
 
 instance Semigroup (Builder f) where
-  (<>) (Builder f1) (Builder f2) = Builder (f2 . f1)
+  (<>) (Builder f1) (Builder f2) = Builder (f1 . f2)
 
 instance Monoid (Builder f) where
   mempty = Builder id

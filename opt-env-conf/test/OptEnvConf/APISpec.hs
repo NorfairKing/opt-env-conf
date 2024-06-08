@@ -88,8 +88,8 @@ greetParser =
       <*> optionalFirst
         [ optional $
             strOption
-              [ long "greeting",
-                short 'g',
+              [ short 'g',
+                long "greeting",
                 metavar "GREETING",
                 help "Greeting to use"
               ],
@@ -105,8 +105,8 @@ greetParser =
               <$> optional
                 ( switch
                     True
-                    [ long "polite",
-                      short 'p',
+                    [ short 'p',
+                      long "polite",
                       help "Whether to be polite"
                     ]
                 )
