@@ -5,6 +5,7 @@
 module OptEnvConf.Run where
 
 import Autodocodec
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State
@@ -43,12 +44,38 @@ runParserWithLeftovers p = do
 
   tc <- getTerminalCapabilitiesFromHandle stderr
 
-  errOrResult <- runParserComplete p argMap envVars Nothing
+  let p' = internalParser p
+  let docs = parserDocs p'
+  errOrResult <-
+    runParserComplete
+      p'
+      argMap
+      envVars
+      Nothing
   case errOrResult of
     Left errs -> do
       hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
-    Right a -> pure (a, leftovers)
+    Right i -> case i of
+      ShowHelp -> do
+        hPutChunksLocaleWith tc stdout $ renderDocs docs
+        exitSuccess
+      ParsedNormally a -> pure (a, leftovers)
+
+-- Internal structure to help us do what the framework
+-- is supposed to.
+data Internal a
+  = ShowHelp
+  | ParsedNormally a
+
+internalParser :: Parser a -> Parser (Internal a)
+internalParser p =
+  switch
+    ShowHelp
+    [ short 'h',
+      long "help"
+    ]
+    <|> (ParsedNormally <$> p)
 
 -- 'runParserOn' _and_ 'unrecognisedOptions'
 runParserComplete ::
