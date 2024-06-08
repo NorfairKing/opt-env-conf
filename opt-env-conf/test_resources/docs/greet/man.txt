@@ -1,11 +1,11 @@
 [33mgreet[m ([37m-h[m|[37m--help[m [33mARG[m) | ([33mSUBJECT[m [37m-g[m|[37m--greeting[m [33mGREETING[m [37m-p[m|[37m--polite[m [33mARG[m)
 
 All settings:
-   [37m-h[m|[37m--help[m [33m[ARG][m        Show this help text 
-   [33mSUBJECT[m                Who to greet        
-   [37m-g[m|[37m--greeting[m [33mGREETING[m Greeting to use     
-   [37mGREET_GREETING[m [33m[ARG][m   Greeting to use     
-   [37m-p[m|[37m--polite[m [33m[ARG][m      Whether to be polite
+   Option:  [37m-h[m|[37m--help[m [33m[ARG][m        Show this help text 
+   Option:  [33mSUBJECT[m                Who to greet        
+   Option:  [37m-g[m|[37m--greeting[m [33mGREETING[m Greeting to use     
+   Env var: [37mGREET_GREETING[m [33m[ARG][m   Greeting to use     
+   Option:  [37m-p[m|[37m--polite[m [33m[ARG][m      Whether to be polite
 
 Options:
    [37m-h[m|[37m--help[m [33m[ARG][m        Show this help text 

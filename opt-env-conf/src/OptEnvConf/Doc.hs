@@ -159,8 +159,8 @@ envEnvDoc OptionGenerals {..} =
 
 renderAnyDoc :: AnyDoc -> [[Chunk]]
 renderAnyDoc = \case
-  AnyDocOpt d -> renderOptDocLong d
-  AnyDocEnv d -> renderEnvDoc d
+  AnyDocOpt d -> ["Option: "] : renderOptDocLong d
+  AnyDocEnv d -> ["Env var:"] : renderEnvDoc d
 
 renderManPage :: String -> AnyDocs AnyDoc -> [Chunk]
 renderManPage progname docs =
