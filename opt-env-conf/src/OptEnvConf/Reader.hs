@@ -1,5 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module OptEnvConf.Reader where
 
+import Data.List (intercalate)
+import Data.List.NonEmpty (NonEmpty (..), (<|))
+import qualified Data.List.NonEmpty as NE
 import Data.String
 import Text.Read
 
@@ -20,3 +26,24 @@ maybeReader func s = case func s of
 
 eitherReader :: (String -> Either String a) -> Reader a
 eitherReader = id
+
+commaSeparated :: Reader a -> Reader (NonEmpty a)
+commaSeparated func = mapM func . parseCommaSeparated
+
+renderCommaSeparated :: NonEmpty String -> String
+renderCommaSeparated = intercalate "," . map escape . NE.toList
+  where
+    escape = concatMap $ \case
+      ',' -> "\\,"
+      '\\' -> "\\\\"
+      c -> [c]
+
+parseCommaSeparated :: String -> NonEmpty String
+parseCommaSeparated = go ""
+  where
+    go acc = \case
+      [] -> reverse acc :| []
+      '\\' : '\\' : rest -> go ('\\' : acc) rest
+      '\\' : ',' : rest -> go (',' : acc) rest
+      ',' : rest -> reverse acc <| go "" rest
+      c : rest -> go (c : acc) rest

@@ -87,6 +87,7 @@ test-suite opt-env-conf-test
       OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
+      OptEnvConf.ReaderSpec
       OptEnvConf.RunSpec
       Paths_opt_env_conf
   hs-source-dirs:
@@ -104,6 +105,7 @@ test-suite opt-env-conf-test
     , genvalidity-aeson
     , genvalidity-containers
     , genvalidity-sydtest
+    , genvalidity-text
     , opt-env-conf
     , optparse-applicative
     , safe-coloured-text

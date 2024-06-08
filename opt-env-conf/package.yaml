@@ -52,6 +52,7 @@ tests:
     - genvalidity-aeson
     - genvalidity-containers
     - genvalidity-sydtest
+    - genvalidity-text
     - opt-env-conf
     - optparse-applicative
     - safe-coloured-text
