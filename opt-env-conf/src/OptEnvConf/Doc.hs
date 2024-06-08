@@ -20,6 +20,7 @@ import Text.Colour.Layout
 data AnyDoc
   = AnyDocOpt !OptDoc
   | AnyDocEnv !EnvDoc
+  deriving (Show)
 
 data OptDoc = OptDoc
   { optDocDasheds :: ![Dashed],
@@ -39,6 +40,7 @@ data AnyDocs a
   = AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
   | AnyDocsSingle ![a]
+  deriving (Show)
 
 instance Functor AnyDocs where
   fmap f = \case
@@ -79,7 +81,7 @@ type OptDocs = AnyDocs OptDoc
 type EnvDocs = AnyDocs EnvDoc
 
 parserDocs :: Parser a -> AnyDocs AnyDoc
-parserDocs = go
+parserDocs = simplifyAnyDocs . go
   where
     go :: Parser a -> AnyDocs AnyDoc
     go = \case
@@ -151,7 +153,6 @@ renderHelpPage :: AnyDocs AnyDoc -> [Chunk]
 renderHelpPage =
   unlinesChunks
     . go
-    . simplifyAnyDocs
   where
     go :: AnyDocs AnyDoc -> [[Chunk]]
     go = \case
@@ -177,11 +178,11 @@ renderCompleteOptDocs optDocs =
     ]
 
 renderShortOptDocs :: OptDocs -> [Chunk]
-renderShortOptDocs = go . simplifyAnyDocs
+renderShortOptDocs = go
   where
     go :: OptDocs -> [Chunk]
     go = \case
-      AnyDocsAnd ds -> unwordsChunks $ map go ds
+      AnyDocsAnd ds -> intercalate [" "] $ map go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle vs ->
         unwordsChunks $
@@ -201,7 +202,6 @@ renderLongOptDocs :: OptDocs -> [Chunk]
 renderLongOptDocs =
   layoutAsTable
     . go
-    . simplifyAnyDocs
   where
     go :: OptDocs -> [[Chunk]]
     go = \case
@@ -238,7 +238,6 @@ renderEnvDocs =
   renderChunksText With24BitColours
     . layoutAsTable
     . go
-    . simplifyAnyDocs
   where
     go :: EnvDocs -> [[Chunk]]
     go = \case

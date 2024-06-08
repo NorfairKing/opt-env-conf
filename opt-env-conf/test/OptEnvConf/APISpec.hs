@@ -20,32 +20,37 @@ exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
   let parser = internalParser p
 
-  it "it documents the man page in the same way" $
+  it "produces the same docs structure as before" $
+    pureGoldenStringFile ("test_resources/docs/" <> dir <> "/docs.txt") $
+      ppShow $
+        parserDocs parser
+
+  it "documents the man page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
       renderManPage $
         parserDocs parser
 
-  it "it documents the help page in the same way" $
+  it "documents the help page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/help.txt") $
       renderHelpPage $
         parserDocs parser
 
-  it "it documents the opt parser in the same way" $
+  it "documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt.txt") $
       renderCompleteOptDocs $
         parserOptDocs parser
 
-  it "it documents the opt parser in the same way" $
+  it "documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs $
         parserOptDocs parser
 
-  it "it documents the opt parser in the same way" $
+  it "documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-long.txt") $
       renderLongOptDocs $
         parserOptDocs parser
 
-  it "it documents the env parser in the same way" $
+  it "documents the env parser in the same way" $
     pureGoldenTextFile ("test_resources/docs/" <> dir <> "/env.txt") $
       renderEnvDocs $
         parserEnvDocs parser

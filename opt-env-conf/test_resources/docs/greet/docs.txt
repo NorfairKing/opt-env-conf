@@ -1,0 +1,62 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      [ AnyDocOpt
+          OptDoc
+            { optDocDasheds = [ DashedLong ('h' :| "elp") , DashedShort 'h' ]
+            , optDocMetavar = Nothing
+            , optDocHelp = Nothing
+            }
+      ]
+  , AnyDocsAnd
+      [ AnyDocsAnd
+          [ AnyDocsOr
+              [ AnyDocsSingle
+                  [ AnyDocOpt
+                      OptDoc
+                        { optDocDasheds = []
+                        , optDocMetavar = Just "SUBJECT"
+                        , optDocHelp = Just "Who to greet"
+                        }
+                  ]
+              , AnyDocsSingle []
+              ]
+          , AnyDocsOr
+              [ AnyDocsOr
+                  [ AnyDocsSingle
+                      [ AnyDocOpt
+                          OptDoc
+                            { optDocDasheds =
+                                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+                            , optDocMetavar = Just "GREETING"
+                            , optDocHelp = Just "Greeting to use"
+                            }
+                      ]
+                  , AnyDocsSingle []
+                  ]
+              , AnyDocsOr
+                  [ AnyDocsSingle
+                      [ AnyDocEnv
+                          EnvDoc
+                            { envDocVars = [ "GREET_GREETING" ]
+                            , envDocMetavar = Nothing
+                            , envDocHelp = Just "Greeting to use"
+                            }
+                      ]
+                  , AnyDocsSingle []
+                  ]
+              , AnyDocsSingle []
+              ]
+          ]
+      , AnyDocsOr
+          [ AnyDocsSingle
+              [ AnyDocOpt
+                  OptDoc
+                    { optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+                    , optDocMetavar = Nothing
+                    , optDocHelp = Just "Whether to be polite"
+                    }
+              ]
+          , AnyDocsSingle []
+          ]
+      ]
+  ]
