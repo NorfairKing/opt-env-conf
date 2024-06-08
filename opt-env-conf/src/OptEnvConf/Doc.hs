@@ -144,8 +144,11 @@ renderAnyDoc = \case
   AnyDocOpt d -> renderOptDocLong d
   AnyDocEnv d -> renderEnvDoc d
 
-renderDocs :: AnyDocs AnyDoc -> [Chunk]
-renderDocs =
+renderManPage :: AnyDocs AnyDoc -> [Chunk]
+renderManPage = renderHelpPage
+
+renderHelpPage :: AnyDocs AnyDoc -> [Chunk]
+renderHelpPage =
   unlinesChunks
     . go
     . simplifyAnyDocs

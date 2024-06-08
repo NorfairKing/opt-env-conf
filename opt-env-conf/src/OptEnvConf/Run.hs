@@ -58,7 +58,7 @@ runParserWithLeftovers p = do
       exitFailure
     Right i -> case i of
       ShowHelp -> do
-        hPutChunksLocaleWith tc stdout $ renderDocs docs
+        hPutChunksLocaleWith tc stdout $ renderHelpPage docs
         exitSuccess
       ParsedNormally a -> pure (a, leftovers)
 

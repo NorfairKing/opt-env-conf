@@ -19,9 +19,15 @@ spec = do
 exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
   let parser = internalParser p
-  it "it documents the parser in the same way" $
-    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/docs.txt") $
-      renderDocs $
+
+  it "it documents the man page in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
+      renderManPage $
+        parserDocs parser
+
+  it "it documents the help page in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/help.txt") $
+      renderHelpPage $
         parserDocs parser
 
   it "it documents the opt parser in the same way" $
