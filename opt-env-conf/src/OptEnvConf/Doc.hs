@@ -240,7 +240,7 @@ renderOptDocLong OptDoc {..} =
   [ unwordsChunks $
       concat
         [ maybeToList $ dashedChunks optDocDasheds,
-          [ [ metavarChunk $ fromMaybe "[ARG]" optDocMetavar
+          [ [ metavarChunk $ fromMaybe "ARG" optDocMetavar
             ]
           ]
         ],
@@ -273,7 +273,7 @@ renderEnvDoc EnvDoc {..} =
         [ [ intersperse "|" $ map envVarChunk envDocVars
             | not (null envDocVars)
           ],
-          [ [ metavarChunk $ fromMaybe "[ARG]" envDocMetavar
+          [ [ metavarChunk $ fromMaybe "ARG" envDocMetavar
             ]
           ]
         ],

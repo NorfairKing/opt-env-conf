@@ -1,2 +1,2 @@
-   [37m-h[m|[37m--help[m [33m[ARG][m Show this help text
-   [33mARGUMENT[m        Argument           
+   [37m-h[m|[37m--help[m [33mARG[m Show this help text
+   [33mARGUMENT[m      Argument           

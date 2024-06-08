@@ -1,4 +1,4 @@
-   [37m-h[m|[37m--help[m [33m[ARG][m        Show this help text 
+   [37m-h[m|[37m--help[m [33mARG[m          Show this help text 
    [33mSUBJECT[m                Who to greet        
    [37m-g[m|[37m--greeting[m [33mGREETING[m Greeting to use     
-   [37m-p[m|[37m--polite[m [33m[ARG][m      Whether to be polite
+   [37m-p[m|[37m--polite[m [33mARG[m        Whether to be polite
