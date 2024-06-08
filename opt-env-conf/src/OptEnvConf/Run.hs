@@ -27,7 +27,7 @@ import OptEnvConf.Error
 import OptEnvConf.Opt
 import OptEnvConf.Parser
 import OptEnvConf.Validation
-import System.Environment (getArgs, getEnvironment)
+import System.Environment (getArgs, getEnvironment, getProgName)
 import System.Exit
 import System.IO
 import Text.Colour
@@ -58,7 +58,8 @@ runParserWithLeftovers p = do
       exitFailure
     Right i -> case i of
       ShowHelp -> do
-        hPutChunksLocaleWith tc stdout $ renderHelpPage docs
+        progname <- getProgName
+        hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
         exitSuccess
       ParsedNormally a -> pure (a, leftovers)
 

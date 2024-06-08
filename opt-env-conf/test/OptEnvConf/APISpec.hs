@@ -42,7 +42,7 @@ exampleParserSpec dir p = describe dir $ do
 
   it "documents the help page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/help.txt") $
-      renderHelpPage $
+      renderHelpPage dir $
         parserDocs parser
 
   it "documents the opt parser in the same way" $

@@ -168,20 +168,30 @@ renderManPage progname docs =
    in unlinesChunks
         [ renderShortOptDocs progname optDocs,
           [],
+          ["All settings:"],
+          renderAnyDocs docs,
           ["Options:"],
           renderLongOptDocs optDocs,
           ["Environment Variables:"],
           renderEnvDocs (docsToEnvDocs docs)
         ]
 
-renderHelpPage :: AnyDocs AnyDoc -> [Chunk]
-renderHelpPage = layoutAsTable . go
+renderHelpPage :: String -> AnyDocs AnyDoc -> [Chunk]
+renderHelpPage progname docs =
+  unlinesChunks
+    [ renderShortOptDocs progname (docsToOptDocs docs),
+      [],
+      renderAnyDocs docs
+    ]
+
+renderAnyDocs :: AnyDocs AnyDoc -> [Chunk]
+renderAnyDocs = layoutAsTable . go
   where
     go :: AnyDocs AnyDoc -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle d -> [renderAnyDoc d]
+      AnyDocsSingle d -> [["  "] : renderAnyDoc d]
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
@@ -223,7 +233,7 @@ renderLongOptDocs = layoutAsTable . go
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> [renderOptDocLong vs]
+      AnyDocsSingle vs -> [["  "] : renderOptDocLong vs]
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
@@ -254,7 +264,7 @@ renderEnvDocs = layoutAsTable . go
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle ed -> [renderEnvDoc ed]
+      AnyDocsSingle ed -> [["  "] : renderEnvDoc ed]
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
