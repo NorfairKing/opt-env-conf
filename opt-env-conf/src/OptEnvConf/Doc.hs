@@ -195,7 +195,7 @@ renderShortOptDocs = go
       AnyDocsAnd ds -> unwordsChunks $ map go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle OptDoc {..} ->
-        concat
+        unwordsChunks
           [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
               | not (null optDocDasheds)
             ],

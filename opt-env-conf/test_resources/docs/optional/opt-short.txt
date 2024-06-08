@@ -1,1 +1,1 @@
---help|-hARGARGUMENT
+--help|-h ARG ARGUMENT

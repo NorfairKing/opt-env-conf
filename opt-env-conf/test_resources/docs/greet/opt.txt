@@ -1,4 +1,4 @@
---help|-hARGSUBJECT -g|--greetingGREETING -p|--politeARG
+--help|-h ARG SUBJECT -g|--greeting GREETING -p|--polite ARG
 --help|-h       [ARG]          undocumented        
 SUBJECT         Who to greet                       
 -g|--greeting   GREETING       Greeting to use     

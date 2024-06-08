@@ -1,1 +1,1 @@
---help|-hARGSUBJECT -g|--greetingGREETING -p|--politeARG
+--help|-h ARG SUBJECT -g|--greeting GREETING -p|--polite ARG
