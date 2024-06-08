@@ -1,0 +1,14 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      OptDoc
+        { optDocDasheds = [ DashedLong ('h' :| "elp") , DashedShort 'h' ]
+        , optDocMetavar = Nothing
+        , optDocHelp = Nothing
+        }
+  , AnyDocsSingle
+      OptDoc
+        { optDocDasheds = []
+        , optDocMetavar = Just "ARGUMENT"
+        , optDocHelp = Just "Argument"
+        }
+  ]

@@ -1,0 +1,29 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      OptDoc
+        { optDocDasheds = [ DashedLong ('h' :| "elp") , DashedShort 'h' ]
+        , optDocMetavar = Nothing
+        , optDocHelp = Nothing
+        }
+  , AnyDocsAnd
+      [ AnyDocsSingle
+          OptDoc
+            { optDocDasheds = []
+            , optDocMetavar = Just "SUBJECT"
+            , optDocHelp = Just "Who to greet"
+            }
+      , AnyDocsSingle
+          OptDoc
+            { optDocDasheds =
+                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+            , optDocMetavar = Just "GREETING"
+            , optDocHelp = Just "Greeting to use"
+            }
+      , AnyDocsSingle
+          OptDoc
+            { optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+            , optDocMetavar = Nothing
+            , optDocHelp = Just "Whether to be polite"
+            }
+      ]
+  ]

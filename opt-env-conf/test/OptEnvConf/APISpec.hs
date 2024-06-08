@@ -25,6 +25,16 @@ exampleParserSpec dir p = describe dir $ do
       ppShow $
         parserDocs parser
 
+  it "produces the same opt docs structure as before" $
+    pureGoldenStringFile ("test_resources/docs/" <> dir <> "/opt-docs.txt") $
+      ppShow $
+        parserOptDocs parser
+
+  it "produces the same env docs structure as before" $
+    pureGoldenStringFile ("test_resources/docs/" <> dir <> "/env-docs.txt") $
+      ppShow $
+        parserEnvDocs parser
+
   it "documents the man page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
       renderManPage $

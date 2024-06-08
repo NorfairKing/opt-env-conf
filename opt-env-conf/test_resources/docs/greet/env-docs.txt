@@ -1,0 +1,6 @@
+AnyDocsSingle
+  EnvDoc
+    { envDocVars = [ "GREET_GREETING" ]
+    , envDocMetavar = Nothing
+    , envDocHelp = Just "Greeting to use"
+    }

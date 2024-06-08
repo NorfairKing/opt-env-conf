@@ -60,6 +60,14 @@ instance Traversable AnyDocs where
     AnyDocsOr as -> AnyDocsOr <$> traverse (traverse f) as
     AnyDocsSingle a -> AnyDocsSingle <$> f a
 
+mapMaybeDocs :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
+mapMaybeDocs func = simplifyAnyDocs . go
+  where
+    go = \case
+      AnyDocsAnd ds -> AnyDocsAnd $ map go ds
+      AnyDocsOr ds -> AnyDocsOr $ map go ds
+      AnyDocsSingle d -> maybe (AnyDocsAnd []) AnyDocsSingle $ func d
+
 simplifyAnyDocs :: AnyDocs a -> AnyDocs a
 simplifyAnyDocs = go
   where
@@ -157,25 +165,20 @@ renderManPage :: AnyDocs AnyDoc -> [Chunk]
 renderManPage = renderHelpPage
 
 renderHelpPage :: AnyDocs AnyDoc -> [Chunk]
-renderHelpPage =
-  unlinesChunks
-    . go
+renderHelpPage = unlinesChunks . go
   where
     go :: AnyDocs AnyDoc -> [[Chunk]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> renderAnyDoc vs
+      AnyDocsSingle d -> renderAnyDoc d
 
-parserOptDocs :: Parser a -> OptDocs
-parserOptDocs =
-  fromMaybe (AnyDocsAnd [])
-    . traverse
-      ( \case
-          AnyDocOpt d -> Just d
-          _ -> Nothing
-      )
-    . parserDocs
+parserOptDocs :: Parser a -> AnyDocs OptDoc
+parserOptDocs = mapMaybeDocs go . parserDocs
+  where
+    go = \case
+      AnyDocOpt o -> Just o
+      _ -> Nothing
 
 renderCompleteOptDocs :: OptDocs -> [Chunk]
 renderCompleteOptDocs optDocs =
@@ -191,17 +194,14 @@ renderShortOptDocs = go
     go = \case
       AnyDocsAnd ds -> unwordsChunks $ map go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle v ->
-        ( \OptDoc {..} ->
-            concat
-              [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
-                  | not (null optDocDasheds)
-                ],
-                [ chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
-                ]
-              ]
-        )
-          v
+      AnyDocsSingle OptDoc {..} ->
+        concat
+          [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
+              | not (null optDocDasheds)
+            ],
+            [ chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
+            ]
+          ]
 
 renderLongOptDocs :: OptDocs -> [Chunk]
 renderLongOptDocs =
@@ -229,14 +229,11 @@ renderOptDocLong OptDoc {..} =
   ]
 
 parserEnvDocs :: Parser a -> EnvDocs
-parserEnvDocs =
-  fromMaybe (AnyDocsAnd [])
-    . traverse
-      ( \case
-          AnyDocEnv d -> Just d
-          _ -> Nothing
-      )
-    . parserDocs
+parserEnvDocs = mapMaybeDocs go . parserDocs
+  where
+    go = \case
+      AnyDocEnv o -> Just o
+      _ -> Nothing
 
 renderEnvDocs :: EnvDocs -> Text
 renderEnvDocs =
@@ -248,7 +245,7 @@ renderEnvDocs =
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> renderEnvDoc vs
+      AnyDocsSingle ed -> renderEnvDoc ed
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
