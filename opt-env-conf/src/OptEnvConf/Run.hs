@@ -1,21 +1,20 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Run where
 
-import Autodocodec
 import Control.Applicative
+import Control.Arrow (left)
 import Control.Monad
-import Control.Monad.Reader
+import Control.Monad.Reader hiding (Reader)
 import Control.Monad.State
 import Control.Selective (select)
-import Data.Aeson ((.:))
 import qualified Data.Aeson as JSON
-import qualified Data.Aeson.Key as Key
-import qualified Data.Aeson.Types as JSON
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
@@ -24,8 +23,9 @@ import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
-import OptEnvConf.Opt
 import OptEnvConf.Parser
+import OptEnvConf.Reader
+import OptEnvConf.Setting
 import OptEnvConf.Validation
 import System.Environment (getArgs, getEnvironment, getProgName)
 import System.Exit
@@ -124,13 +124,18 @@ collectPossibleOpts = go
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
-      ParserArg _ _ -> S.singleton PossibleArg
-      ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
-      ParserSwitch _ o -> S.fromList $ map PossibleSwitch $ switchSpecificsDasheds $ optionGeneralSpecifics o
-      ParserEnvVar _ _ -> S.empty
-      ParserSetting p -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ optionGeneralSpecifics p
       ParserPrefixed _ p -> go p
-      ParserConfig _ _ -> S.empty
+      ParserSetting Setting {..} ->
+        S.fromList $
+          concat
+            [ [PossibleArg | settingTryArgument],
+              case settingSwitchValue of
+                Nothing -> []
+                Just _ -> map PossibleSwitch settingDasheds,
+              if settingTryOption
+                then map PossibleOption settingDasheds
+                else []
+            ]
 
 runParserOn ::
   Parser a ->
@@ -205,49 +210,117 @@ runParserOn p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserArg r o -> do
-        mS <- ppArg
-        case mS of
-          Nothing -> ppError $ ParseErrorMissingArgument $ argumentOptDoc o
-          Just s -> case r s of
-            Left err -> ppError $ ParseErrorArgumentRead err
-            Right a -> pure a
-      ParserOpt r o -> do
-        let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
-        mS <- ppOpt ds
-        case mS of
-          Nothing -> ppError $ ParseErrorMissingOption $ optionOptDoc o
-          Just s -> do
-            case r s of
-              Left err -> ppError $ ParseErrorOptionRead err
-              Right a -> pure a
-      ParserSwitch a o -> do
-        let ds = switchSpecificsDasheds $ optionGeneralSpecifics o
-        mS <- ppSwitch ds
-        case mS of
-          Nothing -> ppError $ ParseErrorMissingSwitch $ switchOptDoc o
-          Just () -> pure a
-      ParserEnvVar r o -> do
-        prefix <- asks ppEnvPrefix
-        es <- asks ppEnvEnv
-        case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) (envSpecificsVars (optionGeneralSpecifics o)) of
-          Nothing -> ppError $ ParseErrorMissingEnvVar $ envEnvDoc o
-          Just s ->
-            case r s of
-              Left err -> ppError $ ParseErrorEnvRead err
-              Right a -> pure a
-      ParserSetting _ -> undefined
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
-      ParserConfig key c -> do
-        mConf <- asks ppEnvConf
-        case mConf of
-          Nothing -> ppError $ ParseErrorMissingConfig key
-          Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
-            Left err -> ppError $ ParseErrorConfigRead err
-            Right v -> case JSON.parseEither (parseJSONVia c) v of
-              Left err -> ppError $ ParseErrorConfigRead err
-              Right a -> pure a
+      ParserSetting set@Setting {..} -> do
+        mArg <-
+          if settingTryArgument
+            then do
+              -- Require readers before finding the argument so the parser
+              -- always fails if it's missing a reader.
+              rs <- requireReaders settingReaders
+              mS <- ppArg
+              case mS of
+                Nothing -> pure NotFound
+                Just argStr -> do
+                  case tryReaders rs argStr of
+                    Left errs -> ppError $ ParseErrorArgumentRead errs
+                    Right a -> pure $ Found a
+            else pure NotRun
+
+        case mArg of
+          Found a -> pure a
+          _ -> do
+            mSwitch <- case settingSwitchValue of
+              Nothing -> pure NotRun
+              Just a -> do
+                mS <- ppSwitch settingDasheds
+                case mS of
+                  Nothing -> pure NotFound
+                  Just () -> pure $ Found a
+
+            case mSwitch of
+              Found a -> pure a
+              _ -> do
+                mOpt <-
+                  if settingTryOption
+                    then do
+                      -- Require readers before finding the option so the parser
+                      -- always fails if it's missing a reader.
+                      rs <- requireReaders settingReaders
+                      mS <- ppOpt settingDasheds
+                      case mS of
+                        Nothing -> pure NotFound
+                        Just optionStr -> do
+                          case tryReaders rs optionStr of
+                            Left err -> ppError $ ParseErrorOptionRead err
+                            Right a -> pure $ Found a
+                    else pure NotRun
+
+                case mOpt of
+                  Found a -> pure a
+                  _ -> do
+                    mEnv <- case settingEnvVars of
+                      Nothing -> pure NotRun
+                      Just ne -> do
+                        -- Require readers before finding the env vars so the parser
+                        -- always fails if it's missing a reader.
+                        rs <- requireReaders settingReaders
+
+                        prefix <- asks ppEnvPrefix
+                        let vars = map (prefix <>) (NE.toList ne)
+
+                        es <- asks ppEnvEnv
+                        case msum $ map (`EnvMap.lookup` es) vars of
+                          Nothing -> pure NotFound
+                          Just varStr ->
+                            case tryReaders rs varStr of
+                              Left err -> ppError $ ParseErrorEnvRead err
+                              Right a -> pure $ Found a
+
+                    case mEnv of
+                      Found a -> pure a
+                      _ ->
+                        case settingDefaultValue of
+                          Just a -> pure a
+                          Nothing -> do
+                            let mOptDoc = settingOptDoc set
+                            let mEnvDoc = settingEnvDoc set
+                            let parseResultError e res = case res of
+                                  NotRun -> Nothing
+                                  NotFound -> Just e
+                                  Found _ -> Nothing -- Should not happen.
+                            maybe (ppError ParseErrorEmptySetting) ppErrors $
+                              NE.nonEmpty $
+                                catMaybes
+                                  [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
+                                    parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
+                                    parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
+                                    parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv
+                                  ]
+
+data ParseResult a
+  = NotRun
+  | NotFound
+  | Found a
+
+requireReaders :: [Reader a] -> PP (NonEmpty (Reader a))
+requireReaders rs = case NE.nonEmpty rs of
+  Nothing -> error "no readers configured." -- TODO nicer error
+  Just ne -> pure ne
+
+-- Try the readers in order
+tryReaders :: NonEmpty (Reader a) -> String -> Either (NonEmpty String) a
+tryReaders rs s = left NE.reverse $ go rs
+  where
+    go (r :| rl) = case r s of
+      Left err -> go' (err :| []) rl
+      Right a -> Right a
+    go' errs = \case
+      [] -> Left errs
+      (r : rl) -> case r s of
+        Left err -> go' (err <| errs) rl
+        Right a -> Right a
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 

@@ -1,1 +1,1 @@
-Alt (Setting (OptionGenerals OptionSpecifics (Just _) [] [DashedShort 'h',DashedLong ('h' :| "elp")] [] Nothing (OptionGenerals (Just "Show this help text")))) (Fmap _ (Fmap _ (Many (Setting (OptionGenerals OptionSpecifics Nothing [_] [] [] (Just "ARGUMENT") (OptionGenerals (Just "Argument")))))))
+Alt (Setting (Setting [DashedShort 'h',DashedLong ('h' :| "elp")] [] False (Just _) False [] Nothing (Just "Show this help text"))) (Fmap _ (Fmap _ (Many (Setting (Setting [] [_] True Nothing False [] (Just "ARGUMENT") (Just "Argument"))))))

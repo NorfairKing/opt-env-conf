@@ -82,16 +82,18 @@ greetParser =
       <$> optional
         ( setting
             [ reader str,
+              argument,
               help "Who to greet",
               metavar "SUBJECT"
             ]
         )
       <*> optional
         ( setting
-            [ short 'g',
+            [ reader str,
+              short 'g',
               long "greeting",
               metavar "GREETING",
-              var "GREETING",
+              envVar "GREETING",
               -- conf "greeting",
               help "Greeting to use"
             ]
@@ -116,6 +118,7 @@ argsParser =
     <$> many
       ( setting
           [ reader str,
+            argument,
             help "Argument",
             metavar "ARGUMENT"
           ]
@@ -127,8 +130,10 @@ optionalParser :: Parser Optional
 optionalParser =
   Optional
     <$> optional
-      ( strArgument
-          [ help "Argument",
+      ( setting
+          [ reader str,
+            argument,
+            help "Argument",
             metavar "ARGUMENT"
           ]
       )

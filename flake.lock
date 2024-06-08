@@ -170,15 +170,16 @@
     "safe-coloured-text": {
       "flake": false,
       "locked": {
-        "lastModified": 1717391548,
-        "narHash": "sha256-wyIqmhEsw2ZDqEUA7Q7q1Ush+HYR4NEWNxNK8ljT4Ss=",
+        "lastModified": 1717875970,
+        "narHash": "sha256-W2zuNX2vKWfDlVdSmxxDOVyC1RH8d4MiDSP+2fpy7Oc=",
         "owner": "NorfairKing",
         "repo": "safe-coloured-text",
-        "rev": "b780c38faf1bbeb69fb92b96aac411b04c384cec",
+        "rev": "db7374cce25fe8c89deeb794c4b3da410965caca",
         "type": "github"
       },
       "original": {
         "owner": "NorfairKing",
+        "ref": "opt-env-conf",
         "repo": "safe-coloured-text",
         "type": "github"
       }

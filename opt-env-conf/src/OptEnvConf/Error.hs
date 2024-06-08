@@ -13,13 +13,14 @@ import Text.Colour
 data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
-  | ParseErrorMissingArgument !OptDoc
-  | ParseErrorArgumentRead !String
-  | ParseErrorMissingOption !OptDoc
-  | ParseErrorOptionRead !String
-  | ParseErrorMissingEnvVar !EnvDoc
-  | ParseErrorEnvRead !String
-  | ParseErrorMissingSwitch !OptDoc
+  | ParseErrorEmptySetting
+  | ParseErrorMissingArgument !(Maybe OptDoc)
+  | ParseErrorArgumentRead !(NonEmpty String)
+  | ParseErrorMissingOption !(Maybe OptDoc)
+  | ParseErrorOptionRead !(NonEmpty String)
+  | ParseErrorMissingEnvVar !(Maybe EnvDoc)
+  | ParseErrorEnvRead !(NonEmpty String)
+  | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfig !String
   | ParseErrorConfigRead !String
   | ParseErrorRequired
@@ -47,17 +48,17 @@ renderError = \case
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorMissingArgument o ->
-    ["Missing argument:" : unwordsChunks (renderOptDocLong o)]
-  ParseErrorArgumentRead s ->
-    [["Failed to read argument: ", chunk $ T.pack $ show s]]
+    ["Missing argument:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
+  ParseErrorArgumentRead errs ->
+    ["Failed to read argument: "] : map (\err -> [chunk $ T.pack $ show err]) (NE.toList errs)
   ParseErrorMissingOption o ->
-    ["Missing option:" : unwordsChunks (renderOptDocLong o)]
+    ["Missing option:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorMissingSwitch o ->
-    ["Missing switch:" : unwordsChunks (renderOptDocLong o)]
-  ParseErrorOptionRead s ->
-    [["Failed to read option: ", chunk $ T.pack $ show s]]
-  ParseErrorMissingEnvVar v ->
-    [["Missing option: ", chunk $ T.pack $ show v]]
+    ["Missing switch:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
+  ParseErrorOptionRead errs ->
+    ["Failed to read option: "] : map (\err -> [chunk $ T.pack $ show err]) (NE.toList errs)
+  ParseErrorMissingEnvVar md ->
+    [["Missing option: ", maybe (error "TODO") (chunk . T.pack . show) md]]
   ParseErrorEnvRead s ->
     [["Failed to env var: ", chunk $ T.pack $ show s]]
   ParseErrorMissingConfig v ->
