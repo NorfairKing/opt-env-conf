@@ -1,12 +1,12 @@
-[33moptional[m ([37m-h[m|[37m--help[m [33mARG[m) | ([33mARGUMENT[m)
+[33moptional[m ([37m-h[m|[37m--help[m) | ([33mARGUMENT[m)
 
 All settings:
-   Option:  [37m-h[m|[37m--help[m [33mARG[m Show this help text
-   Option:  [33mARGUMENT[m      Argument           
+   Option:  [37m-h[m|[37m--help[m Show this help text
+   Option:  [33mARGUMENT[m  Argument           
 
 Options:
-   [37m-h[m|[37m--help[m [33mARG[m Show this help text
-   [33mARGUMENT[m      Argument           
+   [37m-h[m|[37m--help[m Show this help text
+   [33mARGUMENT[m  Argument           
 
 Environment Variables:
 

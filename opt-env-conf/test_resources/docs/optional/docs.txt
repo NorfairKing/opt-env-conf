@@ -2,14 +2,16 @@ AnyDocsOr
   [ AnyDocsSingle
       (AnyDocOpt
          OptDoc
-           { optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           { optDocNeedsArg = False
+           , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
            , optDocMetavar = Nothing
            , optDocHelp = Just "Show this help text"
            })
   , AnyDocsSingle
       (AnyDocOpt
          OptDoc
-           { optDocDasheds = []
+           { optDocNeedsArg = True
+           , optDocDasheds = []
            , optDocMetavar = Just "ARGUMENT"
            , optDocHelp = Just "Argument"
            })

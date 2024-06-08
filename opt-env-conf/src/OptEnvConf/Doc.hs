@@ -24,7 +24,8 @@ data AnyDoc
   deriving (Show)
 
 data OptDoc = OptDoc
-  { optDocDasheds :: ![Dashed],
+  { optDocNeedsArg :: !Bool,
+    optDocDasheds :: ![Dashed],
     optDocMetavar :: !(Maybe Metavar),
     optDocHelp :: !(Maybe String)
   }
@@ -128,7 +129,8 @@ anyDocPrefixed prefix = \case
 argumentOptDoc :: ArgumentParser a -> OptDoc
 argumentOptDoc OptionGenerals {..} =
   OptDoc
-    { optDocDasheds = [],
+    { optDocNeedsArg = True,
+      optDocDasheds = [],
       optDocMetavar = argumentSpecificsMetavar optionGeneralSpecifics,
       optDocHelp = optionGeneralHelp
     }
@@ -136,7 +138,8 @@ argumentOptDoc OptionGenerals {..} =
 optionOptDoc :: OptionParser a -> OptDoc
 optionOptDoc OptionGenerals {..} =
   OptDoc
-    { optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
+    { optDocNeedsArg = True,
+      optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
       optDocMetavar = optionSpecificsMetavar optionGeneralSpecifics,
       optDocHelp = optionGeneralHelp
     }
@@ -144,7 +147,8 @@ optionOptDoc OptionGenerals {..} =
 switchOptDoc :: SwitchParser a -> OptDoc
 switchOptDoc OptionGenerals {..} =
   OptDoc
-    { optDocDasheds = switchSpecificsDasheds optionGeneralSpecifics,
+    { optDocNeedsArg = False,
+      optDocDasheds = switchSpecificsDasheds optionGeneralSpecifics,
       optDocMetavar = Nothing,
       optDocHelp = optionGeneralHelp
     }
@@ -214,7 +218,9 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore yellow (chunk (T.pa
         unwordsChunks $
           concat
             [ maybeToList $ dashedChunks optDocDasheds,
-              [[metavarChunk $ fromMaybe "ARG" optDocMetavar]]
+              [ [metavarChunk $ fromMaybe "ARG" optDocMetavar]
+                | optDocNeedsArg
+              ]
             ]
 
 renderOrChunks :: [[Chunk]] -> [Chunk]
@@ -242,6 +248,7 @@ renderOptDocLong OptDoc {..} =
         [ maybeToList $ dashedChunks optDocDasheds,
           [ [ metavarChunk $ fromMaybe "ARG" optDocMetavar
             ]
+            | optDocNeedsArg
           ]
         ],
     [helpChunk optDocHelp]
