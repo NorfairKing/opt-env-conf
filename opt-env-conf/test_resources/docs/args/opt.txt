@@ -1,3 +1,4 @@
-ARGUMENT
-ARGUMENT   Argument
+--help|-hARGARGUMENT
+--help|-h   [ARG]      undocumented
+ARGUMENT    Argument               
 

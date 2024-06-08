@@ -17,7 +17,8 @@ spec = do
   pure ()
 
 exampleParserSpec :: FilePath -> Parser a -> Spec
-exampleParserSpec dir parser = describe dir $ do
+exampleParserSpec dir p = describe dir $ do
+  let parser = internalParser p
   it "it documents the parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/docs.txt") $
       renderDocs $

@@ -1,3 +1,4 @@
+--help|-h [ARG] undocumented
 SUBJECT Who to greet
 -g|--greeting GREETING Greeting to use
 GREET_GREETING Greeting to use
