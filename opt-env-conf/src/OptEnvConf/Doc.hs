@@ -6,7 +6,7 @@
 
 module OptEnvConf.Doc where
 
-import Data.List (intercalate, intersperse)
+import Data.List (intersperse, sort)
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -165,13 +165,13 @@ renderManPage :: AnyDocs AnyDoc -> [Chunk]
 renderManPage = renderHelpPage
 
 renderHelpPage :: AnyDocs AnyDoc -> [Chunk]
-renderHelpPage = unlinesChunks . go
+renderHelpPage = layoutAsTable . go
   where
-    go :: AnyDocs AnyDoc -> [[Chunk]]
+    go :: AnyDocs AnyDoc -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle d -> renderAnyDoc d
+      AnyDocsSingle d -> [renderAnyDoc d]
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = mapMaybeDocs go . parserDocs
@@ -196,36 +196,34 @@ renderShortOptDocs = go
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks
-          [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
-              | not (null optDocDasheds)
-            ],
-            [ chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
-            ]
+          [ concat
+              [ intersperse "|" $ map dashedChunk optDocDasheds
+                | not (null optDocDasheds)
+              ],
+            [metavarChunk $ fromMaybe "ARG" optDocMetavar] :: [Chunk]
           ]
 
 renderLongOptDocs :: OptDocs -> [Chunk]
-renderLongOptDocs =
-  layoutAsTable
-    . go
+renderLongOptDocs = layoutAsTable . go
   where
-    go :: OptDocs -> [[Chunk]]
+    go :: OptDocs -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> renderOptDocLong vs
+      AnyDocsSingle vs -> [renderOptDocLong vs]
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
-  [ intersperse
-      " "
-      $ concat
-        [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
+  [ unwordsChunks $
+      concat
+        [ [ intersperse "|" $ map dashedChunk $ sort optDocDasheds
             | not (null optDocDasheds)
           ],
-          [ chunk . T.pack $ fromMaybe "[ARG]" optDocMetavar,
-            chunk . T.pack $ fromMaybe "undocumented" optDocHelp
+          [ [ metavarChunk $ fromMaybe "[ARG]" optDocMetavar
+            ]
           ]
-        ]
+        ],
+    [helpChunk optDocHelp]
   ]
 
 parserEnvDocs :: Parser a -> EnvDocs
@@ -241,23 +239,34 @@ renderEnvDocs =
     . layoutAsTable
     . go
   where
-    go :: EnvDocs -> [[Chunk]]
+    go :: EnvDocs -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle ed -> renderEnvDoc ed
+      AnyDocsSingle ed -> [renderEnvDoc ed]
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
-  [ intersperse " " $
+  [ unwordsChunks $
       concat
-        [ [ chunk . T.pack $ intercalate "|" envDocVars
+        [ [ intersperse "|" $ map envVarChunk envDocVars
             | not (null envDocVars)
           ],
-          [ chunk . T.pack $ fromMaybe "undocumented" envDocHelp
+          [ [ metavarChunk $ fromMaybe "[ARG]" envDocMetavar
+            ]
           ]
-        ]
+        ],
+    [helpChunk envDocHelp]
   ]
 
-unwordsChunks :: [[Chunk]] -> [Chunk]
-unwordsChunks = intercalate [" "]
+metavarChunk :: Metavar -> Chunk
+metavarChunk = fore yellow . chunk . T.pack
+
+dashedChunk :: Dashed -> Chunk
+dashedChunk = fore white . chunk . T.pack . AM.renderDashed
+
+envVarChunk :: String -> Chunk
+envVarChunk = fore white . chunk . T.pack
+
+helpChunk :: Maybe Help -> Chunk
+helpChunk = maybe (fore red "!! undocumented !!") (chunk . T.pack)

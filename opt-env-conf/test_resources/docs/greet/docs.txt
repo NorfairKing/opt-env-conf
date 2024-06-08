@@ -4,7 +4,7 @@ AnyDocsOr
          OptDoc
            { optDocDasheds = [ DashedLong ('h' :| "elp") , DashedShort 'h' ]
            , optDocMetavar = Nothing
-           , optDocHelp = Nothing
+           , optDocHelp = Just "Show this help text"
            })
   , AnyDocsAnd
       [ AnyDocsSingle

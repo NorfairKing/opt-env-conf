@@ -47,13 +47,13 @@ renderError = \case
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorMissingArgument o ->
-    ["Missing argument:"] : renderOptDocLong o
+    ["Missing argument:" : unwordsChunks (renderOptDocLong o)]
   ParseErrorArgumentRead s ->
     [["Failed to read argument: ", chunk $ T.pack $ show s]]
   ParseErrorMissingOption o ->
-    ["Missing option:"] : renderOptDocLong o
+    ["Missing option:" : unwordsChunks (renderOptDocLong o)]
   ParseErrorMissingSwitch o ->
-    ["Missing switch:"] : renderOptDocLong o
+    ["Missing switch:" : unwordsChunks (renderOptDocLong o)]
   ParseErrorOptionRead s ->
     [["Failed to read option: ", chunk $ T.pack $ show s]]
   ParseErrorMissingEnvVar v ->

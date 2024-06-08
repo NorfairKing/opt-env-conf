@@ -1,1 +1,1 @@
-Alt (Switch _ (OptionGenerals SwitchSpecifics (OptionGenerals Nothing))) (Fmap _ (Fmap _ (Alt (Fmap _ (Arg _ (OptionGenerals ArgumentSpecifics (Just "ARGUMENT") (OptionGenerals (Just "Argument"))))) (Pure _))))
+Alt (Switch _ (OptionGenerals SwitchSpecifics (OptionGenerals (Just "Show this help text")))) (Fmap _ (Fmap _ (Alt (Fmap _ (Arg _ (OptionGenerals ArgumentSpecifics (Just "ARGUMENT") (OptionGenerals (Just "Argument"))))) (Pure _))))

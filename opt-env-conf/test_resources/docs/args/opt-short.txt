@@ -1,1 +1,1 @@
---help|-h ARG ARGUMENT
+[37m--help[m|[37m-h[m [33mARG[m [33mARGUMENT[m

@@ -73,7 +73,8 @@ internalParser p =
   switch
     ShowHelp
     [ short 'h',
-      long "help"
+      long "help",
+      help "Show this help text"
     ]
     <|> (ParsedNormally <$> p)
 

@@ -1,2 +1,1 @@
-Missing option:
---foo FOO example option
+Missing option:[37m--foo[m [33mFOO[m example option

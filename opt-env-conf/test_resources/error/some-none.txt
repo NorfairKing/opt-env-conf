@@ -1,2 +1,1 @@
-Missing argument:
-[ARG] undocumented
+Missing argument:[33m[ARG][m [31m!! undocumented !![m
