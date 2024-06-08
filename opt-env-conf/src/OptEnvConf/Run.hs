@@ -42,8 +42,6 @@ runParserWithLeftovers p = do
   let (argMap, leftovers) = ArgMap.parse args
   envVars <- EnvMap.parse <$> getEnvironment
 
-  tc <- getTerminalCapabilitiesFromHandle stderr
-
   let p' = internalParser p
   let docs = parserDocs p'
   errOrResult <-
@@ -54,11 +52,13 @@ runParserWithLeftovers p = do
       Nothing
   case errOrResult of
     Left errs -> do
+      tc <- getTerminalCapabilitiesFromHandle stderr
       hPutChunksLocaleWith tc stderr $ renderErrors errs
       exitFailure
     Right i -> case i of
       ShowHelp -> do
         progname <- getProgName
+        tc <- getTerminalCapabilitiesFromHandle stdout
         hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
         exitSuccess
       ParsedNormally a -> pure (a, leftovers)

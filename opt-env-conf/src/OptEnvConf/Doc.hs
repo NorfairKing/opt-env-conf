@@ -252,11 +252,11 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore yellow (chunk (T.pa
 renderOrChunks :: [[Chunk]] -> [Chunk]
 renderOrChunks os =
   unwordsChunks $
-    intersperse ["|"] $
+    intersperse [fore cyan "|"] $
       map parenthesise os
   where
     parenthesise :: [Chunk] -> [Chunk]
-    parenthesise cs = "(" : cs ++ [")"]
+    parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
 
 renderLongOptDocs :: OptDocs -> [Chunk]
 renderLongOptDocs = layoutAsTable . go
@@ -303,9 +303,7 @@ renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
   [ unwordsChunks $
       concat
-        [ [ intersperse "|" $ map envVarChunk envDocVars
-            | not (null envDocVars)
-          ],
+        [ maybeToList $ envVarChunks envDocVars,
           [ [ metavarChunk $ fromMaybe "ARG" envDocMetavar
             ]
           ]
@@ -320,13 +318,19 @@ dashedChunks :: [Dashed] -> Maybe [Chunk]
 dashedChunks = fmap dashedChunksNE . NE.nonEmpty
 
 dashedChunksNE :: NonEmpty Dashed -> [Chunk]
-dashedChunksNE = intersperse "|" . map dashedChunk . NE.toList
+dashedChunksNE = intersperse (fore cyan "|") . map dashedChunk . NE.toList
 
 dashedChunk :: Dashed -> Chunk
 dashedChunk = fore white . chunk . T.pack . AM.renderDashed
+
+envVarChunks :: [String] -> Maybe [Chunk]
+envVarChunks = fmap envVarChunksNE . NE.nonEmpty
+
+envVarChunksNE :: NonEmpty String -> [Chunk]
+envVarChunksNE = intersperse (fore cyan "|") . map envVarChunk . NE.toList
 
 envVarChunk :: String -> Chunk
 envVarChunk = fore white . chunk . T.pack
 
 helpChunk :: Maybe Help -> Chunk
-helpChunk = maybe (fore red "!! undocumented !!") (chunk . T.pack)
+helpChunk = maybe (fore red "!! undocumented !!") (fore blue . chunk . T.pack)

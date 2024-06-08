@@ -7,6 +7,7 @@ module OptEnvConf.Opt where
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
+import OptEnvConf.Reader
 
 type Metavar = String
 
@@ -49,6 +50,18 @@ instance Monoid (Builder f) where
   mempty = Builder id
   mappend = (<>)
 
+class HasReader a f where
+  addReader :: Reader a -> f -> f
+
+instance (HasReader a f) => HasReader a (OptionGenerals f) where
+  addReader r op = op {optionGeneralSpecifics = addReader r (optionGeneralSpecifics op)}
+
+class HasMetavar a where
+  setMetavar :: Metavar -> a -> a
+
+instance (HasMetavar f) => HasMetavar (OptionGenerals f) where
+  setMetavar v op = op {optionGeneralSpecifics = setMetavar v (optionGeneralSpecifics op)}
+
 class HasLong a where
   addLong :: NonEmpty Char -> a -> a
 
@@ -66,12 +79,6 @@ class HasEnvVar a where
 
 instance (HasEnvVar f) => HasEnvVar (OptionGenerals f) where
   addEnvVar v op = op {optionGeneralSpecifics = addEnvVar v (optionGeneralSpecifics op)}
-
-class HasMetavar a where
-  setMetavar :: Metavar -> a -> a
-
-instance (HasMetavar f) => HasMetavar (OptionGenerals f) where
-  setMetavar v op = op {optionGeneralSpecifics = setMetavar v (optionGeneralSpecifics op)}
 
 -- data SwitchSpecifics = SwitchSpecifics
 --
@@ -252,6 +259,12 @@ help s = Builder $ \op -> op {optionGeneralHelp = Just s}
 
 metavar :: (HasMetavar f) => String -> Builder f
 metavar s = Builder $ setMetavar s
+
+reader :: (HasReader a f) => Reader a -> Builder f
+reader b = Builder $ addReader b
+
+-- switch :: (HasSwitch a f) => a -> Builder f
+-- switch v = Builder $ setSwitchVal v
 
 long :: (HasLong f) => String -> Builder f
 long "" = error "Cannot use an empty long-form option."
