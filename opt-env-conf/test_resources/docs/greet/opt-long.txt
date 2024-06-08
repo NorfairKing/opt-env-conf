@@ -1,0 +1,4 @@
+--help|-h       [ARG]          undocumented        
+SUBJECT         Who to greet                       
+-g|--greeting   GREETING       Greeting to use     
+-p|--polite     [ARG]          Whether to be polite
