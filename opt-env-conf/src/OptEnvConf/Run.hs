@@ -237,7 +237,7 @@ runParserOn p args envVars mConfig =
         prefix <- asks ppEnvPrefix
         es <- asks ppEnvEnv
         case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) (envSpecificsVars (optionGeneralSpecifics o)) of
-          Nothing -> ppError $ ParseErrorMissingEnvVar $ envEnvDoc o
+          Nothing -> ppError $ ParseErrorMissingEnvVar $ Just $ envEnvDoc o
           Just s ->
             case r s of
               Left err -> ppError $ ParseErrorEnvRead err
@@ -247,29 +247,43 @@ runParserOn p args envVars mConfig =
         let rs = settingSpecificsReaders s
         -- TODO try the readers in order
         let (r : _) = rs
-        case settingSpecificsDasheds s of
+        errOrA <- case settingSpecificsDasheds s of
           [] -> do
             mS <- ppArg
             case mS of
-              Nothing -> ppError $ ParseErrorMissingArgument $ settingOptDoc o
+              Nothing -> pure $ Left $ ParseErrorMissingArgument $ settingOptDoc o
               Just argStr -> do
                 case r argStr of
                   Left err -> ppError $ ParseErrorArgumentRead err
-                  Right a -> pure a
+                  Right a -> pure $ Right a
           ds ->
             case settingSpecificsSwitchValue s of
               Just a -> do
                 mS <- ppSwitch ds
                 case mS of
-                  Nothing -> ppError $ ParseErrorMissingSwitch $ settingOptDoc o
-                  Just () -> pure a
+                  Nothing -> pure $ Left $ ParseErrorMissingSwitch $ settingOptDoc o
+                  Just () -> pure $ Right a
               Nothing -> do
                 mS <- ppOpt ds
                 case mS of
-                  Nothing -> ppError $ ParseErrorMissingOption $ settingOptDoc o
+                  Nothing -> pure $ Left $ ParseErrorMissingOption $ settingOptDoc o
                   Just optionStr -> do
                     case r optionStr of
                       Left err -> ppError $ ParseErrorOptionRead err
+                      Right a -> pure $ Right a
+        case errOrA of
+          Right a -> pure a -- Args, options, and switches have precedence
+          Left missingErr -> do
+            case settingSpecificsEnvVars s of
+              [] -> ppError missingErr
+              vars -> do
+                prefix <- asks ppEnvPrefix
+                es <- asks ppEnvEnv
+                case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) vars of
+                  Nothing -> ppErrors $ missingErr :| [ParseErrorMissingEnvVar $ settingEnvDoc o]
+                  Just s ->
+                    case r s of
+                      Left err -> ppError $ ParseErrorEnvRead err
                       Right a -> pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'

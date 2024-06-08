@@ -17,7 +17,7 @@ data ParseError
   | ParseErrorArgumentRead !String
   | ParseErrorMissingOption !(Maybe OptDoc)
   | ParseErrorOptionRead !String
-  | ParseErrorMissingEnvVar !EnvDoc
+  | ParseErrorMissingEnvVar !(Maybe EnvDoc)
   | ParseErrorEnvRead !String
   | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfig !String
@@ -56,8 +56,8 @@ renderError = \case
     ["Missing switch:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorOptionRead s ->
     [["Failed to read option: ", chunk $ T.pack $ show s]]
-  ParseErrorMissingEnvVar v ->
-    [["Missing option: ", chunk $ T.pack $ show v]]
+  ParseErrorMissingEnvVar md ->
+    [["Missing option: ", maybe (error "TODO") (chunk . T.pack . show) md]]
   ParseErrorEnvRead s ->
     [["Failed to env var: ", chunk $ T.pack $ show s]]
   ParseErrorMissingConfig v ->
