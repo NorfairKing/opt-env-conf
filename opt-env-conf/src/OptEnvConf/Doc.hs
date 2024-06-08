@@ -7,8 +7,9 @@
 module OptEnvConf.Doc where
 
 import Data.List (intersperse, sort)
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import Data.Text (Text)
 import qualified Data.Text as T
 import OptEnvConf.ArgMap (Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
@@ -161,8 +162,17 @@ renderAnyDoc = \case
   AnyDocOpt d -> renderOptDocLong d
   AnyDocEnv d -> renderEnvDoc d
 
-renderManPage :: AnyDocs AnyDoc -> [Chunk]
-renderManPage = renderHelpPage
+renderManPage :: String -> AnyDocs AnyDoc -> [Chunk]
+renderManPage progname docs =
+  let optDocs = docsToOptDocs docs
+   in unlinesChunks
+        [ renderShortOptDocs progname optDocs,
+          [],
+          ["Options:"],
+          renderLongOptDocs optDocs,
+          ["Environment Variables:"],
+          renderEnvDocs (docsToEnvDocs docs)
+        ]
 
 renderHelpPage :: AnyDocs AnyDoc -> [Chunk]
 renderHelpPage = layoutAsTable . go
@@ -174,34 +184,37 @@ renderHelpPage = layoutAsTable . go
       AnyDocsSingle d -> [renderAnyDoc d]
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
-parserOptDocs = mapMaybeDocs go . parserDocs
+parserOptDocs = docsToOptDocs . parserDocs
+
+docsToOptDocs :: AnyDocs AnyDoc -> OptDocs
+docsToOptDocs = mapMaybeDocs go
   where
     go = \case
       AnyDocOpt o -> Just o
       _ -> Nothing
 
-renderCompleteOptDocs :: OptDocs -> [Chunk]
-renderCompleteOptDocs optDocs =
-  unlinesChunks
-    [ renderShortOptDocs optDocs,
-      renderLongOptDocs optDocs
-    ]
-
-renderShortOptDocs :: OptDocs -> [Chunk]
-renderShortOptDocs = go
+renderShortOptDocs :: String -> OptDocs -> [Chunk]
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore yellow (chunk (T.pack progname))], cs]) . go
   where
     go :: OptDocs -> [Chunk]
     go = \case
       AnyDocsAnd ds -> unwordsChunks $ map go ds
-      AnyDocsOr ds -> concatMap go ds
+      AnyDocsOr ds -> renderOrChunks (map go ds)
       AnyDocsSingle OptDoc {..} ->
-        unwordsChunks
-          [ concat
-              [ intersperse "|" $ map dashedChunk optDocDasheds
-                | not (null optDocDasheds)
-              ],
-            [metavarChunk $ fromMaybe "ARG" optDocMetavar] :: [Chunk]
-          ]
+        unwordsChunks $
+          concat
+            [ maybeToList $ dashedChunks optDocDasheds,
+              [[metavarChunk $ fromMaybe "ARG" optDocMetavar]]
+            ]
+
+renderOrChunks :: [[Chunk]] -> [Chunk]
+renderOrChunks os =
+  unwordsChunks $
+    intersperse ["|"] $
+      map parenthesise os
+  where
+    parenthesise :: [Chunk] -> [Chunk]
+    parenthesise cs = "(" : cs ++ [")"]
 
 renderLongOptDocs :: OptDocs -> [Chunk]
 renderLongOptDocs = layoutAsTable . go
@@ -216,9 +229,7 @@ renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
   [ unwordsChunks $
       concat
-        [ [ intersperse "|" $ map dashedChunk $ sort optDocDasheds
-            | not (null optDocDasheds)
-          ],
+        [ maybeToList $ dashedChunks optDocDasheds,
           [ [ metavarChunk $ fromMaybe "[ARG]" optDocMetavar
             ]
           ]
@@ -227,17 +238,17 @@ renderOptDocLong OptDoc {..} =
   ]
 
 parserEnvDocs :: Parser a -> EnvDocs
-parserEnvDocs = mapMaybeDocs go . parserDocs
+parserEnvDocs = docsToEnvDocs . parserDocs
+
+docsToEnvDocs :: AnyDocs AnyDoc -> EnvDocs
+docsToEnvDocs = mapMaybeDocs go
   where
     go = \case
       AnyDocEnv o -> Just o
       _ -> Nothing
 
-renderEnvDocs :: EnvDocs -> Text
-renderEnvDocs =
-  renderChunksText With24BitColours
-    . layoutAsTable
-    . go
+renderEnvDocs :: EnvDocs -> [Chunk]
+renderEnvDocs = layoutAsTable . go
   where
     go :: EnvDocs -> [[[Chunk]]]
     go = \case
@@ -261,6 +272,12 @@ renderEnvDoc EnvDoc {..} =
 
 metavarChunk :: Metavar -> Chunk
 metavarChunk = fore yellow . chunk . T.pack
+
+dashedChunks :: [Dashed] -> Maybe [Chunk]
+dashedChunks = fmap dashedChunksNE . NE.nonEmpty
+
+dashedChunksNE :: NonEmpty Dashed -> [Chunk]
+dashedChunksNE = intersperse "|" . map dashedChunk . sort . NE.toList
 
 dashedChunk :: Dashed -> Chunk
 dashedChunk = fore white . chunk . T.pack . AM.renderDashed

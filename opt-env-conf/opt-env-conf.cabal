@@ -18,7 +18,6 @@ extra-source-files:
     test_resources/docs/args/opt-docs.txt
     test_resources/docs/args/opt-long.txt
     test_resources/docs/args/opt-short.txt
-    test_resources/docs/args/opt.txt
     test_resources/docs/args/show.txt
     test_resources/docs/greet/docs.txt
     test_resources/docs/greet/env-docs.txt
@@ -28,7 +27,6 @@ extra-source-files:
     test_resources/docs/greet/opt-docs.txt
     test_resources/docs/greet/opt-long.txt
     test_resources/docs/greet/opt-short.txt
-    test_resources/docs/greet/opt.txt
     test_resources/docs/greet/show.txt
     test_resources/docs/optional/docs.txt
     test_resources/docs/optional/env-docs.txt
@@ -38,7 +36,6 @@ extra-source-files:
     test_resources/docs/optional/opt-docs.txt
     test_resources/docs/optional/opt-long.txt
     test_resources/docs/optional/opt-short.txt
-    test_resources/docs/optional/opt.txt
     test_resources/docs/optional/show.txt
     test_resources/error/empty.txt
     test_resources/error/missing-argument.txt

@@ -37,7 +37,7 @@ exampleParserSpec dir p = describe dir $ do
 
   it "documents the man page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
-      renderManPage $
+      renderManPage dir $
         parserDocs parser
 
   it "documents the help page in the same way" $
@@ -46,13 +46,8 @@ exampleParserSpec dir p = describe dir $ do
         parserDocs parser
 
   it "documents the opt parser in the same way" $
-    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt.txt") $
-      renderCompleteOptDocs $
-        parserOptDocs parser
-
-  it "documents the opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-short.txt") $
-      renderShortOptDocs $
+      renderShortOptDocs dir $
         parserOptDocs parser
 
   it "documents the opt parser in the same way" $
@@ -61,7 +56,7 @@ exampleParserSpec dir p = describe dir $ do
         parserOptDocs parser
 
   it "documents the env parser in the same way" $
-    pureGoldenTextFile ("test_resources/docs/" <> dir <> "/env.txt") $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/env.txt") $
       renderEnvDocs $
         parserEnvDocs parser
 
