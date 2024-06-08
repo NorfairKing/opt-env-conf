@@ -39,42 +39,48 @@ data EnvDoc = EnvDoc
 data AnyDocs a
   = AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
-  | AnyDocsSingle ![a]
+  | AnyDocsSingle !a
   deriving (Show)
 
 instance Functor AnyDocs where
   fmap f = \case
     AnyDocsAnd as -> AnyDocsAnd $ fmap (fmap f) as
     AnyDocsOr as -> AnyDocsOr $ fmap (fmap f) as
-    AnyDocsSingle as -> AnyDocsSingle $ fmap f as
+    AnyDocsSingle a -> AnyDocsSingle $ f a
 
 instance Foldable AnyDocs where
   foldMap f = \case
     AnyDocsAnd as -> foldMap (foldMap f) as
     AnyDocsOr as -> foldMap (foldMap f) as
-    AnyDocsSingle as -> foldMap f as
+    AnyDocsSingle a -> f a
 
 instance Traversable AnyDocs where
   traverse f = \case
     AnyDocsAnd as -> AnyDocsAnd <$> traverse (traverse f) as
     AnyDocsOr as -> AnyDocsOr <$> traverse (traverse f) as
-    AnyDocsSingle as -> AnyDocsSingle <$> traverse f as
+    AnyDocsSingle a -> AnyDocsSingle <$> f a
 
 simplifyAnyDocs :: AnyDocs a -> AnyDocs a
 simplifyAnyDocs = go
   where
     go = \case
-      AnyDocsAnd ds -> AnyDocsAnd $ concatMap goAnd ds
-      AnyDocsOr ds -> AnyDocsOr $ concatMap goOr ds
-      AnyDocsSingle vs -> AnyDocsSingle vs
+      AnyDocsAnd ds -> case concatMap goAnd ds of
+        [a] -> a
+        as -> AnyDocsAnd as
+      AnyDocsOr ds -> case concatMap goOr ds of
+        [a] -> a
+        as -> AnyDocsOr as
+      AnyDocsSingle v -> AnyDocsSingle v
 
     goAnd = \case
-      AnyDocsAnd ds -> concatMap goAnd ds
-      ds -> [ds]
+      AnyDocsAnd ds -> concatMap (goAnd . go) ds
+      AnyDocsOr [] -> []
+      ds -> [go ds]
 
     goOr = \case
-      AnyDocsOr ds -> concatMap goOr ds
-      ds -> [ds]
+      AnyDocsOr ds -> concatMap (goOr . go) ds
+      AnyDocsAnd [] -> []
+      ds -> [go ds]
 
 type OptDocs = AnyDocs OptDoc
 
@@ -83,13 +89,14 @@ type EnvDocs = AnyDocs EnvDoc
 parserDocs :: Parser a -> AnyDocs AnyDoc
 parserDocs = simplifyAnyDocs . go
   where
+    noDocs = AnyDocsAnd []
     go :: Parser a -> AnyDocs AnyDoc
     go = \case
       ParserFmap _ p -> go p
-      ParserPure _ -> AnyDocsSingle []
+      ParserPure _ -> noDocs
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
       ParserSelect p1 p2 -> AnyDocsAnd [go p1, go p2]
-      ParserEmpty -> AnyDocsSingle []
+      ParserEmpty -> noDocs
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
       ParserSome p -> go p -- TODO: is this right?
@@ -97,12 +104,12 @@ parserDocs = simplifyAnyDocs . go
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg _ o -> AnyDocsSingle [AnyDocOpt $ argumentOptDoc o]
-      ParserOpt _ o -> AnyDocsSingle [AnyDocOpt $ optionOptDoc o]
-      ParserSwitch _ o -> AnyDocsSingle [AnyDocOpt $ switchOptDoc o]
-      ParserEnvVar _ o -> AnyDocsSingle [AnyDocEnv $ envEnvDoc o]
+      ParserArg _ o -> AnyDocsSingle $ AnyDocOpt $ argumentOptDoc o
+      ParserOpt _ o -> AnyDocsSingle $ AnyDocOpt $ optionOptDoc o
+      ParserSwitch _ o -> AnyDocsSingle $ AnyDocOpt $ switchOptDoc o
+      ParserEnvVar _ o -> AnyDocsSingle $ AnyDocEnv $ envEnvDoc o
       ParserPrefixed prefix p -> anyDocPrefixed prefix <$> go p
-      ParserConfig _ _ -> AnyDocsSingle []
+      ParserConfig _ _ -> noDocs
 
 anyDocPrefixed :: String -> AnyDoc -> AnyDoc
 anyDocPrefixed prefix = \case
@@ -158,11 +165,11 @@ renderHelpPage =
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> concatMap renderAnyDoc vs
+      AnyDocsSingle vs -> renderAnyDoc vs
 
 parserOptDocs :: Parser a -> OptDocs
 parserOptDocs =
-  fromMaybe (AnyDocsSingle [])
+  fromMaybe (AnyDocsAnd [])
     . traverse
       ( \case
           AnyDocOpt d -> Just d
@@ -182,21 +189,19 @@ renderShortOptDocs = go
   where
     go :: OptDocs -> [Chunk]
     go = \case
-      AnyDocsAnd ds -> intercalate [" "] $ map go ds
+      AnyDocsAnd ds -> unwordsChunks $ map go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs ->
-        unwordsChunks $
-          map
-            ( \OptDoc {..} ->
-                concat
-                  [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
-                      | not (null optDocDasheds)
-                    ],
-                    [ chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
-                    ]
-                  ]
-            )
-            vs
+      AnyDocsSingle v ->
+        ( \OptDoc {..} ->
+            concat
+              [ [ chunk . T.pack $ intercalate "|" $ map AM.renderDashed optDocDasheds
+                  | not (null optDocDasheds)
+                ],
+                [ chunk $ T.pack $ fromMaybe "ARG" optDocMetavar
+                ]
+              ]
+        )
+          v
 
 renderLongOptDocs :: OptDocs -> [Chunk]
 renderLongOptDocs =
@@ -207,7 +212,7 @@ renderLongOptDocs =
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> concatMap renderOptDocLong vs
+      AnyDocsSingle vs -> renderOptDocLong vs
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
@@ -225,7 +230,7 @@ renderOptDocLong OptDoc {..} =
 
 parserEnvDocs :: Parser a -> EnvDocs
 parserEnvDocs =
-  fromMaybe (AnyDocsSingle [])
+  fromMaybe (AnyDocsAnd [])
     . traverse
       ( \case
           AnyDocEnv d -> Just d
@@ -243,7 +248,7 @@ renderEnvDocs =
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> concatMap renderEnvDoc vs
+      AnyDocsSingle vs -> renderEnvDoc vs
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
