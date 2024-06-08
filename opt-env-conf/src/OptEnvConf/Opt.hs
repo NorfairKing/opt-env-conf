@@ -197,12 +197,55 @@ emptyEnvParser =
 
 showEnvParserABit :: EnvParser a -> ShowS
 showEnvParserABit = showOptionGeneralsABitWith $ \EnvSpecifics {..} ->
-  showString "OptionSpecifics "
+  showString "EnvSpecifics "
     . showsPrec 11 envSpecificsVars
     . showString " "
     . showsPrec 11 envSpecificsMetavar
 
 type EnvBuilder a = Builder (EnvSpecifics a)
+
+data SettingSpecifics a = SettingSpecifics
+  { settingSpecificsDasheds :: ![Dashed],
+    settingSpecificsEnvVars :: ![String],
+    settingSpecificsMetavar :: !(Maybe Metavar)
+  }
+
+instance CanComplete (SettingSpecifics a) where
+  completeBuilder b = unBuilder b emptySettingParser
+
+instance HasLong (SettingSpecifics a) where
+  addLong s os = os {settingSpecificsDasheds = DashedLong s : settingSpecificsDasheds os}
+
+instance HasShort (SettingSpecifics a) where
+  addShort c os = os {settingSpecificsDasheds = DashedShort c : settingSpecificsDasheds os}
+
+instance HasEnvVar (SettingSpecifics a) where
+  addEnvVar v os = os {settingSpecificsEnvVars = v : settingSpecificsEnvVars os}
+
+instance HasMetavar (SettingSpecifics a) where
+  setMetavar mv os = os {settingSpecificsMetavar = Just mv}
+
+type SettingParser a = OptionGenerals (SettingSpecifics a)
+
+emptySettingParser :: SettingParser a
+emptySettingParser =
+  emptyOptionGeneralsWith
+    SettingSpecifics
+      { settingSpecificsDasheds = [],
+        settingSpecificsEnvVars = [],
+        settingSpecificsMetavar = Nothing
+      }
+
+showSettingParserABit :: SettingParser a -> ShowS
+showSettingParserABit = showOptionGeneralsABitWith $ \SettingSpecifics {..} ->
+  showString "OptionSpecifics "
+    . showsPrec 11 settingSpecificsDasheds
+    . showString " "
+    . showsPrec 11 settingSpecificsEnvVars
+    . showString " "
+    . showsPrec 11 settingSpecificsMetavar
+
+type SettingBuilder a = Builder (SettingSpecifics a)
 
 help :: String -> Builder f
 help s = Builder $ \op -> op {optionGeneralHelp = Just s}

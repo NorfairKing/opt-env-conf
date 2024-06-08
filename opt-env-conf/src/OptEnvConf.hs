@@ -9,6 +9,7 @@ module OptEnvConf
     option,
     switch,
     envVar,
+    setting,
     confVal,
     confValWith,
     optionalFirst,

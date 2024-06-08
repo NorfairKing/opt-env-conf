@@ -128,6 +128,7 @@ collectPossibleOpts = go
       ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
       ParserSwitch _ o -> S.fromList $ map PossibleSwitch $ switchSpecificsDasheds $ optionGeneralSpecifics o
       ParserEnvVar _ _ -> S.empty
+      ParserSetting p -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ optionGeneralSpecifics p
       ParserPrefixed _ p -> go p
       ParserConfig _ _ -> S.empty
 
@@ -235,6 +236,7 @@ runParserOn p args envVars mConfig =
             case r s of
               Left err -> ppError $ ParseErrorEnvRead err
               Right a -> pure a
+      ParserSetting _ -> undefined
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
       ParserConfig key c -> do

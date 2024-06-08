@@ -11,6 +11,7 @@ module OptEnvConf.Parser
     option,
     switch,
     envVar,
+    setting,
     prefixed,
     confVal,
     confValWith,
@@ -79,6 +80,8 @@ data Parser a where
   -- | Env vars
   ParserEnvVar :: !(Reader a) -> !(EnvParser a) -> Parser a
   ParserPrefixed :: !String -> !(Parser a) -> Parser a
+  -- | General settings
+  ParserSetting :: !(SettingParser a) -> Parser a
   -- | Configuration file
   ParserConfig :: !String -> !(ValueCodec void a) -> Parser a
 
@@ -113,6 +116,7 @@ instance Alternative Parser where
           ParserOpt _ _ -> False
           ParserSwitch _ _ -> False
           ParserEnvVar _ _ -> False
+          ParserSetting _ -> False
           ParserPrefixed _ p -> isEmpty p
           ParserConfig _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
@@ -196,6 +200,10 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "EnvVar _ "
             . showEnvParserABit p
+      ParserSetting p ->
+        showParen (d > 10) $
+          showString "Setting "
+            . showSettingParserABit p
       ParserPrefixed prefix p ->
         showParen (d > 10) $
           showString "Prefixed "
@@ -226,6 +234,9 @@ switch a = ParserSwitch a . completeBuilder . mconcat
 
 envVar :: Reader a -> [EnvBuilder a] -> Parser a
 envVar r = ParserEnvVar r . completeBuilder . mconcat
+
+setting :: [SettingBuilder a] -> Parser a
+setting = ParserSetting . completeBuilder . mconcat
 
 prefixed :: String -> Parser a -> Parser a
 prefixed = ParserPrefixed

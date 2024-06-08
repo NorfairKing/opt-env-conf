@@ -119,7 +119,33 @@ parserDocs = simplifyAnyDocs . go
       ParserSwitch _ o -> AnyDocsSingle $ AnyDocOpt $ switchOptDoc o
       ParserEnvVar _ o -> AnyDocsSingle $ AnyDocEnv $ envEnvDoc o
       ParserPrefixed prefix p -> anyDocPrefixed prefix <$> go p
+      ParserSetting p ->
+        AnyDocsOr $
+          catMaybes
+            [ AnyDocsSingle . AnyDocOpt <$> settingOptDoc p,
+              AnyDocsSingle . AnyDocEnv <$> settingEnvDoc p
+            ] -- TODO
       ParserConfig _ _ -> noDocs
+
+settingOptDoc :: SettingParser a -> Maybe OptDoc
+settingOptDoc OptionGenerals {..} = do
+  pure $
+    OptDoc
+      { optDocNeedsArg = True,
+        optDocDasheds = settingSpecificsDasheds optionGeneralSpecifics,
+        optDocMetavar = settingSpecificsMetavar optionGeneralSpecifics,
+        optDocHelp = optionGeneralHelp
+      }
+
+settingEnvDoc :: SettingParser a -> Maybe EnvDoc
+settingEnvDoc OptionGenerals {..} = do
+  vars <- NE.nonEmpty $ settingSpecificsEnvVars optionGeneralSpecifics
+  pure $
+    EnvDoc
+      { envDocVars = NE.toList vars,
+        envDocMetavar = settingSpecificsMetavar optionGeneralSpecifics,
+        envDocHelp = optionGeneralHelp
+      }
 
 anyDocPrefixed :: String -> AnyDoc -> AnyDoc
 anyDocPrefixed prefix = \case

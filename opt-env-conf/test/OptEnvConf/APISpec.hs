@@ -85,22 +85,32 @@ greetParser =
               metavar "SUBJECT"
             ]
         )
-      <*> optionalFirst
-        [ optional $
-            strOption
-              [ short 'g',
-                long "greeting",
-                metavar "GREETING",
-                help "Greeting to use"
-              ],
-          optional $
-            envVar
-              str
-              [ var "GREETING",
-                help "Greeting to use"
-              ],
-          confVal "greeting"
-        ]
+      <*> optional
+        ( setting
+            [ short 'g',
+              long "greeting",
+              metavar "GREETING",
+              var "GREETING",
+              -- conf "greeting",
+              help "Greeting to use"
+            ]
+        )
+      -- <*> optionalFirst
+      --   [ optional $
+      --       strOption
+      --         [ short 'g',
+      --           long "greeting",
+      --           metavar "GREETING",
+      --           help "Greeting to use"
+      --         ],
+      --     optional $
+      --       envVar
+      --         str
+      --         [ var "GREETING",
+      --           help "Greeting to use"
+      --         ],
+      --     confVal "greeting"
+      --   ]
       <*> ( fromMaybe False
               <$> optional
                 ( switch
