@@ -80,8 +80,9 @@ greetParser =
   prefixed "GREET_" $
     Greet
       <$> optional
-        ( strArgument
-            [ help "Who to greet",
+        ( setting
+            [ reader str,
+              help "Who to greet",
               metavar "SUBJECT"
             ]
         )
@@ -95,27 +96,11 @@ greetParser =
               help "Greeting to use"
             ]
         )
-      -- <*> optionalFirst
-      --   [ optional $
-      --       strOption
-      --         [ short 'g',
-      --           long "greeting",
-      --           metavar "GREETING",
-      --           help "Greeting to use"
-      --         ],
-      --     optional $
-      --       envVar
-      --         str
-      --         [ var "GREETING",
-      --           help "Greeting to use"
-      --         ],
-      --     confVal "greeting"
-      --   ]
       <*> ( fromMaybe False
               <$> optional
-                ( switch
-                    True
-                    [ short 'p',
+                ( setting
+                    [ switch True,
+                      short 'p',
                       long "polite",
                       help "Whether to be polite"
                     ]
@@ -129,8 +114,9 @@ argsParser :: Parser Args
 argsParser =
   Args
     <$> many
-      ( strArgument
-          [ help "Argument",
+      ( setting
+          [ reader str,
+            help "Argument",
             metavar "ARGUMENT"
           ]
       )

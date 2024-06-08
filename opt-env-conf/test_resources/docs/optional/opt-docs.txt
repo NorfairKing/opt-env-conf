@@ -1,7 +1,7 @@
 AnyDocsOr
   [ AnyDocsSingle
       OptDoc
-        { optDocNeedsArg = False
+        { optDocNeedsArg = True
         , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
         , optDocMetavar = Nothing
         , optDocHelp = Just "Show this help text"

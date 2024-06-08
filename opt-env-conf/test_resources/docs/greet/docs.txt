@@ -2,7 +2,7 @@ AnyDocsOr
   [ AnyDocsSingle
       (AnyDocOpt
          OptDoc
-           { optDocNeedsArg = False
+           { optDocNeedsArg = True
            , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
            , optDocMetavar = Nothing
            , optDocHelp = Just "Show this help text"
@@ -37,7 +37,7 @@ AnyDocsOr
       , AnyDocsSingle
           (AnyDocOpt
              OptDoc
-               { optDocNeedsArg = False
+               { optDocNeedsArg = True
                , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
                , optDocMetavar = Nothing
                , optDocHelp = Just "Whether to be polite"

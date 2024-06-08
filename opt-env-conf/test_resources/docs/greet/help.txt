@@ -1,8 +1,8 @@
-[33mgreet[m ([37m-h[m|[37m--help[m) | ([33mSUBJECT[m [37m-g[m|[37m--greeting[m [33mGREETING[m [37m-p[m|[37m--polite[m)
+[33mgreet[m [36m([m[37m-h[m[36m|[m[37m--help[m [33mARG[m[36m)[m [36m|[m [36m([m[33mSUBJECT[m [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m [37m-p[m[36m|[m[37m--polite[m [33mARG[m[36m)[m
 
-   Option:  [37m-h[m|[37m--help[m               Show this help text 
-   Option:  [33mSUBJECT[m                 Who to greet        
-   Option:  [37m-g[m|[37m--greeting[m [33mGREETING[m  Greeting to use     
-   Env var: [37mGREET_GREETING[m [33mGREETING[m Greeting to use     
-   Option:  [37m-p[m|[37m--polite[m             Whether to be polite
+   Option:  [37m-h[m[36m|[m[37m--help[m [33mARG[m           [34mShow this help text[m 
+   Option:  [33mSUBJECT[m                 [34mWho to greet[m        
+   Option:  [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m  [34mGreeting to use[m     
+   Env var: [37mGREET_GREETING[m [33mGREETING[m [34mGreeting to use[m     
+   Option:  [37m-p[m[36m|[m[37m--polite[m [33mARG[m         [34mWhether to be polite[m
 

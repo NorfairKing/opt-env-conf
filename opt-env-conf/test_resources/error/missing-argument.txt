@@ -1,1 +1,1 @@
-Missing argument:[33mARGUMENT[m example argument
+Missing argument:[33mARGUMENT[m [34mexample argument[m

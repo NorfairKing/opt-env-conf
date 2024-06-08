@@ -9,7 +9,6 @@ module OptEnvConf.Parser
     strOption,
     argument,
     option,
-    switch,
     envVar,
     setting,
     prefixed,
@@ -228,9 +227,6 @@ argument r = ParserArg r . completeBuilder . mconcat
 
 option :: Reader a -> [OptionBuilder a] -> Parser a
 option r = ParserOpt r . completeBuilder . mconcat
-
-switch :: a -> [SwitchBuilder a] -> Parser a
-switch a = ParserSwitch a . completeBuilder . mconcat
 
 envVar :: Reader a -> [EnvBuilder a] -> Parser a
 envVar r = ParserEnvVar r . completeBuilder . mconcat

@@ -8,6 +8,7 @@ import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Reader
+import Text.Show
 
 type Metavar = String
 
@@ -56,6 +57,12 @@ class HasReader a f where
 instance (HasReader a f) => HasReader a (OptionGenerals f) where
   addReader r op = op {optionGeneralSpecifics = addReader r (optionGeneralSpecifics op)}
 
+class IsSwitch a f where
+  setSwitchValue :: a -> f -> f
+
+instance (IsSwitch a f) => IsSwitch a (OptionGenerals f) where
+  setSwitchValue a op = op {optionGeneralSpecifics = setSwitchValue a (optionGeneralSpecifics op)}
+
 class HasMetavar a where
   setMetavar :: Metavar -> a -> a
 
@@ -79,12 +86,6 @@ class HasEnvVar a where
 
 instance (HasEnvVar f) => HasEnvVar (OptionGenerals f) where
   addEnvVar v op = op {optionGeneralSpecifics = addEnvVar v (optionGeneralSpecifics op)}
-
--- data SwitchSpecifics = SwitchSpecifics
---
--- type SwitchParser = OptionGenerals SwitchSpecifics
---
--- type SwitchBuilder a = SwitchParser a -> SwitchParser a
 
 data OptionSpecifics a = OptionSpecifics
   -- TODO completer
@@ -212,13 +213,34 @@ showEnvParserABit = showOptionGeneralsABitWith $ \EnvSpecifics {..} ->
 type EnvBuilder a = Builder (EnvSpecifics a)
 
 data SettingSpecifics a = SettingSpecifics
-  { settingSpecificsDasheds :: ![Dashed],
+  { -- Nothing means this is not a switch.
+
+    -- | What value to parse when the switch exists.
+    settingSpecificsSwitchValue :: !(Maybe a),
+    -- | How to read a string into a value.
+    --
+    -- An empty list means it doesn't take an argument.
+    settingSpecificsReaders :: ![Reader a],
+    -- | Which dashed values are required for parsing
+    --
+    -- No dashed values means this is an argument.
+    settingSpecificsDasheds :: ![Dashed],
+    -- | Which env vars can be read.
+    --
+    -- Requires at least one Reader.
     settingSpecificsEnvVars :: ![String],
+    -- | Which metavar should be show in documentation
     settingSpecificsMetavar :: !(Maybe Metavar)
   }
 
 instance CanComplete (SettingSpecifics a) where
   completeBuilder b = unBuilder b emptySettingParser
+
+instance IsSwitch a (SettingSpecifics a) where
+  setSwitchValue a os = os {settingSpecificsSwitchValue = Just a}
+
+instance HasReader a (SettingSpecifics a) where
+  addReader a os = os {settingSpecificsReaders = a : settingSpecificsReaders os}
 
 instance HasLong (SettingSpecifics a) where
   addLong s os = os {settingSpecificsDasheds = DashedLong s : settingSpecificsDasheds os}
@@ -238,7 +260,9 @@ emptySettingParser :: SettingParser a
 emptySettingParser =
   emptyOptionGeneralsWith
     SettingSpecifics
-      { settingSpecificsDasheds = [],
+      { settingSpecificsSwitchValue = Nothing,
+        settingSpecificsReaders = [],
+        settingSpecificsDasheds = [],
         settingSpecificsEnvVars = [],
         settingSpecificsMetavar = Nothing
       }
@@ -246,11 +270,19 @@ emptySettingParser =
 showSettingParserABit :: SettingParser a -> ShowS
 showSettingParserABit = showOptionGeneralsABitWith $ \SettingSpecifics {..} ->
   showString "OptionSpecifics "
+    . showMaybeWith (\_ -> showString "_") settingSpecificsSwitchValue
+    . showString " "
+    . showListWith (\_ -> showString "_") settingSpecificsReaders
+    . showString " "
     . showsPrec 11 settingSpecificsDasheds
     . showString " "
     . showsPrec 11 settingSpecificsEnvVars
     . showString " "
     . showsPrec 11 settingSpecificsMetavar
+
+showMaybeWith :: (a -> ShowS) -> Maybe a -> ShowS
+showMaybeWith _ Nothing = showString "Nothing"
+showMaybeWith func (Just a) = showParen True $ showString "Just " . func a
 
 type SettingBuilder a = Builder (SettingSpecifics a)
 
@@ -260,11 +292,11 @@ help s = Builder $ \op -> op {optionGeneralHelp = Just s}
 metavar :: (HasMetavar f) => String -> Builder f
 metavar s = Builder $ setMetavar s
 
-reader :: (HasReader a f) => Reader a -> Builder f
+reader :: Reader a -> Builder (SettingSpecifics a)
 reader b = Builder $ addReader b
 
--- switch :: (HasSwitch a f) => a -> Builder f
--- switch v = Builder $ setSwitchVal v
+switch :: a -> Builder (SettingSpecifics a)
+switch v = Builder $ setSwitchValue v
 
 long :: (HasLong f) => String -> Builder f
 long "" = error "Cannot use an empty long-form option."

@@ -71,9 +71,9 @@ data Internal a
 
 internalParser :: Parser a -> Parser (Internal a)
 internalParser p =
-  switch
-    ShowHelp
-    [ short 'h',
+  setting
+    [ switch ShowHelp,
+      short 'h',
       long "help",
       help "Show this help text"
     ]
