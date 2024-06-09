@@ -121,12 +121,12 @@ collectPossibleOpts = go
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
       ParserSetting p ->
-        case settingSpecificsDasheds (optionGeneralSpecifics p) of
+        case settingSpecificsDasheds (settingSpecifics p) of
           [] -> S.singleton PossibleArg
           ds ->
-            case settingSpecificsSwitchValue (optionGeneralSpecifics p) of
+            case settingSpecificsSwitchValue (settingSpecifics p) of
               Nothing -> S.fromList $ map PossibleOption ds
-              Just _ -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ optionGeneralSpecifics p
+              Just _ -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ settingSpecifics p
       ParserPrefixed _ p -> go p
 
 runParserOn ::
@@ -203,7 +203,7 @@ runParserOn p args envVars mConfig =
                 put s' -- Record the state of the parser that succeeded
                 pure a
       ParserSetting o -> do
-        let s = optionGeneralSpecifics o
+        let s = settingSpecifics o
         let rs = settingSpecificsReaders s
         -- TODO try the readers in order
         let (r : _) = rs

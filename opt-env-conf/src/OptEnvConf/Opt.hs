@@ -15,35 +15,35 @@ type Metavar = String
 
 type Help = String
 
-data OptionGenerals f = OptionGenerals
+data Setting f = Setting
   -- TODO Completer
-  { optionGeneralSpecifics :: f,
-    optionGeneralHelp :: !(Maybe String)
+  { settingSpecifics :: f,
+    settingHelp :: !(Maybe String)
   }
 
-emptyOptionGeneralsWith :: f -> OptionGenerals f
-emptyOptionGeneralsWith f =
-  OptionGenerals
-    { optionGeneralSpecifics = f,
-      optionGeneralHelp = Nothing
+emptySettingWith :: f -> Setting f
+emptySettingWith f =
+  Setting
+    { settingSpecifics = f,
+      settingHelp = Nothing
     }
 
-showOptionGeneralsABitWith :: (f -> ShowS) -> OptionGenerals f -> ShowS
-showOptionGeneralsABitWith func OptionGenerals {..} =
+showSettingABitWith :: (f -> ShowS) -> Setting f -> ShowS
+showSettingABitWith func Setting {..} =
   showParen True $
-    showString "OptionGenerals "
-      . func optionGeneralSpecifics
+    showString "Setting "
+      . func settingSpecifics
       . showString " "
       . showParen
         True
-        ( showString "OptionGenerals "
-            . showsPrec 11 optionGeneralHelp
+        ( showString "Setting "
+            . showsPrec 11 settingHelp
         )
 
-newtype Builder f = Builder {unBuilder :: OptionGenerals f -> OptionGenerals f}
+newtype Builder f = Builder {unBuilder :: Setting f -> Setting f}
 
 class CanComplete f where
-  completeBuilder :: Builder f -> OptionGenerals f
+  completeBuilder :: Builder f -> Setting f
 
 instance Semigroup (Builder f) where
   (<>) (Builder f1) (Builder f2) = Builder (f1 . f2)
@@ -55,38 +55,38 @@ instance Monoid (Builder f) where
 class HasReader a f where
   addReader :: Reader a -> f -> f
 
-instance (HasReader a f) => HasReader a (OptionGenerals f) where
-  addReader r op = op {optionGeneralSpecifics = addReader r (optionGeneralSpecifics op)}
+instance (HasReader a f) => HasReader a (Setting f) where
+  addReader r op = op {settingSpecifics = addReader r (settingSpecifics op)}
 
 class IsSwitch a f where
   setSwitchValue :: a -> f -> f
 
-instance (IsSwitch a f) => IsSwitch a (OptionGenerals f) where
-  setSwitchValue a op = op {optionGeneralSpecifics = setSwitchValue a (optionGeneralSpecifics op)}
+instance (IsSwitch a f) => IsSwitch a (Setting f) where
+  setSwitchValue a op = op {settingSpecifics = setSwitchValue a (settingSpecifics op)}
 
 class HasMetavar a where
   setMetavar :: Metavar -> a -> a
 
-instance (HasMetavar f) => HasMetavar (OptionGenerals f) where
-  setMetavar v op = op {optionGeneralSpecifics = setMetavar v (optionGeneralSpecifics op)}
+instance (HasMetavar f) => HasMetavar (Setting f) where
+  setMetavar v op = op {settingSpecifics = setMetavar v (settingSpecifics op)}
 
 class HasLong a where
   addLong :: NonEmpty Char -> a -> a
 
-instance (HasLong f) => HasLong (OptionGenerals f) where
-  addLong s op = op {optionGeneralSpecifics = addLong s (optionGeneralSpecifics op)}
+instance (HasLong f) => HasLong (Setting f) where
+  addLong s op = op {settingSpecifics = addLong s (settingSpecifics op)}
 
 class HasShort a where
   addShort :: Char -> a -> a
 
-instance (HasShort f) => HasShort (OptionGenerals f) where
-  addShort c op = op {optionGeneralSpecifics = addShort c (optionGeneralSpecifics op)}
+instance (HasShort f) => HasShort (Setting f) where
+  addShort c op = op {settingSpecifics = addShort c (settingSpecifics op)}
 
 class HasEnvVar a where
   addEnvVar :: String -> a -> a
 
-instance (HasEnvVar f) => HasEnvVar (OptionGenerals f) where
-  addEnvVar v op = op {optionGeneralSpecifics = addEnvVar v (optionGeneralSpecifics op)}
+instance (HasEnvVar f) => HasEnvVar (Setting f) where
+  addEnvVar v op = op {settingSpecifics = addEnvVar v (settingSpecifics op)}
 
 data SettingSpecifics a = SettingSpecifics
   { -- | Which dashed values are required for parsing
@@ -130,11 +130,11 @@ instance HasEnvVar (SettingSpecifics a) where
 instance HasMetavar (SettingSpecifics a) where
   setMetavar mv os = os {settingSpecificsMetavar = Just mv}
 
-type SettingParser a = OptionGenerals (SettingSpecifics a)
+type SettingParser a = Setting (SettingSpecifics a)
 
 emptySettingParser :: SettingParser a
 emptySettingParser =
-  emptyOptionGeneralsWith
+  emptySettingWith
     SettingSpecifics
       { settingSpecificsDasheds = [],
         settingSpecificsSwitchValue = Nothing,
@@ -144,7 +144,7 @@ emptySettingParser =
       }
 
 showSettingParserABit :: SettingParser a -> ShowS
-showSettingParserABit = showOptionGeneralsABitWith $ \SettingSpecifics {..} ->
+showSettingParserABit = showSettingABitWith $ \SettingSpecifics {..} ->
   showString "OptionSpecifics "
     . showsPrec 11 settingSpecificsDasheds
     . showString " "
@@ -163,7 +163,7 @@ showMaybeWith func (Just a) = showParen True $ showString "Just " . func a
 type SettingBuilder a = Builder (SettingSpecifics a)
 
 help :: String -> Builder f
-help s = Builder $ \op -> op {optionGeneralHelp = Just s}
+help s = Builder $ \op -> op {settingHelp = Just s}
 
 metavar :: (HasMetavar f) => String -> Builder f
 metavar s = Builder $ setMetavar s
