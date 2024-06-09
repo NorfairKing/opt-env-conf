@@ -54,10 +54,10 @@ library
       OptEnvConf.Doc
       OptEnvConf.EnvMap
       OptEnvConf.Error
-      OptEnvConf.Opt
       OptEnvConf.Parser
       OptEnvConf.Reader
       OptEnvConf.Run
+      OptEnvConf.Setting
       OptEnvConf.Validation
   other-modules:
       Paths_opt_env_conf

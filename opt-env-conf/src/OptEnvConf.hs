@@ -14,9 +14,9 @@ module OptEnvConf
     withYamlConfig,
     xdgYamlConfigFile,
     module OptEnvConf.Doc,
-    module OptEnvConf.Opt,
-    module OptEnvConf.Run,
     module OptEnvConf.Reader,
+    module OptEnvConf.Run,
+    module OptEnvConf.Setting,
     Parser,
     optional,
     module Control.Applicative,
@@ -25,7 +25,7 @@ where
 
 import Control.Applicative
 import OptEnvConf.Doc
-import OptEnvConf.Opt
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Run
+import OptEnvConf.Setting

@@ -21,8 +21,8 @@ import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
-import OptEnvConf.Opt
 import OptEnvConf.Parser
+import OptEnvConf.Setting
 import OptEnvConf.Validation
 import System.Environment (getArgs, getEnvironment, getProgName)
 import System.Exit

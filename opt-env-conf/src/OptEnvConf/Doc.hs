@@ -13,8 +13,8 @@ import Data.Maybe
 import qualified Data.Text as T
 import OptEnvConf.ArgMap (Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
-import OptEnvConf.Opt
 import OptEnvConf.Parser
+import OptEnvConf.Setting
 import Text.Colour
 import Text.Colour.Layout
 

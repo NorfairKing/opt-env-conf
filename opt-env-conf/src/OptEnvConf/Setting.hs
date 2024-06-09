@@ -2,10 +2,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module OptEnvConf.Opt where
+module OptEnvConf.Setting where
 
 import qualified Data.List.NonEmpty as NE
-import Data.String
 import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Reader
 import Text.Show
