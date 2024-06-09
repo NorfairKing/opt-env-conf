@@ -121,6 +121,7 @@ collectPossibleOpts = go
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
+      ParserPrefixed _ p -> go p
       ParserSetting Setting {..} ->
         case settingDasheds of
           [] -> S.singleton PossibleArg
@@ -128,7 +129,6 @@ collectPossibleOpts = go
             case settingSwitchValue of
               Nothing -> S.fromList $ map PossibleOption ds
               Just _ -> S.fromList $ map PossibleSwitch settingDasheds
-      ParserPrefixed _ p -> go p
 
 runParserOn ::
   Parser a ->
@@ -203,6 +203,8 @@ runParserOn p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
+      ParserPrefixed prefix p' ->
+        local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
       ParserSetting s@Setting {..} -> do
         -- TODO try the readers in order
         let (r : _) = settingReaders
@@ -245,8 +247,6 @@ runParserOn p args envVars mConfig =
                     case r varStr of
                       Left err -> ppError $ ParseErrorEnvRead err
                       Right a -> pure a
-      ParserPrefixed prefix p' ->
-        local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 

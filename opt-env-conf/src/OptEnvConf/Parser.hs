@@ -62,10 +62,10 @@ data Parser a where
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   -- TODO maybe we can get rid of this constructor using Alt
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
-  -- | General settings
-  ParserSetting :: !(Setting a) -> Parser a
   -- | Prefixed env var
   ParserPrefixed :: !String -> !(Parser a) -> Parser a
+  -- | General settings
+  ParserSetting :: !(Setting a) -> Parser a
 
 instance Functor Parser where
   fmap = ParserFmap
@@ -94,8 +94,8 @@ instance Alternative Parser where
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserOptionalFirst _ -> False
           ParserRequiredFirst ps -> null ps
-          ParserSetting _ -> False
           ParserPrefixed _ p -> isEmpty p
+          ParserSetting _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty
           (True, False) -> p2
@@ -161,16 +161,16 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "RequiredFirst "
             . showListWith (go 11) ps
-      ParserSetting p ->
-        showParen (d > 10) $
-          showString "Setting "
-            . showSettingABit p
       ParserPrefixed prefix p ->
         showParen (d > 10) $
           showString "Prefixed "
             . showsPrec 11 prefix
             . showString " "
             . go 11 p
+      ParserSetting p ->
+        showParen (d > 10) $
+          showString "Setting "
+            . showSettingABit p
 
 setting :: [Builder a] -> Parser a
 setting = ParserSetting . completeBuilder . mconcat
