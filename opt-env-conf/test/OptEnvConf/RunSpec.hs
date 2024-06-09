@@ -4,8 +4,6 @@ module OptEnvConf.RunSpec (spec) where
 
 import Control.Applicative
 import Data.Aeson as JSON (Object)
-import qualified Data.Aeson.Key as Key
-import qualified Data.Aeson.KeyMap as KeyMap
 import Data.GenValidity.Aeson ()
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -18,7 +16,6 @@ import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Error
 import OptEnvConf.Parser
-import OptEnvConf.Reader as Reader
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Validity

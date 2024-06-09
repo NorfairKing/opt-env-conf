@@ -6,7 +6,6 @@
 module OptEnvConf.Run where
 
 import Control.Applicative
-import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Selective (select)
@@ -209,7 +208,7 @@ runParserOn p args envVars mConfig =
                 pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
-      ParserSetting s@Setting {..} -> do
+      ParserSetting _ -> do
         undefined
 
 -- -- TODO try the readers in order
