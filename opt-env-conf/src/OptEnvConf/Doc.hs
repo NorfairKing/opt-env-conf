@@ -114,10 +114,6 @@ parserDocs = simplifyAnyDocs . go
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserArg _ o -> AnyDocsSingle $ AnyDocOpt $ argumentOptDoc o
-      ParserOpt _ o -> AnyDocsSingle $ AnyDocOpt $ optionOptDoc o
-      ParserSwitch _ o -> AnyDocsSingle $ AnyDocOpt $ switchOptDoc o
-      ParserEnvVar _ o -> AnyDocsSingle $ AnyDocEnv $ envEnvDoc o
       ParserPrefixed prefix p -> anyDocPrefixed prefix <$> go p
       ParserSetting p ->
         AnyDocsOr $
@@ -125,7 +121,6 @@ parserDocs = simplifyAnyDocs . go
             [ AnyDocsSingle . AnyDocOpt <$> settingOptDoc p,
               AnyDocsSingle . AnyDocEnv <$> settingEnvDoc p
             ] -- TODO
-      ParserConfig _ _ -> noDocs
 
 settingOptDoc :: SettingParser a -> Maybe OptDoc
 settingOptDoc OptionGenerals {..} = do

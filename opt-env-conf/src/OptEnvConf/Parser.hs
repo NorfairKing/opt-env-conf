@@ -5,11 +5,8 @@
 
 module OptEnvConf.Parser
   ( -- * Parser API
-    envVar,
     setting,
     prefixed,
-    confVal,
-    confValWith,
     optionalFirst,
     requiredFirst,
     someNonEmpty,
@@ -66,18 +63,10 @@ data Parser a where
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
   -- TODO maybe we can get rid of this constructor using Alt
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
-  -- | Arguments, options and switches
-  ParserArg :: !(Reader a) -> !(ArgumentParser a) -> Parser a
-  -- TODO consider getting rid of ParserOpt and "just" giving Arg a possibly-empty list of dasheds to parse
-  ParserOpt :: !(Reader a) -> !(OptionParser a) -> Parser a
-  ParserSwitch :: !a -> !(SwitchParser a) -> Parser a
-  -- | Env vars
-  ParserEnvVar :: !(Reader a) -> !(EnvParser a) -> Parser a
-  ParserPrefixed :: !String -> !(Parser a) -> Parser a
   -- | General settings
   ParserSetting :: !(SettingParser a) -> Parser a
-  -- | Configuration file
-  ParserConfig :: !String -> !(ValueCodec void a) -> Parser a
+  -- | Prefixed env var
+  ParserPrefixed :: !String -> !(Parser a) -> Parser a
 
 instance Functor Parser where
   fmap = ParserFmap
@@ -106,13 +95,8 @@ instance Alternative Parser where
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserOptionalFirst _ -> False
           ParserRequiredFirst ps -> null ps
-          ParserArg _ _ -> False
-          ParserOpt _ _ -> False
-          ParserSwitch _ _ -> False
-          ParserEnvVar _ _ -> False
           ParserSetting _ -> False
           ParserPrefixed _ p -> isEmpty p
-          ParserConfig _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty
           (True, False) -> p2
@@ -178,22 +162,6 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "RequiredFirst "
             . showListWith (go 11) ps
-      ParserArg _ p ->
-        showParen (d > 10) $
-          showString "Arg _ "
-            . showArgumentParserABit p
-      ParserOpt _ p ->
-        showParen (d > 10) $
-          showString "Opt _ "
-            . showOptionParserABit p
-      ParserSwitch _ p ->
-        showParen (d > 10) $
-          showString "Switch _ "
-            . showSwitchParserABit p
-      ParserEnvVar _ p ->
-        showParen (d > 10) $
-          showString "EnvVar _ "
-            . showEnvParserABit p
       ParserSetting p ->
         showParen (d > 10) $
           showString "Setting "
@@ -204,27 +172,12 @@ showParserABit = ($ "") . go 0
             . showsPrec 11 prefix
             . showString " "
             . go 11 p
-      ParserConfig key c ->
-        showParen (d > 10) $
-          showString "Config "
-            . showsPrec 11 key
-            . showString " "
-            . showParen True (showString (showCodecABit c))
-
-envVar :: Reader a -> [EnvBuilder a] -> Parser a
-envVar r = ParserEnvVar r . completeBuilder . mconcat
 
 setting :: [SettingBuilder a] -> Parser a
 setting = ParserSetting . completeBuilder . mconcat
 
 prefixed :: String -> Parser a -> Parser a
 prefixed = ParserPrefixed
-
-confVal :: (HasCodec a) => String -> Parser a
-confVal k = confValWith k codec
-
-confValWith :: String -> ValueCodec void a -> Parser a
-confValWith = ParserConfig
 
 optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
 optionalFirst = ParserOptionalFirst
@@ -247,8 +200,8 @@ withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >
 xdgYamlConfigFile :: FilePath -> Parser FilePath
 xdgYamlConfigFile subdir =
   (\xdgDir -> xdgDir </> subdir </> "config.yaml")
-    <$> envVar
-      str
-      [ var "XDG_CONFIG_HOME",
+    <$> setting
+      [ reader str,
+        var "XDG_CONFIG_HOME",
         metavar "DIRECTORY"
       ]

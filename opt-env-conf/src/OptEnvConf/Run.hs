@@ -124,10 +124,6 @@ collectPossibleOpts = go
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
-      ParserArg _ _ -> S.singleton PossibleArg
-      ParserOpt _ o -> S.fromList $ map PossibleOption $ optionSpecificsDasheds $ optionGeneralSpecifics o
-      ParserSwitch _ o -> S.fromList $ map PossibleSwitch $ switchSpecificsDasheds $ optionGeneralSpecifics o
-      ParserEnvVar _ _ -> S.empty
       ParserSetting p ->
         case settingSpecificsDasheds (optionGeneralSpecifics p) of
           [] -> S.singleton PossibleArg
@@ -136,7 +132,6 @@ collectPossibleOpts = go
               Nothing -> S.fromList $ map PossibleOption ds
               Just _ -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ optionGeneralSpecifics p
       ParserPrefixed _ p -> go p
-      ParserConfig _ _ -> S.empty
 
 runParserOn ::
   Parser a ->
@@ -211,37 +206,6 @@ runParserOn p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserArg r o -> do
-        mS <- ppArg
-        case mS of
-          Nothing -> ppError $ ParseErrorMissingArgument $ Just $ argumentOptDoc o
-          Just s -> case r s of
-            Left err -> ppError $ ParseErrorArgumentRead err
-            Right a -> pure a
-      ParserOpt r o -> do
-        let ds = optionSpecificsDasheds $ optionGeneralSpecifics o
-        mS <- ppOpt ds
-        case mS of
-          Nothing -> ppError $ ParseErrorMissingOption $ Just $ optionOptDoc o
-          Just s -> do
-            case r s of
-              Left err -> ppError $ ParseErrorOptionRead err
-              Right a -> pure a
-      ParserSwitch a o -> do
-        let ds = switchSpecificsDasheds $ optionGeneralSpecifics o
-        mS <- ppSwitch ds
-        case mS of
-          Nothing -> ppError $ ParseErrorMissingSwitch $ Just $ switchOptDoc o
-          Just () -> pure a
-      ParserEnvVar r o -> do
-        prefix <- asks ppEnvPrefix
-        es <- asks ppEnvEnv
-        case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) (envSpecificsVars (optionGeneralSpecifics o)) of
-          Nothing -> ppError $ ParseErrorMissingEnvVar $ Just $ envEnvDoc o
-          Just s ->
-            case r s of
-              Left err -> ppError $ ParseErrorEnvRead err
-              Right a -> pure a
       ParserSetting o -> do
         let s = optionGeneralSpecifics o
         let rs = settingSpecificsReaders s
@@ -287,15 +251,6 @@ runParserOn p args envVars mConfig =
                       Right a -> pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
-      ParserConfig key c -> do
-        mConf <- asks ppEnvConf
-        case mConf of
-          Nothing -> ppError $ ParseErrorMissingConfig key
-          Just conf -> case JSON.parseEither (.: Key.fromString key) conf of
-            Left err -> ppError $ ParseErrorConfigRead err
-            Right v -> case JSON.parseEither (parseJSONVia c) v of
-              Left err -> ppError $ ParseErrorConfigRead err
-              Right a -> pure a
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 
