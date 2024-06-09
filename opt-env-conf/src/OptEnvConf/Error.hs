@@ -47,20 +47,22 @@ renderError = \case
         ]
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
+  ParseErrorEmptySetting ->
+    [["This setting has not been configured to be able to parse anything."]]
   ParseErrorMissingArgument o ->
     ["Missing argument:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorArgumentRead errs ->
-    ["Failed to read argument: "] : map (\err -> [chunk $ T.pack $ show err]) (NE.toList errs)
+    ["Failed to read argument:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingOption o ->
     ["Missing option:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorMissingSwitch o ->
     ["Missing switch:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorOptionRead errs ->
-    ["Failed to read option: "] : map (\err -> [chunk $ T.pack $ show err]) (NE.toList errs)
+    ["Failed to read option:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingEnvVar md ->
     [["Missing option: ", maybe (error "TODO") (chunk . T.pack . show) md]]
-  ParseErrorEnvRead s ->
-    [["Failed to env var: ", chunk $ T.pack $ show s]]
+  ParseErrorEnvRead errs ->
+    ["Failed to read env var:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingConfig v ->
     [["Missing configuration: ", chunk $ T.pack $ show v]]
   ParseErrorConfigRead s ->
