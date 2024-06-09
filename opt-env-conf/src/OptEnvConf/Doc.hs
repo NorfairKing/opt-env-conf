@@ -122,23 +122,23 @@ parserDocs = simplifyAnyDocs . go
               AnyDocsSingle . AnyDocEnv <$> settingEnvDoc p
             ] -- TODO
 
-settingOptDoc :: SettingParser a -> Maybe OptDoc
+settingOptDoc :: Setting a -> Maybe OptDoc
 settingOptDoc Setting {..} = do
   pure $
     OptDoc
       { optDocNeedsArg = True,
-        optDocDasheds = settingSpecificsDasheds settingSpecifics,
-        optDocMetavar = settingSpecificsMetavar settingSpecifics,
+        optDocDasheds = settingDasheds,
+        optDocMetavar = settingMetavar,
         optDocHelp = settingHelp
       }
 
-settingEnvDoc :: SettingParser a -> Maybe EnvDoc
+settingEnvDoc :: Setting a -> Maybe EnvDoc
 settingEnvDoc Setting {..} = do
-  vars <- NE.nonEmpty $ settingSpecificsEnvVars settingSpecifics
+  vars <- NE.nonEmpty settingEnvVars
   pure $
     EnvDoc
       { envDocVars = NE.toList vars,
-        envDocMetavar = settingSpecificsMetavar settingSpecifics,
+        envDocMetavar = settingMetavar,
         envDocHelp = settingHelp
       }
 

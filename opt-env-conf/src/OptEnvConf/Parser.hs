@@ -63,7 +63,7 @@ data Parser a where
   -- TODO maybe we can get rid of this constructor using Alt
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | General settings
-  ParserSetting :: !(SettingParser a) -> Parser a
+  ParserSetting :: !(Setting a) -> Parser a
   -- | Prefixed env var
   ParserPrefixed :: !String -> !(Parser a) -> Parser a
 
@@ -164,7 +164,7 @@ showParserABit = ($ "") . go 0
       ParserSetting p ->
         showParen (d > 10) $
           showString "Setting "
-            . showSettingParserABit p
+            . showSettingABit p
       ParserPrefixed prefix p ->
         showParen (d > 10) $
           showString "Prefixed "
@@ -172,7 +172,7 @@ showParserABit = ($ "") . go 0
             . showString " "
             . go 11 p
 
-setting :: [SettingBuilder a] -> Parser a
+setting :: [Builder a] -> Parser a
 setting = ParserSetting . completeBuilder . mconcat
 
 prefixed :: String -> Parser a -> Parser a

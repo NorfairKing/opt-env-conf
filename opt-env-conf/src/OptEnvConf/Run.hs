@@ -1,6 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Run where
 
@@ -120,13 +121,13 @@ collectPossibleOpts = go
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
-      ParserSetting p ->
-        case settingSpecificsDasheds (settingSpecifics p) of
+      ParserSetting Setting {..} ->
+        case settingDasheds of
           [] -> S.singleton PossibleArg
           ds ->
-            case settingSpecificsSwitchValue (settingSpecifics p) of
+            case settingSwitchValue of
               Nothing -> S.fromList $ map PossibleOption ds
-              Just _ -> S.fromList $ map PossibleSwitch $ settingSpecificsDasheds $ settingSpecifics p
+              Just _ -> S.fromList $ map PossibleSwitch settingDasheds
       ParserPrefixed _ p -> go p
 
 runParserOn ::
@@ -202,31 +203,30 @@ runParserOn p args envVars mConfig =
               Just a -> do
                 put s' -- Record the state of the parser that succeeded
                 pure a
-      ParserSetting o -> do
-        let s = settingSpecifics o
-        let rs = settingSpecificsReaders s
+      ParserSetting s@Setting {..} -> do
         -- TODO try the readers in order
-        let (r : _) = rs
-        errOrA <- case settingSpecificsDasheds s of
+        let (r : _) = settingReaders
+        let optDoc = settingOptDoc s
+        errOrA <- case settingDasheds of
           [] -> do
             mS <- ppArg
             case mS of
-              Nothing -> pure $ Left $ ParseErrorMissingArgument $ settingOptDoc o
+              Nothing -> pure $ Left $ ParseErrorMissingArgument optDoc
               Just argStr -> do
                 case r argStr of
                   Left err -> ppError $ ParseErrorArgumentRead err
                   Right a -> pure $ Right a
           ds ->
-            case settingSpecificsSwitchValue s of
+            case settingSwitchValue of
               Just a -> do
                 mS <- ppSwitch ds
                 case mS of
-                  Nothing -> pure $ Left $ ParseErrorMissingSwitch $ settingOptDoc o
+                  Nothing -> pure $ Left $ ParseErrorMissingSwitch optDoc
                   Just () -> pure $ Right a
               Nothing -> do
                 mS <- ppOpt ds
                 case mS of
-                  Nothing -> pure $ Left $ ParseErrorMissingOption $ settingOptDoc o
+                  Nothing -> pure $ Left $ ParseErrorMissingOption optDoc
                   Just optionStr -> do
                     case r optionStr of
                       Left err -> ppError $ ParseErrorOptionRead err
@@ -234,13 +234,13 @@ runParserOn p args envVars mConfig =
         case errOrA of
           Right a -> pure a -- Args, options, and switches have precedence
           Left missingErr -> do
-            case settingSpecificsEnvVars s of
+            case settingEnvVars of
               [] -> ppError missingErr
               vars -> do
                 prefix <- asks ppEnvPrefix
                 es <- asks ppEnvEnv
                 case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) vars of
-                  Nothing -> ppErrors $ missingErr :| [ParseErrorMissingEnvVar $ settingEnvDoc o]
+                  Nothing -> ppErrors $ missingErr :| [ParseErrorMissingEnvVar $ settingEnvDoc s]
                   Just varStr ->
                     case r varStr of
                       Left err -> ppError $ ParseErrorEnvRead err
