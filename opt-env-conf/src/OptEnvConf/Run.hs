@@ -275,7 +275,7 @@ runParserOn p args envVars mConfig =
                           Nothing -> pure NotFound
                           Just varStr ->
                             case tryReaders rs varStr of
-                              Left err -> ppError $ ParseErrorEnvRead err
+                              Left errs -> ppError $ ParseErrorEnvRead errs
                               Right a -> pure $ Found a
 
                     case mEnv of
