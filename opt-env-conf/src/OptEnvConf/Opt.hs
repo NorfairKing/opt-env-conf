@@ -19,16 +19,21 @@ data Setting a = Setting
     --
     -- No dashed values means this is an argument.
     settingDasheds :: ![Dashed],
+    -- | Which readers should be tried to parse a value from a string
+    settingReaders :: ![Reader a],
+    -- | Whether the readers should be used to parsed arguments
+    settingTryArgument :: !Bool,
     -- | What value to parse when the switch exists.
     --
     -- Nothing means this is not a switch.
     settingSwitchValue :: !(Maybe a),
-    settingArguments :: [Reader a],
-    settingOptions :: [Reader a],
+    -- | Whether the dasheds should be tried together with the readers as
+    -- options.
+    settingTryOption :: !Bool,
     -- | Which env vars can be read.
     --
     -- Requires at least one Reader.
-    settingEnvVars :: ![(Reader a, String)],
+    settingEnvVars :: ![String],
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
@@ -38,9 +43,10 @@ emptySetting :: Setting a
 emptySetting =
   Setting
     { settingDasheds = [],
+      settingReaders = [],
+      settingTryArgument = False,
       settingSwitchValue = Nothing,
-      settingArguments = [],
-      settingOptions = [],
+      settingTryOption = False,
       settingEnvVars = [],
       settingMetavar = Nothing,
       settingHelp = Nothing
@@ -52,19 +58,15 @@ showSettingABit Setting {..} =
     showString "Setting "
       . showsPrec 11 settingDasheds
       . showString " "
+      . showListWith (\_ -> showString "_") settingReaders
+      . showString " "
+      . showsPrec 11 settingTryArgument
+      . showString " "
       . showMaybeWith (\_ -> showString "_") settingSwitchValue
       . showString " "
-      . showListWith (\_ -> showString "_") settingArguments
+      . showsPrec 11 settingTryOption
       . showString " "
-      . showListWith (\_ -> showString "_") settingOptions
-      . showString " "
-      . showListWith
-        ( \(_, v) ->
-            showParen True $
-              showString "_, "
-                . showsPrec 11 v
-        )
-        settingEnvVars
+      . showsPrec 11 settingEnvVars
       . showString " "
       . showsPrec 11 settingMetavar
       . showString " "
@@ -92,17 +94,14 @@ help s = Builder $ \op -> op {settingHelp = Just s}
 metavar :: String -> Builder a
 metavar mv = Builder $ \s -> s {settingMetavar = Just mv}
 
-strArgument :: (IsString string) => Builder string
-strArgument = argument str
+argument :: Builder a
+argument = Builder $ \s -> s {settingTryArgument = True}
 
-argument :: Reader a -> Builder a
-argument r = Builder $ \s -> s {settingArguments = r : settingArguments s}
+option :: Builder a
+option = Builder $ \s -> s {settingTryOption = True}
 
-strOption :: (IsString string) => Builder string
-strOption = option str
-
-option :: Reader a -> Builder a
-option r = Builder $ \s -> s {settingOptions = r : settingOptions s}
+reader :: Reader a -> Builder a
+reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
 
 switch :: a -> Builder a
 switch v = Builder $ \s -> s {settingSwitchValue = Just v}
@@ -114,8 +113,5 @@ long l = Builder $ \s -> s {settingDasheds = DashedLong (NE.fromList l) : settin
 short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
-strEnvVar :: (IsString string) => String -> Builder string
-strEnvVar = envVar str
-
-envVar :: Reader a -> String -> Builder a
-envVar r v = Builder $ \s -> s {settingEnvVars = (r, v) : settingEnvVars s}
+envVar :: String -> Builder a
+envVar v = Builder $ \s -> s {settingEnvVars = v : settingEnvVars s}

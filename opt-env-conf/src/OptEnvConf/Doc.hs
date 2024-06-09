@@ -137,7 +137,7 @@ settingEnvDoc Setting {..} = do
   vars <- NE.nonEmpty settingEnvVars
   pure $
     EnvDoc
-      { envDocVars = map snd $ NE.toList vars,
+      { envDocVars = NE.toList vars,
         envDocMetavar = settingMetavar,
         envDocHelp = settingHelp
       }

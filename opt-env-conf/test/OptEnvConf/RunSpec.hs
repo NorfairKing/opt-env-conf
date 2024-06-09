@@ -33,7 +33,7 @@ spec = do
 
     it "recognises arguments when they would be parsed" $
       forAllValid $ \arg -> do
-        let p = setting [strArgument] :: Parser String
+        let p = setting [reader str, argument] :: Parser String
         let args = [arg]
         unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
@@ -48,7 +48,7 @@ spec = do
       forAllValid $ \l1 -> do
         forAll (genValid `suchThat` (/= l1)) $ \l2 -> do
           forAllValid $ \v -> do
-            let p = setting [strOption, long (NE.toList l1)] :: Parser String
+            let p = setting [reader str, option, long (NE.toList l1)] :: Parser String
             let d = DashedLong l2
             let args = [ArgMap.renderDashed d, v]
             unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` [OptOption d v]
@@ -56,7 +56,7 @@ spec = do
     it "recognises an option that would be parsed" $
       forAllValid $ \l -> do
         forAllValid $ \v -> do
-          let p = setting [strOption, long $ NE.toList l] :: Parser String
+          let p = setting [reader str, option, long $ NE.toList l] :: Parser String
           let args = [ArgMap.renderDashed (DashedLong l), v]
           unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
@@ -123,7 +123,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
               let args = ArgMap.empty {argMapOpts = map OptArg ls}
-              let p = many $ setting [strArgument]
+              let p = many $ setting [reader str, argument]
               let expected = ls
               shouldParse p args env mConf expected
 
@@ -132,7 +132,7 @@ spec = do
         forAllValid $ \env ->
           forAllValid $ \mConf -> do
             let args = ArgMap.empty {argMapOpts = []}
-            let p = some $ setting [strArgument] :: Parser [String]
+            let p = some $ setting [reader str, argument] :: Parser [String]
             shouldFail p args env mConf $ \case
               ParseErrorMissingArgument _ :| [] -> True
               _ -> False
@@ -142,7 +142,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
               let args = ArgMap.empty {argMapOpts = map OptArg $ NE.toList ls}
-              let p = some $ setting [strArgument]
+              let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args env mConf expected
 
@@ -165,12 +165,14 @@ spec = do
                       optionalFirst
                         [ optional $
                             setting
-                              [ strOption,
+                              [ reader str,
+                                option,
                                 long $ NE.toList l
                               ],
                           optional $
                             setting
-                              [ strEnvVar v
+                              [ reader str,
+                                envVar v
                               ]
                         ]
                 shouldParse p args env mConf (Just arg)
@@ -196,12 +198,14 @@ spec = do
                       requiredFirst
                         [ optional $
                             setting
-                              [ strOption,
+                              [ reader str,
+                                option,
                                 long $ NE.toList l
                               ],
                           optional $
                             setting
-                              [ strEnvVar v
+                              [ reader str,
+                                envVar v
                               ]
                         ]
                 shouldParse p args env mConf arg
@@ -212,7 +216,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \arg -> do
               let args = ArgMap.empty {argMapOpts = [OptArg arg]}
-              let p = setting [strArgument]
+              let p = setting [reader str, argument]
               let expected = arg
               shouldParse p args env mConf expected
 
@@ -222,7 +226,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
               let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) r]}
-              let p = setting [strOption, long $ NE.toList l]
+              let p = setting [reader str, option, long $ NE.toList l]
               let expected = r
               shouldParse p args env mConf expected
 
@@ -231,7 +235,7 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
               let args = ArgMap.empty {argMapOpts = map (OptOption (DashedLong l)) rs}
-              let p = many $ setting [strOption, long $ NE.toList l]
+              let p = many $ setting [reader str, option, long $ NE.toList l]
               let expected = rs
               shouldParse p args env mConf expected
 
@@ -242,30 +246,30 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \(key, val) -> do
                 let env = EnvMap.insert key val env'
-                let p = setting [strEnvVar key]
+                let p = setting [reader str, envVar key]
                 let expected = val
                 shouldParse p args env mConf expected
 
     describe "arguments" $ do
       argParseSpec
         ["--foo", "bar"]
-        (setting [strOption, long "foo"])
+        (setting [reader str, option, long "foo"])
         "bar"
       argParseSpec
         ["--foo", "bar"]
-        (many $ setting [strOption, long "foo"])
+        (many $ setting [reader str, option, long "foo"])
         ["bar"]
       argParseSpec
         ["--foo", "bar", "--foo", "quux"]
-        (many $ setting [strOption, long "foo"])
+        (many $ setting [reader str, option, long "foo"])
         ["bar", "quux"]
       argParseSpec
         ["--foo", "bar", "-f", "quux"]
-        (many $ setting [strOption, short 'f', long "foo"])
+        (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
       argParseSpec
         ["-f", "bar", "--foo", "quux"]
-        (many $ setting [strOption, short 'f', long "foo"])
+        (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
 
 argParseSpec :: (Show a, Eq a) => [String] -> Parser a -> a -> Spec

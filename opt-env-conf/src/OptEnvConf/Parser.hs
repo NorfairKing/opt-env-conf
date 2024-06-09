@@ -31,6 +31,7 @@ import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.Opt
+import OptEnvConf.Reader
 import Path.IO
 import System.FilePath
 import Text.Show
@@ -199,6 +200,7 @@ xdgYamlConfigFile :: FilePath -> Parser FilePath
 xdgYamlConfigFile subdir =
   (\xdgDir -> xdgDir </> subdir </> "config.yaml")
     <$> setting
-      [ strEnvVar "XDG_CONFIG_HOME",
+      [ reader str,
+        envVar "XDG_CONFIG_HOME",
         metavar "DIRECTORY"
       ]

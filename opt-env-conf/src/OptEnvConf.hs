@@ -3,9 +3,7 @@
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
 
 module OptEnvConf
-  ( strArgument,
-    strOption,
-    argument,
+  ( argument,
     option,
     switch,
     setting,
