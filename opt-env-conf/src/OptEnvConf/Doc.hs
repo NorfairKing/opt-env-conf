@@ -147,41 +147,6 @@ anyDocPrefixed prefix = \case
   AnyDocEnv ed -> AnyDocEnv $ ed {envDocVars = map (prefix <>) (envDocVars ed)}
   ad -> ad
 
-argumentOptDoc :: ArgumentParser a -> OptDoc
-argumentOptDoc OptionGenerals {..} =
-  OptDoc
-    { optDocNeedsArg = True,
-      optDocDasheds = [],
-      optDocMetavar = argumentSpecificsMetavar optionGeneralSpecifics,
-      optDocHelp = optionGeneralHelp
-    }
-
-optionOptDoc :: OptionParser a -> OptDoc
-optionOptDoc OptionGenerals {..} =
-  OptDoc
-    { optDocNeedsArg = True,
-      optDocDasheds = optionSpecificsDasheds optionGeneralSpecifics,
-      optDocMetavar = optionSpecificsMetavar optionGeneralSpecifics,
-      optDocHelp = optionGeneralHelp
-    }
-
-switchOptDoc :: SwitchParser a -> OptDoc
-switchOptDoc OptionGenerals {..} =
-  OptDoc
-    { optDocNeedsArg = False,
-      optDocDasheds = switchSpecificsDasheds optionGeneralSpecifics,
-      optDocMetavar = Nothing,
-      optDocHelp = optionGeneralHelp
-    }
-
-envEnvDoc :: EnvParser a -> EnvDoc
-envEnvDoc OptionGenerals {..} =
-  EnvDoc
-    { envDocVars = envSpecificsVars optionGeneralSpecifics,
-      envDocMetavar = envSpecificsMetavar optionGeneralSpecifics,
-      envDocHelp = optionGeneralHelp
-    }
-
 renderAnyDoc :: AnyDoc -> [[Chunk]]
 renderAnyDoc = \case
   AnyDocOpt d -> ["Option: "] : renderOptDocLong d

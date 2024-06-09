@@ -4,16 +4,12 @@
 
 module OptEnvConf.Run where
 
-import Autodocodec
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Selective (select)
-import Data.Aeson ((.:))
 import qualified Data.Aeson as JSON
-import qualified Data.Aeson.Key as Key
-import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
@@ -245,8 +241,8 @@ runParserOn p args envVars mConfig =
                 es <- asks ppEnvEnv
                 case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) vars of
                   Nothing -> ppErrors $ missingErr :| [ParseErrorMissingEnvVar $ settingEnvDoc o]
-                  Just s ->
-                    case r s of
+                  Just varStr ->
+                    case r varStr of
                       Left err -> ppError $ ParseErrorEnvRead err
                       Right a -> pure a
       ParserPrefixed prefix p' ->

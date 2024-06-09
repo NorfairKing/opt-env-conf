@@ -23,7 +23,6 @@ module OptEnvConf.Parser
   )
 where
 
-import Autodocodec
 import Autodocodec.Yaml
 import Control.Applicative
 import Control.Monad
