@@ -14,11 +14,11 @@ data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
   | ParseErrorMissingArgument !(Maybe OptDoc)
-  | ParseErrorArgumentRead !String
+  | ParseErrorArgumentRead !(NonEmpty String)
   | ParseErrorMissingOption !(Maybe OptDoc)
-  | ParseErrorOptionRead !String
+  | ParseErrorOptionRead !(NonEmpty String)
   | ParseErrorMissingEnvVar !(Maybe EnvDoc)
-  | ParseErrorEnvRead !String
+  | ParseErrorEnvRead !(NonEmpty String)
   | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfig !String
   | ParseErrorConfigRead !String
@@ -48,14 +48,14 @@ renderError = \case
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorMissingArgument o ->
     ["Missing argument:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
-  ParseErrorArgumentRead s ->
-    [["Failed to read argument: ", chunk $ T.pack $ show s]]
+  ParseErrorArgumentRead errs ->
+    ["Failed to read argument: "] : map (\err -> [chunk $ T.pack $ show err]) (NE.toList errs)
   ParseErrorMissingOption o ->
     ["Missing option:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorMissingSwitch o ->
     ["Missing switch:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
-  ParseErrorOptionRead s ->
-    [["Failed to read option: ", chunk $ T.pack $ show s]]
+  ParseErrorOptionRead errs ->
+    ["Failed to read option: "] : map (\err -> [chunk $ T.pack $ show err]) (NE.toList errs)
   ParseErrorMissingEnvVar md ->
     [["Missing option: ", maybe (error "TODO") (chunk . T.pack . show) md]]
   ParseErrorEnvRead s ->
