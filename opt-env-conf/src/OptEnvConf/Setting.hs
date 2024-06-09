@@ -4,6 +4,7 @@
 
 module OptEnvConf.Setting where
 
+import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Reader
@@ -32,7 +33,9 @@ data Setting a = Setting
     -- | Which env vars can be read.
     --
     -- Requires at least one Reader.
-    settingEnvVars :: ![String],
+    settingEnvVars :: !(Maybe (NonEmpty String)),
+    -- | Default value, if none of the above find the setting.
+    settingDefaultValue :: Maybe a,
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
@@ -46,9 +49,10 @@ emptySetting =
       settingTryArgument = False,
       settingSwitchValue = Nothing,
       settingTryOption = False,
-      settingEnvVars = [],
+      settingEnvVars = Nothing,
       settingMetavar = Nothing,
-      settingHelp = Nothing
+      settingHelp = Nothing,
+      settingDefaultValue = Nothing
     }
 
 showSettingABit :: Setting a -> ShowS
@@ -66,6 +70,8 @@ showSettingABit Setting {..} =
       . showsPrec 11 settingTryOption
       . showString " "
       . showsPrec 11 settingEnvVars
+      . showString " "
+      . showMaybeWith (\_ -> showString "_") settingDefaultValue
       . showString " "
       . showsPrec 11 settingMetavar
       . showString " "
@@ -113,4 +119,8 @@ short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
 envVar :: String -> Builder a
-envVar v = Builder $ \s -> s {settingEnvVars = v : settingEnvVars s}
+envVar v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
+
+-- | Set the default value
+value :: a -> Builder a
+value a = Builder $ \s -> s {settingDefaultValue = Just a}

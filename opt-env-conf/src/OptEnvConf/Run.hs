@@ -6,12 +6,13 @@
 module OptEnvConf.Run where
 
 import Control.Applicative
+import Control.Arrow (left)
 import Control.Monad
 import Control.Monad.Reader hiding (Reader)
 import Control.Monad.State
 import Control.Selective (select)
 import qualified Data.Aeson as JSON
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
@@ -211,7 +212,7 @@ runParserOn p args envVars mConfig =
                 pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
-      ParserSetting Setting {..} -> do
+      ParserSetting set@Setting {..} -> do
         mArg <-
           if settingTryArgument
             then do
@@ -220,52 +221,88 @@ runParserOn p args envVars mConfig =
               rs <- requireReaders settingReaders
               mS <- ppArg
               case mS of
-                Nothing -> pure Nothing
+                Nothing -> pure NotFound
                 Just argStr -> do
                   case tryReaders rs argStr of
                     Left errs -> ppError $ ParseErrorArgumentRead errs
-                    Right a -> pure $ Just a
-            else pure Nothing
+                    Right a -> pure $ Found a
+            else pure NotRun
 
-        mSwitch <- case settingSwitchValue of
-          Nothing -> pure Nothing
-          Just a -> do
-            mS <- ppSwitch settingDasheds
-            case mS of
-              Nothing -> pure $ Nothing
-              Just () -> pure $ Just a
+        case mArg of
+          Found a -> pure a
+          _ -> do
+            mSwitch <- case settingSwitchValue of
+              Nothing -> pure NotRun
+              Just a -> do
+                mS <- ppSwitch settingDasheds
+                case mS of
+                  Nothing -> pure NotFound
+                  Just () -> pure $ Found a
 
-        mOpt <-
-          if settingTryOption
-            then do
-              -- Require readers before finding the option so the parser
-              -- always fails if it's missing a reader.
-              rs <- requireReaders settingReaders
-              mS <- ppOpt settingDasheds
-              case mS of
-                Nothing -> pure Nothing
-                Just optionStr -> do
-                  case tryReaders rs optionStr of
-                    Left err -> ppError $ ParseErrorOptionRead err
-                    Right a -> pure $ Just a
-            else pure Nothing
+            case mSwitch of
+              Found a -> pure a
+              _ -> do
+                mOpt <-
+                  if settingTryOption
+                    then do
+                      -- Require readers before finding the option so the parser
+                      -- always fails if it's missing a reader.
+                      rs <- requireReaders settingReaders
+                      mS <- ppOpt settingDasheds
+                      case mS of
+                        Nothing -> pure NotFound
+                        Just optionStr -> do
+                          case tryReaders rs optionStr of
+                            Left err -> ppError $ ParseErrorOptionRead err
+                            Right a -> pure $ Found a
+                    else pure NotRun
 
-        mEnv <- do
-          -- Require readers before finding the env vars so the parser
-          -- always fails if it's missing a reader.
-          rs <- requireReaders settingReaders
+                case mOpt of
+                  Found a -> pure a
+                  _ -> do
+                    mEnv <- case settingEnvVars of
+                      Nothing -> pure NotRun
+                      Just ne -> do
+                        -- Require readers before finding the env vars so the parser
+                        -- always fails if it's missing a reader.
+                        rs <- requireReaders settingReaders
 
-          prefix <- asks ppEnvPrefix
-          let vars = map (prefix <>) settingEnvVars
+                        prefix <- asks ppEnvPrefix
+                        let vars = map (prefix <>) (NE.toList ne)
 
-          es <- asks ppEnvEnv
-          case msum $ map (`EnvMap.lookup` es) vars of
-            Nothing -> pure Nothing
-            Just varStr ->
-              case tryReaders rs varStr of
-                Left err -> ppError $ ParseErrorEnvRead err
-                Right a -> pure $ Just a
-        pure $ fromMaybe (error "TODO") $ mArg <|> mSwitch <|> mOpt <|> mEnv
+                        es <- asks ppEnvEnv
+                        case msum $ map (`EnvMap.lookup` es) vars of
+                          Nothing -> pure NotFound
+                          Just varStr ->
+                            case tryReaders rs varStr of
+                              Left err -> ppError $ ParseErrorEnvRead err
+                              Right a -> pure $ Found a
+
+                    case mEnv of
+                      Found a -> pure a
+                      _ ->
+                        case settingDefaultValue of
+                          Just a -> pure a
+                          Nothing -> do
+                            let mOptDoc = settingOptDoc set
+                            let mEnvDoc = settingEnvDoc set
+                            let parseResultError e res = case res of
+                                  NotRun -> Nothing
+                                  NotFound -> Just e
+                                  Found _ -> Nothing -- Should not happen.
+                            maybe (ppError ParseErrorEmptySetting) ppErrors $
+                              NE.nonEmpty $
+                                catMaybes
+                                  [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
+                                    parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
+                                    parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
+                                    parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv
+                                  ]
+
+data ParseResult a
+  = NotRun
+  | NotFound
+  | Found a
 
 requireReaders :: [Reader a] -> PP (NonEmpty (Reader a))
 requireReaders rs = case NE.nonEmpty rs of
@@ -274,7 +311,16 @@ requireReaders rs = case NE.nonEmpty rs of
 
 -- Try the readers in order
 tryReaders :: NonEmpty (Reader a) -> String -> Either (NonEmpty String) a
-tryReaders = undefined
+tryReaders rs s = left NE.reverse $ go rs
+  where
+    go (r :| rl) = case r s of
+      Left err -> go' (err :| []) rl
+      Right a -> Right a
+    go' errs = \case
+      [] -> Left errs
+      (r : rl) -> case r s of
+        Left err -> go' (err <| errs) rl
+        Right a -> Right a
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 

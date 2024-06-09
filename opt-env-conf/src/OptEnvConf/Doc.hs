@@ -134,7 +134,7 @@ settingOptDoc Setting {..} = do
 
 settingEnvDoc :: Setting a -> Maybe EnvDoc
 settingEnvDoc Setting {..} = do
-  vars <- NE.nonEmpty settingEnvVars
+  vars <- settingEnvVars
   pure $
     EnvDoc
       { envDocVars = NE.toList vars,

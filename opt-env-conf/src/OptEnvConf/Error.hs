@@ -13,6 +13,7 @@ import Text.Colour
 data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
+  | ParseErrorEmptySetting
   | ParseErrorMissingArgument !(Maybe OptDoc)
   | ParseErrorArgumentRead !(NonEmpty String)
   | ParseErrorMissingOption !(Maybe OptDoc)
