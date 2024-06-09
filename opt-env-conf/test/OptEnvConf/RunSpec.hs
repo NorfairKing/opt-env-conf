@@ -170,8 +170,7 @@ spec = do
                               ],
                           optional $
                             setting
-                              [ reader str,
-                                var v
+                              [ strEnvVar v
                               ]
                         ]
                 shouldParse p args env mConf (Just arg)
@@ -202,8 +201,7 @@ spec = do
                               ],
                           optional $
                             setting
-                              [ reader str,
-                                var v
+                              [ strEnvVar v
                               ]
                         ]
                 shouldParse p args env mConf arg
@@ -244,7 +242,7 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \(key, val) -> do
                 let env = EnvMap.insert key val env'
-                let p = setting [reader str, var key]
+                let p = setting [strEnvVar key]
                 let expected = val
                 shouldParse p args env mConf expected
 

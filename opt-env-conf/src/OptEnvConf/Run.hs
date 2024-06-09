@@ -206,47 +206,49 @@ runParserOn p args envVars mConfig =
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
       ParserSetting s@Setting {..} -> do
-        -- TODO try the readers in order
-        let (r : _) = settingReaders
-        let optDoc = settingOptDoc s
-        errOrA <- case settingDasheds of
-          [] -> do
-            mS <- ppArg
-            case mS of
-              Nothing -> pure $ Left $ ParseErrorMissingArgument optDoc
-              Just argStr -> do
-                case r argStr of
-                  Left err -> ppError $ ParseErrorArgumentRead err
-                  Right a -> pure $ Right a
-          ds ->
-            case settingSwitchValue of
-              Just a -> do
-                mS <- ppSwitch ds
-                case mS of
-                  Nothing -> pure $ Left $ ParseErrorMissingSwitch optDoc
-                  Just () -> pure $ Right a
-              Nothing -> do
-                mS <- ppOpt ds
-                case mS of
-                  Nothing -> pure $ Left $ ParseErrorMissingOption optDoc
-                  Just optionStr -> do
-                    case r optionStr of
-                      Left err -> ppError $ ParseErrorOptionRead err
-                      Right a -> pure $ Right a
-        case errOrA of
-          Right a -> pure a -- Args, options, and switches have precedence
-          Left missingErr -> do
-            case settingEnvVars of
-              [] -> ppError missingErr
-              vars -> do
-                prefix <- asks ppEnvPrefix
-                es <- asks ppEnvEnv
-                case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) vars of
-                  Nothing -> ppErrors $ missingErr :| [ParseErrorMissingEnvVar $ settingEnvDoc s]
-                  Just varStr ->
-                    case r varStr of
-                      Left err -> ppError $ ParseErrorEnvRead err
-                      Right a -> pure a
+        undefined
+
+-- -- TODO try the readers in order
+-- let (r : _) = settingReaders
+-- let optDoc = settingOptDoc s
+-- errOrA <- case settingDasheds of
+--   [] -> do
+--     mS <- ppArg
+--     case mS of
+--       Nothing -> pure $ Left $ ParseErrorMissingArgument optDoc
+--       Just argStr -> do
+--         case r argStr of
+--           Left err -> ppError $ ParseErrorArgumentRead err
+--           Right a -> pure $ Right a
+--   ds ->
+--     case settingSwitchValue of
+--       Just a -> do
+--         mS <- ppSwitch ds
+--         case mS of
+--           Nothing -> pure $ Left $ ParseErrorMissingSwitch optDoc
+--           Just () -> pure $ Right a
+--       Nothing -> do
+--         mS <- ppOpt ds
+--         case mS of
+--           Nothing -> pure $ Left $ ParseErrorMissingOption optDoc
+--           Just optionStr -> do
+--             case r optionStr of
+--               Left err -> ppError $ ParseErrorOptionRead err
+--               Right a -> pure $ Right a
+-- case errOrA of
+--   Right a -> pure a -- Args, options, and switches have precedence
+--   Left missingErr -> do
+--     case settingEnvVars of
+--       [] -> ppError missingErr
+--       vars -> do
+--         prefix <- asks ppEnvPrefix
+--         es <- asks ppEnvEnv
+--         case msum $ map ((`EnvMap.lookup` es) . (prefix <>)) vars of
+--           Nothing -> ppErrors $ missingErr :| [ParseErrorMissingEnvVar $ settingEnvDoc s]
+--           Just varStr ->
+--             case r varStr of
+--               Left err -> ppError $ ParseErrorEnvRead err
+--               Right a -> pure a
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 

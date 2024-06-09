@@ -81,7 +81,7 @@ greetParser =
     Greet
       <$> optional
         ( setting
-            [ reader str,
+            [ strArgument,
               help "Who to greet",
               metavar "SUBJECT"
             ]
@@ -91,7 +91,7 @@ greetParser =
             [ short 'g',
               long "greeting",
               metavar "GREETING",
-              var "GREETING",
+              strEnvVar "GREETING",
               -- conf "greeting",
               help "Greeting to use"
             ]

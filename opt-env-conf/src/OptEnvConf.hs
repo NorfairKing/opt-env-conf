@@ -7,7 +7,6 @@ module OptEnvConf
     strOption,
     argument,
     option,
-    reader,
     switch,
     setting,
     requiredFirst,

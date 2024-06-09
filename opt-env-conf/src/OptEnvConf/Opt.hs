@@ -23,14 +23,12 @@ data Setting a = Setting
     --
     -- Nothing means this is not a switch.
     settingSwitchValue :: !(Maybe a),
-    -- | How to read a string into a value.
-    --
-    -- An empty list means it doesn't take an argument.
-    settingReaders :: ![Reader a],
+    settingArguments :: [Reader a],
+    settingOptions :: [Reader a],
     -- | Which env vars can be read.
     --
     -- Requires at least one Reader.
-    settingEnvVars :: ![String],
+    settingEnvVars :: ![(Reader a, String)],
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
@@ -41,7 +39,8 @@ emptySetting =
   Setting
     { settingDasheds = [],
       settingSwitchValue = Nothing,
-      settingReaders = [],
+      settingArguments = [],
+      settingOptions = [],
       settingEnvVars = [],
       settingMetavar = Nothing,
       settingHelp = Nothing
@@ -55,9 +54,17 @@ showSettingABit Setting {..} =
       . showString " "
       . showMaybeWith (\_ -> showString "_") settingSwitchValue
       . showString " "
-      . showListWith (\_ -> showString "_") settingReaders
+      . showListWith (\_ -> showString "_") settingArguments
       . showString " "
-      . showsPrec 11 settingEnvVars
+      . showListWith (\_ -> showString "_") settingOptions
+      . showString " "
+      . showListWith
+        ( \(_, v) ->
+            showParen True $
+              showString "_, "
+                . showsPrec 11 v
+        )
+        settingEnvVars
       . showString " "
       . showsPrec 11 settingMetavar
       . showString " "
@@ -89,16 +96,13 @@ strArgument :: (IsString string) => Builder string
 strArgument = argument str
 
 argument :: Reader a -> Builder a
-argument = reader
+argument r = Builder $ \s -> s {settingArguments = r : settingArguments s}
 
 strOption :: (IsString string) => Builder string
 strOption = option str
 
 option :: Reader a -> Builder a
-option = reader
-
-reader :: Reader a -> Builder a
-reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
+option r = Builder $ \s -> s {settingOptions = r : settingOptions s}
 
 switch :: a -> Builder a
 switch v = Builder $ \s -> s {settingSwitchValue = Just v}
@@ -110,5 +114,8 @@ long l = Builder $ \s -> s {settingDasheds = DashedLong (NE.fromList l) : settin
 short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
-var :: String -> Builder a
-var v = Builder $ \s -> s {settingEnvVars = v : settingEnvVars s}
+strEnvVar :: (IsString string) => String -> Builder string
+strEnvVar = envVar str
+
+envVar :: Reader a -> String -> Builder a
+envVar r v = Builder $ \s -> s {settingEnvVars = (r, v) : settingEnvVars s}
