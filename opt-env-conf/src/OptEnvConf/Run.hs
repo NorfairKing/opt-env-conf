@@ -123,12 +123,16 @@ collectPossibleOpts = go
       ParserRequiredFirst p -> S.unions $ map go p
       ParserPrefixed _ p -> go p
       ParserSetting Setting {..} ->
-        case settingDasheds of
-          [] -> S.singleton PossibleArg
-          ds ->
-            case settingSwitchValue of
-              Nothing -> S.fromList $ map PossibleOption ds
-              Just _ -> S.fromList $ map PossibleSwitch settingDasheds
+        S.fromList $
+          concat
+            [ [PossibleArg | settingTryArgument],
+              case settingSwitchValue of
+                Nothing -> []
+                Just _ -> map PossibleSwitch settingDasheds,
+              if settingTryOption
+                then map PossibleOption settingDasheds
+                else []
+            ]
 
 runParserOn ::
   Parser a ->

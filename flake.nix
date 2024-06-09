@@ -11,7 +11,8 @@
     validity.flake = false;
     autodocodec.url = "github:NorfairKing/autodocodec";
     autodocodec.flake = false;
-    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
+    # TODO put this branch back once we release safe-coloured-text
+    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text/opt-env-conf";
     safe-coloured-text.flake = false;
     fast-myers-diff.url = "github:NorfairKing/fast-myers-diff";
     fast-myers-diff.flake = false;
@@ -63,10 +64,10 @@
           name = "test-coverage-report";
           packages = [ "opt-env-conf" ];
         };
-        # weeder-check = pkgs.weeder-nix.makeWeederCheck {
-        #   weederToml = ./weeder.toml;
-        #   packages = [ "opt-env-conf" ];
-        # };
+        weeder-check = pkgs.weeder-nix.makeWeederCheck {
+          weederToml = ./weeder.toml;
+          packages = [ "opt-env-conf" ];
+        };
         pre-commit = pre-commit-hooks.lib.${system}.run {
           src = ./.;
           hooks = {
