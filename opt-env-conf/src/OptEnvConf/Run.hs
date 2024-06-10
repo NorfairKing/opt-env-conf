@@ -5,13 +5,16 @@
 
 module OptEnvConf.Run where
 
+import Autodocodec
 import Control.Applicative
 import Control.Arrow (left)
 import Control.Monad
 import Control.Monad.Reader hiding (Reader)
 import Control.Monad.State
 import Control.Selective (select)
+import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
+import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -231,6 +234,7 @@ runParserOn p args envVars mConfig =
         case mArg of
           Found a -> pure a
           _ -> do
+            -- TODO do this without all the nesting
             mSwitch <- case settingSwitchValue of
               Nothing -> pure NotRun
               Just a -> do
@@ -280,24 +284,45 @@ runParserOn p args envVars mConfig =
 
                     case mEnv of
                       Found a -> pure a
-                      _ ->
-                        case settingDefaultValue of
-                          Just a -> pure a
-                          Nothing -> do
-                            let mOptDoc = settingOptDoc set
-                            let mEnvDoc = settingEnvDoc set
-                            let parseResultError e res = case res of
-                                  NotRun -> Nothing
-                                  NotFound -> Just e
-                                  Found _ -> Nothing -- Should not happen.
-                            maybe (ppError ParseErrorEmptySetting) ppErrors $
-                              NE.nonEmpty $
-                                catMaybes
-                                  [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
-                                    parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
-                                    parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
-                                    parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv
-                                  ]
+                      _ -> do
+                        mConf <- case settingConfigVals of
+                          Nothing -> pure NotRun
+                          Just ((k, c) :| _) -> do
+                            -- TODO try parsing with the others
+                            -- TODO handle subconfig prefix here?
+                            mObj <- asks ppEnvConf
+                            case mObj of
+                              Nothing -> pure NotFound
+                              Just obj ->
+                                case JSON.parseEither (obj .:?) k of
+                                  Left err -> ppError $ ParseErrorConfigRead err
+                                  Right mV -> case mV of
+                                    Nothing -> pure NotFound
+                                    Just v -> case JSON.parseEither (parseJSONVia c) v of
+                                      Left err -> ppError $ ParseErrorConfigRead err
+                                      Right a -> pure $ Found a
+
+                        case mConf of
+                          Found a -> pure a
+                          _ ->
+                            case settingDefaultValue of
+                              Just a -> pure a
+                              Nothing -> do
+                                let mOptDoc = settingOptDoc set
+                                let mEnvDoc = settingEnvDoc set
+                                let parseResultError e res = case res of
+                                      NotRun -> Nothing
+                                      NotFound -> Just e
+                                      Found _ -> Nothing -- Should not happen.
+                                maybe (ppError ParseErrorEmptySetting) ppErrors $
+                                  NE.nonEmpty $
+                                    catMaybes
+                                      [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
+                                        parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
+                                        parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
+                                        parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
+                                        parseResultError (ParseErrorMissingConfVal (error "TODO")) mConf
+                                      ]
 
 data ParseResult a
   = NotRun
