@@ -13,32 +13,30 @@ Alt
         (Just "Show this help text")))
   (Fmap
      _
-     (Fmap
-        _
+     (Setting
         (Setting
-           (Setting
-              []
-              []
-              False
-              Nothing
-              False
-              Nothing
-              (Just
-                 [ ( "big"
-                   , MapCodec
-                       (MapCodec
-                          (BimapCodec
-                             _
-                             _
-                             (NumberCodec
-                                Nothing
-                                (Just
-                                   NumberBounds
-                                     { numberBoundsLower = -9.223372036854775808e18
-                                     , numberBoundsUpper = 9.223372036854775807e18
-                                     }))))
-                   )
-                 ])
-              Nothing
-              Nothing
-              (Just "multi-line config codec explanation")))))
+           []
+           []
+           False
+           Nothing
+           False
+           Nothing
+           (Just
+              [ ( "big"
+                , MapCodec
+                    (MapCodec
+                       (BimapCodec
+                          _
+                          _
+                          (NumberCodec
+                             Nothing
+                             (Just
+                                NumberBounds
+                                  { numberBoundsLower = -9.223372036854775808e18
+                                  , numberBoundsUpper = 9.223372036854775807e18
+                                  }))))
+                )
+              ])
+           Nothing
+           Nothing
+           (Just "multi-line config codec explanation"))))

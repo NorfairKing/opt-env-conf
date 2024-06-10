@@ -13,18 +13,16 @@ Alt
         (Just "Show this help text")))
   (Fmap
      _
-     (Fmap
-        _
-        (Many
+     (Many
+        (Setting
            (Setting
-              (Setting
-                 []
-                 [ _ ]
-                 True
-                 Nothing
-                 False
-                 Nothing
-                 Nothing
-                 Nothing
-                 (Just "ARGUMENT")
-                 (Just "Argument"))))))
+              []
+              [ _ ]
+              True
+              Nothing
+              False
+              Nothing
+              Nothing
+              Nothing
+              (Just "ARGUMENT")
+              (Just "Argument")))))
