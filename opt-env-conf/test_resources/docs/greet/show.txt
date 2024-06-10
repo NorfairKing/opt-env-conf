@@ -46,7 +46,7 @@ Alt
                           Nothing
                           False
                           (Just ("GREETING" :| []))
-                          Nothing
+                          (Just [ ( "greeting" , BimapCodec _ _ (StringCodec Nothing) ) ])
                           Nothing
                           (Just "GREETING")
                           (Just "Greeting to use"))))
@@ -64,7 +64,7 @@ Alt
                           (Just _)
                           False
                           Nothing
-                          Nothing
+                          (Just [ ( "polite" , BoolCodec Nothing ) ])
                           Nothing
                           Nothing
                           (Just "Whether to be polite"))))
