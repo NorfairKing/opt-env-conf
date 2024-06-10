@@ -1,55 +1,49 @@
 AnyDocsOr
   [ AnyDocsSingle
-      (AnyDocOpt
-         OptDoc
-           { optDocNeedsArg = True
-           , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-           , optDocMetavar = Nothing
-           , optDocHelp = Just "Show this help text"
-           })
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = True
+        , setDocTryOption = False
+        , setDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Show this help text"
+        }
   , AnyDocsAnd
       [ AnyDocsSingle
-          (AnyDocOpt
-             OptDoc
-               { optDocNeedsArg = True
-               , optDocDasheds = []
-               , optDocMetavar = Just "SUBJECT"
-               , optDocHelp = Just "Who to greet"
-               })
-      , AnyDocsOr
-          [ AnyDocsSingle
-              (AnyDocOpt
-                 OptDoc
-                   { optDocNeedsArg = True
-                   , optDocDasheds =
-                       [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-                   , optDocMetavar = Just "GREETING"
-                   , optDocHelp = Just "Greeting to use"
-                   })
-          , AnyDocsSingle
-              (AnyDocEnv
-                 EnvDoc
-                   { envDocVars = [ "GREET_GREETING" ]
-                   , envDocMetavar = Just "GREETING"
-                   , envDocHelp = Just "Greeting to use"
-                   })
-          ]
-      , AnyDocsOr
-          [ AnyDocsSingle
-              (AnyDocOpt
-                 OptDoc
-                   { optDocNeedsArg = True
-                   , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-                   , optDocMetavar = Nothing
-                   , optDocHelp = Just "Whether to be polite"
-                   })
-          , AnyDocsSingle
-              (AnyDocEnv
-                 EnvDoc
-                   { envDocVars = [ "GREET_POLITE" ]
-                   , envDocMetavar = Nothing
-                   , envDocHelp = Just "Whether to be polite"
-                   })
-          ]
+          SetDoc
+            { setDocTryArgument = True
+            , setDocTrySwitch = False
+            , setDocTryOption = False
+            , setDocDasheds = []
+            , setDocEnvVars = Nothing
+            , setDocConfKeys = Nothing
+            , setDocMetavar = Just "SUBJECT"
+            , setDocHelp = Just "Who to greet"
+            }
+      , AnyDocsSingle
+          SetDoc
+            { setDocTryArgument = False
+            , setDocTrySwitch = False
+            , setDocTryOption = True
+            , setDocDasheds =
+                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+            , setDocEnvVars = Just ("GREET_GREETING" :| [])
+            , setDocConfKeys = Just ("greeting" :| [])
+            , setDocMetavar = Just "GREETING"
+            , setDocHelp = Just "Greeting to use"
+            }
+      , AnyDocsSingle
+          SetDoc
+            { setDocTryArgument = False
+            , setDocTrySwitch = True
+            , setDocTryOption = False
+            , setDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+            , setDocEnvVars = Just ("GREET_POLITE" :| [])
+            , setDocConfKeys = Just ("polite" :| [])
+            , setDocMetavar = Nothing
+            , setDocHelp = Just "Whether to be polite"
+            }
       ]
   ]

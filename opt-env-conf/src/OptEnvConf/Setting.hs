@@ -5,8 +5,6 @@
 module OptEnvConf.Setting where
 
 import Autodocodec
-import qualified Data.Aeson.Key as JSON
-import qualified Data.Aeson.Key as Key
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
@@ -41,7 +39,7 @@ data Setting a = Setting
     --
     -- TODO we could actually have value codecs with void as the first argument.
     -- consider doing that.
-    settingConfigVals :: !(Maybe (NonEmpty (JSON.Key, ValueCodec a a))),
+    settingConfigVals :: !(Maybe (NonEmpty (String, ValueCodec a a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: Maybe a,
     -- | Which metavar should be show in documentation
@@ -148,7 +146,7 @@ conf k = confWith k codec
 
 confWith :: String -> ValueCodec a a -> Builder a
 confWith k c =
-  let t = (Key.fromString k, c)
+  let t = (k, c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value

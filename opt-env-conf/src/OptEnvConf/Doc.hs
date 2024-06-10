@@ -6,6 +6,7 @@
 
 module OptEnvConf.Doc where
 
+import Control.Monad
 import Data.List (intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -18,13 +19,22 @@ import OptEnvConf.Setting
 import Text.Colour
 import Text.Colour.Layout
 
-data AnyDoc
-  = AnyDocOpt !OptDoc
-  | AnyDocEnv !EnvDoc
+data SetDoc = SetDoc
+  { setDocTryArgument :: !Bool,
+    setDocTrySwitch :: !Bool,
+    setDocTryOption :: !Bool,
+    setDocDasheds :: ![Dashed],
+    setDocEnvVars :: !(Maybe (NonEmpty String)),
+    setDocConfKeys :: !(Maybe (NonEmpty String)),
+    setDocMetavar :: !(Maybe Metavar),
+    setDocHelp :: !(Maybe String)
+  }
   deriving (Show)
 
 data OptDoc = OptDoc
-  { optDocNeedsArg :: !Bool,
+  { optDocTryArgument :: !Bool,
+    optDocTrySwitch :: !Bool,
+    optDocTryOption :: !Bool,
     optDocDasheds :: ![Dashed],
     optDocMetavar :: !(Maybe Metavar),
     optDocHelp :: !(Maybe String)
@@ -32,9 +42,15 @@ data OptDoc = OptDoc
   deriving (Show, Eq)
 
 data EnvDoc = EnvDoc
-  { envDocVars :: ![String],
+  { envDocVars :: !(NonEmpty String),
     envDocMetavar :: !(Maybe Metavar),
     envDocHelp :: !(Maybe String)
+  }
+  deriving (Show, Eq)
+
+data ConfDoc = ConfDoc
+  { confDocKeys :: !(NonEmpty String),
+    confDocHelp :: !(Maybe String)
   }
   deriving (Show, Eq)
 
@@ -92,15 +108,11 @@ simplifyAnyDocs = go
       AnyDocsAnd [] -> []
       ds -> [go ds]
 
-type OptDocs = AnyDocs OptDoc
-
-type EnvDocs = AnyDocs EnvDoc
-
-parserDocs :: Parser a -> AnyDocs AnyDoc
+parserDocs :: Parser a -> AnyDocs SetDoc
 parserDocs = simplifyAnyDocs . go
   where
     noDocs = AnyDocsAnd []
-    go :: Parser a -> AnyDocs AnyDoc
+    go :: Parser a -> AnyDocs SetDoc
     go = \case
       ParserFmap _ p -> go p
       ParserPure _ -> noDocs
@@ -114,59 +126,84 @@ parserDocs = simplifyAnyDocs . go
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
-      ParserPrefixed prefix p -> anyDocPrefixed prefix <$> go p
-      ParserSetting p ->
-        AnyDocsOr $
-          catMaybes
-            [ AnyDocsSingle . AnyDocOpt <$> settingOptDoc p,
-              AnyDocsSingle . AnyDocEnv <$> settingEnvDoc p
-            ] -- TODO
+      ParserPrefixed prefix p -> setDocPrefixed prefix <$> go p
+      ParserSetting set -> AnyDocsSingle $ settingSetDoc set
+
+settingSetDoc :: Setting a -> SetDoc
+settingSetDoc Setting {..} =
+  let setDocDasheds = settingDasheds
+      setDocTryArgument = settingTryArgument
+      setDocTrySwitch = isJust settingSwitchValue
+      setDocTryOption = settingTryOption
+      setDocEnvVars = settingEnvVars
+      setDocConfKeys = NE.map fst <$> settingConfigVals
+      setDocMetavar = settingMetavar
+      setDocHelp = settingHelp
+   in SetDoc {..}
 
 settingOptDoc :: Setting a -> Maybe OptDoc
-settingOptDoc Setting {..} = do
-  pure $
-    OptDoc
-      { optDocNeedsArg = True,
-        optDocDasheds = settingDasheds,
-        optDocMetavar = settingMetavar,
-        optDocHelp = settingHelp
-      }
+settingOptDoc = setDocOptDoc . settingSetDoc
 
-settingEnvDoc :: Setting a -> Maybe EnvDoc
-settingEnvDoc Setting {..} = do
-  vars <- settingEnvVars
-  pure $
-    EnvDoc
-      { envDocVars = NE.toList vars,
-        envDocMetavar = settingMetavar,
-        envDocHelp = settingHelp
-      }
+setDocPrefixed :: String -> SetDoc -> SetDoc
+setDocPrefixed prefix sd =
+  sd {setDocEnvVars = NE.map (prefix <>) <$> setDocEnvVars sd}
 
-anyDocPrefixed :: String -> AnyDoc -> AnyDoc
-anyDocPrefixed prefix = \case
-  AnyDocEnv ed -> AnyDocEnv $ ed {envDocVars = map (prefix <>) (envDocVars ed)}
-  ad -> ad
+renderSetDoc :: SetDoc -> [[[Chunk]]]
+renderSetDoc SetDoc {..} =
+  addHelpText $
+    concat
+      [ [ [ ["argument:"],
+            [metavarChunk $ fromMaybe "ARG" setDocMetavar]
+          ]
+          | setDocTryArgument
+        ],
+        [ [ ["switch:"],
+            dashedChunksNE dasheds
+          ]
+          | setDocTrySwitch,
+            dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
+        ],
+        [ [ ["option:"],
+            dashedChunksNE dasheds
+              ++ [" ", metavarChunk $ fromMaybe "ARG" setDocMetavar]
+          ]
+          | setDocTryOption,
+            dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
+        ],
+        [ [ ["env var:"],
+            envVarChunksNE vars
+              ++ [" ", metavarChunk $ fromMaybe "ARG" setDocMetavar]
+          ]
+          | vars <- maybeToList setDocEnvVars
+        ]
+      ]
+  where
+    addHelpText :: [[[Chunk]]] -> [[[Chunk]]]
+    addHelpText = \case
+      [] -> [addHelpTextToLine []]
+      [cs] -> [addHelpTextToLine cs]
+      (l : ls) -> addHelpTextToLine l : ls
 
-renderAnyDoc :: AnyDoc -> [[Chunk]]
-renderAnyDoc = \case
-  AnyDocOpt d -> ["Option: "] : renderOptDocLong d
-  AnyDocEnv d -> ["Env var:"] : renderEnvDoc d
+    addHelpTextToLine :: [[Chunk]] -> [[Chunk]]
+    addHelpTextToLine = (++ [[helpChunk setDocHelp]])
 
-renderManPage :: String -> AnyDocs AnyDoc -> [Chunk]
+renderManPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderManPage progname docs =
   let optDocs = docsToOptDocs docs
    in unlinesChunks
         [ renderShortOptDocs progname optDocs,
           [],
-          ["All settings:"],
+          [fore cyan "All settings:"],
           renderAnyDocs docs,
-          ["Options:"],
+          [fore cyan "Options:"],
           renderLongOptDocs optDocs,
-          ["Environment Variables:"],
-          renderEnvDocs (docsToEnvDocs docs)
+          [fore cyan "Environment Variables:"],
+          renderEnvDocs (docsToEnvDocs docs),
+          [fore cyan "Configuration Values:"],
+          renderConfDocs (docsToConfDocs docs)
         ]
 
-renderHelpPage :: String -> AnyDocs AnyDoc -> [Chunk]
+renderHelpPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderHelpPage progname docs =
   unlinesChunks
     [ renderShortOptDocs progname (docsToOptDocs docs),
@@ -174,38 +211,53 @@ renderHelpPage progname docs =
       renderAnyDocs docs
     ]
 
-renderAnyDocs :: AnyDocs AnyDoc -> [Chunk]
+renderAnyDocs :: AnyDocs SetDoc -> [Chunk]
 renderAnyDocs = layoutAsTable . go
   where
-    go :: AnyDocs AnyDoc -> [[[Chunk]]]
+    go :: AnyDocs SetDoc -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle d -> [["  "] : renderAnyDoc d]
+      AnyDocsSingle d -> map (["  "] :) (renderSetDoc d)
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
 
-docsToOptDocs :: AnyDocs AnyDoc -> OptDocs
-docsToOptDocs = mapMaybeDocs go
-  where
-    go = \case
-      AnyDocOpt o -> Just o
-      _ -> Nothing
+docsToOptDocs :: AnyDocs SetDoc -> AnyDocs OptDoc
+docsToOptDocs = mapMaybeDocs setDocOptDoc
 
-renderShortOptDocs :: String -> OptDocs -> [Chunk]
+setDocOptDoc :: SetDoc -> Maybe OptDoc
+setDocOptDoc SetDoc {..} = do
+  guard $ setDocTryArgument || setDocTrySwitch || setDocTryOption
+  let optDocTryArgument = setDocTryArgument
+      optDocTrySwitch = setDocTrySwitch
+      optDocTryOption = setDocTryOption
+      optDocDasheds = setDocDasheds
+      optDocMetavar = setDocMetavar
+      optDocHelp = setDocHelp
+  pure OptDoc {..}
+
+renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
 renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore yellow (chunk (T.pack progname))], cs]) . go
   where
-    go :: OptDocs -> [Chunk]
+    go :: AnyDocs OptDoc -> [Chunk]
     go = \case
       AnyDocsAnd ds -> unwordsChunks $ map go ds
       AnyDocsOr ds -> renderOrChunks (map go ds)
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks $
           concat
-            [ maybeToList $ dashedChunks optDocDasheds,
-              [ [metavarChunk $ fromMaybe "ARG" optDocMetavar]
-                | optDocNeedsArg
+            [ [ [metavarChunk $ fromMaybe "ARG" optDocMetavar]
+                | optDocTryArgument
+              ],
+              [ concat $ maybeToList $ dashedChunks optDocDasheds
+                | optDocTrySwitch
+              ],
+              [ concat
+                  [ concat $ maybeToList $ dashedChunks optDocDasheds,
+                    [" ", metavarChunk $ fromMaybe "ARG" optDocMetavar]
+                  ]
+                | optDocTryOption
               ]
             ]
 
@@ -218,10 +270,10 @@ renderOrChunks os =
     parenthesise :: [Chunk] -> [Chunk]
     parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
 
-renderLongOptDocs :: OptDocs -> [Chunk]
+renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]
 renderLongOptDocs = layoutAsTable . go
   where
-    go :: OptDocs -> [[[Chunk]]]
+    go :: AnyDocs OptDoc -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
@@ -234,26 +286,32 @@ renderOptDocLong OptDoc {..} =
         [ maybeToList $ dashedChunks optDocDasheds,
           [ [ metavarChunk $ fromMaybe "ARG" optDocMetavar
             ]
-            | optDocNeedsArg
+            | optDocTryArgument
           ]
         ],
     [helpChunk optDocHelp]
   ]
 
-parserEnvDocs :: Parser a -> EnvDocs
+parserEnvDocs :: Parser a -> AnyDocs EnvDoc
 parserEnvDocs = docsToEnvDocs . parserDocs
 
-docsToEnvDocs :: AnyDocs AnyDoc -> EnvDocs
-docsToEnvDocs = mapMaybeDocs go
-  where
-    go = \case
-      AnyDocEnv o -> Just o
-      _ -> Nothing
+docsToEnvDocs :: AnyDocs SetDoc -> AnyDocs EnvDoc
+docsToEnvDocs = mapMaybeDocs setDocEnvDoc
 
-renderEnvDocs :: EnvDocs -> [Chunk]
+setDocEnvDoc :: SetDoc -> Maybe EnvDoc
+setDocEnvDoc SetDoc {..} = do
+  envDocVars <- setDocEnvVars
+  let envDocMetavar = setDocMetavar
+  let envDocHelp = setDocHelp
+  pure EnvDoc {..}
+
+settingEnvDoc :: Setting a -> Maybe EnvDoc
+settingEnvDoc = setDocEnvDoc . settingSetDoc
+
+renderEnvDocs :: AnyDocs EnvDoc -> [Chunk]
 renderEnvDocs = layoutAsTable . go
   where
-    go :: EnvDocs -> [[[Chunk]]]
+    go :: AnyDocs EnvDoc -> [[[Chunk]]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
@@ -261,14 +319,42 @@ renderEnvDocs = layoutAsTable . go
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
-  [ unwordsChunks $
-      concat
-        [ maybeToList $ envVarChunks envDocVars,
-          [ [ metavarChunk $ fromMaybe "ARG" envDocMetavar
-            ]
-          ]
-        ],
+  [ unwordsChunks
+      [ envVarChunksNE envDocVars,
+        [ metavarChunk $ fromMaybe "ARG" envDocMetavar
+        ]
+      ],
     [helpChunk envDocHelp]
+  ]
+
+parserConfDocs :: Parser a -> AnyDocs ConfDoc
+parserConfDocs = docsToConfDocs . parserDocs
+
+docsToConfDocs :: AnyDocs SetDoc -> AnyDocs ConfDoc
+docsToConfDocs = mapMaybeDocs setDocConfDoc
+
+setDocConfDoc :: SetDoc -> Maybe ConfDoc
+setDocConfDoc SetDoc {..} = do
+  confDocKeys <- setDocConfKeys
+  let confDocHelp = setDocHelp
+  pure ConfDoc {..}
+
+settingConfDoc :: Setting a -> Maybe ConfDoc
+settingConfDoc = setDocConfDoc . settingSetDoc
+
+renderConfDocs :: AnyDocs ConfDoc -> [Chunk]
+renderConfDocs = layoutAsTable . go
+  where
+    go :: AnyDocs ConfDoc -> [[[Chunk]]]
+    go = \case
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle ed -> [["  "] : renderConfDoc ed]
+
+renderConfDoc :: ConfDoc -> [[Chunk]]
+renderConfDoc ConfDoc {..} =
+  [ unwordsChunks [envVarChunksNE confDocKeys],
+    [helpChunk confDocHelp]
   ]
 
 metavarChunk :: Metavar -> Chunk
@@ -283,14 +369,23 @@ dashedChunksNE = intersperse (fore cyan "|") . map dashedChunk . NE.toList
 dashedChunk :: Dashed -> Chunk
 dashedChunk = fore white . chunk . T.pack . AM.renderDashed
 
-envVarChunks :: [String] -> Maybe [Chunk]
-envVarChunks = fmap envVarChunksNE . NE.nonEmpty
+envVarChunks :: Maybe (NonEmpty String) -> Maybe [Chunk]
+envVarChunks = fmap envVarChunksNE
 
 envVarChunksNE :: NonEmpty String -> [Chunk]
 envVarChunksNE = intersperse (fore cyan "|") . map envVarChunk . NE.toList
 
 envVarChunk :: String -> Chunk
 envVarChunk = fore white . chunk . T.pack
+
+confValChunks :: Maybe (NonEmpty String) -> Maybe [Chunk]
+confValChunks = fmap confValChunksNE
+
+confValChunksNE :: NonEmpty String -> [Chunk]
+confValChunksNE = intersperse (fore cyan "|") . map confValChunk . NE.toList
+
+confValChunk :: String -> Chunk
+confValChunk = fore white . chunk . T.pack
 
 helpChunk :: Maybe Help -> Chunk
 helpChunk = maybe (fore red "!! undocumented !!") (fore blue . chunk . T.pack)
