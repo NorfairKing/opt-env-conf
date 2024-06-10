@@ -38,25 +38,25 @@ import Text.Show
 
 data Parser a where
   -- Functor
-  ParserPure :: a -> Parser a
+  ParserPure :: !a -> Parser a
   -- Applicative
-  ParserFmap :: (a -> b) -> Parser a -> Parser b
-  ParserAp :: Parser (a -> b) -> Parser a -> Parser b
+  ParserFmap :: !(a -> b) -> !(Parser a) -> Parser b
+  ParserAp :: !(Parser (a -> b)) -> !(Parser a) -> Parser b
   -- Selective
-  ParserSelect :: Parser (Either a b) -> Parser (a -> b) -> Parser b
+  ParserSelect :: !(Parser (Either a b)) -> !(Parser (a -> b)) -> Parser b
   -- Alternative
   ParserEmpty :: Parser a
-  ParserAlt :: Parser a -> Parser a -> Parser a
-  ParserMany :: Parser a -> Parser [a]
-  ParserSome :: Parser a -> Parser (NonEmpty a)
+  ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
+  ParserMany :: !(Parser a) -> Parser [a]
+  ParserSome :: !(Parser a) -> Parser (NonEmpty a)
   -- | Apply a computation to the result of a parser
   --
   -- This is intended for use-cases like resolving a file to an absolute path.
   -- It is morally ok for read-only IO actions but you will
   -- have a bad time if the action is not read-only.
-  ParserMapIO :: (a -> IO b) -> Parser a -> Parser b
+  ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
   -- | Load a configuration value and use it for the continuing parser
-  ParserWithConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
+  ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- Combining
   -- TODO Maybe we can get rid of this constructor using 'optional requiredFirst'
   ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
@@ -68,7 +68,10 @@ data Parser a where
   ParserSetting :: !(Setting a) -> Parser a
 
 instance Functor Parser where
-  fmap = ParserFmap
+  fmap f = \case
+    ParserFmap g p -> ParserFmap (f . g) p
+    ParserMapIO g p -> ParserMapIO (fmap f . g) p
+    p -> ParserFmap f p
 
 instance Applicative Parser where
   pure = ParserPure
