@@ -1,8 +1,8 @@
 { mkDerivation, aeson, autodocodec, autodocodec-yaml, base
 , containers, envparse, filepath, genvalidity, genvalidity-aeson
 , genvalidity-containers, genvalidity-sydtest, genvalidity-text
-, lib, mtl, optparse-applicative, path, path-io, QuickCheck
-, safe-coloured-text, safe-coloured-text-layout
+, lib, mtl, optparse-applicative, path, path-io, pretty-show
+, QuickCheck, safe-coloured-text, safe-coloured-text-layout
 , safe-coloured-text-terminfo, selective, sydtest, sydtest-discover
 , text, validity, validity-containers, yaml
 }:
@@ -19,8 +19,8 @@ mkDerivation {
   testHaskellDepends = [
     aeson base containers envparse genvalidity genvalidity-aeson
     genvalidity-containers genvalidity-sydtest genvalidity-text
-    optparse-applicative QuickCheck safe-coloured-text sydtest text
-    yaml
+    optparse-applicative pretty-show QuickCheck safe-coloured-text
+    sydtest text yaml
   ];
   testToolDepends = [ sydtest-discover ];
   license = lib.licenses.unfree;
