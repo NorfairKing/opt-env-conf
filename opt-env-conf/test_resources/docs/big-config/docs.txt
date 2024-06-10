@@ -19,7 +19,7 @@ AnyDocsOr
         , setDocEnvVars = Nothing
         , setDocConfKeys =
             Just
-              (( "big"
+              (( "big" :| []
                , MapSchema
                    (MapSchema
                       (NumberSchema

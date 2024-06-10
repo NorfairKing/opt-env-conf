@@ -1,12 +1,12 @@
 AnyDocsAnd
   [ AnyDocsSingle
       ConfDoc
-        { confDocKeys = ( "greeting" , StringSchema ) :| []
+        { confDocKeys = ( "greeting" :| [] , StringSchema ) :| []
         , confDocHelp = Just "Greeting to use"
         }
   , AnyDocsSingle
       ConfDoc
-        { confDocKeys = ( "polite" , BoolSchema ) :| []
+        { confDocKeys = ( "polite" :| [] , BoolSchema ) :| []
         , confDocHelp = Just "Whether to be polite"
         }
   ]

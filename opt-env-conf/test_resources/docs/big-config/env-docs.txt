@@ -1,7 +1,7 @@
 AnyDocsSingle
   ConfDoc
     { confDocKeys =
-        ( "big"
+        ( "big" :| []
         , MapSchema
             (MapSchema
                (NumberSchema

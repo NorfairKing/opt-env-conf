@@ -8,10 +8,10 @@ module OptEnvConf.Doc where
 
 import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
-import Control.Arrow (second)
+import Control.Arrow (first)
 import Control.Monad
-import Data.List (intersperse)
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List (intercalate, intersperse)
+import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import qualified Data.Text as T
@@ -28,7 +28,7 @@ data SetDoc = SetDoc
     setDocTryOption :: !Bool,
     setDocDasheds :: ![Dashed],
     setDocEnvVars :: !(Maybe (NonEmpty String)),
-    setDocConfKeys :: !(Maybe (NonEmpty (String, JSONSchema))),
+    setDocConfKeys :: !(Maybe (NonEmpty (NonEmpty String, JSONSchema))),
     setDocMetavar :: !(Maybe Metavar),
     setDocHelp :: !(Maybe String)
   }
@@ -52,7 +52,7 @@ data EnvDoc = EnvDoc
   deriving (Show, Eq)
 
 data ConfDoc = ConfDoc
-  { confDocKeys :: !(NonEmpty (String, JSONSchema)),
+  { confDocKeys :: !(NonEmpty (NonEmpty String, JSONSchema)),
     confDocHelp :: !(Maybe String)
   }
   deriving (Show, Eq)
@@ -130,7 +130,16 @@ parserDocs = simplifyAnyDocs . go
       ParserOptionalFirst ps -> AnyDocsOr $ map go ps
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserPrefixed prefix p -> setDocPrefixed prefix <$> go p
+      ParserSubconfig key p -> setDocSubconfiged key <$> go p
       ParserSetting set -> AnyDocsSingle $ settingSetDoc set
+
+setDocSubconfiged :: String -> SetDoc -> SetDoc
+setDocSubconfiged key sd =
+  sd {setDocConfKeys = NE.map (first (key <|)) <$> setDocConfKeys sd}
+
+setDocPrefixed :: String -> SetDoc -> SetDoc
+setDocPrefixed prefix sd =
+  sd {setDocEnvVars = NE.map (prefix <>) <$> setDocEnvVars sd}
 
 settingSetDoc :: Setting a -> SetDoc
 settingSetDoc Setting {..} =
@@ -139,17 +148,13 @@ settingSetDoc Setting {..} =
       setDocTrySwitch = isJust settingSwitchValue
       setDocTryOption = settingTryOption
       setDocEnvVars = settingEnvVars
-      setDocConfKeys = NE.map (second jsonSchemaVia) <$> settingConfigVals
+      setDocConfKeys = NE.map (\(k, c) -> (k :| [], jsonSchemaVia c)) <$> settingConfigVals
       setDocMetavar = settingMetavar
       setDocHelp = settingHelp
    in SetDoc {..}
 
 settingOptDoc :: Setting a -> Maybe OptDoc
 settingOptDoc = setDocOptDoc . settingSetDoc
-
-setDocPrefixed :: String -> SetDoc -> SetDoc
-setDocPrefixed prefix sd =
-  sd {setDocEnvVars = NE.map (prefix <>) <$> setDocEnvVars sd}
 
 renderSetDoc :: SetDoc -> [[[Chunk]]]
 renderSetDoc SetDoc {..} =
@@ -385,14 +390,8 @@ envVarChunksNE = intersperse (fore cyan "|") . map envVarChunk . NE.toList
 envVarChunk :: String -> Chunk
 envVarChunk = fore white . chunk . T.pack
 
-confValChunks :: Maybe (NonEmpty String) -> Maybe [Chunk]
-confValChunks = fmap confValChunksNE
-
-confValChunksNE :: NonEmpty String -> [Chunk]
-confValChunksNE = intersperse (fore cyan "|") . map confValChunk . NE.toList
-
-confValChunk :: String -> Chunk
-confValChunk = fore white . chunk . T.pack
+confValChunk :: NonEmpty String -> Chunk
+confValChunk = fore white . chunk . T.pack . intercalate "." . NE.toList
 
 helpChunk :: Maybe Help -> Chunk
 helpChunk = maybe (fore red "!! undocumented !!") (fore blue . chunk . T.pack)
