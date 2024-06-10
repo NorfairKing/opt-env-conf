@@ -21,6 +21,17 @@ extra-source-files:
     test_resources/docs/args/opt-long.txt
     test_resources/docs/args/opt-short.txt
     test_resources/docs/args/show.txt
+    test_resources/docs/big-config/config-docs.txt
+    test_resources/docs/big-config/config.txt
+    test_resources/docs/big-config/docs.txt
+    test_resources/docs/big-config/env-docs.txt
+    test_resources/docs/big-config/env.txt
+    test_resources/docs/big-config/help.txt
+    test_resources/docs/big-config/man.txt
+    test_resources/docs/big-config/opt-docs.txt
+    test_resources/docs/big-config/opt-long.txt
+    test_resources/docs/big-config/opt-short.txt
+    test_resources/docs/big-config/show.txt
     test_resources/docs/greet/config-docs.txt
     test_resources/docs/greet/config.txt
     test_resources/docs/greet/docs.txt
@@ -73,6 +84,7 @@ library
   build-depends:
       aeson
     , autodocodec
+    , autodocodec-schema
     , autodocodec-yaml
     , base
     , containers

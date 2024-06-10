@@ -1,0 +1,36 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = True
+        , setDocTryOption = False
+        , setDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Show this help text"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
+        , setDocEnvVars = Nothing
+        , setDocConfKeys =
+            Just
+              (( "big"
+               , MapSchema
+                   (MapSchema
+                      (NumberSchema
+                         (Just
+                            NumberBounds
+                              { numberBoundsLower = -9.223372036854775808e18
+                              , numberBoundsUpper = 9.223372036854775807e18
+                              })))
+               ) :|
+                 [])
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "multi-line config codec explanation"
+        }
+  ]

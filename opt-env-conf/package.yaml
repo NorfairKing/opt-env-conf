@@ -16,6 +16,7 @@ library:
   dependencies:
   - aeson
   - autodocodec
+  - autodocodec-schema
   - autodocodec-yaml
   - containers
   - envparse

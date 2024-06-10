@@ -19,6 +19,10 @@
    [37mGREET_POLITE[m [33mARG[m        [34mWhether to be polite[m
 
 [36mConfiguration Values:[m
-   [37mgreeting[m [34mGreeting to use[m     
-   [37mpolite[m   [34mWhether to be polite[m
+  [34mGreeting to use[m
+  [37mgreeting[m:
+    [33m<string>[m
+  [34mWhether to be polite[m
+  [37mpolite[m:
+    [33m<boolean>[m
 

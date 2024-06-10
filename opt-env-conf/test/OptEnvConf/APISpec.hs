@@ -2,6 +2,7 @@
 
 module OptEnvConf.APISpec (spec) where
 
+import Data.Map (Map)
 import Data.Maybe
 import Data.Text (Text)
 import OptEnvConf
@@ -13,6 +14,7 @@ import Text.Show.Pretty as Pretty
 spec :: Spec
 spec = do
   exampleParserSpec "greet" greetParser
+  exampleParserSpec "big-config" bigConfigParser
   exampleParserSpec "args" argsParser
   exampleParserSpec "optional" optionalParser
   pure ()
@@ -124,6 +126,16 @@ greetParser =
                     ]
                 )
           )
+
+data BigConfig = BigConfig (Map String (Map String Int))
+
+bigConfigParser :: Parser BigConfig
+bigConfigParser =
+  BigConfig
+    <$> setting
+      [ conf "big",
+        help "multi-line config codec explanation"
+      ]
 
 data Args = Args [String]
   deriving (Show)
