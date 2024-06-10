@@ -89,10 +89,10 @@ runParserComplete ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserComplete p args env mConf =
+runParserComplete p args e mConf =
   case NE.nonEmpty $ unrecognisedOptions p args of
     Just unrecogniseds -> pure $ Left $ NE.map ParseErrorUnrecognised unrecogniseds
-    Nothing -> runParserOn p args env mConf
+    Nothing -> runParserOn p args e mConf
 
 unrecognisedOptions :: Parser a -> ArgMap -> [Opt]
 unrecognisedOptions p args =

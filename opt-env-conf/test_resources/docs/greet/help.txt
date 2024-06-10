@@ -5,4 +5,5 @@
    Option:  [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m  [34mGreeting to use[m     
    Env var: [37mGREET_GREETING[m [33mGREETING[m [34mGreeting to use[m     
    Option:  [37m-p[m[36m|[m[37m--polite[m [33mARG[m         [34mWhether to be polite[m
+   Env var: [37mGREET_POLITE[m [33mARG[m        [34mWhether to be polite[m
 

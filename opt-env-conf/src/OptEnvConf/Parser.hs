@@ -201,6 +201,6 @@ xdgYamlConfigFile subdir =
   (\xdgDir -> xdgDir </> subdir </> "config.yaml")
     <$> setting
       [ reader str,
-        envVar "XDG_CONFIG_HOME",
+        env "XDG_CONFIG_HOME",
         metavar "DIRECTORY"
       ]

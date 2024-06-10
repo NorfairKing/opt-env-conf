@@ -63,7 +63,7 @@ Alt
                           False
                           (Just _)
                           False
-                          Nothing
+                          (Just ("POLITE" :| []))
                           (Just [ ( "polite" , BoolCodec Nothing ) ])
                           Nothing
                           Nothing
