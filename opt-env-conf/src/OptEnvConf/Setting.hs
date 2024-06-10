@@ -6,6 +6,7 @@ module OptEnvConf.Setting where
 
 import Autodocodec
 import qualified Data.Aeson.Key as JSON
+import qualified Data.Aeson.Key as Key
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
@@ -81,10 +82,12 @@ showSettingABit Setting {..} =
       . showString " "
       . showMaybeWith
         ( showListWith
-            ( \(k, _) ->
+            ( \(k, c) ->
                 showString "("
                   . shows k
-                  . showString ", _)"
+                  . showString ", "
+                  . showString (showCodecABit c)
+                  . showString ")"
             )
             . NE.toList
         )
@@ -140,12 +143,12 @@ short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 envVar :: String -> Builder a
 envVar v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
 
-confVal :: (HasCodec a) => JSON.Key -> Builder a
+confVal :: (HasCodec a) => String -> Builder a
 confVal k = confValWith k codec
 
-confValWith :: JSON.Key -> ValueCodec a a -> Builder a
+confValWith :: String -> ValueCodec a a -> Builder a
 confValWith k c =
-  let t = (k, c)
+  let t = (Key.fromString k, c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value
