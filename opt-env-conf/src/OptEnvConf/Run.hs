@@ -129,6 +129,7 @@ collectPossibleOpts = go
       ParserOptionalFirst p -> S.unions $ map go p
       ParserRequiredFirst p -> S.unions $ map go p
       ParserPrefixed _ p -> go p
+      ParserSubconfig _ p -> go p
       ParserSetting Setting {..} ->
         S.fromList $
           concat
@@ -216,6 +217,15 @@ runParserOn p args envVars mConfig =
                 pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
+      ParserSubconfig key p' -> do
+        mConf <- asks ppEnvConf
+        case mConf of
+          Nothing -> go p'
+          Just c -> do
+            case JSON.parseEither (.:? Key.fromString key) c of
+              Left err -> error err -- TODO nice error
+              Right mSubConf ->
+                local (\e -> e {ppEnvConf = mSubConf}) $ go p'
       ParserSetting set@Setting {..} -> do
         mArg <-
           if settingTryArgument

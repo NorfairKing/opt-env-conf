@@ -7,6 +7,7 @@ module OptEnvConf.Parser
   ( -- * Parser API
     setting,
     prefixed,
+    subConfig,
     optionalFirst,
     requiredFirst,
     someNonEmpty,
@@ -64,6 +65,8 @@ data Parser a where
   ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Prefixed env var
   ParserPrefixed :: !String -> !(Parser a) -> Parser a
+  -- | Subconfig
+  ParserSubconfig :: !String -> !(Parser a) -> Parser a
   -- | General settings
   ParserSetting :: !(Setting a) -> Parser a
 
@@ -98,6 +101,7 @@ instance Alternative Parser where
           ParserOptionalFirst _ -> False
           ParserRequiredFirst ps -> null ps
           ParserPrefixed _ p -> isEmpty p
+          ParserSubconfig _ p -> isEmpty p
           ParserSetting _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty
@@ -170,6 +174,12 @@ showParserABit = ($ "") . go 0
             . showsPrec 11 prefix
             . showString " "
             . go 11 p
+      ParserSubconfig key p ->
+        showParen (d > 10) $
+          showString "SubConfig "
+            . showsPrec 11 key
+            . showString " "
+            . go 11 p
       ParserSetting p ->
         showParen (d > 10) $
           showString "Setting "
@@ -180,6 +190,9 @@ setting = ParserSetting . completeBuilder . mconcat
 
 prefixed :: String -> Parser a -> Parser a
 prefixed = ParserPrefixed
+
+subConfig :: String -> Parser a -> Parser a
+subConfig = ParserSubconfig
 
 optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
 optionalFirst = ParserOptionalFirst

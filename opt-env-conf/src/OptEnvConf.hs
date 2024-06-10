@@ -7,6 +7,8 @@ module OptEnvConf
     option,
     switch,
     setting,
+    prefixed,
+    subConfig,
     requiredFirst,
     someNonEmpty,
     mapIO,
