@@ -4,6 +4,8 @@
 
 module OptEnvConf.Setting where
 
+import Autodocodec
+import qualified Data.Aeson.Key as JSON
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
@@ -34,6 +36,11 @@ data Setting a = Setting
     --
     -- Requires at least one Reader.
     settingEnvVars :: !(Maybe (NonEmpty String)),
+    -- | Which and how to parse config values
+    --
+    -- TODO we could actually have value codecs with void as the first argument.
+    -- consider doing that.
+    settingConfigVals :: !(Maybe (NonEmpty (JSON.Key, ValueCodec a a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: Maybe a,
     -- | Which metavar should be show in documentation
@@ -50,6 +57,7 @@ emptySetting =
       settingSwitchValue = Nothing,
       settingTryOption = False,
       settingEnvVars = Nothing,
+      settingConfigVals = Nothing,
       settingMetavar = Nothing,
       settingHelp = Nothing,
       settingDefaultValue = Nothing
@@ -70,6 +78,17 @@ showSettingABit Setting {..} =
       . showsPrec 11 settingTryOption
       . showString " "
       . showsPrec 11 settingEnvVars
+      . showString " "
+      . showMaybeWith
+        ( showListWith
+            ( \(k, _) ->
+                showString "("
+                  . shows k
+                  . showString ", _)"
+            )
+            . NE.toList
+        )
+        settingConfigVals
       . showString " "
       . showMaybeWith (\_ -> showString "_") settingDefaultValue
       . showString " "
@@ -120,6 +139,14 @@ short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
 envVar :: String -> Builder a
 envVar v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
+
+confVal :: (HasCodec a) => JSON.Key -> Builder a
+confVal k = confValWith k codec
+
+confValWith :: JSON.Key -> ValueCodec a a -> Builder a
+confValWith k c =
+  let t = (k, c)
+   in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value
 value :: a -> Builder a

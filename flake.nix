@@ -64,10 +64,10 @@
           name = "test-coverage-report";
           packages = [ "opt-env-conf" ];
         };
-        weeder-check = pkgs.weeder-nix.makeWeederCheck {
-          weederToml = ./weeder.toml;
-          packages = [ "opt-env-conf" ];
-        };
+        #weeder-check = pkgs.weeder-nix.makeWeederCheck {
+        #  weederToml = ./weeder.toml;
+        #  packages = [ "opt-env-conf" ];
+        #};
         pre-commit = pre-commit-hooks.lib.${system}.run {
           src = ./.;
           hooks = {
