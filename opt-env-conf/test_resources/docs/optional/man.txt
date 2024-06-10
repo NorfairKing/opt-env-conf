@@ -1,12 +1,14 @@
-[33moptional[m [36m([m[37m-h[m[36m|[m[37m--help[m [33mARG[m[36m)[m [36m|[m [36m([m[33mARGUMENT[m[36m)[m
+[33moptional[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[33mARGUMENT[m[36m)[m
 
-All settings:
-   Option:  [37m-h[m[36m|[m[37m--help[m [33mARG[m [34mShow this help text[m
-   Option:  [33mARGUMENT[m      [34mArgument[m           
+[36mAll settings:[m
+   switch:   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+   argument: [33mARGUMENT[m  [34mArgument[m           
 
-Options:
-   [37m-h[m[36m|[m[37m--help[m [33mARG[m [34mShow this help text[m
-   [33mARGUMENT[m      [34mArgument[m           
+[36mOptions:[m
+   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+   [33mARGUMENT[m  [34mArgument[m           
 
-Environment Variables:
+[36mEnvironment Variables:[m
+
+[36mConfiguration Values:[m
 

@@ -1,7 +1,9 @@
 AnyDocsOr
   [ AnyDocsSingle
       OptDoc
-        { optDocNeedsArg = True
+        { optDocTryArgument = False
+        , optDocTrySwitch = True
+        , optDocTryOption = False
         , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
         , optDocMetavar = Nothing
         , optDocHelp = Just "Show this help text"
@@ -9,14 +11,18 @@ AnyDocsOr
   , AnyDocsAnd
       [ AnyDocsSingle
           OptDoc
-            { optDocNeedsArg = True
+            { optDocTryArgument = True
+            , optDocTrySwitch = False
+            , optDocTryOption = False
             , optDocDasheds = []
             , optDocMetavar = Just "SUBJECT"
             , optDocHelp = Just "Who to greet"
             }
       , AnyDocsSingle
           OptDoc
-            { optDocNeedsArg = True
+            { optDocTryArgument = False
+            , optDocTrySwitch = False
+            , optDocTryOption = True
             , optDocDasheds =
                 [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
             , optDocMetavar = Just "GREETING"
@@ -24,7 +30,9 @@ AnyDocsOr
             }
       , AnyDocsSingle
           OptDoc
-            { optDocNeedsArg = True
+            { optDocTryArgument = False
+            , optDocTrySwitch = True
+            , optDocTryOption = False
             , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
             , optDocMetavar = Nothing
             , optDocHelp = Just "Whether to be polite"

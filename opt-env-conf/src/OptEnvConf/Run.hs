@@ -14,6 +14,7 @@ import Control.Monad.State
 import Control.Selective (select)
 import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
+import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
@@ -294,7 +295,7 @@ runParserOn p args envVars mConfig =
                             case mObj of
                               Nothing -> pure NotFound
                               Just obj ->
-                                case JSON.parseEither (obj .:?) k of
+                                case JSON.parseEither ((obj .:?) . Key.fromString) k of
                                   Left err -> ppError $ ParseErrorConfigRead err
                                   Right mV -> case mV of
                                     Nothing -> pure NotFound

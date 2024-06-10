@@ -44,7 +44,7 @@ Alt
                           [ _ ]
                           False
                           Nothing
-                          False
+                          True
                           (Just ("GREETING" :| []))
                           (Just [ ( "greeting" , BimapCodec _ _ (StringCodec Nothing) ) ])
                           Nothing

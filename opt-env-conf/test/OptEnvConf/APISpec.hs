@@ -34,6 +34,11 @@ exampleParserSpec dir p = describe dir $ do
   it "produces the same env docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/env-docs.txt") $
       ppShow $
+        parserConfDocs parser
+
+  it "produces the same conf docs structure as before" $
+    pureGoldenStringFile ("test_resources/docs/" <> dir <> "/config-docs.txt") $
+      ppShow $
         parserEnvDocs parser
 
   it "documents the man page in the same way" $
@@ -46,12 +51,12 @@ exampleParserSpec dir p = describe dir $ do
       renderHelpPage dir $
         parserDocs parser
 
-  it "documents the opt parser in the same way" $
+  it "documents the short opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs dir $
         parserOptDocs parser
 
-  it "documents the opt parser in the same way" $
+  it "documents the long opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-long.txt") $
       renderLongOptDocs $
         parserOptDocs parser
@@ -60,6 +65,11 @@ exampleParserSpec dir p = describe dir $ do
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/env.txt") $
       renderEnvDocs $
         parserEnvDocs parser
+
+  it "documents the conf parser in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/config.txt") $
+      renderConfDocs $
+        parserConfDocs parser
 
   it "shows the parser in the same way" $
     goldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
@@ -93,6 +103,7 @@ greetParser =
       <*> optional
         ( setting
             [ reader str,
+              option,
               short 'g',
               long "greeting",
               metavar "GREETING",

@@ -10,6 +10,8 @@ copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        AllRightsReserved
 build-type:     Simple
 extra-source-files:
+    test_resources/docs/args/config-docs.txt
+    test_resources/docs/args/config.txt
     test_resources/docs/args/docs.txt
     test_resources/docs/args/env-docs.txt
     test_resources/docs/args/env.txt
@@ -19,6 +21,8 @@ extra-source-files:
     test_resources/docs/args/opt-long.txt
     test_resources/docs/args/opt-short.txt
     test_resources/docs/args/show.txt
+    test_resources/docs/greet/config-docs.txt
+    test_resources/docs/greet/config.txt
     test_resources/docs/greet/docs.txt
     test_resources/docs/greet/env-docs.txt
     test_resources/docs/greet/env.txt
@@ -28,6 +32,8 @@ extra-source-files:
     test_resources/docs/greet/opt-long.txt
     test_resources/docs/greet/opt-short.txt
     test_resources/docs/greet/show.txt
+    test_resources/docs/optional/config-docs.txt
+    test_resources/docs/optional/config.txt
     test_resources/docs/optional/docs.txt
     test_resources/docs/optional/env-docs.txt
     test_resources/docs/optional/env.txt

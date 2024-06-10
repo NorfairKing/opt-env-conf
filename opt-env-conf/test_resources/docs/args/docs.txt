@@ -1,18 +1,24 @@
 AnyDocsOr
   [ AnyDocsSingle
-      (AnyDocOpt
-         OptDoc
-           { optDocNeedsArg = True
-           , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-           , optDocMetavar = Nothing
-           , optDocHelp = Just "Show this help text"
-           })
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = True
+        , setDocTryOption = False
+        , setDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Show this help text"
+        }
   , AnyDocsSingle
-      (AnyDocOpt
-         OptDoc
-           { optDocNeedsArg = True
-           , optDocDasheds = []
-           , optDocMetavar = Just "ARGUMENT"
-           , optDocHelp = Just "Argument"
-           })
+      SetDoc
+        { setDocTryArgument = True
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocMetavar = Just "ARGUMENT"
+        , setDocHelp = Just "Argument"
+        }
   ]
