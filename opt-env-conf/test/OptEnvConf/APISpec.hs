@@ -8,6 +8,7 @@ import OptEnvConf
 import OptEnvConf.Parser
 import Test.Syd
 import Text.Colour
+import Text.Show.Pretty as Pretty
 
 spec :: Spec
 spec = do
@@ -61,8 +62,10 @@ exampleParserSpec dir p = describe dir $ do
         parserEnvDocs parser
 
   it "shows the parser in the same way" $
-    pureGoldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
-      showParserABit parser
+    goldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
+      case Pretty.parseValue (showParserABit parser) of
+        Nothing -> expectationFailure "Error parsing value"
+        Just v -> pure $ Pretty.valToStr v
 
 pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
 pureGoldenChunksFile fp cs =

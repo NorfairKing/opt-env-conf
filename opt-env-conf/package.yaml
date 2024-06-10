@@ -55,6 +55,7 @@ tests:
     - genvalidity-text
     - opt-env-conf
     - optparse-applicative
+    - pretty-show
     - safe-coloured-text
     - sydtest
     - text
