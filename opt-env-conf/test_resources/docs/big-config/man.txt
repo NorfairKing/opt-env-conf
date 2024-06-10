@@ -1,0 +1,18 @@
+[33mbig-config[m [37m-h[m[36m|[m[37m--help[m
+
+[36mAll settings:[m
+   switch:                             [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+   [34mmulti-line config codec explanation[m                              
+
+[36mOptions:[m
+   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+
+[36mEnvironment Variables:[m
+
+[36mConfiguration Values:[m
+  [34mmulti-line config codec explanation[m
+  [37mbig[m:
+    [37m<key>[m: 
+      [37m<key>[m: 
+        [33m<number>[m # between [32m-9223372036854775808[m and [32m9223372036854775807[m
+

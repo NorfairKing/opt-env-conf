@@ -1,0 +1,9 @@
+AnyDocsSingle
+  OptDoc
+    { optDocTryArgument = False
+    , optDocTrySwitch = True
+    , optDocTryOption = False
+    , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+    , optDocMetavar = Nothing
+    , optDocHelp = Just "Show this help text"
+    }

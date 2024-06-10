@@ -6,6 +6,9 @@
 
 module OptEnvConf.Doc where
 
+import Autodocodec.Schema
+import Autodocodec.Yaml.Schema
+import Control.Arrow (second)
 import Control.Monad
 import Data.List (intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
@@ -25,7 +28,7 @@ data SetDoc = SetDoc
     setDocTryOption :: !Bool,
     setDocDasheds :: ![Dashed],
     setDocEnvVars :: !(Maybe (NonEmpty String)),
-    setDocConfKeys :: !(Maybe (NonEmpty String)),
+    setDocConfKeys :: !(Maybe (NonEmpty (String, JSONSchema))),
     setDocMetavar :: !(Maybe Metavar),
     setDocHelp :: !(Maybe String)
   }
@@ -49,7 +52,7 @@ data EnvDoc = EnvDoc
   deriving (Show, Eq)
 
 data ConfDoc = ConfDoc
-  { confDocKeys :: !(NonEmpty String),
+  { confDocKeys :: !(NonEmpty (String, JSONSchema)),
     confDocHelp :: !(Maybe String)
   }
   deriving (Show, Eq)
@@ -136,7 +139,7 @@ settingSetDoc Setting {..} =
       setDocTrySwitch = isJust settingSwitchValue
       setDocTryOption = settingTryOption
       setDocEnvVars = settingEnvVars
-      setDocConfKeys = NE.map fst <$> settingConfigVals
+      setDocConfKeys = NE.map (second jsonSchemaVia) <$> settingConfigVals
       setDocMetavar = settingMetavar
       setDocHelp = settingHelp
    in SetDoc {..}
@@ -343,19 +346,23 @@ settingConfDoc :: Setting a -> Maybe ConfDoc
 settingConfDoc = setDocConfDoc . settingSetDoc
 
 renderConfDocs :: AnyDocs ConfDoc -> [Chunk]
-renderConfDocs = layoutAsTable . go
+renderConfDocs = unlinesChunks . go
   where
-    go :: AnyDocs ConfDoc -> [[[Chunk]]]
+    go :: AnyDocs ConfDoc -> [[Chunk]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle ed -> [["  "] : renderConfDoc ed]
+      AnyDocsSingle ed -> map ("  " :) (renderConfDoc ed)
 
 renderConfDoc :: ConfDoc -> [[Chunk]]
 renderConfDoc ConfDoc {..} =
-  [ unwordsChunks [envVarChunksNE confDocKeys],
-    [helpChunk confDocHelp]
-  ]
+  [helpChunk confDocHelp]
+    : concatMap
+      ( \(key, schema) ->
+          [confValChunk key, ":"]
+            : map ("  " :) (jsonSchemaChunkLines schema)
+      )
+      (NE.toList confDocKeys)
 
 metavarChunk :: Metavar -> Chunk
 metavarChunk = fore yellow . chunk . T.pack

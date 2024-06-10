@@ -1,6 +1,7 @@
 snapshot: lts-22.22
 packages: 
 - opt-env-conf
+- /home/syd/src/autodocodec/autodocodec-yaml/
 - /home/syd/src/safe-coloured-text/safe-coloured-text
 - /home/syd/src/safe-coloured-text/safe-coloured-text-layout
 
