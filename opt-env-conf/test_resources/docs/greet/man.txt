@@ -6,6 +6,7 @@ All settings:
    Option:  [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m  [34mGreeting to use[m     
    Env var: [37mGREET_GREETING[m [33mGREETING[m [34mGreeting to use[m     
    Option:  [37m-p[m[36m|[m[37m--polite[m [33mARG[m         [34mWhether to be polite[m
+   Env var: [37mGREET_POLITE[m [33mARG[m        [34mWhether to be polite[m
 
 Options:
    [37m-h[m[36m|[m[37m--help[m [33mARG[m          [34mShow this help text[m 
@@ -14,5 +15,6 @@ Options:
    [37m-p[m[36m|[m[37m--polite[m [33mARG[m        [34mWhether to be polite[m
 
 Environment Variables:
-   [37mGREET_GREETING[m [33mGREETING[m [34mGreeting to use[m
+   [37mGREET_GREETING[m [33mGREETING[m [34mGreeting to use[m     
+   [37mGREET_POLITE[m [33mARG[m        [34mWhether to be polite[m
 

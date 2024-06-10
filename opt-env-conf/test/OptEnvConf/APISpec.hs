@@ -96,7 +96,7 @@ greetParser =
               short 'g',
               long "greeting",
               metavar "GREETING",
-              envVar "GREETING",
+              env "GREETING",
               conf "greeting",
               help "Greeting to use"
             ]
@@ -107,6 +107,7 @@ greetParser =
                     [ switch True,
                       short 'p',
                       long "polite",
+                      env "POLITE",
                       conf "polite",
                       help "Whether to be polite"
                     ]

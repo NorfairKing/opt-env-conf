@@ -34,13 +34,22 @@ AnyDocsOr
                    , envDocHelp = Just "Greeting to use"
                    })
           ]
-      , AnyDocsSingle
-          (AnyDocOpt
-             OptDoc
-               { optDocNeedsArg = True
-               , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-               , optDocMetavar = Nothing
-               , optDocHelp = Just "Whether to be polite"
-               })
+      , AnyDocsOr
+          [ AnyDocsSingle
+              (AnyDocOpt
+                 OptDoc
+                   { optDocNeedsArg = True
+                   , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+                   , optDocMetavar = Nothing
+                   , optDocHelp = Just "Whether to be polite"
+                   })
+          , AnyDocsSingle
+              (AnyDocEnv
+                 EnvDoc
+                   { envDocVars = [ "GREET_POLITE" ]
+                   , envDocMetavar = Nothing
+                   , envDocHelp = Just "Whether to be polite"
+                   })
+          ]
       ]
   ]

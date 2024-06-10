@@ -140,8 +140,8 @@ long l = Builder $ \s -> s {settingDasheds = DashedLong (NE.fromList l) : settin
 short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
-envVar :: String -> Builder a
-envVar v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
+env :: String -> Builder a
+env v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
 
 conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
