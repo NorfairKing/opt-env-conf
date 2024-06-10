@@ -143,11 +143,11 @@ short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 envVar :: String -> Builder a
 envVar v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
 
-confVal :: (HasCodec a) => String -> Builder a
-confVal k = confValWith k codec
+conf :: (HasCodec a) => String -> Builder a
+conf k = confWith k codec
 
-confValWith :: String -> ValueCodec a a -> Builder a
-confValWith k c =
+confWith :: String -> ValueCodec a a -> Builder a
+confWith k c =
   let t = (Key.fromString k, c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
