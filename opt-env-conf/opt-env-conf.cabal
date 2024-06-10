@@ -43,6 +43,17 @@ extra-source-files:
     test_resources/docs/greet/opt-long.txt
     test_resources/docs/greet/opt-short.txt
     test_resources/docs/greet/show.txt
+    test_resources/docs/hidden/config-docs.txt
+    test_resources/docs/hidden/config.txt
+    test_resources/docs/hidden/docs.txt
+    test_resources/docs/hidden/env-docs.txt
+    test_resources/docs/hidden/env.txt
+    test_resources/docs/hidden/help.txt
+    test_resources/docs/hidden/man.txt
+    test_resources/docs/hidden/opt-docs.txt
+    test_resources/docs/hidden/opt-long.txt
+    test_resources/docs/hidden/opt-short.txt
+    test_resources/docs/hidden/show.txt
     test_resources/docs/optional/config-docs.txt
     test_resources/docs/optional/config.txt
     test_resources/docs/optional/docs.txt

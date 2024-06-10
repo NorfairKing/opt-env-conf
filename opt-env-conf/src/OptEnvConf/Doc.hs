@@ -135,7 +135,7 @@ parserDocs = simplifyAnyDocs . go
       ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserPrefixed prefix p -> setDocPrefixed prefix <$> go p
       ParserSubconfig key p -> setDocSubconfiged key <$> go p
-      ParserSetting set -> AnyDocsSingle $ settingSetDoc set
+      ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
 
 setDocSubconfiged :: String -> SetDoc -> SetDoc
 setDocSubconfiged key sd =
@@ -145,21 +145,22 @@ setDocPrefixed :: String -> SetDoc -> SetDoc
 setDocPrefixed prefix sd =
   sd {setDocEnvVars = NE.map (prefix <>) <$> setDocEnvVars sd}
 
-settingSetDoc :: Setting a -> SetDoc
-settingSetDoc Setting {..} =
+settingSetDoc :: Setting a -> Maybe SetDoc
+settingSetDoc Setting {..} = do
+  guard $ not settingHidden
   let setDocDasheds = settingDasheds
-      setDocTryArgument = settingTryArgument
-      setDocTrySwitch = isJust settingSwitchValue
-      setDocTryOption = settingTryOption
-      setDocEnvVars = settingEnvVars
-      setDocConfKeys = NE.map (\(k, c) -> (k :| [], jsonSchemaVia c)) <$> settingConfigVals
-      setDocDefault = snd <$> settingDefaultValue
-      setDocMetavar = settingMetavar
-      setDocHelp = settingHelp
-   in SetDoc {..}
+  let setDocTryArgument = settingTryArgument
+  let setDocTrySwitch = isJust settingSwitchValue
+  let setDocTryOption = settingTryOption
+  let setDocEnvVars = settingEnvVars
+  let setDocConfKeys = NE.map (\(k, c) -> (k :| [], jsonSchemaVia c)) <$> settingConfigVals
+  let setDocDefault = snd <$> settingDefaultValue
+  let setDocMetavar = settingMetavar
+  let setDocHelp = settingHelp
+  pure SetDoc {..}
 
 settingOptDoc :: Setting a -> Maybe OptDoc
-settingOptDoc = setDocOptDoc . settingSetDoc
+settingOptDoc = settingSetDoc >=> setDocOptDoc
 
 renderSetDoc :: SetDoc -> [[[Chunk]]]
 renderSetDoc SetDoc {..} =
@@ -252,7 +253,7 @@ setDocOptDoc SetDoc {..} = do
   pure OptDoc {..}
 
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore yellow (chunk (T.pack progname))], cs]) . go
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", fore yellow (chunk (T.pack progname))], cs]) . go
   where
     go :: AnyDocs OptDoc -> [Chunk]
     go = \case
@@ -322,7 +323,7 @@ setDocEnvDoc SetDoc {..} = do
   pure EnvDoc {..}
 
 settingEnvDoc :: Setting a -> Maybe EnvDoc
-settingEnvDoc = setDocEnvDoc . settingSetDoc
+settingEnvDoc = settingSetDoc >=> setDocEnvDoc
 
 renderEnvDocs :: AnyDocs EnvDoc -> [Chunk]
 renderEnvDocs = layoutAsTable . go
@@ -357,7 +358,7 @@ setDocConfDoc SetDoc {..} = do
   pure ConfDoc {..}
 
 settingConfDoc :: Setting a -> Maybe ConfDoc
-settingConfDoc = setDocConfDoc . settingSetDoc
+settingConfDoc = settingSetDoc >=> setDocConfDoc
 
 renderConfDocs :: AnyDocs ConfDoc -> [Chunk]
 renderConfDocs = unlinesChunks . go

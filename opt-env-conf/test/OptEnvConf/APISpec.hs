@@ -13,11 +13,11 @@ import Text.Show.Pretty as Pretty
 
 spec :: Spec
 spec = do
-  exampleParserSpec "greet" greetParser
-  exampleParserSpec "big-config" bigConfigParser
   exampleParserSpec "args" argsParser
   exampleParserSpec "optional" optionalParser
-  pure ()
+  exampleParserSpec "big-config" bigConfigParser
+  exampleParserSpec "hidden" hiddenParser
+  exampleParserSpec "greet" greetParser
 
 exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
@@ -164,3 +164,15 @@ optionalParser =
             metavar "ARGUMENT"
           ]
       )
+
+data Hidden = Hidden String
+
+hiddenParser :: Parser Hidden
+hiddenParser =
+  Hidden
+    <$> setting
+      [ reader str,
+        argument,
+        hidden,
+        value "default"
+      ]

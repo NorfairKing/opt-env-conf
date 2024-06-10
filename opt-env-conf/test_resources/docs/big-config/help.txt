@@ -1,4 +1,4 @@
-[33mbig-config[m [37m-h[m[36m|[m[37m--help[m
+[36mUsage: [m[33mbig-config[m [37m-h[m[36m|[m[37m--help[m
 
    switch:                             [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
    [34mmulti-line config codec explanation[m                              

@@ -42,6 +42,8 @@ data Setting a = Setting
     settingConfigVals :: !(Maybe (NonEmpty (String, ValueCodec a a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: Maybe (a, String),
+    -- | Whether to hide docs
+    settingHidden :: !Bool,
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
@@ -59,6 +61,7 @@ emptySetting =
       settingConfigVals = Nothing,
       settingMetavar = Nothing,
       settingHelp = Nothing,
+      settingHidden = False,
       settingDefaultValue = Nothing
     }
 
@@ -156,3 +159,6 @@ value a = valueWithShown a (show a)
 -- | Set the default value, along with a shown version of it.
 valueWithShown :: a -> String -> Builder a
 valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown)}
+
+hidden :: Builder a
+hidden = Builder $ \s -> s {settingHidden = True}

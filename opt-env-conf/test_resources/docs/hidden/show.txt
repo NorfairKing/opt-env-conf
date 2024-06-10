@@ -1,0 +1,27 @@
+Alt
+  (Setting
+     (Setting
+        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        (Just "Show this help text")))
+  (Fmap
+     _
+     (Setting
+        (Setting
+           []
+           [ _ ]
+           True
+           Nothing
+           False
+           Nothing
+           Nothing
+           (Just _)
+           Nothing
+           Nothing)))
