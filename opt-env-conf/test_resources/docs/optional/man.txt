@@ -5,8 +5,8 @@
    argument: [33mARGUMENT[m  [34mArgument[m           
 
 [36mOptions:[m
-   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
-   [33mARGUMENT[m  [34mArgument[m           
+   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
+   [33mARGUMENT[m  [34mArgument[m            
 
 [36mEnvironment Variables:[m
 

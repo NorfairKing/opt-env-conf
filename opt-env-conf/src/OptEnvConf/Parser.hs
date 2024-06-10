@@ -218,5 +218,6 @@ xdgYamlConfigFile subdir =
     <$> setting
       [ reader str,
         env "XDG_CONFIG_HOME",
-        metavar "DIRECTORY"
+        metavar "DIRECTORY",
+        help "Path to the XDG configuration directory"
       ]

@@ -5,6 +5,7 @@ AnyDocsOr
         , optDocTrySwitch = True
         , optDocTryOption = False
         , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        , optDocDefault = Nothing
         , optDocMetavar = Nothing
         , optDocHelp = Just "Show this help text"
         }
@@ -14,6 +15,7 @@ AnyDocsOr
         , optDocTrySwitch = False
         , optDocTryOption = False
         , optDocDasheds = []
+        , optDocDefault = Nothing
         , optDocMetavar = Just "ARGUMENT"
         , optDocHelp = Just "Argument"
         }

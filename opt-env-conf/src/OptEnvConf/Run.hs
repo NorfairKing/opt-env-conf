@@ -317,10 +317,11 @@ runParserOn p args envVars mConfig =
                           Found a -> pure a
                           _ ->
                             case settingDefaultValue of
-                              Just a -> pure a
+                              Just (a, _) -> pure a
                               Nothing -> do
                                 let mOptDoc = settingOptDoc set
                                 let mEnvDoc = settingEnvDoc set
+                                let mConfDoc = settingConfDoc set
                                 let parseResultError e res = case res of
                                       NotRun -> Nothing
                                       NotFound -> Just e
@@ -332,7 +333,7 @@ runParserOn p args envVars mConfig =
                                         parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
                                         parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
                                         parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
-                                        parseResultError (ParseErrorMissingConfVal (error "TODO")) mConf
+                                        parseResultError (ParseErrorMissingConfVal mConfDoc) mConf
                                       ]
 
 data ParseResult a

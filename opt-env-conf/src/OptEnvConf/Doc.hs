@@ -29,6 +29,7 @@ data SetDoc = SetDoc
     setDocDasheds :: ![Dashed],
     setDocEnvVars :: !(Maybe (NonEmpty String)),
     setDocConfKeys :: !(Maybe (NonEmpty (NonEmpty String, JSONSchema))),
+    setDocDefault :: !(Maybe String),
     setDocMetavar :: !(Maybe Metavar),
     setDocHelp :: !(Maybe String)
   }
@@ -39,6 +40,7 @@ data OptDoc = OptDoc
     optDocTrySwitch :: !Bool,
     optDocTryOption :: !Bool,
     optDocDasheds :: ![Dashed],
+    optDocDefault :: !(Maybe String),
     optDocMetavar :: !(Maybe Metavar),
     optDocHelp :: !(Maybe String)
   }
@@ -46,6 +48,7 @@ data OptDoc = OptDoc
 
 data EnvDoc = EnvDoc
   { envDocVars :: !(NonEmpty String),
+    envDocDefault :: !(Maybe String),
     envDocMetavar :: !(Maybe Metavar),
     envDocHelp :: !(Maybe String)
   }
@@ -53,6 +56,7 @@ data EnvDoc = EnvDoc
 
 data ConfDoc = ConfDoc
   { confDocKeys :: !(NonEmpty (NonEmpty String, JSONSchema)),
+    confDocDefault :: !(Maybe String),
     confDocHelp :: !(Maybe String)
   }
   deriving (Show, Eq)
@@ -149,6 +153,7 @@ settingSetDoc Setting {..} =
       setDocTryOption = settingTryOption
       setDocEnvVars = settingEnvVars
       setDocConfKeys = NE.map (\(k, c) -> (k :| [], jsonSchemaVia c)) <$> settingConfigVals
+      setDocDefault = snd <$> settingDefaultValue
       setDocMetavar = settingMetavar
       setDocHelp = settingHelp
    in SetDoc {..}
@@ -241,6 +246,7 @@ setDocOptDoc SetDoc {..} = do
       optDocTrySwitch = setDocTrySwitch
       optDocTryOption = setDocTryOption
       optDocDasheds = setDocDasheds
+      optDocDefault = setDocDefault
       optDocMetavar = setDocMetavar
       optDocHelp = setDocHelp
   pure OptDoc {..}
@@ -297,7 +303,8 @@ renderOptDocLong OptDoc {..} =
             | optDocTryArgument
           ]
         ],
-    [helpChunk optDocHelp]
+    [helpChunk optDocHelp],
+    unwordsChunks [defaultValueChunks d | d <- maybeToList optDocDefault]
   ]
 
 parserEnvDocs :: Parser a -> AnyDocs EnvDoc
@@ -309,6 +316,7 @@ docsToEnvDocs = mapMaybeDocs setDocEnvDoc
 setDocEnvDoc :: SetDoc -> Maybe EnvDoc
 setDocEnvDoc SetDoc {..} = do
   envDocVars <- setDocEnvVars
+  let envDocDefault = setDocDefault
   let envDocMetavar = setDocMetavar
   let envDocHelp = setDocHelp
   pure EnvDoc {..}
@@ -344,6 +352,7 @@ docsToConfDocs = mapMaybeDocs setDocConfDoc
 setDocConfDoc :: SetDoc -> Maybe ConfDoc
 setDocConfDoc SetDoc {..} = do
   confDocKeys <- setDocConfKeys
+  let confDocDefault = setDocDefault
   let confDocHelp = setDocHelp
   pure ConfDoc {..}
 
@@ -392,6 +401,9 @@ envVarChunk = fore white . chunk . T.pack
 
 confValChunk :: NonEmpty String -> Chunk
 confValChunk = fore white . chunk . T.pack . intercalate "." . NE.toList
+
+defaultValueChunks :: String -> [Chunk]
+defaultValueChunks val = ["default: ", fore yellow $ chunk $ T.pack val]
 
 helpChunk :: Maybe Help -> Chunk
 helpChunk = maybe (fore red "!! undocumented !!") (fore blue . chunk . T.pack)

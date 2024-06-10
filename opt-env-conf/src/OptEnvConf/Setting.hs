@@ -41,7 +41,7 @@ data Setting a = Setting
     -- consider doing that.
     settingConfigVals :: !(Maybe (NonEmpty (String, ValueCodec a a))),
     -- | Default value, if none of the above find the setting.
-    settingDefaultValue :: Maybe a,
+    settingDefaultValue :: Maybe (a, String),
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
@@ -150,5 +150,9 @@ confWith k c =
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value
-value :: a -> Builder a
-value a = Builder $ \s -> s {settingDefaultValue = Just a}
+value :: (Show a) => a -> Builder a
+value a = valueWithShown a (show a)
+
+-- | Set the default value, along with a shown version of it.
+valueWithShown :: a -> String -> Builder a
+valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown)}

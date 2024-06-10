@@ -21,7 +21,7 @@ data ParseError
   | ParseErrorMissingEnvVar !(Maybe EnvDoc)
   | ParseErrorEnvRead !(NonEmpty String)
   | ParseErrorMissingSwitch !(Maybe OptDoc)
-  | ParseErrorMissingConfVal !String
+  | ParseErrorMissingConfVal !(Maybe ConfDoc)
   | ParseErrorConfigRead !String
   | ParseErrorRequired
   deriving (Show, Eq)
@@ -63,8 +63,8 @@ renderError = \case
     [["Missing option: ", maybe (error "TODO") (chunk . T.pack . show) md]]
   ParseErrorEnvRead errs ->
     ["Failed to read env var:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
-  ParseErrorMissingConfVal v ->
-    [["Missing config value: ", chunk $ T.pack $ show v]]
+  ParseErrorMissingConfVal md ->
+    ["Missing config value: "] : maybe (error "TODO") renderConfDoc md
   ParseErrorConfigRead s ->
     [["Failed to parse configuration:", chunk $ T.pack $ show s]]
   ParseErrorRequired ->

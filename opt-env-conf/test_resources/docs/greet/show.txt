@@ -19,22 +19,18 @@ Alt
            (Ap
               (Fmap
                  _
-                 (Alt
-                    (Fmap
-                       _
-                       (Setting
-                          (Setting
-                             []
-                             [ _ ]
-                             True
-                             Nothing
-                             False
-                             Nothing
-                             Nothing
-                             Nothing
-                             (Just "SUBJECT")
-                             (Just "Who to greet"))))
-                    (Pure _)))
+                 (Setting
+                    (Setting
+                       []
+                       [ _ ]
+                       True
+                       Nothing
+                       False
+                       Nothing
+                       Nothing
+                       (Just _)
+                       (Just "SUBJECT")
+                       (Just "Who to greet"))))
               (Alt
                  (Fmap
                     _

@@ -7,6 +7,7 @@ AnyDocsOr
         , setDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
         , setDocEnvVars = Nothing
         , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
         , setDocMetavar = Nothing
         , setDocHelp = Just "Show this help text"
         }
@@ -19,6 +20,7 @@ AnyDocsOr
             , setDocDasheds = []
             , setDocEnvVars = Nothing
             , setDocConfKeys = Nothing
+            , setDocDefault = Just "\"world\""
             , setDocMetavar = Just "SUBJECT"
             , setDocHelp = Just "Who to greet"
             }
@@ -31,6 +33,7 @@ AnyDocsOr
                 [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
             , setDocEnvVars = Just ("GREET_GREETING" :| [])
             , setDocConfKeys = Just (( "greeting" :| [] , StringSchema ) :| [])
+            , setDocDefault = Nothing
             , setDocMetavar = Just "GREETING"
             , setDocHelp = Just "Greeting to use"
             }
@@ -42,6 +45,7 @@ AnyDocsOr
             , setDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
             , setDocEnvVars = Just ("GREET_POLITE" :| [])
             , setDocConfKeys = Just (( "polite" :| [] , BoolSchema ) :| [])
+            , setDocDefault = Nothing
             , setDocMetavar = Nothing
             , setDocHelp = Just "Whether to be polite"
             }
