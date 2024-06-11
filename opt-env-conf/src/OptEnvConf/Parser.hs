@@ -15,6 +15,7 @@ module OptEnvConf.Parser
     withConfig,
     withYamlConfig,
     xdgYamlConfigFile,
+    withLocalYamlConfig,
 
     -- * Parser implementation
     Parser (..),
@@ -221,3 +222,16 @@ xdgYamlConfigFile subdir =
         metavar "DIRECTORY",
         help "Path to the XDG configuration directory"
       ]
+
+withLocalYamlConfig :: Parser a -> Parser a
+withLocalYamlConfig =
+  withYamlConfig $
+    Just
+      <$> setting
+        [ option,
+          long "config-file",
+          env "CONFIG_FILE",
+          metavar "FILE",
+          value "config.yaml",
+          help "Path to the configuration file"
+        ]

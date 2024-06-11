@@ -15,6 +15,7 @@ module OptEnvConf
     withConfig,
     withYamlConfig,
     xdgYamlConfigFile,
+    withLocalYamlConfig,
     module OptEnvConf.Doc,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,

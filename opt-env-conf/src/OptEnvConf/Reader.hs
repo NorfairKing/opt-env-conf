@@ -19,6 +19,10 @@ auto s = case readMaybe s of
   Nothing -> Left $ "Un-Read-able value: " <> show s
   Just a -> a
 
+-- | Always return True
+exists :: Reader Bool
+exists = const $ Right True
+
 maybeReader :: (String -> Maybe a) -> Reader a
 maybeReader func s = case func s of
   Nothing -> Left $ "Unparsable value: " <> show s
