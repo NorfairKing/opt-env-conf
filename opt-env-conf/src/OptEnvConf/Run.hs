@@ -65,12 +65,18 @@ runParserWithLeftovers p = do
         tc <- getTerminalCapabilitiesFromHandle stdout
         hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
         exitSuccess
+      RenderMan -> do
+        progname <- getProgName
+        tc <- getTerminalCapabilitiesFromHandle stdout
+        hPutChunksLocaleWith tc stdout $ renderManPage progname docs
+        exitSuccess
       ParsedNormally a -> pure (a, leftovers)
 
 -- Internal structure to help us do what the framework
 -- is supposed to.
 data Internal a
   = ShowHelp
+  | RenderMan
   | ParsedNormally a
 
 internalParser :: Parser a -> Parser (Internal a)
@@ -81,6 +87,12 @@ internalParser p =
       long "help",
       help "Show this help text"
     ]
+    <|> setting
+      [ switch RenderMan,
+        long "render-man-page",
+        hidden,
+        help "Show this help text"
+      ]
     <|> (ParsedNormally <$> p)
 
 -- 'runParserOn' _and_ 'unrecognisedOptions'
