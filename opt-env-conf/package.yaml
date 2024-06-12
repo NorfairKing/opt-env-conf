@@ -58,6 +58,7 @@ tests:
     - optparse-applicative
     - pretty-show
     - safe-coloured-text
+    - safe-coloured-text-terminfo
     - sydtest
     - text
     - yaml

@@ -82,6 +82,7 @@ library
       OptEnvConf.Doc
       OptEnvConf.EnvMap
       OptEnvConf.Error
+      OptEnvConf.Lint
       OptEnvConf.Parser
       OptEnvConf.Reader
       OptEnvConf.Run
@@ -148,6 +149,7 @@ test-suite opt-env-conf-test
     , optparse-applicative
     , pretty-show
     , safe-coloured-text
+    , safe-coloured-text-terminfo
     , sydtest
     , text
     , yaml

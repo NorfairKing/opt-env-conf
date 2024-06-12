@@ -37,4 +37,4 @@ Alt
            Nothing
            (Just _)
            Nothing
-           Nothing)))
+           (Just "Example of a hidden setting"))))

@@ -27,6 +27,7 @@ import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
+import OptEnvConf.Lint
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Setting
@@ -46,31 +47,37 @@ runParserWithLeftovers p = do
   let (argMap, leftovers) = ArgMap.parse args
   envVars <- EnvMap.parse <$> getEnvironment
 
-  let p' = internalParser p
-  let docs = parserDocs p'
-  errOrResult <-
-    runParserComplete
-      p'
-      argMap
-      envVars
-      Nothing
-  case errOrResult of
-    Left errs -> do
+  case lintParser p of
+    Just errs -> do
       tc <- getTerminalCapabilitiesFromHandle stderr
-      hPutChunksLocaleWith tc stderr $ renderErrors errs
+      hPutChunksLocaleWith tc stderr $ renderLintErrors errs
       exitFailure
-    Right i -> case i of
-      ShowHelp -> do
-        progname <- getProgName
-        tc <- getTerminalCapabilitiesFromHandle stdout
-        hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
-        exitSuccess
-      RenderMan -> do
-        progname <- getProgName
-        tc <- getTerminalCapabilitiesFromHandle stdout
-        hPutChunksLocaleWith tc stdout $ renderManPage progname docs
-        exitSuccess
-      ParsedNormally a -> pure (a, leftovers)
+    Nothing -> do
+      let p' = internalParser p
+      let docs = parserDocs p'
+      errOrResult <-
+        runParserComplete
+          p'
+          argMap
+          envVars
+          Nothing
+      case errOrResult of
+        Left errs -> do
+          tc <- getTerminalCapabilitiesFromHandle stderr
+          hPutChunksLocaleWith tc stderr $ renderErrors errs
+          exitFailure
+        Right i -> case i of
+          ShowHelp -> do
+            progname <- getProgName
+            tc <- getTerminalCapabilitiesFromHandle stdout
+            hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
+            exitSuccess
+          RenderMan -> do
+            progname <- getProgName
+            tc <- getTerminalCapabilitiesFromHandle stdout
+            hPutChunksLocaleWith tc stdout $ renderManPage progname docs
+            exitSuccess
+          ParsedNormally a -> pure (a, leftovers)
 
 -- Internal structure to help us do what the framework
 -- is supposed to.

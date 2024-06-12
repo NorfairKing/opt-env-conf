@@ -63,7 +63,7 @@ Alt
            (Setting
               (Setting
                  [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-                 []
+                 [ _ ]
                  False
                  (Just _)
                  False

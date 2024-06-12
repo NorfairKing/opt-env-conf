@@ -22,7 +22,7 @@ mkDerivation {
     aeson base containers envparse genvalidity genvalidity-aeson
     genvalidity-containers genvalidity-sydtest genvalidity-text
     optparse-applicative pretty-show QuickCheck safe-coloured-text
-    sydtest text yaml
+    safe-coloured-text-terminfo sydtest text yaml
   ];
   testToolDepends = [ sydtest-discover ];
   license = lib.licenses.unfree;

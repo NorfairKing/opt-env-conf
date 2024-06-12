@@ -3,12 +3,14 @@
 module OptEnvConf.APISpec (spec) where
 
 import Data.Map (Map)
-import Data.Maybe
 import Data.Text (Text)
+import qualified Data.Text as T
 import OptEnvConf
+import OptEnvConf.Lint
 import OptEnvConf.Parser
 import Test.Syd
 import Text.Colour
+import Text.Colour.Chunk
 import Text.Show.Pretty as Pretty
 
 spec :: Spec
@@ -22,6 +24,12 @@ spec = do
 exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
   let parser = internalParser p
+
+  it "passes the linter" $
+    case lintParser parser of
+      Nothing -> pure ()
+      Just errs ->
+        expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderLintErrors errs
 
   it "produces the same docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/docs.txt") $
@@ -114,7 +122,8 @@ greetParser =
             ]
         )
       <*> setting
-        [ switch True,
+        [ reader exists,
+          switch True,
           short 'p',
           long "polite",
           env "POLITE",
@@ -171,5 +180,6 @@ hiddenParser =
       [ reader str,
         argument,
         hidden,
-        value "default"
+        value "default",
+        help "Example of a hidden setting"
       ]
