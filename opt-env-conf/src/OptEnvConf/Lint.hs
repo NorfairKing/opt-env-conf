@@ -53,32 +53,36 @@ renderLintError = \case
     [ errorChunk,
       " ",
       functionChunk "argument",
-      "has no",
+      " has no ",
       functionChunk "reader",
       ":"
     ]
       : helpLines h
   LintErrorEmptySetting h ->
-    [ errorChunk,
-      " ",
-      functionChunk "setting",
-      " parses nothing."
-    ]
-      : [ "Add an",
-          functionChunk "argument",
-          ", ",
-          functionChunk "switch",
-          ", ",
-          functionChunk "option",
-          ", ",
-          functionChunk "env",
-          ", ",
-          functionChunk "conf",
-          ", or ",
-          functionChunk "value",
-          ":"
+    concat
+      [ [ [ errorChunk,
+            " This ",
+            functionChunk "setting",
+            " parses nothing:"
+          ]
+        ],
+        helpLines h,
+        [ [ "Add an ",
+            functionChunk "argument",
+            ", ",
+            functionChunk "switch",
+            ", ",
+            functionChunk "option",
+            ", ",
+            functionChunk "env",
+            ", ",
+            functionChunk "conf",
+            ", or ",
+            functionChunk "value",
+            ":"
+          ]
         ]
-      : helpLines h
+      ]
   LintErrorNoReaderForOption h ->
     [ errorChunk,
       " ",

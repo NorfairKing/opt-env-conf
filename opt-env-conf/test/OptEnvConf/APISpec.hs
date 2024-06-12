@@ -10,7 +10,6 @@ import OptEnvConf.Lint
 import OptEnvConf.Parser
 import Test.Syd
 import Text.Colour
-import Text.Colour.Chunk
 import Text.Show.Pretty as Pretty
 
 spec :: Spec

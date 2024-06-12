@@ -74,6 +74,13 @@ extra-source-files:
     test_resources/error/unrecognised-argument.txt
     test_resources/error/unrecognised-option-none.txt
     test_resources/error/unrecognised-option-other.txt
+    test_resources/lint/empty-setting.txt
+    test_resources/lint/no-dashed-for-option.txt
+    test_resources/lint/no-dashed-for-switch.txt
+    test_resources/lint/no-reader-for-argument.txt
+    test_resources/lint/no-reader-for-env.txt
+    test_resources/lint/no-reader-for-option.txt
+    test_resources/lint/null-setting.txt
 
 library
   exposed-modules:
@@ -126,6 +133,7 @@ test-suite opt-env-conf-test
       OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
+      OptEnvConf.LintSpec
       OptEnvConf.ReaderSpec
       OptEnvConf.RunSpec
       Paths_opt_env_conf

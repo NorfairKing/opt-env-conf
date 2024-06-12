@@ -1,0 +1,4 @@
+[31mSetting parser is invalid:[m
+  
+  [31mError:[m [33moption[m has no [33mlong[m or [33mshort[m:
+  [34mExample[m
