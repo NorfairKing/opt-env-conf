@@ -9,7 +9,7 @@ AnyDocsAnd
   , AnyDocsSingle
       EnvDoc
         { envDocVars = "GREET_POLITE" :| []
-        , envDocDefault = Nothing
+        , envDocDefault = Just "False"
         , envDocMetavar = Nothing
         , envDocHelp = Just "Whether to be polite"
         }

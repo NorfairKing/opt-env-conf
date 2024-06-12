@@ -113,18 +113,15 @@ greetParser =
               help "Greeting to use"
             ]
         )
-      <*> ( fromMaybe False
-              <$> optional
-                ( setting
-                    [ switch True,
-                      short 'p',
-                      long "polite",
-                      env "POLITE",
-                      conf "polite",
-                      help "Whether to be polite"
-                    ]
-                )
-          )
+      <*> setting
+        [ switch True,
+          short 'p',
+          long "polite",
+          env "POLITE",
+          conf "polite",
+          value False,
+          help "Whether to be polite"
+        ]
 
 data BigConfig = BigConfig (Map String (Map String Int))
 

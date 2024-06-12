@@ -16,6 +16,8 @@ module OptEnvConf.Parser
     withYamlConfig,
     xdgYamlConfigFile,
     withLocalYamlConfig,
+    enableDisableSwitch,
+    choice,
 
     -- * Parser implementation
     Parser (..),
@@ -32,6 +34,8 @@ import Control.Selective
 import Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe
+import OptEnvConf.ArgMap (Dashed (..))
 import OptEnvConf.Reader
 import OptEnvConf.Setting
 import Path.IO
@@ -187,7 +191,10 @@ showParserABit = ($ "") . go 0
             . showSettingABit p
 
 setting :: [Builder a] -> Parser a
-setting = ParserSetting . completeBuilder . mconcat
+setting = ParserSetting . buildSetting
+
+buildSetting :: [Builder a] -> Setting a
+buildSetting = completeBuilder . mconcat
 
 prefixed :: String -> Parser a -> Parser a
 prefixed = ParserPrefixed
@@ -235,3 +242,44 @@ withLocalYamlConfig =
           value "config.yaml",
           help "Path to the configuration file"
         ]
+
+enableDisableSwitch :: Bool -> [Builder Bool] -> Parser Bool
+enableDisableSwitch defaultBool builders =
+  fromMaybe defaultBool
+    <$> choice
+      [ optional $
+          ParserSetting $
+            modEnable $
+              buildSetting $
+                [switch True, reader exists]
+                  ++ builders,
+        optional $
+          ParserSetting $
+            modDisable $
+              buildSetting $
+                [switch False, reader exists]
+                  ++ builders
+      ]
+  where
+    modEnable :: Setting Bool -> Setting Bool
+    modEnable s =
+      s
+        { settingDasheds = mapMaybe (prefixDashedLong "enable-") (settingDasheds s),
+          settingDefaultValue = Nothing
+        }
+    modDisable :: Setting Bool -> Setting Bool
+    modDisable s =
+      s
+        { settingDasheds = mapMaybe (prefixDashedLong "disable-") (settingDasheds s),
+          settingDefaultValue = Nothing
+        }
+    prefixDashedLong :: String -> Dashed -> Maybe Dashed
+    prefixDashedLong s = \case
+      DashedShort _ -> Nothing
+      DashedLong l -> Just $ DashedLong $ s `NE.prependList` l
+
+choice :: [Parser a] -> Parser a
+choice = \case
+  [] -> ParserEmpty
+  [c] -> c
+  (c : cs) -> c <|> choice cs

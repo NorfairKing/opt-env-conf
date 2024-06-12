@@ -45,7 +45,7 @@ AnyDocsOr
             , setDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
             , setDocEnvVars = Just ("GREET_POLITE" :| [])
             , setDocConfKeys = Just (( "polite" :| [] , BoolSchema ) :| [])
-            , setDocDefault = Nothing
+            , setDocDefault = Just "False"
             , setDocMetavar = Nothing
             , setDocHelp = Just "Whether to be polite"
             }

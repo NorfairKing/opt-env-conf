@@ -8,7 +8,7 @@ AnyDocsAnd
   , AnyDocsSingle
       ConfDoc
         { confDocKeys = ( "polite" :| [] , BoolSchema ) :| []
-        , confDocDefault = Nothing
+        , confDocDefault = Just "False"
         , confDocHelp = Just "Whether to be polite"
         }
   ]

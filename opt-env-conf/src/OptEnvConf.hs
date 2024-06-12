@@ -16,6 +16,7 @@ module OptEnvConf
     withYamlConfig,
     xdgYamlConfigFile,
     withLocalYamlConfig,
+    enableDisableSwitch,
     module OptEnvConf.Doc,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,

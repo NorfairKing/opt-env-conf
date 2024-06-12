@@ -10,6 +10,7 @@ import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
 import Control.Arrow (first)
 import Control.Monad
+import Data.Containers.ListUtils (nubOrd)
 import Data.List (intercalate, intersperse)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
@@ -33,7 +34,7 @@ data SetDoc = SetDoc
     setDocMetavar :: !(Maybe Metavar),
     setDocHelp :: !(Maybe String)
   }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data OptDoc = OptDoc
   { optDocTryArgument :: !Bool,
@@ -44,7 +45,7 @@ data OptDoc = OptDoc
     optDocMetavar :: !(Maybe Metavar),
     optDocHelp :: !(Maybe String)
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data EnvDoc = EnvDoc
   { envDocVars :: !(NonEmpty String),
@@ -52,20 +53,20 @@ data EnvDoc = EnvDoc
     envDocMetavar :: !(Maybe Metavar),
     envDocHelp :: !(Maybe String)
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data ConfDoc = ConfDoc
   { confDocKeys :: !(NonEmpty (NonEmpty String, JSONSchema)),
     confDocDefault :: !(Maybe String),
     confDocHelp :: !(Maybe String)
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data AnyDocs a
   = AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
   | AnyDocsSingle !a
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 instance Functor AnyDocs where
   fmap f = \case
@@ -85,7 +86,7 @@ instance Traversable AnyDocs where
     AnyDocsOr as -> AnyDocsOr <$> traverse (traverse f) as
     AnyDocsSingle a -> AnyDocsSingle <$> f a
 
-mapMaybeDocs :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
+mapMaybeDocs :: (Ord b) => (a -> Maybe b) -> AnyDocs a -> AnyDocs b
 mapMaybeDocs func = simplifyAnyDocs . go
   where
     go = \case
@@ -93,16 +94,16 @@ mapMaybeDocs func = simplifyAnyDocs . go
       AnyDocsOr ds -> AnyDocsOr $ map go ds
       AnyDocsSingle d -> maybe (AnyDocsAnd []) AnyDocsSingle $ func d
 
-simplifyAnyDocs :: AnyDocs a -> AnyDocs a
+simplifyAnyDocs :: (Ord a) => AnyDocs a -> AnyDocs a
 simplifyAnyDocs = go
   where
     go = \case
       AnyDocsAnd ds -> case concatMap goAnd ds of
         [a] -> a
-        as -> AnyDocsAnd as
+        as -> AnyDocsAnd $ nubOrd as
       AnyDocsOr ds -> case concatMap goOr ds of
         [a] -> a
-        as -> AnyDocsOr as
+        as -> AnyDocsOr $ nubOrd as
       AnyDocsSingle v -> AnyDocsSingle v
 
     goAnd = \case

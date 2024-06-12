@@ -1,16 +1,29 @@
 Alt
-  (Setting
+  (Alt
      (Setting
-        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-        []
-        False
-        (Just _)
-        False
-        Nothing
-        Nothing
-        Nothing
-        Nothing
-        (Just "Show this help text")))
+        (Setting
+           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Show this help text")))
+     (Setting
+        (Setting
+           [ DashedLong ('r' :| "ender-man-page") ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Show this help text"))))
   (Fmap
      _
      (Prefixed
@@ -47,21 +60,15 @@ Alt
                           (Just "GREETING")
                           (Just "Greeting to use"))))
                  (Pure _)))
-           (Fmap
-              _
-              (Alt
-                 (Fmap
-                    _
-                    (Setting
-                       (Setting
-                          [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-                          []
-                          False
-                          (Just _)
-                          False
-                          (Just ("POLITE" :| []))
-                          (Just [ ( "polite" , BoolCodec Nothing ) ])
-                          Nothing
-                          Nothing
-                          (Just "Whether to be polite"))))
-                 (Pure _))))))
+           (Setting
+              (Setting
+                 [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+                 []
+                 False
+                 (Just _)
+                 False
+                 (Just ("POLITE" :| []))
+                 (Just [ ( "polite" , BoolCodec Nothing ) ])
+                 (Just _)
+                 Nothing
+                 (Just "Whether to be polite"))))))

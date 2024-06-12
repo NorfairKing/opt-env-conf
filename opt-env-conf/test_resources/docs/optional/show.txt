@@ -1,16 +1,29 @@
 Alt
-  (Setting
+  (Alt
      (Setting
-        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-        []
-        False
-        (Just _)
-        False
-        Nothing
-        Nothing
-        Nothing
-        Nothing
-        (Just "Show this help text")))
+        (Setting
+           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Show this help text")))
+     (Setting
+        (Setting
+           [ DashedLong ('r' :| "ender-man-page") ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Show this help text"))))
   (Fmap
      _
      (Alt
