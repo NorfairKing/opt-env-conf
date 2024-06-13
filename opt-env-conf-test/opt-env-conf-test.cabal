@@ -32,6 +32,17 @@ extra-source-files:
     test_resources/docs/big-config/opt-long.txt
     test_resources/docs/big-config/opt-short.txt
     test_resources/docs/big-config/show.txt
+    test_resources/docs/empty/config-docs.txt
+    test_resources/docs/empty/config.txt
+    test_resources/docs/empty/docs.txt
+    test_resources/docs/empty/env-docs.txt
+    test_resources/docs/empty/env.txt
+    test_resources/docs/empty/help.txt
+    test_resources/docs/empty/man.txt
+    test_resources/docs/empty/opt-docs.txt
+    test_resources/docs/empty/opt-long.txt
+    test_resources/docs/empty/opt-short.txt
+    test_resources/docs/empty/show.txt
     test_resources/docs/enable-disable/config-docs.txt
     test_resources/docs/enable-disable/config.txt
     test_resources/docs/enable-disable/docs.txt

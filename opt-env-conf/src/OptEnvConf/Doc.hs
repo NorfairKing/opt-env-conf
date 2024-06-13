@@ -205,18 +205,42 @@ helpLines h =
 renderManPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderManPage progname docs =
   let optDocs = docsToOptDocs docs
-   in unlinesChunks
-        [ renderShortOptDocs progname optDocs,
-          [],
-          [fore cyan "All settings:"],
-          renderAnyDocs docs,
-          [fore cyan "Options:"],
-          renderLongOptDocs optDocs,
-          [fore cyan "Environment Variables:"],
-          renderEnvDocs (docsToEnvDocs docs),
-          [fore cyan "Configuration Values:"],
-          renderConfDocs (docsToConfDocs docs)
-        ]
+      envDocs = docsToEnvDocs docs
+      confDocs = docsToConfDocs docs
+   in unlinesChunks $
+        concat
+          [ [ renderShortOptDocs progname optDocs,
+              [],
+              [fore cyan "All settings:"],
+              renderAnyDocs docs
+            ],
+            concat
+              [ [ [fore cyan "Options:"],
+                  renderLongOptDocs optDocs
+                ]
+                | not (nullDocs optDocs)
+              ],
+            concat
+              [ [ [fore cyan "Environment Variables:"],
+                  renderEnvDocs envDocs
+                ]
+                | not (nullDocs envDocs)
+              ],
+            concat
+              [ [ [fore cyan "Configuration Values:"],
+                  renderConfDocs confDocs
+                ]
+                | not (nullDocs confDocs)
+              ]
+          ]
+
+nullDocs :: AnyDocs a -> Bool
+nullDocs = \case
+  AnyDocsOr [] -> True
+  AnyDocsOr _ -> False
+  AnyDocsAnd [] -> True
+  AnyDocsAnd _ -> False
+  AnyDocsSingle _ -> False
 
 renderHelpPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderHelpPage progname docs =

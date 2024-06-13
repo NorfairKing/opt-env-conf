@@ -1,4 +1,4 @@
-[36mUsage: [m[33mhidden[m [37m-h[m[36m|[m[37m--help[m
+[36mUsage: [m[33mempty[m [37m-h[m[36m|[m[37m--help[m
 
 [36mAll settings:[m
   [34mShow this help text[m

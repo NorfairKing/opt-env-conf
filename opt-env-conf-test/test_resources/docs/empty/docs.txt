@@ -1,0 +1,12 @@
+AnyDocsSingle
+  SetDoc
+    { setDocTryArgument = False
+    , setDocTrySwitch = True
+    , setDocTryOption = False
+    , setDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+    , setDocEnvVars = Nothing
+    , setDocConfKeys = Nothing
+    , setDocDefault = Nothing
+    , setDocMetavar = Nothing
+    , setDocHelp = Just "Show this help text"
+    }

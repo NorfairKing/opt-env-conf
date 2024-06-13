@@ -14,8 +14,6 @@
 [36mOptions:[m
    [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
 
-[36mEnvironment Variables:[m
-
 [36mConfiguration Values:[m
   [34mmulti-line config codec explanation, the same option twice.[m
   [37mbig[m:

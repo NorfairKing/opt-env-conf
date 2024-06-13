@@ -13,6 +13,7 @@ import Text.Show.Pretty as Pretty
 
 spec :: Spec
 spec = do
+  exampleParserSpec "empty" emptyParser
   exampleParserSpec "args" argsParser
   exampleParserSpec "optional" optionalParser
   exampleParserSpec "big-config" bigConfigParser
@@ -191,3 +192,9 @@ enableDisableParser =
         env "EXAMPLE",
         conf "example"
       ]
+
+data Empty = Empty
+
+emptyParser :: Parser Empty
+emptyParser =
+  pure Empty
