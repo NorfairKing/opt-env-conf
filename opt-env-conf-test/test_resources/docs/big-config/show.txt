@@ -35,7 +35,7 @@ Alt
            False
            Nothing
            (Just
-              [ ( "big"
+              [ ( "big" :| []
                 , MapCodec
                     (MapCodec
                        (BimapCodec

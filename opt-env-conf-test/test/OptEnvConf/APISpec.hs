@@ -96,7 +96,7 @@ data Greet = Greet
 
 greetParser :: Parser Greet
 greetParser =
-  prefixed "GREET_" $
+  subEnv "GREET_" $
     Greet
       <$> setting
         [ reader str,

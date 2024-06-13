@@ -2,17 +2,15 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module OptEnvConf.Parser
-  ( Functor (..),
-    Applicative (..),
-    Alternative (..),
-    Selective (..),
-
-    -- * Parser API
+  ( -- * Parser API
     setting,
-    prefixed,
+    subArgs,
+    subEnv,
     subConfig,
+    subSettings,
     someNonEmpty,
     mapIO,
     withConfig,
@@ -24,22 +22,30 @@ module OptEnvConf.Parser
 
     -- * Parser implementation
     Parser (..),
+    HasParser (..),
     Metavar,
     Help,
     showParserABit,
+
+    -- ** Re-exports
+    Functor (..),
+    Applicative (..),
+    Alternative (..),
+    Selective (..),
   )
 where
 
 import Autodocodec.Yaml
 import Control.Applicative
+import Control.Arrow (first)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
 import qualified Data.Char as Char
-import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import OptEnvConf.ArgMap (Dashed (..))
+import OptEnvConf.ArgMap (Dashed (..), prefixDashed)
 import OptEnvConf.Reader
 import OptEnvConf.Setting
 import Path.IO
@@ -65,10 +71,6 @@ data Parser a where
   ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
-  -- | Prefixed env var
-  ParserPrefixed :: !String -> !(Parser a) -> Parser a
-  -- | Subconfig
-  ParserSubconfig :: !String -> !(Parser a) -> Parser a
   -- | General settings
   ParserSetting :: !(Setting a) -> Parser a
 
@@ -99,8 +101,6 @@ instance Alternative Parser where
           ParserMany _ -> False
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
-          ParserPrefixed _ p -> isEmpty p
-          ParserSubconfig _ p -> isEmpty p
           ParserSetting _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty
@@ -154,34 +154,19 @@ showParserABit = ($ "") . go 0
             . go 11 p1
             . showString " "
             . go 11 p2
-      ParserPrefixed prefix p ->
-        showParen (d > 10) $
-          showString "Prefixed "
-            . showsPrec 11 prefix
-            . showString " "
-            . go 11 p
-      ParserSubconfig key p ->
-        showParen (d > 10) $
-          showString "SubConfig "
-            . showsPrec 11 key
-            . showString " "
-            . go 11 p
       ParserSetting p ->
         showParen (d > 10) $
           showString "Setting "
             . showSettingABit p
+
+class HasParser a where
+  settingsParser :: Parser a
 
 setting :: [Builder a] -> Parser a
 setting = ParserSetting . buildSetting
 
 buildSetting :: [Builder a] -> Setting a
 buildSetting = completeBuilder . mconcat
-
-prefixed :: String -> Parser a -> Parser a
-prefixed = ParserPrefixed
-
-subConfig :: String -> Parser a -> Parser a
-subConfig = ParserSubconfig
 
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty p = (:|) <$> p <*> many p
@@ -264,6 +249,12 @@ enableDisableSwitch defaultBool builders =
             settingMetavar = Nothing,
             settingHelp = Nothing
           }
+
+    prefixOrReplaceEnv :: String -> String -> String
+    prefixOrReplaceEnv prefix = \case
+      "" -> prefix
+      v -> prefix <> "_" <> v
+
     parseEnableEnv :: Maybe (Parser Bool)
     parseEnableEnv = do
       guard (not defaultBool)
@@ -278,11 +269,11 @@ enableDisableSwitch defaultBool builders =
               settingEnvVars =
                 if defaultBool
                   then Nothing
-                  else fmap (NE.map (("ENABLE_" <>) . map Char.toUpper)) (settingEnvVars s),
+                  else fmap (NE.map (prefixOrReplaceEnv "ENABLE" . map Char.toUpper)) (settingEnvVars s),
               settingConfigVals = Nothing,
               settingDefaultValue = Nothing,
               settingHidden = False,
-              settingMetavar = Nothing,
+              settingMetavar = Just "ANY",
               settingHelp = settingHelp s
             }
     parseDisableEnv :: Maybe (Parser Bool)
@@ -298,12 +289,12 @@ enableDisableSwitch defaultBool builders =
               settingTryOption = False,
               settingEnvVars =
                 if defaultBool
-                  then fmap (NE.map (("DISABLE_" <>) . map Char.toUpper)) (settingEnvVars s)
+                  then fmap (NE.map (prefixOrReplaceEnv "DISABLE" . map Char.toUpper)) (settingEnvVars s)
                   else Nothing,
               settingConfigVals = Nothing,
               settingDefaultValue = Nothing,
               settingHidden = False,
-              settingMetavar = Nothing,
+              settingMetavar = Just "ANY",
               settingHelp = settingHelp s
             }
     parseConfigVal :: Maybe (Parser Bool)
@@ -341,12 +332,51 @@ enableDisableSwitch defaultBool builders =
             settingHelp = settingHelp s
           }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed
-    prefixDashedLong p = \case
+    prefixDashedLong prefix = \case
       DashedShort _ -> Nothing
-      DashedLong l -> Just $ DashedLong $ p `NE.prependList` l
+      d -> Just $ prefixDashed prefix d
 
 choice :: [Parser a] -> Parser a
 choice = \case
   [] -> ParserEmpty
   [c] -> c
   (c : cs) -> c <|> choice cs
+
+{-# ANN subArgs ("NOCOVER" :: String) #-}
+subArgs :: String -> Parser a -> Parser a
+subArgs prefix = parserMapSetting $ \s ->
+  s {settingDasheds = map (prefixDashed prefix) (settingDasheds s)}
+
+{-# ANN subEnv ("NOCOVER" :: String) #-}
+subEnv :: String -> Parser a -> Parser a
+subEnv prefix = parserMapSetting $ \s ->
+  s {settingEnvVars = NE.map (prefix <>) <$> settingEnvVars s}
+
+{-# ANN subConfig ("NOCOVER" :: String) #-}
+subConfig :: String -> Parser a -> Parser a
+subConfig prefix = parserMapSetting $ \s ->
+  s {settingConfigVals = NE.map (first (prefix <|)) <$> settingConfigVals s}
+
+subSettings :: (HasParser a) => String -> Parser a
+subSettings prefix =
+  subArgs (map Char.toLower prefix <> "-") $
+    subEnv (map Char.toUpper prefix <> "_") $
+      subConfig
+        prefix
+        settingsParser
+
+parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
+parserMapSetting func = go
+  where
+    go :: Parser s -> Parser s
+    go = \case
+      ParserPure a -> ParserPure a
+      ParserFmap f p -> ParserFmap f (go p)
+      ParserAp p1 p2 -> ParserAp (go p1) (go p2)
+      ParserSelect p1 p2 -> ParserSelect (go p1) (go p2)
+      ParserEmpty -> ParserEmpty
+      ParserAlt p1 p2 -> ParserAlt p1 p2
+      ParserMany p -> ParserMany (go p)
+      ParserMapIO f p -> ParserMapIO f (go p)
+      ParserWithConfig p1 p2 -> ParserWithConfig p1 p2
+      ParserSetting s -> ParserSetting $ func s

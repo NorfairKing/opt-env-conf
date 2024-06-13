@@ -8,10 +8,10 @@ module OptEnvConf.Doc where
 
 import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
-import Control.Arrow (first)
+import Control.Arrow
 import Control.Monad
 import Data.List (intercalate, intersperse)
-import Data.List.NonEmpty (NonEmpty (..), (<|))
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import qualified Data.Text as T
@@ -130,17 +130,7 @@ parserDocs = simplifyAnyDocs . go
       ParserMany p -> go p -- TODO: is this right?
       ParserMapIO _ p -> go p -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
-      ParserPrefixed prefix p -> setDocPrefixed prefix <$> go p
-      ParserSubconfig key p -> setDocSubconfiged key <$> go p
       ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
-
-setDocSubconfiged :: String -> SetDoc -> SetDoc
-setDocSubconfiged key sd =
-  sd {setDocConfKeys = NE.map (first (key <|)) <$> setDocConfKeys sd}
-
-setDocPrefixed :: String -> SetDoc -> SetDoc
-setDocPrefixed prefix sd =
-  sd {setDocEnvVars = NE.map (prefix <>) <$> setDocEnvVars sd}
 
 settingSetDoc :: Setting a -> Maybe SetDoc
 settingSetDoc Setting {..} = do
@@ -150,7 +140,7 @@ settingSetDoc Setting {..} = do
   let setDocTrySwitch = isJust settingSwitchValue
   let setDocTryOption = settingTryOption
   let setDocEnvVars = settingEnvVars
-  let setDocConfKeys = NE.map (\(k, c) -> (k :| [], jsonSchemaVia c)) <$> settingConfigVals
+  let setDocConfKeys = NE.map (second jsonSchemaVia) <$> settingConfigVals
   let setDocDefault = snd <$> settingDefaultValue
   let setDocMetavar = settingMetavar
   let setDocHelp = settingHelp

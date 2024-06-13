@@ -10,6 +10,7 @@ import Data.GenValidity.Aeson ()
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
+import qualified Data.Text as T
 import OptEnvConf
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
@@ -22,6 +23,7 @@ import OptEnvConf.Parser
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Validity
+import Text.Colour
 
 spec :: Spec
 spec = do
@@ -189,7 +191,44 @@ spec = do
                   let expected = val :: Text
                   shouldParse p args e (Just c1) expected
 
-    describe "Prefixed" $ do
+    describe "subArgs" $ do
+      it "can prefix a switch parser" $
+        forAllValid $ \a' ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \prefix ->
+                forAllValid $ \(key, val) -> do
+                  let prefixedKey = ArgMap.prefixDashed prefix (DashedLong key)
+                  let a = a' {argMapOpts = OptSwitch prefixedKey : argMapOpts a'}
+                  let p =
+                        subArgs prefix $
+                          setting
+                            [ reader str,
+                              switch val,
+                              long (NE.toList key)
+                            ]
+                  let expected = val :: String
+                  shouldParse p a e mConf expected
+
+      it "can prefix an option parser" $
+        forAllValid $ \a' ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \prefix ->
+                forAllValid $ \(key, val) -> do
+                  let prefixedKey = ArgMap.prefixDashed prefix (DashedLong key)
+                  let a = a' {argMapOpts = OptOption prefixedKey val : argMapOpts a'}
+                  let p =
+                        subArgs prefix $
+                          setting
+                            [ reader str,
+                              option,
+                              long (NE.toList key)
+                            ]
+                  let expected = val
+                  shouldParse p a e mConf expected
+
+    describe "subEnv" $ do
       it "can prefix an env var parser" $
         forAllValid $ \args ->
           forAllValid $ \e' ->
@@ -198,11 +237,11 @@ spec = do
                 forAllValid $ \(key, val) -> do
                   let prefixedKey = prefix <> key
                   let e = EnvMap.insert prefixedKey val e'
-                  let p = prefixed prefix $ setting [reader str, env key]
+                  let p = subEnv prefix $ setting [reader str, env key]
                   let expected = val
                   shouldParse p args e mConf expected
 
-    describe "Subconfig" $ do
+    describe "subConfig" $ do
       it "can prefix a conf val parser" $
         forAllValid $ \args ->
           forAllValid $ \e ->
@@ -352,8 +391,8 @@ shouldParse ::
   IO ()
 shouldParse p args e mConf expected = do
   errOrRes <- runParserOn p args e mConf
-  case errOrRes of
-    Left err -> expectationFailure $ show err
+  context (showParserABit p) $ case errOrRes of
+    Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected
 
 shouldFail ::

@@ -20,7 +20,7 @@ AnyDocsOr
         , setDocEnvVars = Just ("DISABLE_EXAMPLE" :| [])
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing
-        , setDocMetavar = Nothing
+        , setDocMetavar = Just "ANY"
         , setDocHelp = Just "Example of an enable/disable switch"
         }
   , AnyDocsSingle

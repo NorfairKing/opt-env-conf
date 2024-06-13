@@ -26,49 +26,48 @@ Alt
            (Just "Show this help text"))))
   (Fmap
      _
-     (Prefixed
-        "GREET_"
+     (Ap
         (Ap
-           (Ap
+           (Fmap
+              _
+              (Setting
+                 (Setting
+                    []
+                    [ _ ]
+                    True
+                    Nothing
+                    False
+                    Nothing
+                    Nothing
+                    (Just _)
+                    (Just "SUBJECT")
+                    (Just "Who to greet"))))
+           (Alt
               (Fmap
                  _
                  (Setting
                     (Setting
-                       []
+                       [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
                        [ _ ]
-                       True
-                       Nothing
                        False
                        Nothing
+                       True
+                       (Just ("GREETING" :| []))
+                       (Just
+                          [ ( "greeting" :| [] , BimapCodec _ _ (StringCodec Nothing) ) ])
                        Nothing
-                       (Just _)
-                       (Just "SUBJECT")
-                       (Just "Who to greet"))))
-              (Alt
-                 (Fmap
-                    _
-                    (Setting
-                       (Setting
-                          [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-                          [ _ ]
-                          False
-                          Nothing
-                          True
-                          (Just ("GREETING" :| []))
-                          (Just [ ( "greeting" , BimapCodec _ _ (StringCodec Nothing) ) ])
-                          Nothing
-                          (Just "GREETING")
-                          (Just "Greeting to use"))))
-                 (Pure _)))
+                       (Just "GREETING")
+                       (Just "Greeting to use"))))
+              (Pure _)))
+        (Setting
            (Setting
-              (Setting
-                 [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-                 [ _ ]
-                 False
-                 (Just _)
-                 False
-                 (Just ("POLITE" :| []))
-                 (Just [ ( "polite" , BoolCodec Nothing ) ])
-                 (Just _)
-                 Nothing
-                 (Just "Whether to be polite"))))))
+              [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+              [ _ ]
+              False
+              (Just _)
+              False
+              (Just ("GREET_POLITE" :| []))
+              (Just [ ( "polite" :| [] , BoolCodec Nothing ) ])
+              (Just _)
+              Nothing
+              (Just "Whether to be polite")))))

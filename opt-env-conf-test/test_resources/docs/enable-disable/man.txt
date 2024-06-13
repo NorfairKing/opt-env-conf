@@ -2,7 +2,7 @@
 
 [36mAll settings:[m
    switch:                             [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                
-   env var:                            [37mDISABLE_EXAMPLE[m [33mARG[m        [34mExample of an enable/disable switch[m
+   env var:                            [37mDISABLE_EXAMPLE[m [33mANY[m        [34mExample of an enable/disable switch[m
    [34mExample of an enable/disable switch[m                                                               
    switch:                             [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m
 
@@ -11,7 +11,7 @@
    [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m default: [33mTrue[m
 
 [36mEnvironment Variables:[m
-   [37mDISABLE_EXAMPLE[m [33mARG[m [34mExample of an enable/disable switch[m
+   [37mDISABLE_EXAMPLE[m [33mANY[m [34mExample of an enable/disable switch[m
 
 [36mConfiguration Values:[m
   [34mExample of an enable/disable switch[m

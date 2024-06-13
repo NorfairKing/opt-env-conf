@@ -1,7 +1,7 @@
 AnyDocsAnd
   [ AnyDocsSingle
       EnvDoc
-        { envDocVars = "GREET_GREETING" :| []
+        { envDocVars = "GREETING" :| []
         , envDocDefault = Nothing
         , envDocMetavar = Just "GREETING"
         , envDocHelp = Just "Greeting to use"

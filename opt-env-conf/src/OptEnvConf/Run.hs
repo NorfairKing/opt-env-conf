@@ -143,8 +143,6 @@ collectPossibleOpts = go
       ParserMany p -> go p
       ParserMapIO _ p -> go p
       ParserWithConfig pc pa -> go pc `S.union` go pa
-      ParserPrefixed _ p -> go p
-      ParserSubconfig _ p -> go p
       ParserSetting Setting {..} ->
         S.fromList $
           concat
@@ -165,7 +163,7 @@ runParserOn ::
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig =
   validationToEither <$> do
-    let ppEnv = PPEnv {ppEnvPrefix = "", ppEnvEnv = envVars, ppEnvConf = mConfig}
+    let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     runValidationT $ evalStateT (runReaderT (go p) ppEnv) args
   where
     tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
@@ -204,17 +202,6 @@ runParserOn p args envVars mConfig =
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
-      ParserPrefixed prefix p' ->
-        local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
-      ParserSubconfig key p' -> do
-        mConf <- asks ppEnvConf
-        case mConf of
-          Nothing -> go p'
-          Just c -> do
-            case JSON.parseEither (.:? Key.fromString key) c of
-              Left err -> error err -- TODO nice error
-              Right mSubConf ->
-                local (\e -> e {ppEnvConf = mSubConf}) $ go p'
       ParserSetting set@Setting {..} -> do
         mArg <-
           if settingTryArgument
@@ -271,8 +258,7 @@ runParserOn p args envVars mConfig =
                         -- always fails if it's missing a reader.
                         rs <- requireReaders settingReaders
 
-                        prefix <- asks ppEnvPrefix
-                        let vars = map (prefix <>) (NE.toList ne)
+                        let vars = NE.toList ne
 
                         es <- asks ppEnvEnv
                         case msum $ map (`EnvMap.lookup` es) vars of
@@ -287,14 +273,22 @@ runParserOn p args envVars mConfig =
                       _ -> do
                         mConf <- case settingConfigVals of
                           Nothing -> pure NotRun
-                          Just ((k, c) :| _) -> do
+                          Just ((ne, c) :| _) -> do
                             -- TODO try parsing with the others
                             -- TODO handle subconfig prefix here?
                             mObj <- asks ppEnvConf
                             case mObj of
                               Nothing -> pure NotFound
-                              Just obj ->
-                                case JSON.parseEither ((obj .:?) . Key.fromString) k of
+                              Just obj -> do
+                                let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
+                                    jsonParser o (k :| rest) = case NE.nonEmpty rest of
+                                      Nothing -> o .:? Key.fromString k
+                                      Just neRest -> do
+                                        mO' <- o .:? Key.fromString k
+                                        case mO' of
+                                          Nothing -> pure Nothing
+                                          Just o' -> jsonParser o' neRest
+                                case JSON.parseEither (jsonParser obj) ne of
                                   Left err -> ppError $ ParseErrorConfigRead err
                                   Right mV -> case mV of
                                     Nothing -> pure NotFound
@@ -353,8 +347,7 @@ type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 type PPState = ArgMap
 
 data PPEnv = PPEnv
-  { ppEnvPrefix :: !String,
-    ppEnvEnv :: !EnvMap,
+  { ppEnvEnv :: !EnvMap,
     ppEnvConf :: !(Maybe JSON.Object)
   }
 

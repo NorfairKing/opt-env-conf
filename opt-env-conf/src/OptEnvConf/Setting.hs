@@ -39,7 +39,7 @@ data Setting a = Setting
     --
     -- TODO we could actually have value codecs with void as the first argument.
     -- consider doing that.
-    settingConfigVals :: !(Maybe (NonEmpty (String, ValueCodec a a))),
+    settingConfigVals :: !(Maybe (NonEmpty (NonEmpty String, ValueCodec a a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: Maybe (a, String),
     -- | Whether to hide docs
@@ -149,7 +149,7 @@ conf k = confWith k codec
 
 confWith :: String -> ValueCodec a a -> Builder a
 confWith k c =
-  let t = (k, c)
+  let t = (k :| [], c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value

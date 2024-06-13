@@ -31,7 +31,7 @@ AnyDocsOr
             , setDocTryOption = True
             , setDocDasheds =
                 [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-            , setDocEnvVars = Just ("GREET_GREETING" :| [])
+            , setDocEnvVars = Just ("GREETING" :| [])
             , setDocConfKeys = Just (( "greeting" :| [] , StringSchema ) :| [])
             , setDocDefault = Nothing
             , setDocMetavar = Just "GREETING"

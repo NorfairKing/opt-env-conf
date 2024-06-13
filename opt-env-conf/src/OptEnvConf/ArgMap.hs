@@ -6,6 +6,7 @@ module OptEnvConf.ArgMap
     empty,
     Dashed (..),
     renderDashed,
+    prefixDashed,
     parse,
     parse_,
     consumeArgument,
@@ -43,6 +44,11 @@ renderDashed :: Dashed -> String
 renderDashed = \case
   DashedShort c -> ['-', c]
   DashedLong cs -> '-' : '-' : NE.toList cs
+
+prefixDashed :: String -> Dashed -> Dashed
+prefixDashed p = \case
+  DashedLong l -> DashedLong $ p `NE.prependList` l
+  DashedShort c -> DashedShort c
 
 parse :: [String] -> (ArgMap, [String])
 parse args =

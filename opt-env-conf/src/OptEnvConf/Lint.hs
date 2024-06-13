@@ -164,8 +164,6 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserMany p -> go p
       ParserMapIO _ p -> go p
       ParserWithConfig p1 p2 -> go p1 *> go p2
-      ParserPrefixed _ p -> go p
-      ParserSubconfig _ p -> go p
       ParserSetting Setting {..} -> do
         case settingHelp of
           Nothing ->

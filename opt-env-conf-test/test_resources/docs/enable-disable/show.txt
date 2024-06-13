@@ -63,7 +63,7 @@ Alt
                     (Just ("DISABLE_EXAMPLE" :| []))
                     Nothing
                     Nothing
-                    Nothing
+                    (Just "ANY")
                     (Just "Example of an enable/disable switch")))
               (Alt
                  (Setting
@@ -74,7 +74,7 @@ Alt
                        Nothing
                        False
                        Nothing
-                       (Just [ ( "example" , BoolCodec Nothing ) ])
+                       (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
                        Nothing
                        Nothing
                        (Just "Example of an enable/disable switch")))
