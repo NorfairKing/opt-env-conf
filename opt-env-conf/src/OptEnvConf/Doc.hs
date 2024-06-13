@@ -1,6 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -115,8 +116,58 @@ simplifyAnyDocs = go
       AnyDocsAnd [] -> []
       ds -> [go ds]
 
+-- A set doc is actually a shorthand for an Or
+-- So when we find Or docs that can be combined in the same way, we prefer to
+-- see a single SetDoc
+combineSetDocs :: AnyDocs SetDoc -> AnyDocs SetDoc
+combineSetDocs = simplifyAnyDocs . go
+  where
+    go = \case
+      AnyDocsOr os -> AnyDocsOr $ goOr os
+      AnyDocsAnd ds -> AnyDocsAnd $ map go ds
+      AnyDocsSingle d -> AnyDocsSingle d
+
+    goOr = \case
+      [] -> []
+      [d] -> [d]
+      (AnyDocsSingle d1 : AnyDocsSingle d2 : ds) -> case combineSetDoc d1 d2 of
+        Nothing -> AnyDocsSingle d1 : goOr (AnyDocsSingle d2 : ds)
+        Just d -> goOr $ AnyDocsSingle d : ds
+      (d : ds) -> d : goOr ds
+
+emptySetDoc :: SetDoc
+emptySetDoc =
+  SetDoc
+    { setDocTryArgument = False,
+      setDocTrySwitch = False,
+      setDocTryOption = False,
+      setDocDasheds = [],
+      setDocEnvVars = Nothing,
+      setDocConfKeys = Nothing,
+      setDocDefault = Nothing,
+      setDocMetavar = Nothing,
+      setDocHelp = Nothing
+    }
+
+combineSetDoc :: SetDoc -> SetDoc -> Maybe SetDoc
+combineSetDoc sd1 sd2 = do
+  guard $ ((==) <$> setDocHelp sd1 <*> setDocHelp sd2) == Just True
+  let sd1' = sd1 {setDocMetavar = Nothing, setDocHelp = Nothing}
+  let sd2' = sd2 {setDocMetavar = Nothing, setDocHelp = Nothing}
+  if
+    | setDocTryArgument sd2 -> Nothing
+    | setDocTrySwitch sd2 -> Nothing
+    | setDocTryOption sd2 -> Nothing
+    | not (null (setDocDasheds sd2)) -> Nothing
+    | sd1' == emptySetDoc {setDocTryArgument = True} -> Just $ sd2 {setDocTryArgument = True}
+    | sd1' == emptySetDoc {setDocTrySwitch = True, setDocDasheds = setDocDasheds sd1} -> Just $ sd2 {setDocTrySwitch = True, setDocDasheds = setDocDasheds sd1}
+    | sd1' == emptySetDoc {setDocTryOption = True, setDocDasheds = setDocDasheds sd1} -> Just $ sd2 {setDocTryOption = True, setDocDasheds = setDocDasheds sd1}
+    | isJust (setDocEnvVars sd2) -> Nothing
+    | sd1' == emptySetDoc {setDocEnvVars = setDocEnvVars sd1} -> Just $ sd2 {setDocEnvVars = setDocEnvVars sd1}
+    | otherwise -> Nothing
+
 parserDocs :: Parser a -> AnyDocs SetDoc
-parserDocs = simplifyAnyDocs . go
+parserDocs = combineSetDocs . simplifyAnyDocs . go
   where
     noDocs = AnyDocsAnd []
     go :: Parser a -> AnyDocs SetDoc
@@ -125,7 +176,7 @@ parserDocs = simplifyAnyDocs . go
       ParserPure _ -> noDocs
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
       ParserSelect p1 p2 -> AnyDocsAnd [go p1, go p2]
-      ParserEmpty -> noDocs
+      ParserEmpty -> AnyDocsOr []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
       ParserMapIO _ p -> go p -- TODO: is this right? Maybe we want to document that it's not a pure parser?

@@ -17,7 +17,6 @@ import Control.Monad
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Text (Text)
-import qualified Data.Text as T
 import OptEnvConf.Doc
 import OptEnvConf.Parser
 import OptEnvConf.Setting

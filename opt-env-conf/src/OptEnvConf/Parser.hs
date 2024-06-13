@@ -208,12 +208,13 @@ enableDisableSwitch :: Bool -> [Builder Bool] -> Parser Bool
 enableDisableSwitch defaultBool builders =
   choice $
     catMaybes
-      [ Just parseDisableSwitch,
+      [ Just parseDummy,
+        Just parseDisableSwitch,
         Just parseEnableSwitch,
         parseEnableEnv,
         parseDisableEnv,
         parseConfigVal,
-        Just parseDummy
+        Just $ pure defaultBool
       ]
   where
     s = buildSetting builders
@@ -326,7 +327,7 @@ enableDisableSwitch defaultBool builders =
             settingTryOption = False,
             settingEnvVars = Nothing,
             settingConfigVals = Nothing,
-            settingDefaultValue = Just (defaultBool, show defaultBool),
+            settingDefaultValue = Nothing,
             settingHidden = False,
             settingMetavar = Just $ fromMaybe "ANY" $ settingMetavar s,
             settingHelp = settingHelp s
