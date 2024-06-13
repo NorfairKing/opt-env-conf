@@ -14,7 +14,6 @@ module OptEnvConf.Lint
 where
 
 import Control.Monad
-import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Text (Text)
@@ -166,8 +165,6 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserSome p -> go p
       ParserMapIO _ p -> go p
       ParserWithConfig p1 p2 -> go p1 *> go p2
-      ParserOptionalFirst ps -> traverse_ go ps
-      ParserRequiredFirst ps -> traverse_ go ps
       ParserPrefixed _ p -> go p
       ParserSubconfig _ p -> go p
       ParserSetting Setting {..} -> do

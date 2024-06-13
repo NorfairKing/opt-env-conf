@@ -131,8 +131,6 @@ parserDocs = simplifyAnyDocs . go
       ParserSome p -> go p -- TODO: is this right?
       ParserMapIO _ p -> go p -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
-      ParserOptionalFirst ps -> AnyDocsOr $ map go ps
-      ParserRequiredFirst ps -> AnyDocsOr $ map go ps
       ParserPrefixed prefix p -> setDocPrefixed prefix <$> go p
       ParserSubconfig key p -> setDocSubconfiged key <$> go p
       ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set

@@ -8,8 +8,6 @@ module OptEnvConf.Parser
     setting,
     prefixed,
     subConfig,
-    optionalFirst,
-    requiredFirst,
     someNonEmpty,
     mapIO,
     withConfig,
@@ -40,7 +38,6 @@ import OptEnvConf.Reader
 import OptEnvConf.Setting
 import Path.IO
 import System.FilePath
-import Text.Show
 
 data Parser a where
   -- Functor
@@ -63,11 +60,6 @@ data Parser a where
   ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
-  -- Combining
-  -- TODO Maybe we can get rid of this constructor using 'optional requiredFirst'
-  ParserOptionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
-  -- TODO maybe we can get rid of this constructor using Alt
-  ParserRequiredFirst :: [Parser (Maybe a)] -> Parser a
   -- | Prefixed env var
   ParserPrefixed :: !String -> !(Parser a) -> Parser a
   -- | Subconfig
@@ -103,8 +95,6 @@ instance Alternative Parser where
           ParserSome _ -> False
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
-          ParserOptionalFirst _ -> False
-          ParserRequiredFirst ps -> null ps
           ParserPrefixed _ p -> isEmpty p
           ParserSubconfig _ p -> isEmpty p
           ParserSetting _ -> False
@@ -165,14 +155,6 @@ showParserABit = ($ "") . go 0
             . go 11 p1
             . showString " "
             . go 11 p2
-      ParserOptionalFirst ps ->
-        showParen (d > 10) $
-          showString "OptionalFirst "
-            . showListWith (go 11) ps
-      ParserRequiredFirst ps ->
-        showParen (d > 10) $
-          showString "RequiredFirst "
-            . showListWith (go 11) ps
       ParserPrefixed prefix p ->
         showParen (d > 10) $
           showString "Prefixed "
@@ -201,12 +183,6 @@ prefixed = ParserPrefixed
 
 subConfig :: String -> Parser a -> Parser a
 subConfig = ParserSubconfig
-
-optionalFirst :: [Parser (Maybe a)] -> Parser (Maybe a)
-optionalFirst = ParserOptionalFirst
-
-requiredFirst :: [Parser (Maybe a)] -> Parser a
-requiredFirst = ParserRequiredFirst
 
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty = ParserSome

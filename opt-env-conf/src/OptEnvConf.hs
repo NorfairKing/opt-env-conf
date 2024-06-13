@@ -9,7 +9,6 @@ module OptEnvConf
     setting,
     prefixed,
     subConfig,
-    requiredFirst,
     someNonEmpty,
     mapIO,
     withConfig,

@@ -145,8 +145,6 @@ collectPossibleOpts = go
       ParserSome p -> go p
       ParserMapIO _ p -> go p
       ParserWithConfig pc pa -> go pc `S.union` go pa
-      ParserOptionalFirst p -> S.unions $ map go p
-      ParserRequiredFirst p -> S.unions $ map go p
       ParserPrefixed _ p -> go p
       ParserSubconfig _ p -> go p
       ParserSetting Setting {..} ->
@@ -212,28 +210,6 @@ runParserOn p args envVars mConfig =
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
-      ParserOptionalFirst pss -> case pss of
-        [] -> pure Nothing
-        (p' : ps) -> do
-          eor <- tryPP $ go p'
-          case eor of
-            Left err -> ppErrors err -- Error if any fails, don't ignore it.
-            Right (mA, s') -> case mA of
-              Nothing -> go $ ParserOptionalFirst ps -- Don't record the state and continue to try to parse the next
-              Just a -> do
-                put s' -- Record the state
-                pure (Just a)
-      ParserRequiredFirst pss -> case pss of
-        [] -> ppError ParseErrorRequired
-        (p' : ps) -> do
-          eor <- tryPP $ go p'
-          case eor of
-            Left err -> ppErrors err -- Error if any fails, don't ignore it.
-            Right (mA, s') -> case mA of
-              Nothing -> go $ ParserRequiredFirst ps -- Don't record the state and continue to try to parse the next
-              Just a -> do
-                put s' -- Record the state of the parser that succeeded
-                pure a
       ParserPrefixed prefix p' ->
         local (\e -> e {ppEnvPrefix = ppEnvPrefix e <> prefix}) $ go p'
       ParserSubconfig key p' -> do
