@@ -3,7 +3,15 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module OptEnvConf.Run where
+module OptEnvConf.Run
+  ( getSettings,
+    runParser,
+    runParserComplete,
+    runParserOn,
+    internalParser,
+    unrecognisedOptions,
+  )
+where
 
 import Autodocodec
 import Control.Applicative
@@ -36,6 +44,9 @@ import System.Exit
 import System.IO
 import Text.Colour
 import Text.Colour.Capabilities.FromEnv
+
+getSettings :: (HasParser a) => IO a
+getSettings = runParser settingsParser
 
 runParser :: Parser a -> IO a
 runParser = fmap fst . runParserWithLeftovers
