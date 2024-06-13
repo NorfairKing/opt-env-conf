@@ -142,7 +142,6 @@ collectPossibleOpts = go
       ParserEmpty -> S.empty
       ParserAlt p1 p2 -> go p1 `S.union` go p2
       ParserMany p -> go p
-      ParserSome p -> go p
       ParserMapIO _ p -> go p
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserPrefixed _ p -> go p
@@ -200,10 +199,6 @@ runParserOn p args envVars mConfig =
             put s'
             as <- go (ParserMany p')
             pure (a : as)
-      ParserSome p' -> do
-        a <- go p'
-        as <- go $ ParserMany p'
-        pure $ a :| as
       ParserMapIO f p' -> do
         a <- go p'
         liftIO $ f a

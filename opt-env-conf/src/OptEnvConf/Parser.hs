@@ -51,7 +51,6 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
-  ParserSome :: !(Parser a) -> Parser (NonEmpty a)
   -- | Apply a computation to the result of a parser
   --
   -- This is intended for use-cases like resolving a file to an absolute path.
@@ -92,7 +91,6 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
-          ParserSome _ -> False
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserPrefixed _ p -> isEmpty p
@@ -105,8 +103,7 @@ instance Alternative Parser where
           (False, False) -> ParserAlt p1 p2
   many = ParserMany
 
-  -- TODO maybe we can get rid of the some constructor by using (:) <$> p <$> many p
-  some = fmap NE.toList . ParserSome
+  some p = (:) <$> p <*> many p
 
 showParserABit :: Parser a -> String
 showParserABit = ($ "") . go 0
@@ -140,10 +137,6 @@ showParserABit = ($ "") . go 0
       ParserMany p ->
         showParen (d > 10) $
           showString "Many "
-            . go 11 p
-      ParserSome p ->
-        showParen (d > 10) $
-          showString "Some "
             . go 11 p
       ParserMapIO _ p ->
         showParen (d > 10) $
@@ -185,7 +178,7 @@ subConfig :: String -> Parser a -> Parser a
 subConfig = ParserSubconfig
 
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
-someNonEmpty = ParserSome
+someNonEmpty p = (:|) <$> p <*> many p
 
 mapIO :: (a -> IO b) -> Parser a -> Parser b
 mapIO = ParserMapIO
