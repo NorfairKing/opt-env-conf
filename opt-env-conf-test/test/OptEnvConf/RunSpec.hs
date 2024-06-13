@@ -3,10 +3,13 @@
 module OptEnvConf.RunSpec (spec) where
 
 import Control.Applicative
-import Data.Aeson as JSON (Object)
+import Data.Aeson as JSON (Object, toJSON)
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KeyMap
 import Data.GenValidity.Aeson ()
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.Text (Text)
 import OptEnvConf
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
@@ -162,7 +165,58 @@ spec = do
               let expected = NE.toList ls
               shouldParse p args e mConf expected
 
-    describe "Arg" $ do
+    describe "MapIO" $ do
+      it "can run an IO action on the result of a parser" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = mapIO (pure . succ) (pure (i :: Int))
+                let expected = succ i
+                shouldParse p args e mConf expected
+
+    describe "WithConfig" $ do
+      it "can replace the config object" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \c1 ->
+              forAllValid $ \c2' ->
+                forAllValid $ \(key, val) -> do
+                  let c2 = KeyMap.insert key (toJSON val) c2'
+                  let p =
+                        withConfig (pure (Just c2)) $
+                          setting [conf (Key.toString key)]
+                  let expected = val :: Text
+                  shouldParse p args e (Just c1) expected
+
+    describe "Prefixed" $ do
+      it "can prefix an env var parser" $
+        forAllValid $ \args ->
+          forAllValid $ \e' ->
+            forAllValid $ \mConf ->
+              forAllValid $ \prefix ->
+                forAllValid $ \(key, val) -> do
+                  let prefixedKey = prefix <> key
+                  let e = EnvMap.insert prefixedKey val e'
+                  let p = prefixed prefix $ setting [reader str, env key]
+                  let expected = val
+                  shouldParse p args e mConf expected
+
+    describe "Subconfig" $ do
+      it "can prefix a conf val parser" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \c' ->
+              forAllValid $ \prefix ->
+                forAllValid $ \(key, val) -> do
+                  let c = KeyMap.insert prefix (toJSON (KeyMap.singleton key (toJSON val))) c'
+                  let p =
+                        subConfig (Key.toString prefix) $
+                          setting [conf (Key.toString key)]
+                  let expected = val :: Text
+                  shouldParse p args e (Just c) expected
+
+    describe "Setting" $ do
       it "can parse a single arg" $
         forAllValid $ \e ->
           forAllValid $ \mConf ->
@@ -172,7 +226,6 @@ spec = do
               let expected = arg
               shouldParse p args e mConf expected
 
-    describe "Opt" $ do
       it "can parse a single option" $
         forAllValid $ \e ->
           forAllValid $ \mConf ->
@@ -191,7 +244,6 @@ spec = do
               let expected = rs
               shouldParse p args e mConf expected
 
-    describe "EnvVar" $ do
       it "can parse a single env var" $
         forAllValid $ \args ->
           forAllValid $ \e' ->
@@ -201,6 +253,16 @@ spec = do
                 let p = setting [reader str, env key]
                 let expected = val
                 shouldParse p args e mConf expected
+
+      it "can parse a single config value" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \c' ->
+              forAllValid $ \(key, val) -> do
+                let c = KeyMap.insert key (toJSON val) c'
+                let p = setting [conf (Key.toString key)]
+                let expected = val :: Text
+                shouldParse p args e (Just c) expected
 
     describe "arguments" $ do
       argParseSpec
