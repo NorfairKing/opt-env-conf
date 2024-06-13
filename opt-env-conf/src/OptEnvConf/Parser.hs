@@ -4,7 +4,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.Parser
-  ( -- * Parser API
+  ( Functor (..),
+    Applicative (..),
+    Alternative (..),
+    Selective (..),
+
+    -- * Parser API
     setting,
     prefixed,
     subConfig,

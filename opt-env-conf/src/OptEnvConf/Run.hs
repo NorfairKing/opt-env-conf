@@ -11,7 +11,6 @@ import Control.Arrow (left)
 import Control.Monad
 import Control.Monad.Reader hiding (Reader)
 import Control.Monad.State
-import Control.Selective (select)
 import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key

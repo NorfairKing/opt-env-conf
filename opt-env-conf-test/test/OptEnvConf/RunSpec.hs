@@ -85,6 +85,25 @@ spec = do
                 let expected = (succ i, i :: Int)
                 shouldParse p args e mConf expected
 
+    describe "Select" $ do
+      it "can use the second parser with select" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = select (pure (Left i :: Either Int Int)) (pure succ)
+                let expected = succ i
+                shouldParse p args e mConf expected
+
+      it "can avoid the second parser with select" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = select (pure (Right i :: Either Int Int)) (pure succ)
+                let expected = i
+                shouldParse p args e mConf expected
+
     describe "Empty" $ do
       it "can fail to parse an empty value" $
         forAllValid $ \args ->
