@@ -9,7 +9,7 @@
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     validity.url = "github:NorfairKing/validity";
     validity.flake = false;
-    autodocodec.url = "github:NorfairKing/autodocodec";
+    autodocodec.url = "github:NorfairKing/autodocodec/opt-env-conf";
     autodocodec.flake = false;
     # TODO put this branch back once we release safe-coloured-text
     safe-coloured-text.url = "github:NorfairKing/safe-coloured-text/opt-env-conf";

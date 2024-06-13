@@ -246,21 +246,24 @@ withLocalYamlConfig =
 
 enableDisableSwitch :: Bool -> [Builder Bool] -> Parser Bool
 enableDisableSwitch defaultBool builders =
-  fromMaybe defaultBool
-    <$> choice
-      [ optional $
-          ParserSetting $
-            modEnable $
-              buildSetting $
-                [switch True, reader exists]
-                  ++ builders,
-        optional $
-          ParserSetting $
-            modDisable $
-              buildSetting $
-                [switch False, reader exists]
-                  ++ builders
-      ]
+  fromMaybe defaultBool <$> enableDisableSwitch' builders
+
+enableDisableSwitch' :: [Builder Bool] -> Parser (Maybe Bool)
+enableDisableSwitch' builders =
+  choice
+    [ optional $
+        ParserSetting $
+          modEnable $
+            buildSetting $
+              switch True
+                : builders,
+      optional $
+        ParserSetting $
+          modDisable $
+            buildSetting $
+              switch False
+                : builders
+    ]
   where
     modEnable :: Setting Bool -> Setting Bool
     modEnable s =
