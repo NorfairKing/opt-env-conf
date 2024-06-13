@@ -17,6 +17,7 @@ spec = do
   exampleParserSpec "optional" optionalParser
   exampleParserSpec "big-config" bigConfigParser
   exampleParserSpec "hidden" hiddenParser
+  exampleParserSpec "enable-disable" enableDisableParser
   exampleParserSpec "greet" greetParser
 
 exampleParserSpec :: FilePath -> Parser a -> Spec
@@ -177,4 +178,17 @@ hiddenParser =
         hidden,
         value "default",
         help "Example of a hidden setting"
+      ]
+
+data EnableDisable = EnableDisable Bool
+
+enableDisableParser :: Parser EnableDisable
+enableDisableParser =
+  EnableDisable
+    <$> enableDisableSwitch
+      True
+      [ long "example",
+        help "Example of an enable/disable switch",
+        env "EXAMPLE",
+        conf "example"
       ]

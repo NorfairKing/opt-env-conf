@@ -224,32 +224,53 @@ enableDisableSwitch defaultBool builders =
 
 enableDisableSwitch' :: [Builder Bool] -> Parser (Maybe Bool)
 enableDisableSwitch' builders =
-  choice
-    [ optional $
-        ParserSetting $
+  optional $
+    choice
+      [ ParserSetting $
           modEnable $
-            buildSetting $
-              switch True
-                : builders,
-      optional $
+            buildSetting builders,
         ParserSetting $
           modDisable $
+            buildSetting builders,
+        ParserSetting $
+          modUnhidden $
             buildSetting $
-              switch False
+              reader exists
                 : builders
-    ]
+      ]
   where
     modEnable :: Setting Bool -> Setting Bool
     modEnable s =
       s
         { settingDasheds = mapMaybe (prefixDashedLong "enable-") (settingDasheds s),
-          settingDefaultValue = Nothing
+          settingTryArgument = False,
+          settingSwitchValue = Just True,
+          settingTryOption = False,
+          settingEnvVars = Nothing,
+          settingConfigVals = Nothing,
+          settingDefaultValue = Nothing,
+          settingHidden = True
         }
     modDisable :: Setting Bool -> Setting Bool
     modDisable s =
       s
         { settingDasheds = mapMaybe (prefixDashedLong "disable-") (settingDasheds s),
-          settingDefaultValue = Nothing
+          settingTryArgument = False,
+          settingSwitchValue = Just False,
+          settingTryOption = False,
+          settingEnvVars = Nothing,
+          settingConfigVals = Nothing,
+          settingDefaultValue = Nothing,
+          settingHidden = True
+        }
+    modUnhidden :: Setting Bool -> Setting Bool
+    modUnhidden s =
+      s
+        { settingDasheds = mapMaybe (prefixDashedLong "(enable|disable)-") (settingDasheds s),
+          settingSwitchValue = Just True, -- Unused
+          settingMetavar = Just $ fromMaybe "ANY" $ settingMetavar s,
+          settingDefaultValue = Nothing,
+          settingHidden = False
         }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed
     prefixDashedLong s = \case

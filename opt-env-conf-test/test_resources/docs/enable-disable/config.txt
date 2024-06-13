@@ -1,0 +1,3 @@
+  [34mExample of an enable/disable switch[m
+  [37mexample[m:
+    [33m<boolean>[m

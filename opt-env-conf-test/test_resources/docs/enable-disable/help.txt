@@ -1,0 +1,6 @@
+[36mUsage: [m[33menable-disable[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m--(enable|disable)-example[m[36m)[m
+
+   switch:  [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                
+   switch:  [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m
+   env var: [37mEXAMPLE[m [33mANY[m                                                   
+

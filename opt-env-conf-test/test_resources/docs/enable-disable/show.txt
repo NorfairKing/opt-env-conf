@@ -1,0 +1,70 @@
+Alt
+  (Alt
+     (Setting
+        (Setting
+           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Show this help text")))
+     (Setting
+        (Setting
+           [ DashedLong ('r' :| "ender-man-page") ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "Show this help text"))))
+  (Fmap
+     _
+     (Alt
+        (Fmap
+           _
+           (Alt
+              (Setting
+                 (Setting
+                    [ DashedLong ('e' :| "nable-example") ]
+                    []
+                    False
+                    (Just _)
+                    False
+                    Nothing
+                    Nothing
+                    Nothing
+                    Nothing
+                    (Just "Example of an enable/disable switch")))
+              (Alt
+                 (Setting
+                    (Setting
+                       [ DashedLong ('d' :| "isable-example") ]
+                       []
+                       False
+                       (Just _)
+                       False
+                       Nothing
+                       Nothing
+                       Nothing
+                       Nothing
+                       (Just "Example of an enable/disable switch")))
+                 (Setting
+                    (Setting
+                       [ DashedLong ('(' :| "enable|disable)-example") ]
+                       [ _ ]
+                       False
+                       (Just _)
+                       False
+                       (Just ("EXAMPLE" :| []))
+                       (Just [ ( "example" , BoolCodec Nothing ) ])
+                       Nothing
+                       (Just "ANY")
+                       (Just "Example of an enable/disable switch"))))))
+        (Pure _)))

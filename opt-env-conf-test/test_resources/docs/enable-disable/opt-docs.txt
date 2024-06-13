@@ -1,0 +1,22 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = True
+        , optDocTryOption = False
+        , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Nothing
+        , optDocHelp = Just "Show this help text"
+        }
+  , AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = True
+        , optDocTryOption = False
+        , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Just "ANY"
+        , optDocHelp = Just "Example of an enable/disable switch"
+        }
+  ]
