@@ -17,6 +17,18 @@ AnyDocsOr
         , setDocTrySwitch = True
         , setDocTryOption = False
         , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
+        , setDocMetavar = Just "ANY"
+        , setDocHelp = Just "Example of an enable/disable switch"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
         , setDocEnvVars = Just ("DISABLE_EXAMPLE" :| [])
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing

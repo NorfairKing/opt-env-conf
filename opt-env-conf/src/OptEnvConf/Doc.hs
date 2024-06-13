@@ -1,7 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -15,6 +14,7 @@ import Data.List (intercalate, intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Text (Text)
 import qualified Data.Text as T
 import OptEnvConf.ArgMap (Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
@@ -116,58 +116,8 @@ simplifyAnyDocs = go
       AnyDocsAnd [] -> []
       ds -> [go ds]
 
--- A set doc is actually a shorthand for an Or
--- So when we find Or docs that can be combined in the same way, we prefer to
--- see a single SetDoc
-combineSetDocs :: AnyDocs SetDoc -> AnyDocs SetDoc
-combineSetDocs = simplifyAnyDocs . go
-  where
-    go = \case
-      AnyDocsOr os -> AnyDocsOr $ goOr os
-      AnyDocsAnd ds -> AnyDocsAnd $ map go ds
-      AnyDocsSingle d -> AnyDocsSingle d
-
-    goOr = \case
-      [] -> []
-      [d] -> [d]
-      (AnyDocsSingle d1 : AnyDocsSingle d2 : ds) -> case combineSetDoc d1 d2 of
-        Nothing -> AnyDocsSingle d1 : goOr (AnyDocsSingle d2 : ds)
-        Just d -> goOr $ AnyDocsSingle d : ds
-      (d : ds) -> d : goOr ds
-
-emptySetDoc :: SetDoc
-emptySetDoc =
-  SetDoc
-    { setDocTryArgument = False,
-      setDocTrySwitch = False,
-      setDocTryOption = False,
-      setDocDasheds = [],
-      setDocEnvVars = Nothing,
-      setDocConfKeys = Nothing,
-      setDocDefault = Nothing,
-      setDocMetavar = Nothing,
-      setDocHelp = Nothing
-    }
-
-combineSetDoc :: SetDoc -> SetDoc -> Maybe SetDoc
-combineSetDoc sd1 sd2 = do
-  guard $ ((==) <$> setDocHelp sd1 <*> setDocHelp sd2) == Just True
-  let sd1' = sd1 {setDocMetavar = Nothing, setDocHelp = Nothing}
-  let sd2' = sd2 {setDocMetavar = Nothing, setDocHelp = Nothing}
-  if
-    | setDocTryArgument sd2 -> Nothing
-    | setDocTrySwitch sd2 -> Nothing
-    | setDocTryOption sd2 -> Nothing
-    | not (null (setDocDasheds sd2)) -> Nothing
-    | sd1' == emptySetDoc {setDocTryArgument = True} -> Just $ sd2 {setDocTryArgument = True}
-    | sd1' == emptySetDoc {setDocTrySwitch = True, setDocDasheds = setDocDasheds sd1} -> Just $ sd2 {setDocTrySwitch = True, setDocDasheds = setDocDasheds sd1}
-    | sd1' == emptySetDoc {setDocTryOption = True, setDocDasheds = setDocDasheds sd1} -> Just $ sd2 {setDocTryOption = True, setDocDasheds = setDocDasheds sd1}
-    | isJust (setDocEnvVars sd2) -> Nothing
-    | sd1' == emptySetDoc {setDocEnvVars = setDocEnvVars sd1} -> Just $ sd2 {setDocEnvVars = setDocEnvVars sd1}
-    | otherwise -> Nothing
-
 parserDocs :: Parser a -> AnyDocs SetDoc
-parserDocs = combineSetDocs . simplifyAnyDocs . go
+parserDocs = simplifyAnyDocs . go
   where
     noDocs = AnyDocsAnd []
     go :: Parser a -> AnyDocs SetDoc
@@ -201,10 +151,20 @@ settingOptDoc :: Setting a -> Maybe OptDoc
 settingOptDoc = settingSetDoc >=> setDocOptDoc
 
 renderSetDoc :: SetDoc -> [[Chunk]]
-renderSetDoc SetDoc {..} =
+renderSetDoc setDoc =
   concat
-    [ maybe [[fore red "undocumented"]] helpLines setDocHelp,
-      [ unwordsChunks
+    [ renderSetDocHeader (setDocHelp setDoc),
+      renderSetDocWithoutHeader setDoc,
+      [[]]
+    ]
+
+renderSetDocHeader :: Maybe Help -> [[Chunk]]
+renderSetDocHeader = maybe [[fore red "undocumented"]] helpLines
+
+renderSetDocWithoutHeader :: SetDoc -> [[Chunk]]
+renderSetDocWithoutHeader SetDoc {..} =
+  concat
+    [ [ unwordsChunks
           [ ["argument:"],
             [metavarChunk $ fromMaybe "ARG" setDocMetavar]
           ]
@@ -240,12 +200,11 @@ renderSetDoc SetDoc {..} =
                     [["config: ", confValChunk key, ": "] ++ line]
                   ls ->
                     ["config: ", confValChunk key, ":"]
-                      : map ("  " :) ls
+                      : indent ls
             )
             (NE.toList confs)
           | confs <- maybeToList setDocConfKeys
-        ],
-      [[]]
+        ]
     ]
 
 helpLines :: Help -> [[Chunk]]
@@ -262,23 +221,23 @@ renderManPage progname docs =
         concat
           [ [ renderShortOptDocs progname optDocs,
               [],
-              [fore cyan "All settings:"],
+              headerChunks "All settings",
               renderAnyDocs docs
             ],
             concat
-              [ [ [fore cyan "Options:"],
+              [ [ headerChunks "Options",
                   renderLongOptDocs optDocs
                 ]
                 | not (nullDocs optDocs)
               ],
             concat
-              [ [ [fore cyan "Environment Variables:"],
+              [ [ headerChunks "Environment Variables",
                   renderEnvDocs envDocs
                 ]
                 | not (nullDocs envDocs)
               ],
             concat
-              [ [ [fore cyan "Configuration Values:"],
+              [ [ headerChunks "Configuration Values",
                   renderConfDocs confDocs
                 ]
                 | not (nullDocs confDocs)
@@ -307,8 +266,37 @@ renderAnyDocs = unlinesChunks . go
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
-      AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle d -> map ("  " :) (renderSetDoc d)
+      AnyDocsOr ds -> goOr ds
+      AnyDocsSingle d -> indent (renderSetDoc d)
+
+    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
+    goOr :: [AnyDocs SetDoc] -> [[Chunk]]
+    goOr = \case
+      [] -> []
+      [d] -> go d
+      (AnyDocsSingle d : ds) ->
+        case setDocHelp d of
+          Nothing -> go (AnyDocsSingle d) ++ goOr ds
+          Just h ->
+            let (sds, rest) = goSameHelp h ds
+             in concat
+                  [ indent $ renderSetDocHeader (Just h),
+                    indent $ concatMap renderSetDocWithoutHeader $ d : sds,
+                    [[]],
+                    goOr rest
+                  ]
+      (d : ds) -> go d ++ goOr ds
+
+    goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
+    goSameHelp h = \case
+      [] -> ([], [])
+      (AnyDocsSingle d : ds) ->
+        if setDocHelp d == Just h
+          then
+            let (sds, rest) = goSameHelp h ds
+             in (d : sds, rest)
+          else ([], AnyDocsSingle d : ds)
+      ds -> ([], ds)
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
@@ -368,7 +356,7 @@ renderLongOptDocs = layoutAsTable . go
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> [["  "] : renderOptDocLong vs]
+      AnyDocsSingle vs -> [indent $ renderOptDocLong vs]
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
@@ -408,7 +396,7 @@ renderEnvDocs = layoutAsTable . go
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle ed -> [["  "] : renderEnvDoc ed]
+      AnyDocsSingle ed -> [indent $ renderEnvDoc ed]
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
@@ -443,15 +431,18 @@ renderConfDocs = unlinesChunks . go
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle ed -> map ("  " :) (renderConfDoc ed)
+      AnyDocsSingle ed -> indent (renderConfDoc ed)
 
 renderConfDoc :: ConfDoc -> [[Chunk]]
 renderConfDoc ConfDoc {..} =
   [helpChunk confDocHelp]
     : concatMap
       ( \(key, schema) ->
-          [confValChunk key, ":"]
-            : map ("  " :) (jsonSchemaChunkLines schema)
+          case jsonSchemaChunkLines schema of
+            [line] ->
+              [[confValChunk key, ": "] ++ line]
+            ls ->
+              [confValChunk key, ":"] : indent ls
       )
       (NE.toList confDocKeys)
 
@@ -484,3 +475,9 @@ defaultValueChunks val = ["default: ", fore yellow $ chunk $ T.pack val]
 
 helpChunk :: Maybe Help -> Chunk
 helpChunk = maybe (fore red "!! undocumented !!") (fore blue . chunk . T.pack)
+
+headerChunks :: Text -> [Chunk]
+headerChunks t = [fore cyan (chunk t), ":"]
+
+indent :: [[Chunk]] -> [[Chunk]]
+indent = map ("  " :)

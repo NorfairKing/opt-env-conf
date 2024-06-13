@@ -2,7 +2,7 @@
 
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
-  
+
   [34mGreeting to use[m
   option: [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m
   env: [37mGREET_GREETING[m [33mGREETING[m
