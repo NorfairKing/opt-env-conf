@@ -1,4 +1,4 @@
-  [34mmulti-line config codec explanation[m
+  [34mmulti-line config codec explanation, the same option twice.[m
   [37mbig[m:
     [37m<key>[m: 
       [37m<key>[m: 

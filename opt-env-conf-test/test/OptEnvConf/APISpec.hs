@@ -88,8 +88,8 @@ pureGoldenChunksFile fp cs =
   pureGoldenTextFile fp $ renderChunksText With24BitColours cs
 
 data Greet = Greet
-  { greetGreetee :: String,
-    greetGreeting :: Maybe String,
+  { greetGreeting :: String,
+    greetGreetee :: String,
     greetPolite :: Bool
   }
   deriving (Show)
@@ -100,23 +100,22 @@ greetParser =
     Greet
       <$> setting
         [ reader str,
+          option,
+          short 'g',
+          long "greeting",
+          metavar "GREETING",
+          env "GREETING",
+          conf "greeting",
+          value "Hello",
+          help "Greeting to use"
+        ]
+      <*> setting
+        [ reader str,
           argument,
           help "Who to greet",
           value "world",
           metavar "SUBJECT"
         ]
-      <*> optional
-        ( setting
-            [ reader str,
-              option,
-              short 'g',
-              long "greeting",
-              metavar "GREETING",
-              env "GREETING",
-              conf "greeting",
-              help "Greeting to use"
-            ]
-        )
       <*> setting
         [ reader exists,
           switch True,
@@ -135,7 +134,7 @@ bigConfigParser =
   BigConfig
     <$> setting
       [ conf "big",
-        help "multi-line config codec explanation"
+        help "multi-line config codec explanation, the same option twice."
       ]
 
 data Args = Args [String]

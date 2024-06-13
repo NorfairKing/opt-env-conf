@@ -13,5 +13,6 @@ AnyDocsSingle
         ) :|
           []
     , confDocDefault = Nothing
-    , confDocHelp = Just "multi-line config codec explanation"
+    , confDocHelp =
+        Just "multi-line config codec explanation, the same option twice."
     }

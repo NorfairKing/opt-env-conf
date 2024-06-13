@@ -1,7 +1,9 @@
 [36mUsage: [m[33mhidden[m [37m-h[m[36m|[m[37m--help[m
 
 [36mAll settings:[m
-   switch: [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+  
 
 [36mOptions:[m
    [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

@@ -52,4 +52,5 @@ Alt
               ])
            Nothing
            Nothing
-           (Just "multi-line config codec explanation"))))
+           (Just
+              "multi-line config codec explanation, the same option twice."))))

@@ -14,6 +14,19 @@ AnyDocsOr
   , AnyDocsAnd
       [ AnyDocsSingle
           SetDoc
+            { setDocTryArgument = False
+            , setDocTrySwitch = False
+            , setDocTryOption = True
+            , setDocDasheds =
+                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+            , setDocEnvVars = Just ("GREET_GREETING" :| [])
+            , setDocConfKeys = Just (( "greeting" :| [] , StringSchema ) :| [])
+            , setDocDefault = Just "\"Hello\""
+            , setDocMetavar = Just "GREETING"
+            , setDocHelp = Just "Greeting to use"
+            }
+      , AnyDocsSingle
+          SetDoc
             { setDocTryArgument = True
             , setDocTrySwitch = False
             , setDocTryOption = False
@@ -23,19 +36,6 @@ AnyDocsOr
             , setDocDefault = Just "\"world\""
             , setDocMetavar = Just "SUBJECT"
             , setDocHelp = Just "Who to greet"
-            }
-      , AnyDocsSingle
-          SetDoc
-            { setDocTryArgument = False
-            , setDocTrySwitch = False
-            , setDocTryOption = True
-            , setDocDasheds =
-                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-            , setDocEnvVars = Just ("GREETING" :| [])
-            , setDocConfKeys = Just (( "greeting" :| [] , StringSchema ) :| [])
-            , setDocDefault = Nothing
-            , setDocMetavar = Just "GREETING"
-            , setDocHelp = Just "Greeting to use"
             }
       , AnyDocsSingle
           SetDoc

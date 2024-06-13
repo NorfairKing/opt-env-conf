@@ -33,6 +33,7 @@ AnyDocsOr
                  [])
         , setDocDefault = Nothing
         , setDocMetavar = Nothing
-        , setDocHelp = Just "multi-line config codec explanation"
+        , setDocHelp =
+            Just "multi-line config codec explanation, the same option twice."
         }
   ]

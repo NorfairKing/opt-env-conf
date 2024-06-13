@@ -12,6 +12,17 @@ AnyDocsOr
   , AnyDocsAnd
       [ AnyDocsSingle
           OptDoc
+            { optDocTryArgument = False
+            , optDocTrySwitch = False
+            , optDocTryOption = True
+            , optDocDasheds =
+                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+            , optDocDefault = Just "\"Hello\""
+            , optDocMetavar = Just "GREETING"
+            , optDocHelp = Just "Greeting to use"
+            }
+      , AnyDocsSingle
+          OptDoc
             { optDocTryArgument = True
             , optDocTrySwitch = False
             , optDocTryOption = False
@@ -19,17 +30,6 @@ AnyDocsOr
             , optDocDefault = Just "\"world\""
             , optDocMetavar = Just "SUBJECT"
             , optDocHelp = Just "Who to greet"
-            }
-      , AnyDocsSingle
-          OptDoc
-            { optDocTryArgument = False
-            , optDocTrySwitch = False
-            , optDocTryOption = True
-            , optDocDasheds =
-                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-            , optDocDefault = Nothing
-            , optDocMetavar = Just "GREETING"
-            , optDocHelp = Just "Greeting to use"
             }
       , AnyDocsSingle
           OptDoc

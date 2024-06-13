@@ -2,7 +2,7 @@ AnyDocsAnd
   [ AnyDocsSingle
       ConfDoc
         { confDocKeys = ( "greeting" :| [] , StringSchema ) :| []
-        , confDocDefault = Nothing
+        , confDocDefault = Just "\"Hello\""
         , confDocHelp = Just "Greeting to use"
         }
   , AnyDocsSingle

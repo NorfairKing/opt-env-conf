@@ -149,44 +149,58 @@ settingSetDoc Setting {..} = do
 settingOptDoc :: Setting a -> Maybe OptDoc
 settingOptDoc = settingSetDoc >=> setDocOptDoc
 
-renderSetDoc :: SetDoc -> [[[Chunk]]]
+renderSetDoc :: SetDoc -> [[Chunk]]
 renderSetDoc SetDoc {..} =
-  addHelpText $
-    concat
-      [ [ [ ["argument:"],
+  concat
+    [ maybe [[fore red "undocumented"]] helpLines setDocHelp,
+      [ unwordsChunks
+          [ ["argument:"],
             [metavarChunk $ fromMaybe "ARG" setDocMetavar]
           ]
-          | setDocTryArgument
-        ],
-        [ [ ["switch:"],
+        | setDocTryArgument
+      ],
+      [ unwordsChunks
+          [ ["switch:"],
             dashedChunksNE dasheds
           ]
-          | setDocTrySwitch,
-            dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
-        ],
-        [ [ ["option:"],
+        | setDocTrySwitch,
+          dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
+      ],
+      [ unwordsChunks
+          [ ["option:"],
             dashedChunksNE dasheds
               ++ [" ", metavarChunk $ fromMaybe "ARG" setDocMetavar]
           ]
-          | setDocTryOption,
-            dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
-        ],
-        [ [ ["env var:"],
+        | setDocTryOption,
+          dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
+      ],
+      [ unwordsChunks
+          [ ["env:"],
             envVarChunksNE vars
               ++ [" ", metavarChunk $ fromMaybe "ARG" setDocMetavar]
           ]
-          | vars <- maybeToList setDocEnvVars
-        ]
-      ]
-  where
-    addHelpText :: [[[Chunk]]] -> [[[Chunk]]]
-    addHelpText = \case
-      [] -> [addHelpTextToLine []]
-      [cs] -> [addHelpTextToLine cs]
-      (l : ls) -> addHelpTextToLine l : ls
+        | vars <- maybeToList setDocEnvVars
+      ],
+      concat
+        [ concatMap
+            ( \(key, schema) ->
+                case jsonSchemaChunkLines schema of
+                  [line] ->
+                    [["config: ", confValChunk key, ": "] ++ line]
+                  ls ->
+                    ["config: ", confValChunk key, ":"]
+                      : map ("  " :) ls
+            )
+            (NE.toList confs)
+          | confs <- maybeToList setDocConfKeys
+        ],
+      [[]]
+    ]
 
-    addHelpTextToLine :: [[Chunk]] -> [[Chunk]]
-    addHelpTextToLine = (++ [[helpChunk setDocHelp]])
+helpLines :: Help -> [[Chunk]]
+helpLines h =
+  let ls = T.lines (T.pack h)
+   in map ((: []) . fore blue . chunk) ls
 
 renderManPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderManPage progname docs =
@@ -213,13 +227,13 @@ renderHelpPage progname docs =
     ]
 
 renderAnyDocs :: AnyDocs SetDoc -> [Chunk]
-renderAnyDocs = layoutAsTable . go
+renderAnyDocs = unlinesChunks . go
   where
-    go :: AnyDocs SetDoc -> [[[Chunk]]]
+    go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle d -> map (["  "] :) (renderSetDoc d)
+      AnyDocsSingle d -> map ("  " :) (renderSetDoc d)
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs

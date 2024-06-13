@@ -18,6 +18,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
+import OptEnvConf.Doc
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import OptEnvConf.Validation
@@ -56,7 +57,7 @@ renderLintError = \case
       functionChunk "reader",
       ":"
     ]
-      : helpLines h
+      : mHelpLines h
   LintErrorEmptySetting h ->
     concat
       [ [ [ errorChunk,
@@ -65,7 +66,7 @@ renderLintError = \case
             " parses nothing:"
           ]
         ],
-        helpLines h,
+        mHelpLines h,
         [ [ "Add an ",
             functionChunk "argument",
             ", ",
@@ -90,7 +91,7 @@ renderLintError = \case
       functionChunk "reader",
       ":"
     ]
-      : helpLines h
+      : mHelpLines h
   LintErrorNoDashedForOption h ->
     [ errorChunk,
       " ",
@@ -101,7 +102,7 @@ renderLintError = \case
       functionChunk "short",
       ":"
     ]
-      : helpLines h
+      : mHelpLines h
   LintErrorNoDashedForSwitch h ->
     [ errorChunk,
       " ",
@@ -112,7 +113,7 @@ renderLintError = \case
       functionChunk "short",
       ":"
     ]
-      : helpLines h
+      : mHelpLines h
   LintErrorNoReaderForEnvVar h ->
     [ errorChunk,
       " ",
@@ -121,7 +122,7 @@ renderLintError = \case
       functionChunk "reader",
       ":"
     ]
-      : helpLines h
+      : mHelpLines h
 
 errorChunk :: Chunk
 errorChunk = fore red "Error:"
@@ -129,15 +130,11 @@ errorChunk = fore red "Error:"
 functionChunk :: Text -> Chunk
 functionChunk = fore yellow . chunk
 
-helpLines :: Maybe Help -> [[Chunk]]
-helpLines =
+mHelpLines :: Maybe Help -> [[Chunk]]
+mHelpLines =
   maybe
     [["This setting is undocument, so we cannot refer to it."]]
-    go
-  where
-    go h =
-      let ls = T.lines (T.pack h)
-       in map ((: []) . fore blue . chunk) ls
+    helpLines
 
 -- Put this in your test suite
 lintParserTest :: Parser a -> IO ()

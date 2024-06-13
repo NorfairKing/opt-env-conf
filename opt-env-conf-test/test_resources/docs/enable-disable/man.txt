@@ -1,10 +1,18 @@
 [36mUsage: [m[33menable-disable[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m--(enable|disable)-example[m[36m)[m
 
 [36mAll settings:[m
-   switch:                             [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                
-   env var:                            [37mDISABLE_EXAMPLE[m [33mANY[m        [34mExample of an enable/disable switch[m
-   [34mExample of an enable/disable switch[m                                                               
-   switch:                             [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+  
+  [34mExample of an enable/disable switch[m
+  env: [37mDISABLE_EXAMPLE[m [33mANY[m
+  
+  [34mExample of an enable/disable switch[m
+  config: [37mexample[m: [33m<boolean>[m
+  
+  [34mExample of an enable/disable switch[m
+  switch: [37m--(enable|disable)-example[m
+  
 
 [36mOptions:[m
    [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                              
