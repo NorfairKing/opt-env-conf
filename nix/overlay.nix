@@ -42,6 +42,7 @@ with final.haskell.lib;
 
             optEnvConfPackages = {
               opt-env-conf = optEnvConfPkg "opt-env-conf";
+              opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
             };
           in
           {

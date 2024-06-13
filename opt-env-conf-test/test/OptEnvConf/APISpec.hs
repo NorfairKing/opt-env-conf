@@ -4,10 +4,9 @@ module OptEnvConf.APISpec (spec) where
 
 import Data.Map (Map)
 import Data.Text (Text)
-import qualified Data.Text as T
 import OptEnvConf
-import OptEnvConf.Lint
 import OptEnvConf.Parser
+import OptEnvConf.Test
 import Test.Syd
 import Text.Colour
 import Text.Show.Pretty as Pretty
@@ -25,10 +24,7 @@ exampleParserSpec dir p = describe dir $ do
   let parser = internalParser p
 
   it "passes the linter" $
-    case lintParser parser of
-      Nothing -> pure ()
-      Just errs ->
-        expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderLintErrors errs
+    parserLintTest parser
 
   it "produces the same docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/docs.txt") $
