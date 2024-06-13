@@ -62,7 +62,12 @@
         shell = self.devShells.${system}.default;
         coverage-report = pkgs.dekking.makeCoverageReport {
           name = "test-coverage-report";
-          packages = [ "opt-env-conf" ];
+          packages = [
+            "opt-env-conf"
+          ];
+          coverage = [
+            "opt-env-conf-test"
+          ];
         };
         #weeder-check = pkgs.weeder-nix.makeWeederCheck {
         #  weederToml = ./weeder.toml;
