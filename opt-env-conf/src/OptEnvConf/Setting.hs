@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -39,7 +40,7 @@ data Setting a = Setting
     --
     -- TODO we could actually have value codecs with void as the first argument.
     -- consider doing that.
-    settingConfigVals :: !(Maybe (NonEmpty (NonEmpty String, ValueCodec a a))),
+    settingConfigVals :: !(Maybe (NonEmpty (NonEmpty String, DecodingCodec a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: Maybe (a, String),
     -- | Whether to hide docs
@@ -48,6 +49,8 @@ data Setting a = Setting
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
   }
+
+data DecodingCodec a = forall void. DecodingCodec (ValueCodec void a)
 
 emptySetting :: Setting a
 emptySetting =
@@ -83,7 +86,7 @@ showSettingABit Setting {..} =
       . showString " "
       . showMaybeWith
         ( showListWith
-            ( \(k, c) ->
+            ( \(k, DecodingCodec c) ->
                 showString "("
                   . shows k
                   . showString ", "
@@ -147,9 +150,9 @@ env v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ sett
 conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
 
-confWith :: String -> ValueCodec a a -> Builder a
+confWith :: String -> ValueCodec void a -> Builder a
 confWith k c =
-  let t = (k :| [], c)
+  let t = (k :| [], DecodingCodec c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value

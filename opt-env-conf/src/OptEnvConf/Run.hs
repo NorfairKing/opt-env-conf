@@ -284,7 +284,7 @@ runParserOn p args envVars mConfig =
                       _ -> do
                         mConf <- case settingConfigVals of
                           Nothing -> pure NotRun
-                          Just ((ne, c) :| _) -> do
+                          Just ((ne, DecodingCodec c) :| _) -> do
                             -- TODO try parsing with the others
                             -- TODO handle subconfig prefix here?
                             mObj <- asks ppEnvConf
