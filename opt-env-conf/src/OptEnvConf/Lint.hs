@@ -168,8 +168,11 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserSubconfig _ p -> go p
       ParserSetting Setting {..} -> do
         case settingHelp of
-          Nothing -> validationFailure LintErrorUndocumented
-          Just h -> pure h
+          Nothing ->
+            -- Hidden values may be undocumented
+            when (not settingHidden) $
+              validationFailure LintErrorUndocumented
+          Just _ -> pure ()
         when
           ( and
               [ not settingTryArgument,

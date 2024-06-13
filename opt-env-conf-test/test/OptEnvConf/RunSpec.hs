@@ -264,7 +264,7 @@ spec = do
                 let expected = val :: Text
                 shouldParse p args e (Just c) expected
 
-    describe "arguments" $ do
+    describe "Unit tests" $ do
       argParseSpec
         ["--foo", "bar"]
         (setting [reader str, option, long "foo"])
@@ -286,11 +286,58 @@ spec = do
         (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
 
+      argParseSpecs
+        (enableDisableSwitch True [long "example"])
+        [ ([], True),
+          (["--enable-example"], True),
+          (["--disable-example"], False)
+        ]
+
+      argParseSpecs
+        (enableDisableSwitch False [long "example"])
+        [ ([], False),
+          (["--enable-example"], True),
+          (["--disable-example"], False)
+        ]
+
+      envParseSpecs
+        (enableDisableSwitch True [long "example", env "EXAMPLE", env "ALTERNATIVE"])
+        [ ([], True),
+          ([("DISABLE_EXAMPLE", "")], False),
+          ([("DISABLE_ALTERNATIVE", "")], False),
+          ([("ENABLE_EXAMPLE", "")], True),
+          ([("ENABLE_ALTERNATIVE", "")], True)
+        ]
+
+      envParseSpecs
+        (enableDisableSwitch False [long "example", env "EXAMPLE", env "ALTERNATIVE"])
+        [ ([], False),
+          ([("ENABLE_EXAMPLE", "")], True),
+          ([("ENABLE_ALTERNATIVE", "")], True),
+          ([("DISABLE_EXAMPLE", "")], False),
+          ([("DISABLE_ALTERNATIVE", "")], False)
+        ]
+
+argParseSpecs :: (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
+argParseSpecs p = mapM_ (\(args, result) -> argParseSpec args p result)
+
 argParseSpec :: (Show a, Eq a) => [String] -> Parser a -> a -> Spec
 argParseSpec args p expected = do
   it (unwords ["parses ", show args, "as", show expected]) $ do
     let argMap = ArgMap.parse_ args
     errOrRes <- runParserOn p argMap EnvMap.empty Nothing
+    case errOrRes of
+      Left err -> expectationFailure $ show err
+      Right actual -> actual `shouldBe` expected
+
+envParseSpecs :: (Show a, Eq a) => Parser a -> [([(String, String)], a)] -> Spec
+envParseSpecs p = mapM_ (\(envs, result) -> envParseSpec envs p result)
+
+envParseSpec :: (Show a, Eq a) => [(String, String)] -> Parser a -> a -> Spec
+envParseSpec envVars p expected = do
+  it (unwords ["parses ", show envVars, "as", show expected]) $ do
+    let envMap = EnvMap.parse envVars
+    errOrRes <- runParserOn p ArgMap.empty envMap Nothing
     case errOrRes of
       Left err -> expectationFailure $ show err
       Right actual -> actual `shouldBe` expected

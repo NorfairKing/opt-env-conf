@@ -14,12 +14,36 @@ AnyDocsOr
   , AnyDocsSingle
       SetDoc
         { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
+        , setDocEnvVars = Just ("DISABLE_EXAMPLE" :| [])
+        , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Example of an enable/disable switch"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = False
+        , setDocDasheds = []
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Just (( "example" :| [] , BoolSchema ) :| [])
+        , setDocDefault = Nothing
+        , setDocMetavar = Nothing
+        , setDocHelp = Just "Example of an enable/disable switch"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
         , setDocTrySwitch = True
         , setDocTryOption = False
         , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
-        , setDocEnvVars = Just ("EXAMPLE" :| [])
-        , setDocConfKeys = Just (( "example" :| [] , BoolSchema ) :| [])
-        , setDocDefault = Nothing
+        , setDocEnvVars = Nothing
+        , setDocConfKeys = Nothing
+        , setDocDefault = Just "True"
         , setDocMetavar = Just "ANY"
         , setDocHelp = Just "Example of an enable/disable switch"
         }

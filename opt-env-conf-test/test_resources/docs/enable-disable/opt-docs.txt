@@ -15,7 +15,7 @@ AnyDocsOr
         , optDocTrySwitch = True
         , optDocTryOption = False
         , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
-        , optDocDefault = Nothing
+        , optDocDefault = Just "True"
         , optDocMetavar = Just "ANY"
         , optDocHelp = Just "Example of an enable/disable switch"
         }

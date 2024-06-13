@@ -35,6 +35,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
+import qualified Data.Char as Char
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -220,62 +221,129 @@ withLocalYamlConfig =
 
 enableDisableSwitch :: Bool -> [Builder Bool] -> Parser Bool
 enableDisableSwitch defaultBool builders =
-  fromMaybe defaultBool <$> enableDisableSwitch' builders
-
-enableDisableSwitch' :: [Builder Bool] -> Parser (Maybe Bool)
-enableDisableSwitch' builders =
-  optional $
-    choice
-      [ ParserSetting $
-          modEnable $
-            buildSetting builders,
-        ParserSetting $
-          modDisable $
-            buildSetting builders,
-        ParserSetting $
-          modUnhidden $
-            buildSetting $
-              reader exists
-                : builders
+  choice $
+    catMaybes
+      [ Just parseDisableSwitch,
+        Just parseEnableSwitch,
+        parseEnableEnv,
+        parseDisableEnv,
+        parseConfigVal,
+        Just parseDummy
       ]
   where
-    modEnable :: Setting Bool -> Setting Bool
-    modEnable s =
-      s
-        { settingDasheds = mapMaybe (prefixDashedLong "enable-") (settingDasheds s),
-          settingTryArgument = False,
-          settingSwitchValue = Just True,
-          settingTryOption = False,
-          settingEnvVars = Nothing,
-          settingConfigVals = Nothing,
-          settingDefaultValue = Nothing,
-          settingHidden = True
-        }
-    modDisable :: Setting Bool -> Setting Bool
-    modDisable s =
-      s
-        { settingDasheds = mapMaybe (prefixDashedLong "disable-") (settingDasheds s),
-          settingTryArgument = False,
-          settingSwitchValue = Just False,
-          settingTryOption = False,
-          settingEnvVars = Nothing,
-          settingConfigVals = Nothing,
-          settingDefaultValue = Nothing,
-          settingHidden = True
-        }
-    modUnhidden :: Setting Bool -> Setting Bool
-    modUnhidden s =
-      s
-        { settingDasheds = mapMaybe (prefixDashedLong "(enable|disable)-") (settingDasheds s),
-          settingSwitchValue = Just True, -- Unused
-          settingMetavar = Just $ fromMaybe "ANY" $ settingMetavar s,
-          settingDefaultValue = Nothing,
-          settingHidden = False
-        }
+    s = buildSetting builders
+    parseEnableSwitch :: Parser Bool
+    parseEnableSwitch =
+      ParserSetting $
+        Setting
+          { settingDasheds = mapMaybe (prefixDashedLong "enable-") (settingDasheds s),
+            settingReaders = [],
+            settingTryArgument = False,
+            settingSwitchValue = Just True,
+            settingTryOption = False,
+            settingEnvVars = Nothing,
+            settingConfigVals = Nothing,
+            settingDefaultValue = Nothing,
+            settingHidden = True,
+            settingMetavar = Nothing,
+            settingHelp = Nothing
+          }
+    parseDisableSwitch :: Parser Bool
+    parseDisableSwitch =
+      ParserSetting $
+        Setting
+          { settingDasheds = mapMaybe (prefixDashedLong "disable-") (settingDasheds s),
+            settingReaders = [],
+            settingTryArgument = False,
+            settingSwitchValue = Just False,
+            settingTryOption = False,
+            settingEnvVars = Nothing,
+            settingConfigVals = Nothing,
+            settingDefaultValue = Nothing,
+            settingHidden = True,
+            settingMetavar = Nothing,
+            settingHelp = Nothing
+          }
+    parseEnableEnv :: Maybe (Parser Bool)
+    parseEnableEnv = do
+      guard (not defaultBool)
+      pure $
+        ParserSetting $
+          Setting
+            { settingDasheds = [],
+              settingReaders = (exists :) $ settingReaders s,
+              settingTryArgument = False,
+              settingSwitchValue = Nothing,
+              settingTryOption = False,
+              settingEnvVars =
+                if defaultBool
+                  then Nothing
+                  else fmap (NE.map (("ENABLE_" <>) . map Char.toUpper)) (settingEnvVars s),
+              settingConfigVals = Nothing,
+              settingDefaultValue = Nothing,
+              settingHidden = False,
+              settingMetavar = Nothing,
+              settingHelp = settingHelp s
+            }
+    parseDisableEnv :: Maybe (Parser Bool)
+    parseDisableEnv = do
+      guard defaultBool
+      pure $
+        ParserSetting $
+          Setting
+            { settingDasheds = [],
+              settingReaders = ((fmap not . exists) :) $ settingReaders s,
+              settingTryArgument = False,
+              settingSwitchValue = Nothing,
+              settingTryOption = False,
+              settingEnvVars =
+                if defaultBool
+                  then fmap (NE.map (("DISABLE_" <>) . map Char.toUpper)) (settingEnvVars s)
+                  else Nothing,
+              settingConfigVals = Nothing,
+              settingDefaultValue = Nothing,
+              settingHidden = False,
+              settingMetavar = Nothing,
+              settingHelp = settingHelp s
+            }
+    parseConfigVal :: Maybe (Parser Bool)
+    parseConfigVal = do
+      ne <- settingConfigVals s
+      pure $
+        ParserSetting $
+          Setting
+            { settingDasheds = [],
+              settingReaders = [],
+              settingTryArgument = False,
+              settingSwitchValue = Nothing,
+              settingTryOption = False,
+              settingEnvVars = Nothing,
+              settingConfigVals = Just ne,
+              settingDefaultValue = Nothing,
+              settingHidden = False,
+              settingMetavar = Nothing,
+              settingHelp = settingHelp s
+            }
+    parseDummy :: Parser Bool
+    parseDummy =
+      ParserSetting $
+        Setting
+          { settingDasheds = mapMaybe (prefixDashedLong "(enable|disable)-") (settingDasheds s),
+            settingReaders = [],
+            settingTryArgument = False,
+            settingSwitchValue = Just True, -- Unused
+            settingTryOption = False,
+            settingEnvVars = Nothing,
+            settingConfigVals = Nothing,
+            settingDefaultValue = Just (defaultBool, show defaultBool),
+            settingHidden = False,
+            settingMetavar = Just $ fromMaybe "ANY" $ settingMetavar s,
+            settingHelp = settingHelp s
+          }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed
-    prefixDashedLong s = \case
+    prefixDashedLong p = \case
       DashedShort _ -> Nothing
-      DashedLong l -> Just $ DashedLong $ s `NE.prependList` l
+      DashedLong l -> Just $ DashedLong $ p `NE.prependList` l
 
 choice :: [Parser a] -> Parser a
 choice = \case

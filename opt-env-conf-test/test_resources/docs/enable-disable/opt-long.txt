@@ -1,2 +1,2 @@
-   [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                 
-   [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m 
+   [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                              
+   [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m default: [33mTrue[m
