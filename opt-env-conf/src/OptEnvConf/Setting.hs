@@ -160,5 +160,11 @@ value a = valueWithShown a (show a)
 valueWithShown :: a -> String -> Builder a
 valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown)}
 
+-- Use the show function in the setting
+-- Lint when the show function is absent
+-- re-use the show function for 'value'
+example :: (Show a) => a -> Builder a
+example = help . show
+
 hidden :: Builder a
 hidden = Builder $ \s -> s {settingHidden = True}

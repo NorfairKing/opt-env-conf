@@ -235,7 +235,8 @@ withLocalYamlConfig =
   withYamlConfig $
     Just
       <$> setting
-        [ option,
+        [ reader str,
+          option,
           long "config-file",
           env "CONFIG_FILE",
           metavar "FILE",
