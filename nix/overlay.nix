@@ -40,19 +40,38 @@ with final.haskell.lib;
                 testTarget = (old.testTarget or "") + " --show-details=direct";
               }));
 
-            optEnvConfPackages = {
-              opt-env-conf = optEnvConfPkg "opt-env-conf";
-              opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
-            };
-
-            installManpage = exeNames: drv: overrideCabal drv (old: {
+            installManpage = exeName: drv: overrideCabal drv (old: {
               postInstall = (drv.postInstall or "") + ''
                 mkdir -p $out/share/man/man1/
-                # ${pkgs.help2man}/bin/help2man "''${!outputBin}/bin/${exeName}"
+                export NO_COLOR=1
+                ${final.help2man}/bin/help2man "''${!outputBin}/bin/${exeName}" --output ${exeName}.1 --help-option=--render-man-page
+                ${final.gzip}/bin/gzip -9 -c ${exeName}.1 > $out/share/man/man1/${exeName}.1.gz
               '';
             });
-            installCompletions = exeNames: drv: { };
-            installManpageAndCompletions = exeNames: drv: installManpage exeNames (installCompletions exeNames drv);
+            installManpages = exeNames: drv:
+              foldr installManpage drv exeNames;
+            installCompletion = exeName: drv:
+              overrideCabal drv (old: { });
+            installCompletions = exeNames: drv:
+              foldr installCompletion drv exeNames;
+            installManpagesAndCompletions = exeNames: drv:
+              installManpages exeNames (installCompletions exeNames drv);
+
+            opt-env-conf = overrideCabal (optEnvConfPkg "opt-env-conf") (old: {
+              passthru = {
+                inherit
+                  installManpage
+                  installManpages
+                  installCompletion
+                  installCompletions
+                  installManpagesAndCompletions;
+              } // (old.passthru or { });
+            });
+
+            optEnvConfPackages = {
+              inherit opt-env-conf;
+              opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
+            };
           in
           {
             inherit optEnvConfPackages;
