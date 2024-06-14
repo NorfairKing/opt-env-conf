@@ -14,6 +14,7 @@ library
   exposed-modules:
       OptEnvConf
       OptEnvConf.ArgMap
+      OptEnvConf.Casing
       OptEnvConf.Doc
       OptEnvConf.EnvMap
       OptEnvConf.Error

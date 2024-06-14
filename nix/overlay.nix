@@ -44,6 +44,10 @@ with final.haskell.lib;
               opt-env-conf = optEnvConfPkg "opt-env-conf";
               opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
             };
+
+            installManpage = exeNames: drv: { };
+            installCompletions = exeNames: drv: { };
+            installManpageAndCompletions = exeNames: drv: installManpage exeNames (installCompletions exeNames drv);
           in
           {
             inherit optEnvConfPackages;

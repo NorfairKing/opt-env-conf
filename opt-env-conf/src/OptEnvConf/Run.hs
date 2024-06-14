@@ -4,7 +4,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Run
-  ( getSettings,
+  ( runSettingsParser,
     runParser,
     runParserComplete,
     runParserOn,
@@ -45,8 +45,8 @@ import System.IO
 import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
-getSettings :: (HasParser a) => IO a
-getSettings = runParser settingsParser
+runSettingsParser :: (HasParser a) => IO a
+runSettingsParser = runParser settingsParser
 
 runParser :: Parser a -> IO a
 runParser = fmap fst . runParserWithLeftovers

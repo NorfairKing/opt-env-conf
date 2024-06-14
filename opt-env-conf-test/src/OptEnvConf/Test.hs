@@ -1,7 +1,10 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module OptEnvConf.Test
-  ( parserLintTest,
+  ( settingsLintTest,
+    parserLintTest,
     pureGoldenManPage,
   )
 where
@@ -12,6 +15,11 @@ import OptEnvConf
 import OptEnvConf.Lint
 import Test.Syd
 import Text.Colour
+
+settingsLintTest :: forall a. (HasParser a) => Spec
+settingsLintTest = do
+  specify "pass the lint test" $
+    parserLintTest (settingsParser @a)
 
 parserLintTest :: Parser a -> IO ()
 parserLintTest parser =

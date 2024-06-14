@@ -41,11 +41,11 @@ import Control.Arrow (first)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
-import qualified Data.Char as Char
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import OptEnvConf.ArgMap (Dashed (..), prefixDashed)
+import OptEnvConf.Casing
 import OptEnvConf.Reader
 import OptEnvConf.Setting
 import Path.IO
@@ -270,7 +270,7 @@ enableDisableSwitch defaultBool builders =
               settingEnvVars =
                 if defaultBool
                   then Nothing
-                  else fmap (NE.map (prefixOrReplaceEnv "ENABLE" . map Char.toUpper)) (settingEnvVars s),
+                  else fmap (NE.map (prefixOrReplaceEnv "ENABLE" . toEnvCase)) (settingEnvVars s),
               settingConfigVals = Nothing,
               settingDefaultValue = Nothing,
               settingHidden = False,
@@ -290,7 +290,7 @@ enableDisableSwitch defaultBool builders =
               settingTryOption = False,
               settingEnvVars =
                 if defaultBool
-                  then fmap (NE.map (prefixOrReplaceEnv "DISABLE" . map Char.toUpper)) (settingEnvVars s)
+                  then fmap (NE.map (prefixOrReplaceEnv "DISABLE" . toEnvCase)) (settingEnvVars s)
                   else Nothing,
               settingConfigVals = Nothing,
               settingDefaultValue = Nothing,
@@ -360,11 +360,10 @@ subConfig prefix = parserMapSetting $ \s ->
 
 subSettings :: (HasParser a) => String -> Parser a
 subSettings prefix =
-  subArgs (map Char.toLower prefix <> "-") $
-    subEnv (map Char.toUpper prefix <> "_") $
-      subConfig
-        prefix
-        settingsParser
+  subArgs (toArgCase prefix <> "-")
+    . subEnv (toEnvCase prefix <> "_")
+    . subConfig (toConfigCase prefix)
+    $ settingsParser
 
 parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
 parserMapSetting func = go

@@ -150,6 +150,14 @@ env v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ sett
 conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
 
+name :: (HasCodec a) => String -> Builder a
+name s =
+  mconcat
+    [ long s,
+      env s,
+      conf s
+    ]
+
 confWith :: String -> ValueCodec void a -> Builder a
 confWith k c =
   let t = (k :| [], DecodingCodec c)
