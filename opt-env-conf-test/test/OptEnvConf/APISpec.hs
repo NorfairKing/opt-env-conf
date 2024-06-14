@@ -4,6 +4,7 @@ module OptEnvConf.APISpec (spec) where
 
 import Data.Map (Map)
 import Data.Text (Text)
+import Data.Version
 import OptEnvConf
 import OptEnvConf.Parser
 import OptEnvConf.Test
@@ -23,7 +24,8 @@ spec = do
 
 exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
-  let parser = internalParser p
+  let version = makeVersion [0, 0, 0]
+  let parser = internalParser version p
 
   it "passes the linter" $
     parserLintTest parser
@@ -48,14 +50,18 @@ exampleParserSpec dir p = describe dir $ do
       ppShow $
         parserEnvDocs parser
 
-  it "documents the man page in the same way" $
-    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
-      renderManPage dir $
-        parserDocs parser
+  it "documents the version page in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/version.txt") $
+      renderVersionPage dir version
 
   it "documents the help page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/help.txt") $
       renderHelpPage dir $
+        parserDocs parser
+
+  it "documents the man page in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
+      renderManPage dir $
         parserDocs parser
 
   it "documents the short opt parser in the same way" $

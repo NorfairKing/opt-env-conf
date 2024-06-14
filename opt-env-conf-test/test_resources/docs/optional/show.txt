@@ -1,8 +1,20 @@
 Alt
+  (Setting
+     (Setting
+        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        (Just "Show this help text")))
   (Alt
      (Setting
         (Setting
-           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
            []
            False
            (Just _)
@@ -11,34 +23,35 @@ Alt
            Nothing
            Nothing
            Nothing
-           (Just "Show this help text")))
-     (Setting
-        (Setting
-           [ DashedLong ('r' :| "ender-man-page") ]
-           []
-           False
-           (Just _)
-           False
-           Nothing
-           Nothing
-           Nothing
-           Nothing
-           (Just "Show this help text"))))
-  (Fmap
-     _
+           (Just "Output version information: 0.0.0")))
      (Alt
+        (Setting
+           (Setting
+              [ DashedLong ('r' :| "ender-man-page") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "Show this help text")))
         (Fmap
            _
-           (Setting
-              (Setting
-                 []
-                 [ _ ]
-                 True
-                 Nothing
-                 False
-                 Nothing
-                 Nothing
-                 Nothing
-                 (Just "ARGUMENT")
-                 (Just "Argument"))))
-        (Pure _)))
+           (Alt
+              (Fmap
+                 _
+                 (Setting
+                    (Setting
+                       []
+                       [ _ ]
+                       True
+                       Nothing
+                       False
+                       Nothing
+                       Nothing
+                       Nothing
+                       (Just "ARGUMENT")
+                       (Just "Argument"))))
+              (Pure _)))))

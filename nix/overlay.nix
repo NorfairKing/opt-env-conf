@@ -45,7 +45,12 @@ with final.haskell.lib;
               opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
             };
 
-            installManpage = exeNames: drv: { };
+            installManpage = exeNames: drv: overrideCabal drv (old: {
+              postInstall = (drv.postInstall or "") + ''
+                mkdir -p $out/share/man/man1/
+                # ${pkgs.help2man}/bin/help2man "''${!outputBin}/bin/${exeName}"
+              '';
+            });
             installCompletions = exeNames: drv: { };
             installManpageAndCompletions = exeNames: drv: installManpage exeNames (installCompletions exeNames drv);
           in

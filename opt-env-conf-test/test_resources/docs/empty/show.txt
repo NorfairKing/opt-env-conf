@@ -1,8 +1,20 @@
 Alt
+  (Setting
+     (Setting
+        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        (Just "Show this help text")))
   (Alt
      (Setting
         (Setting
-           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
            []
            False
            (Just _)
@@ -11,17 +23,18 @@ Alt
            Nothing
            Nothing
            Nothing
-           (Just "Show this help text")))
-     (Setting
+           (Just "Output version information: 0.0.0")))
+     (Alt
         (Setting
-           [ DashedLong ('r' :| "ender-man-page") ]
-           []
-           False
-           (Just _)
-           False
-           Nothing
-           Nothing
-           Nothing
-           Nothing
-           (Just "Show this help text"))))
-  (Fmap _ (Pure _))
+           (Setting
+              [ DashedLong ('r' :| "ender-man-page") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "Show this help text")))
+        (Fmap _ (Pure _))))

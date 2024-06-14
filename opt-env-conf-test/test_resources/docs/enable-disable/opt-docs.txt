@@ -14,6 +14,17 @@ AnyDocsOr
         { optDocTryArgument = False
         , optDocTrySwitch = True
         , optDocTryOption = False
+        , optDocDasheds =
+            [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Nothing
+        , optDocHelp = Just "Output version information: 0.0.0"
+        }
+  , AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = True
+        , optDocTryOption = False
         , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
         , optDocDefault = Nothing
         , optDocMetavar = Just "ANY"

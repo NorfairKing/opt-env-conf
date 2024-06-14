@@ -1,8 +1,20 @@
 Alt
+  (Setting
+     (Setting
+        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        (Just "Show this help text")))
   (Alt
      (Setting
         (Setting
-           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
            []
            False
            (Just _)
@@ -11,25 +23,11 @@ Alt
            Nothing
            Nothing
            Nothing
-           (Just "Show this help text")))
-     (Setting
-        (Setting
-           [ DashedLong ('r' :| "ender-man-page") ]
-           []
-           False
-           (Just _)
-           False
-           Nothing
-           Nothing
-           Nothing
-           Nothing
-           (Just "Show this help text"))))
-  (Fmap
-     _
+           (Just "Output version information: 0.0.0")))
      (Alt
         (Setting
            (Setting
-              [ DashedLong ('(' :| "enable|disable)-example") ]
+              [ DashedLong ('r' :| "ender-man-page") ]
               []
               False
               (Just _)
@@ -37,25 +35,14 @@ Alt
               Nothing
               Nothing
               Nothing
-              (Just "ANY")
-              (Just "Example of an enable/disable switch")))
-        (Alt
-           (Setting
-              (Setting
-                 [ DashedLong ('d' :| "isable-example") ]
-                 []
-                 False
-                 (Just _)
-                 False
-                 Nothing
-                 Nothing
-                 Nothing
-                 Nothing
-                 Nothing))
+              Nothing
+              (Just "Show this help text")))
+        (Fmap
+           _
            (Alt
               (Setting
                  (Setting
-                    [ DashedLong ('e' :| "nable-example") ]
+                    [ DashedLong ('(' :| "enable|disable)-example") ]
                     []
                     False
                     (Just _)
@@ -63,32 +50,58 @@ Alt
                     Nothing
                     Nothing
                     Nothing
-                    Nothing
-                    Nothing))
+                    (Just "ANY")
+                    (Just "Example of an enable/disable switch")))
               (Alt
                  (Setting
                     (Setting
+                       [ DashedLong ('d' :| "isable-example") ]
                        []
-                       [ _ ]
+                       False
+                       (Just _)
                        False
                        Nothing
-                       False
-                       (Just ("DISABLE_EXAMPLE" :| []))
                        Nothing
                        Nothing
-                       (Just "ANY")
-                       (Just "Example of an enable/disable switch")))
+                       Nothing
+                       Nothing))
                  (Alt
                     (Setting
                        (Setting
-                          []
+                          [ DashedLong ('e' :| "nable-example") ]
                           []
                           False
-                          Nothing
+                          (Just _)
                           False
                           Nothing
-                          (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
                           Nothing
                           Nothing
-                          (Just "Example of an enable/disable switch")))
-                    (Pure _)))))))
+                          Nothing
+                          Nothing))
+                    (Alt
+                       (Setting
+                          (Setting
+                             []
+                             [ _ ]
+                             False
+                             Nothing
+                             False
+                             (Just ("DISABLE_EXAMPLE" :| []))
+                             Nothing
+                             Nothing
+                             (Just "ANY")
+                             (Just "Example of an enable/disable switch")))
+                       (Alt
+                          (Setting
+                             (Setting
+                                []
+                                []
+                                False
+                                Nothing
+                                False
+                                Nothing
+                                (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
+                                Nothing
+                                Nothing
+                                (Just "Example of an enable/disable switch")))
+                          (Pure _)))))))))

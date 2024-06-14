@@ -1,8 +1,20 @@
 Alt
+  (Setting
+     (Setting
+        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        (Just "Show this help text")))
   (Alt
      (Setting
         (Setting
-           [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
+           [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
            []
            False
            (Just _)
@@ -11,59 +23,60 @@ Alt
            Nothing
            Nothing
            Nothing
-           (Just "Show this help text")))
-     (Setting
+           (Just "Output version information: 0.0.0")))
+     (Alt
         (Setting
-           [ DashedLong ('r' :| "ender-man-page") ]
-           []
-           False
-           (Just _)
-           False
-           Nothing
-           Nothing
-           Nothing
-           Nothing
-           (Just "Show this help text"))))
-  (Fmap
-     _
-     (Ap
-        (Ap
-           (Fmap
-              _
+           (Setting
+              [ DashedLong ('r' :| "ender-man-page") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "Show this help text")))
+        (Fmap
+           _
+           (Ap
+              (Ap
+                 (Fmap
+                    _
+                    (Setting
+                       (Setting
+                          [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+                          [ _ ]
+                          False
+                          Nothing
+                          True
+                          (Just ("GREET_GREETING" :| []))
+                          (Just
+                             [ ( "greeting" :| [] , BimapCodec _ _ (StringCodec Nothing) ) ])
+                          (Just _)
+                          (Just "GREETING")
+                          (Just "Greeting to use"))))
+                 (Setting
+                    (Setting
+                       []
+                       [ _ ]
+                       True
+                       Nothing
+                       False
+                       Nothing
+                       Nothing
+                       (Just _)
+                       (Just "SUBJECT")
+                       (Just "Who to greet"))))
               (Setting
                  (Setting
-                    [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+                    [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
                     [ _ ]
                     False
-                    Nothing
-                    True
-                    (Just ("GREET_GREETING" :| []))
-                    (Just
-                       [ ( "greeting" :| [] , BimapCodec _ _ (StringCodec Nothing) ) ])
                     (Just _)
-                    (Just "GREETING")
-                    (Just "Greeting to use"))))
-           (Setting
-              (Setting
-                 []
-                 [ _ ]
-                 True
-                 Nothing
-                 False
-                 Nothing
-                 Nothing
-                 (Just _)
-                 (Just "SUBJECT")
-                 (Just "Who to greet"))))
-        (Setting
-           (Setting
-              [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-              [ _ ]
-              False
-              (Just _)
-              False
-              (Just ("GREET_POLITE" :| []))
-              (Just [ ( "polite" :| [] , BoolCodec Nothing ) ])
-              (Just _)
-              Nothing
-              (Just "Whether to be polite")))))
+                    False
+                    (Just ("GREET_POLITE" :| []))
+                    (Just [ ( "polite" :| [] , BoolCodec Nothing ) ])
+                    (Just _)
+                    Nothing
+                    (Just "Whether to be polite")))))))

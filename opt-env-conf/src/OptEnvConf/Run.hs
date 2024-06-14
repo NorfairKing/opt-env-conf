@@ -14,7 +14,6 @@ module OptEnvConf.Run
 where
 
 import Autodocodec
-import Control.Applicative
 import Control.Arrow (left)
 import Control.Monad
 import Control.Monad.Reader hiding (Reader)
@@ -28,6 +27,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Version
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
 import OptEnvConf.Doc
@@ -45,14 +45,14 @@ import System.IO
 import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
-runSettingsParser :: (HasParser a) => IO a
-runSettingsParser = runParser settingsParser
+runSettingsParser :: (HasParser a) => Version -> IO a
+runSettingsParser version = runParser version settingsParser
 
-runParser :: Parser a -> IO a
-runParser = fmap fst . runParserWithLeftovers
+runParser :: Version -> Parser a -> IO a
+runParser version = fmap fst . runParserWithLeftovers version
 
-runParserWithLeftovers :: Parser a -> IO (a, [String])
-runParserWithLeftovers p = do
+runParserWithLeftovers :: Version -> Parser a -> IO (a, [String])
+runParserWithLeftovers version p = do
   args <- getArgs
   let (argMap, leftovers) = ArgMap.parse args
   envVars <- EnvMap.parse <$> getEnvironment
@@ -63,7 +63,7 @@ runParserWithLeftovers p = do
       hPutChunksLocaleWith tc stderr $ renderLintErrors errs
       exitFailure
     Nothing -> do
-      let p' = internalParser p
+      let p' = internalParser version p
       let docs = parserDocs p'
       errOrResult <-
         runParserComplete
@@ -82,6 +82,11 @@ runParserWithLeftovers p = do
             tc <- getTerminalCapabilitiesFromHandle stdout
             hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
             exitSuccess
+          ShowVersion -> do
+            progname <- getProgName
+            tc <- getTerminalCapabilitiesFromHandle stdout
+            hPutChunksLocaleWith tc stdout $ renderVersionPage progname version
+            exitSuccess
           RenderMan -> do
             progname <- getProgName
             tc <- getTerminalCapabilitiesFromHandle stdout
@@ -93,24 +98,33 @@ runParserWithLeftovers p = do
 -- is supposed to.
 data Internal a
   = ShowHelp
+  | ShowVersion
   | RenderMan
   | ParsedNormally a
 
-internalParser :: Parser a -> Parser (Internal a)
-internalParser p =
-  setting
-    [ switch ShowHelp,
-      short 'h',
-      long "help",
-      help "Show this help text"
+internalParser :: Version -> Parser a -> Parser (Internal a)
+internalParser version p =
+  choice
+    [ setting
+        [ switch ShowHelp,
+          short 'h',
+          long "help",
+          help "Show this help text"
+        ],
+      setting
+        [ switch ShowVersion,
+          short 'v',
+          long "version",
+          help $ "Output version information: " <> showVersion version
+        ],
+      setting
+        [ switch RenderMan,
+          long "render-man-page",
+          hidden,
+          help "Show this help text"
+        ],
+      ParsedNormally <$> p
     ]
-    <|> setting
-      [ switch RenderMan,
-        long "render-man-page",
-        hidden,
-        help "Show this help text"
-      ]
-    <|> (ParsedNormally <$> p)
 
 -- 'runParserOn' _and_ 'unrecognisedOptions'
 runParserComplete ::

@@ -4,7 +4,33 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module OptEnvConf.Doc where
+module OptEnvConf.Doc
+  ( renderVersionPage,
+    renderHelpPage,
+    renderManPage,
+    renderLongOptDocs,
+    renderShortOptDocs,
+    renderEnvDocs,
+    renderConfDocs,
+
+    -- * Internal
+    parserDocs,
+    parserOptDocs,
+    parserEnvDocs,
+    parserConfDocs,
+    SetDoc (..),
+    OptDoc (..),
+    EnvDoc (..),
+    ConfDoc (..),
+    settingOptDoc,
+    renderOptDocLong,
+    settingEnvDoc,
+    renderEnvDoc,
+    settingConfDoc,
+    renderConfDoc,
+    helpLines,
+  )
+where
 
 import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
@@ -16,6 +42,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Version
 import OptEnvConf.ArgMap (Dashed (..))
 import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.Parser
@@ -252,6 +279,13 @@ nullDocs = \case
   AnyDocsAnd _ -> False
   AnyDocsSingle _ -> False
 
+renderVersionPage :: String -> Version -> [Chunk]
+renderVersionPage progname version =
+  unwordsChunks
+    [ [progNameChunk progname],
+      [chunk $ T.pack $ showVersion version]
+    ]
+
 renderHelpPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderHelpPage progname docs =
   unlinesChunks
@@ -317,7 +351,7 @@ setDocOptDoc SetDoc {..} = do
   pure OptDoc {..}
 
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", fore yellow (chunk (T.pack progname))], cs]) . go
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", progNameChunk progname], cs]) . go
   where
     go :: AnyDocs OptDoc -> [Chunk]
     go = \case
@@ -446,6 +480,9 @@ renderConfDoc ConfDoc {..} =
       )
       (NE.toList confDocKeys)
 
+progNameChunk :: String -> Chunk
+progNameChunk = fore yellow . chunk . T.pack
+
 metavarChunk :: Metavar -> Chunk
 metavarChunk = fore yellow . chunk . T.pack
 
@@ -457,9 +494,6 @@ dashedChunksNE = intersperse (fore cyan "|") . map dashedChunk . NE.toList
 
 dashedChunk :: Dashed -> Chunk
 dashedChunk = fore white . chunk . T.pack . AM.renderDashed
-
-envVarChunks :: Maybe (NonEmpty String) -> Maybe [Chunk]
-envVarChunks = fmap envVarChunksNE
 
 envVarChunksNE :: NonEmpty String -> [Chunk]
 envVarChunksNE = intersperse (fore cyan "|") . map envVarChunk . NE.toList
