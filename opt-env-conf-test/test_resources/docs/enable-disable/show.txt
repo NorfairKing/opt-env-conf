@@ -50,7 +50,7 @@ Alt
                     Nothing
                     Nothing
                     Nothing
-                    (Just "ANY")
+                    Nothing
                     (Just "Example of an enable/disable switch")))
               (Alt
                  (Setting
@@ -86,10 +86,10 @@ Alt
                              False
                              Nothing
                              False
-                             (Just ("DISABLE_EXAMPLE" :| []))
+                             (Just ("EXAMPLE" :| []))
                              Nothing
                              Nothing
-                             (Just "ANY")
+                             (Just "BOOL")
                              (Just "Example of an enable/disable switch")))
                        (Alt
                           (Setting

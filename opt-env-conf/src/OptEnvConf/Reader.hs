@@ -17,7 +17,7 @@ str = Right . fromString
 auto :: (Read a) => Reader a
 auto s = case readMaybe s of
   Nothing -> Left $ "Un-Read-able value: " <> show s
-  Just a -> a
+  Just a -> Right a
 
 -- | Always return True
 exists :: Reader Bool

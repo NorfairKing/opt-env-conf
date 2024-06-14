@@ -11,6 +11,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
@@ -326,42 +327,42 @@ spec = do
         ["bar", "quux"]
 
       argParseSpecs
-        (enableDisableSwitch True [long "example"])
+        (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
         [ ([], True),
           (["--enable-example"], True),
           (["--disable-example"], False)
         ]
 
       argParseSpecs
-        (enableDisableSwitch False [long "example"])
+        (enableDisableSwitch False [long "example", env "EXAMPLE", conf "example"])
         [ ([], False),
           (["--enable-example"], True),
           (["--disable-example"], False)
         ]
 
       envParseSpecs
-        (enableDisableSwitch True [long "example", env "EXAMPLE", env "ALTERNATIVE"])
+        (enableDisableSwitch True [long "example", env "EXAMPLE", env "ALTERNATIVE", conf "example"])
         [ ([], True),
-          ([("DISABLE_EXAMPLE", "")], False),
-          ([("DISABLE_ALTERNATIVE", "")], False),
-          ([("ENABLE_EXAMPLE", "")], True),
-          ([("ENABLE_ALTERNATIVE", "")], True)
+          ([("EXAMPLE", "False")], False),
+          ([("ALTERNATIVE", "False")], False),
+          ([("EXAMPLE", "True")], True),
+          ([("ALTERNATIVE", "True")], True)
         ]
 
       envParseSpecs
-        (enableDisableSwitch False [long "example", env "EXAMPLE", env "ALTERNATIVE"])
+        (enableDisableSwitch False [long "example", env "EXAMPLE", env "ALTERNATIVE", conf "example"])
         [ ([], False),
-          ([("ENABLE_EXAMPLE", "")], True),
-          ([("ENABLE_ALTERNATIVE", "")], True),
-          ([("DISABLE_EXAMPLE", "")], False),
-          ([("DISABLE_ALTERNATIVE", "")], False)
+          ([("EXAMPLE", "True")], True),
+          ([("ALTERNATIVE", "True")], True),
+          ([("EXAMPLE", "False")], False),
+          ([("ALTERNATIVE", "False")], False)
         ]
 
-argParseSpecs :: (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
-argParseSpecs p = mapM_ (\(args, result) -> argParseSpec args p result)
+argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
+argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
 
-argParseSpec :: (Show a, Eq a) => [String] -> Parser a -> a -> Spec
-argParseSpec args p expected = do
+argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a -> Spec
+argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses ", show args, "as", show expected]) $ do
     let argMap = ArgMap.parse_ args
     errOrRes <- runParserOn p argMap EnvMap.empty Nothing
@@ -369,16 +370,16 @@ argParseSpec args p expected = do
       Left err -> expectationFailure $ show err
       Right actual -> actual `shouldBe` expected
 
-envParseSpecs :: (Show a, Eq a) => Parser a -> [([(String, String)], a)] -> Spec
-envParseSpecs p = mapM_ (\(envs, result) -> envParseSpec envs p result)
+envParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([(String, String)], a)] -> Spec
+envParseSpecs p table = withFrozenCallStack $ mapM_ (\(envs, result) -> envParseSpec envs p result) table
 
-envParseSpec :: (Show a, Eq a) => [(String, String)] -> Parser a -> a -> Spec
-envParseSpec envVars p expected = do
+envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser a -> a -> Spec
+envParseSpec envVars p expected = withFrozenCallStack $ do
   it (unwords ["parses ", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
     errOrRes <- runParserOn p ArgMap.empty envMap Nothing
     case errOrRes of
-      Left err -> expectationFailure $ show err
+      Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
 
 shouldParse ::

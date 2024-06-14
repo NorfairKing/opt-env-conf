@@ -23,8 +23,23 @@ data ParseError
   | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfVal !(Maybe ConfDoc)
   | ParseErrorConfigRead !String
-  | ParseErrorRequired
   deriving (Show, Eq)
+
+-- Whether the other side of an 'Alt' should be tried if we find this error.
+errorIsForgivable :: ParseError -> Bool
+errorIsForgivable = \case
+  ParseErrorUnrecognised _ -> False
+  ParseErrorEmpty -> True
+  ParseErrorEmptySetting -> False
+  ParseErrorMissingArgument _ -> True
+  ParseErrorArgumentRead _ -> False
+  ParseErrorMissingSwitch _ -> True
+  ParseErrorOptionRead _ -> False
+  ParseErrorMissingOption _ -> True
+  ParseErrorMissingEnvVar _ -> True
+  ParseErrorEnvRead _ -> False
+  ParseErrorMissingConfVal _ -> True
+  ParseErrorConfigRead _ -> False
 
 renderErrors :: NonEmpty ParseError -> [Chunk]
 renderErrors = unlinesChunks . concatMap renderError . NE.toList
@@ -67,5 +82,3 @@ renderError = \case
     ["Missing config value: "] : maybe (error "TODO") renderConfDoc md
   ParseErrorConfigRead s ->
     [["Failed to parse configuration:", chunk $ T.pack $ show s]]
-  ParseErrorRequired ->
-    [["Required"]]

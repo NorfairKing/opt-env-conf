@@ -216,8 +216,7 @@ enableDisableSwitch defaultBool builders =
       [ Just parseDummy,
         Just parseDisableSwitch,
         Just parseEnableSwitch,
-        parseEnableEnv,
-        parseDisableEnv,
+        parseEnv,
         parseConfigVal,
         Just $ pure defaultBool
       ]
@@ -256,51 +255,22 @@ enableDisableSwitch defaultBool builders =
             settingHelp = Nothing
           }
 
-    prefixOrReplaceEnv :: String -> String -> String
-    prefixOrReplaceEnv prefix = \case
-      "" -> prefix
-      v -> prefix <> "_" <> v
-
-    parseEnableEnv :: Maybe (Parser Bool)
-    parseEnableEnv = do
-      guard (not defaultBool)
+    parseEnv :: Maybe (Parser Bool)
+    parseEnv = do
+      ne <- settingEnvVars s
       pure $
         ParserSetting $
           Setting
             { settingDasheds = [],
-              settingReaders = (exists :) $ settingReaders s,
+              settingReaders = (auto :: Reader Bool) : settingReaders s,
               settingTryArgument = False,
               settingSwitchValue = Nothing,
               settingTryOption = False,
-              settingEnvVars =
-                if defaultBool
-                  then Nothing
-                  else fmap (NE.map (prefixOrReplaceEnv "ENABLE" . toEnvCase)) (settingEnvVars s),
+              settingEnvVars = Just ne,
               settingConfigVals = Nothing,
               settingDefaultValue = Nothing,
               settingHidden = False,
-              settingMetavar = Just "ANY",
-              settingHelp = settingHelp s
-            }
-    parseDisableEnv :: Maybe (Parser Bool)
-    parseDisableEnv = do
-      guard defaultBool
-      pure $
-        ParserSetting $
-          Setting
-            { settingDasheds = [],
-              settingReaders = ((fmap not . exists) :) $ settingReaders s,
-              settingTryArgument = False,
-              settingSwitchValue = Nothing,
-              settingTryOption = False,
-              settingEnvVars =
-                if defaultBool
-                  then fmap (NE.map (prefixOrReplaceEnv "DISABLE" . toEnvCase)) (settingEnvVars s)
-                  else Nothing,
-              settingConfigVals = Nothing,
-              settingDefaultValue = Nothing,
-              settingHidden = False,
-              settingMetavar = Just "ANY",
+              settingMetavar = Just "BOOL",
               settingHelp = settingHelp s
             }
     parseConfigVal :: Maybe (Parser Bool)
@@ -334,7 +304,7 @@ enableDisableSwitch defaultBool builders =
             settingConfigVals = Nothing,
             settingDefaultValue = Nothing,
             settingHidden = False,
-            settingMetavar = Just $ fromMaybe "ANY" $ settingMetavar s,
+            settingMetavar = Nothing,
             settingHelp = settingHelp s
           }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed

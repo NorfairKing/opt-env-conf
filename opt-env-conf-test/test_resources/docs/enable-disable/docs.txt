@@ -33,7 +33,7 @@ AnyDocsOr
         , setDocEnvVars = Nothing
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing
-        , setDocMetavar = Just "ANY"
+        , setDocMetavar = Nothing
         , setDocHelp = Just "Example of an enable/disable switch"
         }
   , AnyDocsSingle
@@ -42,10 +42,10 @@ AnyDocsOr
         , setDocTrySwitch = False
         , setDocTryOption = False
         , setDocDasheds = []
-        , setDocEnvVars = Just ("DISABLE_EXAMPLE" :| [])
+        , setDocEnvVars = Just ("EXAMPLE" :| [])
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing
-        , setDocMetavar = Just "ANY"
+        , setDocMetavar = Just "BOOL"
         , setDocHelp = Just "Example of an enable/disable switch"
         }
   , AnyDocsSingle

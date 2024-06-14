@@ -1,7 +1,7 @@
 AnyDocsSingle
   EnvDoc
-    { envDocVars = "DISABLE_EXAMPLE" :| []
+    { envDocVars = "EXAMPLE" :| []
     , envDocDefault = Nothing
-    , envDocMetavar = Just "ANY"
+    , envDocMetavar = Just "BOOL"
     , envDocHelp = Just "Example of an enable/disable switch"
     }

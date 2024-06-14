@@ -15,7 +15,6 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
-import Control.Monad
 import Control.Monad.Reader hiding (Reader)
 import Control.Monad.State
 import Data.Aeson ((.:?))
@@ -27,7 +26,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Traversable
 import Data.Version
+import Debug.Trace
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
 import OptEnvConf.Doc
@@ -212,7 +213,11 @@ runParserOn p args envVars mConfig =
             put s'
             pure a
           -- Note that args are not consumed if the alternative failed.
-          Left _ -> go p2 -- TODO: Maybe collect the error?
+          Left errs ->
+            -- TODO: Maybe collect the error?
+            if all errorIsForgivable errs
+              then go p2
+              else ppErrors errs
       ParserMany p' -> do
         eor <- tryPP $ go p'
         case eor of
@@ -282,16 +287,18 @@ runParserOn p args envVars mConfig =
                         -- Require readers before finding the env vars so the parser
                         -- always fails if it's missing a reader.
                         rs <- requireReaders settingReaders
-
-                        let vars = NE.toList ne
-
                         es <- asks ppEnvEnv
-                        case msum $ map (`EnvMap.lookup` es) vars of
-                          Nothing -> pure NotFound
-                          Just varStr ->
-                            case tryReaders rs varStr of
-                              Left errs -> ppError $ ParseErrorEnvRead errs
-                              Right a -> pure $ Found a
+                        let founds = mapMaybe (`EnvMap.lookup` es) (NE.toList ne)
+                        traceShowM founds
+                        -- Run the parser on all specified env vars before
+                        -- returning the first because we want to fail if any
+                        -- of them fail, even if they wouldn't be the parse
+                        -- result.
+                        results <- for founds $ \varStr ->
+                          case tryReaders rs varStr of
+                            Left errs -> ppError $ ParseErrorEnvRead errs
+                            Right a -> pure a
+                        pure $ maybe NotFound Found $ listToMaybe results
 
                     case mEnv of
                       Found a -> pure a

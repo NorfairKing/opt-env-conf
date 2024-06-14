@@ -9,7 +9,7 @@
 
   [34mExample of an enable/disable switch[m
   switch: [37m--(enable|disable)-example[m
-  env: [37mDISABLE_EXAMPLE[m [33mANY[m
+  env: [37mEXAMPLE[m [33mBOOL[m
   config: [37mexample[m: [33m<boolean>[m
 
 
@@ -19,7 +19,7 @@
   [37m--(enable|disable)-example[m   [34mExample of an enable/disable switch[m   
 
 [36mEnvironment Variables[m:
-  [37mDISABLE_EXAMPLE[m [33mANY[m   [34mExample of an enable/disable switch[m
+  [37mEXAMPLE[m [33mBOOL[m   [34mExample of an enable/disable switch[m
 
 [36mConfiguration Values[m:
   [34mExample of an enable/disable switch[m
