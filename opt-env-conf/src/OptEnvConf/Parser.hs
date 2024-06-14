@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module OptEnvConf.Parser
   ( -- * Parser API
@@ -10,6 +11,7 @@ module OptEnvConf.Parser
     subArgs,
     subEnv,
     subConfig,
+    subAll,
     subSettings,
     someNonEmpty,
     mapIO,
@@ -26,6 +28,8 @@ module OptEnvConf.Parser
     Metavar,
     Help,
     showParserABit,
+    parserMapSetting,
+    parserTraverseSetting,
 
     -- ** Re-exports
     Functor (..),
@@ -41,6 +45,7 @@ import Control.Arrow (first)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
+import Data.Functor.Identity
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -358,25 +363,35 @@ subConfig :: String -> Parser a -> Parser a
 subConfig prefix = parserMapSetting $ \s ->
   s {settingConfigVals = NE.map (first (prefix <|)) <$> settingConfigVals s}
 
-subSettings :: (HasParser a) => String -> Parser a
-subSettings prefix =
+subAll :: String -> Parser a -> Parser a
+subAll prefix =
   subArgs (toArgCase prefix <> "-")
     . subEnv (toEnvCase prefix <> "_")
     . subConfig (toConfigCase prefix)
-    $ settingsParser
+
+subSettings :: (HasParser a) => String -> Parser a
+subSettings prefix = subAll prefix settingsParser
 
 parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
-parserMapSetting func = go
+parserMapSetting func = runIdentity . parserTraverseSetting (Identity . func)
+
+parserTraverseSetting ::
+  forall f s.
+  (Applicative f) =>
+  (forall a. Setting a -> f (Setting a)) ->
+  Parser s ->
+  f (Parser s)
+parserTraverseSetting func = go
   where
-    go :: Parser s -> Parser s
+    go :: forall q. Parser q -> f (Parser q)
     go = \case
-      ParserPure a -> ParserPure a
-      ParserFmap f p -> ParserFmap f (go p)
-      ParserAp p1 p2 -> ParserAp (go p1) (go p2)
-      ParserSelect p1 p2 -> ParserSelect (go p1) (go p2)
-      ParserEmpty -> ParserEmpty
-      ParserAlt p1 p2 -> ParserAlt p1 p2
-      ParserMany p -> ParserMany (go p)
-      ParserMapIO f p -> ParserMapIO f (go p)
-      ParserWithConfig p1 p2 -> ParserWithConfig p1 p2
-      ParserSetting s -> ParserSetting $ func s
+      ParserPure a -> pure $ ParserPure a
+      ParserFmap f p -> ParserFmap f <$> go p
+      ParserAp p1 p2 -> ParserAp <$> go p1 <*> go p2
+      ParserSelect p1 p2 -> ParserSelect <$> go p1 <*> go p2
+      ParserEmpty -> pure ParserEmpty
+      ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
+      ParserMany p -> ParserMany <$> go p
+      ParserMapIO f p -> ParserMapIO f <$> go p
+      ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
+      ParserSetting s -> ParserSetting <$> func s

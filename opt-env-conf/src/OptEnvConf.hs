@@ -10,6 +10,7 @@ module OptEnvConf
     subArgs,
     subEnv,
     subConfig,
+    subAll,
     subSettings,
     someNonEmpty,
     mapIO,

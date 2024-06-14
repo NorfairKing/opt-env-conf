@@ -9,6 +9,7 @@ import Autodocodec
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import OptEnvConf.ArgMap (Dashed (..))
+import OptEnvConf.Casing
 import OptEnvConf.Reader
 import Text.Show
 
@@ -138,8 +139,9 @@ switch :: a -> Builder a
 switch v = Builder $ \s -> s {settingSwitchValue = Just v}
 
 long :: String -> Builder a
-long "" = error "Cannot use an empty long-form option."
-long l = Builder $ \s -> s {settingDasheds = DashedLong (NE.fromList l) : settingDasheds s}
+long l = Builder $ \s -> case NE.nonEmpty l of
+  Nothing -> s
+  Just ne -> s {settingDasheds = DashedLong ne : settingDasheds s}
 
 short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
@@ -153,9 +155,10 @@ conf k = confWith k codec
 name :: (HasCodec a) => String -> Builder a
 name s =
   mconcat
-    [ long s,
-      env s,
-      conf s
+    [ option,
+      long (toArgCase s),
+      env (toEnvCase s),
+      conf (toConfigCase s)
     ]
 
 confWith :: String -> ValueCodec void a -> Builder a
