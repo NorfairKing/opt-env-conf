@@ -3,6 +3,7 @@
 module OptEnvConf.LintSpec (spec) where
 
 import Data.Text (Text)
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Lint
 import Test.Syd
@@ -23,8 +24,18 @@ spec = do
     "no-reader-for-argument"
     ( setting
         [ argument,
+          metavar "STR",
           help "Example"
         ]
+    )
+  goldenLintTest
+    "no-metavar-for-argument"
+    ( setting
+        [ reader str,
+          argument,
+          help "Example"
+        ] ::
+        Parser String
     )
   goldenLintTest
     "no-reader-for-option"
@@ -82,12 +93,13 @@ spec = do
     "no-commands"
     (commands [])
 
-goldenLintTest :: FilePath -> Parser a -> Spec
-goldenLintTest fp parser = it "produces the same lint error for this parser" $
-  goldenChunksFile ("test_resources/lint/" <> fp <> ".txt") $ do
-    case lintParser parser of
-      Nothing -> expectationFailure "Parser was valid."
-      Just errs -> pure $ renderLintErrors errs
+goldenLintTest :: (HasCallStack) => FilePath -> Parser a -> Spec
+goldenLintTest fp parser = withFrozenCallStack $
+  it "produces the same lint error for this parser" $
+    goldenChunksFile ("test_resources/lint/" <> fp <> ".txt") $ do
+      case lintParser parser of
+        Nothing -> expectationFailure "Parser was valid."
+        Just errs -> pure $ renderLintErrors errs
 
 goldenChunksFile :: FilePath -> IO [Chunk] -> GoldenTest Text
 goldenChunksFile fp cs =

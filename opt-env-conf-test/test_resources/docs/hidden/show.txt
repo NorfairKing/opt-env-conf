@@ -10,5 +10,5 @@ Check
         Nothing
         Nothing
         (Just _)
-        Nothing
+        (Just "STR")
         (Just "Example of a hidden setting")))

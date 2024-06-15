@@ -5,6 +5,7 @@ module OptEnvConf.APISpec (spec) where
 import Data.Map (Map)
 import Data.Text (Text)
 import Data.Version
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Parser
 import OptEnvConf.Test
@@ -24,8 +25,8 @@ spec = do
   exampleParserSpec "three-commands" threeCommandsParser
   exampleParserSpec "sub-commands" subCommandsParser
 
-exampleParserSpec :: FilePath -> Parser a -> Spec
-exampleParserSpec dir p = describe dir $ do
+exampleParserSpec :: (HasCallStack) => FilePath -> Parser a -> Spec
+exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
   let version = makeVersion [0, 0, 0]
   let parser = internalParser version p
 
@@ -185,6 +186,7 @@ hiddenParser =
       [ reader str,
         argument,
         hidden,
+        metavar "STR",
         value "default",
         help "Example of a hidden setting"
       ]

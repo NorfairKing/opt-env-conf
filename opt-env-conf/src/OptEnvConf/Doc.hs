@@ -228,7 +228,7 @@ renderSetDocWithoutHeader SetDoc {..} =
   concat
     [ [ unwordsChunks
           [ ["argument:"],
-            [metavarChunk $ fromMaybe "ARG" setDocMetavar]
+            [mMetavarChunk setDocMetavar]
           ]
         | setDocTryArgument
       ],
@@ -242,7 +242,7 @@ renderSetDocWithoutHeader SetDoc {..} =
       [ unwordsChunks
           [ ["option:"],
             dashedChunksNE dasheds
-              ++ [" ", metavarChunk $ fromMaybe "ARG" setDocMetavar]
+              ++ [" ", mMetavarChunk setDocMetavar]
           ]
         | setDocTryOption,
           dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
@@ -250,7 +250,7 @@ renderSetDocWithoutHeader SetDoc {..} =
       [ unwordsChunks
           [ ["env:"],
             envVarChunksNE vars
-              ++ [" ", metavarChunk $ fromMaybe "ARG" setDocMetavar]
+              ++ [" ", mMetavarChunk setDocMetavar]
           ]
         | vars <- maybeToList setDocEnvVars
       ],
@@ -418,7 +418,7 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", pro
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks $
           concat
-            [ [ [metavarChunk $ fromMaybe "ARG" optDocMetavar]
+            [ [ [mMetavarChunk optDocMetavar]
                 | optDocTryArgument
               ],
               [ concat $ maybeToList $ dashedChunks optDocDasheds
@@ -426,7 +426,7 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", pro
               ],
               [ concat
                   [ concat $ maybeToList $ dashedChunks optDocDasheds,
-                    [" ", metavarChunk $ fromMaybe "ARG" optDocMetavar]
+                    [" ", mMetavarChunk optDocMetavar]
                   ]
                 | optDocTryOption
               ]
@@ -478,7 +478,7 @@ renderOptDocLong OptDoc {..} =
   [ unwordsChunks $
       concat
         [ maybeToList $ dashedChunks optDocDasheds,
-          [ [ metavarChunk $ fromMaybe "ARG" optDocMetavar
+          [ [ mMetavarChunk optDocMetavar
             ]
             | optDocTryArgument
           ]
@@ -518,7 +518,7 @@ renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
   [ unwordsChunks
       [ envVarChunksNE envDocVars,
-        [ metavarChunk $ fromMaybe "ARG" envDocMetavar
+        [ mMetavarChunk envDocMetavar
         ]
       ],
     [mHelpChunk envDocHelp]
@@ -569,6 +569,9 @@ progNameChunk = fore yellow . chunk . T.pack
 commandChunk :: String -> Chunk
 commandChunk = fore magenta . chunk . T.pack
 
+mMetavarChunk :: Maybe Metavar -> Chunk
+mMetavarChunk = metavarChunk . fromMaybe "METAVAR"
+
 metavarChunk :: Metavar -> Chunk
 metavarChunk = fore yellow . chunk . T.pack
 
@@ -594,7 +597,7 @@ defaultValueChunks :: String -> [Chunk]
 defaultValueChunks val = ["default: ", fore yellow $ chunk $ T.pack val]
 
 mHelpChunk :: Maybe Help -> Chunk
-mHelpChunk = maybe (fore red "!! undocumented !!") helpChunk
+mHelpChunk = maybe (fore red "undocumented") helpChunk
 
 helpChunk :: Help -> Chunk
 helpChunk = fore blue . chunk . T.pack

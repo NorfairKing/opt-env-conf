@@ -31,6 +31,7 @@ data LintError
   = LintErrorUndocumented
   | LintErrorEmptySetting !(Maybe Help)
   | LintErrorNoReaderForArgument !(Maybe Help)
+  | LintErrorNoMetavarForArgument !(Maybe Help)
   | LintErrorNoReaderForOption !(Maybe Help)
   | LintErrorNoDashedForOption !(Maybe Help)
   | LintErrorNoMetavarForOption !(Maybe Help)
@@ -52,15 +53,6 @@ renderLintError = \case
   LintErrorUndocumented ->
     [ [errorChunk, " ", "Undocumented setting."]
     ]
-  LintErrorNoReaderForArgument h ->
-    [ errorChunk,
-      " ",
-      functionChunk "argument",
-      " has no ",
-      functionChunk "reader",
-      ":"
-    ]
-      : mHelpLines h
   LintErrorEmptySetting h ->
     concat
       [ [ [ errorChunk,
@@ -86,6 +78,24 @@ renderLintError = \case
           ]
         ]
       ]
+  LintErrorNoReaderForArgument h ->
+    [ errorChunk,
+      " ",
+      functionChunk "argument",
+      " has no ",
+      functionChunk "reader",
+      ":"
+    ]
+      : mHelpLines h
+  LintErrorNoMetavarForArgument h ->
+    [ errorChunk,
+      " ",
+      functionChunk "argument",
+      " has no ",
+      functionChunk "metavar",
+      ":"
+    ]
+      : mHelpLines h
   LintErrorNoReaderForOption h ->
     [ errorChunk,
       " ",
@@ -214,6 +224,9 @@ lintParser = either Just (const Nothing) . validationToEither . go
         when (settingTryArgument && null settingReaders) $
           validationFailure $
             LintErrorNoReaderForArgument settingHelp
+        when (settingTryArgument && isNothing settingMetavar) $
+          validationFailure $
+            LintErrorNoMetavarForArgument settingHelp
         when (settingTryOption && null settingReaders) $
           validationFailure $
             LintErrorNoReaderForOption settingHelp
