@@ -94,6 +94,18 @@ extra-source-files:
     test_resources/docs/optional/opt-short.txt
     test_resources/docs/optional/show.txt
     test_resources/docs/optional/version.txt
+    test_resources/docs/sub-commands/config-docs.txt
+    test_resources/docs/sub-commands/config.txt
+    test_resources/docs/sub-commands/docs.txt
+    test_resources/docs/sub-commands/env-docs.txt
+    test_resources/docs/sub-commands/env.txt
+    test_resources/docs/sub-commands/help.txt
+    test_resources/docs/sub-commands/man.txt
+    test_resources/docs/sub-commands/opt-docs.txt
+    test_resources/docs/sub-commands/opt-long.txt
+    test_resources/docs/sub-commands/opt-short.txt
+    test_resources/docs/sub-commands/show.txt
+    test_resources/docs/sub-commands/version.txt
     test_resources/docs/three-commands/config-docs.txt
     test_resources/docs/three-commands/config.txt
     test_resources/docs/three-commands/docs.txt

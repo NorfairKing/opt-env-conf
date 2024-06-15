@@ -1,0 +1,9 @@
+  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
+  [37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
+  [35mtop[m [34mcommand without subcommands[m
+    [37m--name[m [34mname[m 
+  [35msub[m [34mcommand with subcommands[m
+    [35ma[m [34mA[m
+    [35mb[m [34mB[m
+    [35mc[m [34mC[m
+    [35md[m [34mD[m

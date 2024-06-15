@@ -22,6 +22,7 @@ spec = do
   exampleParserSpec "enable-disable" enableDisableParser
   exampleParserSpec "greet" greetParser
   exampleParserSpec "three-commands" threeCommandsParser
+  exampleParserSpec "sub-commands" subCommandsParser
 
 exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
@@ -239,4 +240,40 @@ threeCommandsParser =
               name "enable"
             ],
       command "three" "third" (pure Three)
+    ]
+
+data SubCommands
+  = Top !String
+  | Sub !Sub1 !Sub2
+
+subCommandsParser :: Parser SubCommands
+subCommandsParser =
+  commands
+    [ command "top" "command without subcommands" $
+        Top
+          <$> setting
+            [ help "name",
+              reader str,
+              metavar "NAME",
+              name "name"
+            ],
+      command "sub" "command with subcommands" $ Sub <$> sub1Parser <*> sub2Parser
+    ]
+
+data Sub1 = A | B
+
+sub1Parser :: Parser Sub1
+sub1Parser =
+  commands
+    [ command "a" "A" $ pure A,
+      command "b" "B" $ pure B
+    ]
+
+data Sub2 = C | D
+
+sub2Parser :: Parser Sub2
+sub2Parser =
+  commands
+    [ command "c" "C" $ pure C,
+      command "d" "D" $ pure D
     ]

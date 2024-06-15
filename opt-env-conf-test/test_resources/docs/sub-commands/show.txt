@@ -1,0 +1,25 @@
+Commands
+  [ Command
+      "top"
+      "command without subcommands"
+      (Check
+         _
+         (Setting
+            (Setting
+               [ DashedLong ('n' :| "ame") ]
+               [ _ ]
+               False
+               Nothing
+               True
+               (Just ("NAME" :| []))
+               (Just [ ( "name" :| [] , BimapCodec _ _ (StringCodec Nothing) ) ])
+               Nothing
+               (Just "NAME")
+               (Just "name"))))
+  , Command
+      "sub"
+      "command with subcommands"
+      (Ap
+         (Commands [ Command "a" "A" (Pure _) , Command "b" "B" (Pure _) ])
+         (Commands [ Command "c" "C" (Pure _) , Command "d" "D" (Pure _) ]))
+  ]
