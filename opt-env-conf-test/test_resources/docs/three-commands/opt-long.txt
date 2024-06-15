@@ -1,2 +1,7 @@
-  [37m-h[m[36m|[m[37m--help[m      [34mShow this help text[m                 
-  [37m-v[m[36m|[m[37m--version[m   [34mOutput version information: 0.0.0[m   
+  [37m-h[m[36m|[m[37m--help[m       [34mShow this help text[m                   
+  [37m-v[m[36m|[m[37m--version[m    [34mOutput version information: 0.0.0[m     
+  [35mone[m                                                   
+    [33mSTR[m             [34margument[m                            
+  [35mtwo[m                                                   
+    [37m--number[m[36m|[m[37m-n[m     [34mnumber[m                              
+  [35mthree[m                                                 

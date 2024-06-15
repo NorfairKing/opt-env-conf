@@ -419,6 +419,13 @@ renderLongOptDocs = layoutAsTable . go
   where
     go :: AnyDocs OptDoc -> [[[Chunk]]]
     go = \case
+      AnyDocsCommands cs ->
+        concatMap
+          ( \(c, d) ->
+              indent [[commandChunk c]]
+                : map indent (go d)
+          )
+          cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle vs -> [indent $ renderOptDocLong vs]
