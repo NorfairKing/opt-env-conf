@@ -1,1 +1,5 @@
-AnyDocsOr []
+AnyDocsCommands
+  [ ( "one" , AnyDocsAnd [] )
+  , ( "two" , AnyDocsAnd [] )
+  , ( "three" , AnyDocsAnd [] )
+  ]

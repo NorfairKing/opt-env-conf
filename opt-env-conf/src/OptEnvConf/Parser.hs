@@ -119,7 +119,7 @@ instance Alternative Parser where
           ParserAlt _ _ -> False
           ParserMany _ -> False
           ParserCheck _ p -> isEmpty p
-          ParserCommands cs -> not (null cs)
+          ParserCommands cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ -> False
      in case (isEmpty p1, isEmpty p2) of

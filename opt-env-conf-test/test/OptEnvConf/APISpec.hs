@@ -31,25 +31,31 @@ exampleParserSpec dir p = describe dir $ do
   it "passes the linter" $
     parserLintTest parser
 
+  it "shows the parser in the same way" $
+    goldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
+      case Pretty.parseValue (showParserABit p) of
+        Nothing -> expectationFailure "Error parsing value"
+        Just v -> pure $ Pretty.valToStr v
+
   it "produces the same docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/docs.txt") $
       ppShow $
-        parserDocs parser
+        parserDocs p
 
   it "produces the same opt docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/opt-docs.txt") $
       ppShow $
-        parserOptDocs parser
+        parserOptDocs p
 
   it "produces the same env docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/env-docs.txt") $
       ppShow $
-        parserConfDocs parser
+        parserConfDocs p
 
   it "produces the same conf docs structure as before" $
     pureGoldenStringFile ("test_resources/docs/" <> dir <> "/config-docs.txt") $
       ppShow $
-        parserEnvDocs parser
+        parserEnvDocs p
 
   it "documents the version page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/version.txt") $
@@ -84,12 +90,6 @@ exampleParserSpec dir p = describe dir $ do
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/config.txt") $
       renderConfDocs $
         parserConfDocs parser
-
-  it "shows the parser in the same way" $
-    goldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
-      case Pretty.parseValue (showParserABit parser) of
-        Nothing -> expectationFailure "Error parsing value"
-        Just v -> pure $ Pretty.valToStr v
 
 pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
 pureGoldenChunksFile fp cs =
@@ -208,14 +208,32 @@ emptyParser =
   pure Empty
 
 data ThreeCommands
-  = One
-  | Two
+  = One !String
+  | Two !Int
   | Three
 
 threeCommandsParser :: Parser ThreeCommands
 threeCommandsParser =
   commands
-    [ ("one", pure One),
-      ("two", pure Two),
+    [ ( "one",
+        One
+          <$> setting
+            [ help "argument",
+              reader str,
+              metavar "STR",
+              argument
+            ]
+      ),
+      ( "two",
+        Two
+          <$> setting
+            [ help "number",
+              reader auto,
+              option,
+              metavar "INT",
+              long "number",
+              short 'n'
+            ]
+      ),
       ("three", pure Three)
     ]
