@@ -21,6 +21,7 @@ import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
+import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -168,7 +169,7 @@ collectPossibleOpts = go
       ParserCheck _ p -> go p
       -- This isn't right. We need to know which command is in action to know which opts are unrecognised
       -- For that we need context-aware opt parsing
-      ParserCommands ne -> S.insert PossibleArg $ S.unions $ map (go . snd) ne
+      ParserCommands ne -> S.unions $ map goCommand ne
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserSetting Setting {..} ->
         S.fromList $
@@ -181,6 +182,8 @@ collectPossibleOpts = go
                 then map PossibleOption settingDasheds
                 else []
             ]
+    goCommand :: Command a -> Set PossibleOpt
+    goCommand Command {..} = S.insert PossibleArg (go commandParser)
 
 runParserOn ::
   Parser a ->
@@ -236,10 +239,10 @@ runParserOn p args envVars mConfig =
       ParserCommands cs -> do
         mS <- ppArg
         case mS of
-          Nothing -> ppError $ ParseErrorMissingCommand $ map fst cs
-          Just s -> case lookup s cs of
-            Nothing -> ppError $ ParseErrorUnrecognisedCommand s (map fst cs)
-            Just p' -> go p'
+          Nothing -> ppError $ ParseErrorMissingCommand $ map commandArg cs
+          Just s -> case find ((== s) . commandArg) cs of
+            Nothing -> ppError $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+            Just c -> go $ commandParser c
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa

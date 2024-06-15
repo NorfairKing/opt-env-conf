@@ -51,8 +51,8 @@ spec = do
   parseErrorSpec
     "required-command"
     ( commands
-        [ ("one", pure '1'),
-          ("two", pure '2')
+        [ command "one" "first" $ pure '1',
+          command "two" "second" $ pure '2'
         ]
     )
     []
@@ -60,8 +60,8 @@ spec = do
   parseErrorSpec
     "unrecognised-command"
     ( commands
-        [ ("one", pure '1'),
-          ("two", pure '2')
+        [ command "one" "first" $ pure '1',
+          command "two" "second" $ pure '2'
         ]
     )
     ["three"]

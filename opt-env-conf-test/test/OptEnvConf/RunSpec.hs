@@ -360,8 +360,8 @@ spec = do
 
       argParseSpecs
         ( commands
-            [ ("one", pure '1'),
-              ("two", pure '2')
+            [ command "one" "first" $ pure '1',
+              command "two" "second" $ pure '2'
             ]
         )
         [ (["one"], '1'),

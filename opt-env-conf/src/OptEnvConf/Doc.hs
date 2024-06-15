@@ -90,7 +90,7 @@ data ConfDoc = ConfDoc
   deriving (Show, Eq)
 
 data AnyDocs a
-  = AnyDocsCommands [(String, AnyDocs a)]
+  = AnyDocsCommands [CommandDoc a]
   | AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
   | AnyDocsSingle !a
@@ -98,39 +98,57 @@ data AnyDocs a
 
 instance Functor AnyDocs where
   fmap f = \case
-    AnyDocsCommands cs -> AnyDocsCommands $ map (second (fmap f)) cs
+    AnyDocsCommands cs -> AnyDocsCommands $ map (fmap f) cs
     AnyDocsAnd as -> AnyDocsAnd $ fmap (fmap f) as
     AnyDocsOr as -> AnyDocsOr $ fmap (fmap f) as
     AnyDocsSingle a -> AnyDocsSingle $ f a
 
 instance Foldable AnyDocs where
   foldMap f = \case
-    AnyDocsCommands cs -> foldMap (foldMap f . snd) cs
+    AnyDocsCommands cs -> foldMap (foldMap f) cs
     AnyDocsAnd as -> foldMap (foldMap f) as
     AnyDocsOr as -> foldMap (foldMap f) as
     AnyDocsSingle a -> f a
 
 instance Traversable AnyDocs where
   traverse f = \case
-    AnyDocsCommands cs -> AnyDocsCommands <$> traverse (\(c, d) -> (,) c <$> traverse f d) cs
+    AnyDocsCommands cs -> AnyDocsCommands <$> traverse (traverse f) cs
     AnyDocsAnd as -> AnyDocsAnd <$> traverse (traverse f) as
     AnyDocsOr as -> AnyDocsOr <$> traverse (traverse f) as
     AnyDocsSingle a -> AnyDocsSingle <$> f a
+
+data CommandDoc a = CommandDoc
+  { commandDocArgument :: String,
+    commandDocHelp :: Help,
+    commandDocs :: AnyDocs a
+  }
+  deriving (Show, Eq)
+
+instance Functor CommandDoc where
+  fmap f cd = cd {commandDocs = fmap f (commandDocs cd)}
+
+instance Foldable CommandDoc where
+  foldMap f = foldMap f . commandDocs
+
+instance Traversable CommandDoc where
+  traverse f cd = (\d -> cd {commandDocs = d}) <$> traverse f (commandDocs cd)
 
 mapMaybeDocs :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
 mapMaybeDocs func = simplifyAnyDocs . go
   where
     go = \case
-      AnyDocsCommands cs -> AnyDocsCommands $ map (second go) cs
+      AnyDocsCommands cs -> AnyDocsCommands $ map goCommandDoc cs
       AnyDocsAnd ds -> AnyDocsAnd $ map go ds
       AnyDocsOr ds -> AnyDocsOr $ map go ds
       AnyDocsSingle d -> maybe (AnyDocsAnd []) AnyDocsSingle $ func d
+
+    goCommandDoc cd = cd {commandDocs = go (commandDocs cd)}
 
 simplifyAnyDocs :: AnyDocs a -> AnyDocs a
 simplifyAnyDocs = go
   where
     go = \case
-      AnyDocsCommands cs -> AnyDocsCommands $ map (second go) cs
+      AnyDocsCommands cs -> AnyDocsCommands $ map goDoc cs
       AnyDocsAnd ds -> case concatMap goAnd ds of
         [a] -> a
         as -> AnyDocsAnd as
@@ -139,14 +157,16 @@ simplifyAnyDocs = go
         as -> AnyDocsOr as
       AnyDocsSingle v -> AnyDocsSingle v
 
+    goDoc cd = cd {commandDocs = go (commandDocs cd)}
+
     goAnd = \case
-      AnyDocsCommands c -> [AnyDocsCommands $ map (second go) c]
+      AnyDocsCommands c -> [AnyDocsCommands $ map goDoc c]
       AnyDocsAnd ds -> concatMap (goAnd . go) ds
       AnyDocsOr [] -> []
       ds -> [go ds]
 
     goOr = \case
-      AnyDocsCommands c -> [AnyDocsCommands $ map (second go) c]
+      AnyDocsCommands c -> [AnyDocsCommands $ map goDoc c]
       AnyDocsOr ds -> concatMap (goOr . go) ds
       AnyDocsAnd [] -> []
       ds -> [go ds]
@@ -164,9 +184,16 @@ parserDocs = simplifyAnyDocs . go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
       ParserCheck _ p -> go p
-      ParserCommands ne -> AnyDocsCommands $ map (second go) ne
+      ParserCommands cs -> AnyDocsCommands $ map goCommand cs
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
+    goCommand :: Command a -> CommandDoc SetDoc
+    goCommand Command {..} =
+      CommandDoc
+        { commandDocArgument = commandArg,
+          commandDocHelp = commandHelp,
+          commandDocs = go commandParser
+        }
 
 settingSetDoc :: Setting a -> Maybe SetDoc
 settingSetDoc Setting {..} = do
@@ -309,13 +336,13 @@ renderAnyDocs = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands cs -> concatMap (uncurry renderCommand) cs
+      AnyDocsCommands cs -> concatMap goCommand cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> goOr ds
       AnyDocsSingle d -> indent (renderSetDoc d)
 
-    renderCommand :: String -> AnyDocs SetDoc -> [[Chunk]]
-    renderCommand = undefined
+    goCommand :: CommandDoc SetDoc -> [[Chunk]]
+    goCommand = undefined
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: [AnyDocs SetDoc] -> [[Chunk]]
@@ -373,13 +400,13 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", pro
         unwordsChunks $
           intersperse [orChunk] $
             map
-              ( \(c, d) ->
-                  if nullDocs d
-                    then [commandChunk c]
+              ( \CommandDoc {..} ->
+                  if nullDocs commandDocs
+                    then [commandChunk commandDocArgument]
                     else
-                      commandChunk c
+                      commandChunk commandDocArgument
                         : " "
-                        : go d
+                        : go commandDocs
               )
               cs
       AnyDocsAnd ds -> unwordsChunks $ map go ds
@@ -421,9 +448,10 @@ renderLongOptDocs = layoutAsTable . go
     go = \case
       AnyDocsCommands cs ->
         concatMap
-          ( \(c, d) ->
-              indent [[commandChunk c]]
-                : map indent (go d)
+          ( \CommandDoc {..} ->
+              map indent $
+                [[commandChunk commandDocArgument]]
+                  : go commandDocs
           )
           cs
       AnyDocsAnd ds -> concatMap go ds

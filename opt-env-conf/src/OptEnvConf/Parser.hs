@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module OptEnvConf.Parser
@@ -13,6 +14,7 @@ module OptEnvConf.Parser
     checkMap,
     checkMapIO,
     commands,
+    command,
     subArgs,
     subArgs_,
     subEnv,
@@ -31,6 +33,7 @@ module OptEnvConf.Parser
     -- * Parser implementation
     Parser (..),
     HasParser (..),
+    Command (..),
     Metavar,
     Help,
     showParserABit,
@@ -47,7 +50,7 @@ where
 
 import Autodocodec.Yaml
 import Control.Applicative
-import Control.Arrow (first, second)
+import Control.Arrow (first)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
@@ -63,6 +66,24 @@ import Path.IO
 import System.FilePath
 import Text.Show
 
+data Command a = Command
+  { commandArg :: String,
+    commandHelp :: Help,
+    commandParser :: Parser a
+  }
+
+instance Functor Command where
+  fmap f c = c {commandParser = fmap f (commandParser c)}
+
+showCommandABit :: Command a -> ShowS
+showCommandABit Command {..} =
+  showString "Command "
+    . showsPrec 11 commandArg
+    . showString " "
+    . showsPrec 11 commandHelp
+    . showString " "
+    . showParserPrec 11 commandParser
+
 data Parser a where
   -- Functor
   ParserPure :: !a -> Parser a
@@ -77,7 +98,7 @@ data Parser a where
   -- Map, Check, and IO
   ParserCheck :: (a -> IO (Either String b)) -> Parser a -> Parser b
   -- Commands
-  ParserCommands :: [(String, Parser a)] -> Parser a
+  ParserCommands :: [Command a] -> Parser a
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- | General settings
@@ -92,7 +113,7 @@ instance Functor Parser where
     ParserEmpty -> ParserEmpty
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
-    ParserCommands ne -> ParserCommands (map (second (fmap f)) ne)
+    ParserCommands cs -> ParserCommands $ map (fmap f) cs
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
     -- TODO: make setting a parser and fmap here
     p -> ParserCheck (pure . Right . f) p
@@ -132,7 +153,10 @@ instance Alternative Parser where
   some p = (:) <$> p <*> many p
 
 showParserABit :: Parser a -> String
-showParserABit = ($ "") . go 0
+showParserABit = ($ "") . showParserPrec 0
+
+showParserPrec :: Int -> Parser a -> ShowS
+showParserPrec = go
   where
     go :: Int -> Parser a -> ShowS
     go d = \case
@@ -168,13 +192,7 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Commands "
             . showListWith
-              ( \(c, p) ->
-                  showString "("
-                    . showsPrec 11 c
-                    . showString ", "
-                    . go 11 p
-                    . showString ")"
-              )
+              showCommandABit
               cs
       ParserWithConfig p1 p2 ->
         showParen (d > 10) $
@@ -219,8 +237,11 @@ checkMap func = checkMapIO (pure . func)
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIO = ParserCheck
 
-commands :: [(String, Parser a)] -> Parser a
+commands :: [Command a] -> Parser a
 commands = ParserCommands
+
+command :: String -> String -> Parser a -> Command a
+command = Command
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
@@ -422,6 +443,16 @@ parserTraverseSetting func = go
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
       ParserCheck f p -> ParserCheck f <$> go p
-      ParserCommands ne -> ParserCommands <$> traverse (\(c, p) -> (,) c <$> go p) ne
+      ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting s -> ParserSetting <$> func s
+
+commandTraverseSetting ::
+  forall f s.
+  (Applicative f) =>
+  (forall a. Setting a -> f (Setting a)) ->
+  Command s ->
+  f (Command s)
+commandTraverseSetting func c = do
+  (\p -> c {commandParser = p})
+    <$> parserTraverseSetting func (commandParser c)

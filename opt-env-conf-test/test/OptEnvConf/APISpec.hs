@@ -215,16 +215,15 @@ data ThreeCommands
 threeCommandsParser :: Parser ThreeCommands
 threeCommandsParser =
   commands
-    [ ( "one",
+    [ command "one" "first" $
         One
           <$> setting
             [ help "argument",
               reader str,
               metavar "STR",
               argument
-            ]
-      ),
-      ( "two",
+            ],
+      command "two" "second" $
         Two
           <$> setting
             [ help "number",
@@ -233,7 +232,6 @@ threeCommandsParser =
               metavar "INT",
               long "number",
               short 'n'
-            ]
-      ),
-      ("three", pure Three)
+            ],
+      command "three" "third" (pure Three)
     ]

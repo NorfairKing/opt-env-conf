@@ -1,53 +1,14 @@
-Alt
+Check
+  _
   (Setting
      (Setting
-        [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
         []
+        [ _ ]
+        True
+        Nothing
         False
+        Nothing
+        Nothing
         (Just _)
-        False
         Nothing
-        Nothing
-        Nothing
-        Nothing
-        (Just "Show this help text")))
-  (Alt
-     (Setting
-        (Setting
-           [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
-           []
-           False
-           (Just _)
-           False
-           Nothing
-           Nothing
-           Nothing
-           Nothing
-           (Just "Output version information: 0.0.0")))
-     (Alt
-        (Setting
-           (Setting
-              [ DashedLong ('r' :| "ender-man-page") ]
-              []
-              False
-              (Just _)
-              False
-              Nothing
-              Nothing
-              Nothing
-              Nothing
-              (Just "Show this help text")))
-        (Check
-           _
-           (Setting
-              (Setting
-                 []
-                 [ _ ]
-                 True
-                 Nothing
-                 False
-                 Nothing
-                 Nothing
-                 (Just _)
-                 Nothing
-                 (Just "Example of a hidden setting"))))))
+        (Just "Example of a hidden setting")))

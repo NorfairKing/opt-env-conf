@@ -190,7 +190,7 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserCommands ls -> do
         if null ls
           then validationFailure LintErrorNoCommands
-          else traverse_ (go . snd) ls
+          else traverse_ (go . commandParser) ls
       ParserWithConfig p1 p2 -> go p1 *> go p2
       ParserSetting Setting {..} -> do
         case settingHelp of

@@ -1,35 +1,37 @@
 Commands
-  [ ( "one"
-    , Check
-        _
-        (Setting
-           (Setting
-              []
-              [ _ ]
-              True
-              Nothing
-              False
-              Nothing
-              Nothing
-              Nothing
-              Nothing
-              (Just "argument")))
-    )
-  , ( "two"
-    , Check
-        _
-        (Setting
-           (Setting
-              [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
-              [ _ ]
-              False
-              Nothing
-              True
-              Nothing
-              Nothing
-              Nothing
-              (Just "INT")
-              (Just "number")))
-    )
-  , ( "three" , Pure _ )
+  [ Command
+      "one"
+      "first"
+      (Check
+         _
+         (Setting
+            (Setting
+               []
+               [ _ ]
+               True
+               Nothing
+               False
+               Nothing
+               Nothing
+               Nothing
+               (Just "STR")
+               (Just "argument"))))
+  , Command
+      "two"
+      "second"
+      (Check
+         _
+         (Setting
+            (Setting
+               [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+               [ _ ]
+               False
+               Nothing
+               True
+               Nothing
+               Nothing
+               Nothing
+               (Just "INT")
+               (Just "number"))))
+  , Command "three" "third" (Pure _)
   ]
