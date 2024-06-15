@@ -1,5 +1,17 @@
 AnyDocsCommands
-  [ ( "one" , AnyDocsAnd [] )
-  , ( "two" , AnyDocsAnd [] )
-  , ( "three" , AnyDocsAnd [] )
+  [ CommandDoc
+      { commandDocArgument = "one"
+      , commandDocHelp = "first"
+      , commandDocs = AnyDocsAnd []
+      }
+  , CommandDoc
+      { commandDocArgument = "two"
+      , commandDocHelp = "second"
+      , commandDocs = AnyDocsAnd []
+      }
+  , CommandDoc
+      { commandDocArgument = "three"
+      , commandDocHelp = "third"
+      , commandDocs = AnyDocsAnd []
+      }
   ]

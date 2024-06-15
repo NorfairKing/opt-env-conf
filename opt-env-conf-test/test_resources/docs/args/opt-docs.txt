@@ -1,33 +1,10 @@
-AnyDocsOr
-  [ AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = True
-        , optDocTryOption = False
-        , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-        , optDocDefault = Nothing
-        , optDocMetavar = Nothing
-        , optDocHelp = Just "Show this help text"
-        }
-  , AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = True
-        , optDocTryOption = False
-        , optDocDasheds =
-            [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
-        , optDocDefault = Nothing
-        , optDocMetavar = Nothing
-        , optDocHelp = Just "Output version information: 0.0.0"
-        }
-  , AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = True
-        , optDocTrySwitch = False
-        , optDocTryOption = False
-        , optDocDasheds = []
-        , optDocDefault = Nothing
-        , optDocMetavar = Just "ARGUMENT"
-        , optDocHelp = Just "Argument"
-        }
-  ]
+AnyDocsSingle
+  OptDoc
+    { optDocTryArgument = True
+    , optDocTrySwitch = False
+    , optDocTryOption = False
+    , optDocDasheds = []
+    , optDocDefault = Nothing
+    , optDocMetavar = Just "ARGUMENT"
+    , optDocHelp = Just "Argument"
+    }

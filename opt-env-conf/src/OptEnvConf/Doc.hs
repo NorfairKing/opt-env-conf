@@ -450,7 +450,7 @@ renderLongOptDocs = layoutAsTable . go
         concatMap
           ( \CommandDoc {..} ->
               map indent $
-                [[commandChunk commandDocArgument]]
+                [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]
                   : go commandDocs
           )
           cs
@@ -468,7 +468,7 @@ renderOptDocLong OptDoc {..} =
             | optDocTryArgument
           ]
         ],
-    [helpChunk optDocHelp],
+    [mHelpChunk optDocHelp],
     unwordsChunks [defaultValueChunks d | d <- maybeToList optDocDefault]
   ]
 
@@ -505,7 +505,7 @@ renderEnvDoc EnvDoc {..} =
         [ metavarChunk $ fromMaybe "ARG" envDocMetavar
         ]
       ],
-    [helpChunk envDocHelp]
+    [mHelpChunk envDocHelp]
   ]
 
 parserConfDocs :: Parser a -> AnyDocs ConfDoc
@@ -535,7 +535,7 @@ renderConfDocs = unlinesChunks . go
 
 renderConfDoc :: ConfDoc -> [[Chunk]]
 renderConfDoc ConfDoc {..} =
-  [helpChunk confDocHelp]
+  [mHelpChunk confDocHelp]
     : concatMap
       ( \(key, schema) ->
           case jsonSchemaChunkLines schema of
@@ -576,8 +576,11 @@ confValChunk = fore white . chunk . T.pack . intercalate "." . NE.toList
 defaultValueChunks :: String -> [Chunk]
 defaultValueChunks val = ["default: ", fore yellow $ chunk $ T.pack val]
 
-helpChunk :: Maybe Help -> Chunk
-helpChunk = maybe (fore red "!! undocumented !!") (fore blue . chunk . T.pack)
+mHelpChunk :: Maybe Help -> Chunk
+mHelpChunk = maybe (fore red "!! undocumented !!") helpChunk
+
+helpChunk :: Help -> Chunk
+helpChunk = fore blue . chunk . T.pack
 
 headerChunks :: Text -> [Chunk]
 headerChunks t = [fore cyan (chunk t), ":"]

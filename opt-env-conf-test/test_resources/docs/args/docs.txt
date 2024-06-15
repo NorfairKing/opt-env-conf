@@ -1,39 +1,12 @@
-AnyDocsOr
-  [ AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = True
-        , setDocTryOption = False
-        , setDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-        , setDocEnvVars = Nothing
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocMetavar = Nothing
-        , setDocHelp = Just "Show this help text"
-        }
-  , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = True
-        , setDocTryOption = False
-        , setDocDasheds =
-            [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
-        , setDocEnvVars = Nothing
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocMetavar = Nothing
-        , setDocHelp = Just "Output version information: 0.0.0"
-        }
-  , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = True
-        , setDocTrySwitch = False
-        , setDocTryOption = False
-        , setDocDasheds = []
-        , setDocEnvVars = Nothing
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocMetavar = Just "ARGUMENT"
-        , setDocHelp = Just "Argument"
-        }
-  ]
+AnyDocsSingle
+  SetDoc
+    { setDocTryArgument = True
+    , setDocTrySwitch = False
+    , setDocTryOption = False
+    , setDocDasheds = []
+    , setDocEnvVars = Nothing
+    , setDocConfKeys = Nothing
+    , setDocDefault = Nothing
+    , setDocMetavar = Just "ARGUMENT"
+    , setDocHelp = Just "Argument"
+    }

@@ -1,4 +1,4 @@
-[36mUsage: [m[33moptional[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[33mARGUMENT[m[36m)[m
+[36mUsage: [m[33moptional[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [33mARGUMENT[m
 
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m

@@ -1,31 +1,41 @@
 AnyDocsCommands
-  [ ( "one"
-    , AnyDocsSingle
-        SetDoc
-          { setDocTryArgument = True
-          , setDocTrySwitch = False
-          , setDocTryOption = False
-          , setDocDasheds = []
-          , setDocEnvVars = Nothing
-          , setDocConfKeys = Nothing
-          , setDocDefault = Nothing
-          , setDocMetavar = Nothing
-          , setDocHelp = Just "argument"
-          }
-    )
-  , ( "two"
-    , AnyDocsSingle
-        SetDoc
-          { setDocTryArgument = False
-          , setDocTrySwitch = False
-          , setDocTryOption = True
-          , setDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
-          , setDocEnvVars = Nothing
-          , setDocConfKeys = Nothing
-          , setDocDefault = Nothing
-          , setDocMetavar = Just "INT"
-          , setDocHelp = Just "number"
-          }
-    )
-  , ( "three" , AnyDocsAnd [] )
+  [ CommandDoc
+      { commandDocArgument = "one"
+      , commandDocHelp = "first"
+      , commandDocs =
+          AnyDocsSingle
+            SetDoc
+              { setDocTryArgument = True
+              , setDocTrySwitch = False
+              , setDocTryOption = False
+              , setDocDasheds = []
+              , setDocEnvVars = Nothing
+              , setDocConfKeys = Nothing
+              , setDocDefault = Nothing
+              , setDocMetavar = Just "STR"
+              , setDocHelp = Just "argument"
+              }
+      }
+  , CommandDoc
+      { commandDocArgument = "two"
+      , commandDocHelp = "second"
+      , commandDocs =
+          AnyDocsSingle
+            SetDoc
+              { setDocTryArgument = False
+              , setDocTrySwitch = False
+              , setDocTryOption = True
+              , setDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+              , setDocEnvVars = Nothing
+              , setDocConfKeys = Nothing
+              , setDocDefault = Nothing
+              , setDocMetavar = Just "INT"
+              , setDocHelp = Just "number"
+              }
+      }
+  , CommandDoc
+      { commandDocArgument = "three"
+      , commandDocHelp = "third"
+      , commandDocs = AnyDocsAnd []
+      }
   ]

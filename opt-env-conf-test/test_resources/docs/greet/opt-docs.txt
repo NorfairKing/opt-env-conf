@@ -1,56 +1,33 @@
-AnyDocsOr
+AnyDocsAnd
   [ AnyDocsSingle
       OptDoc
         { optDocTryArgument = False
-        , optDocTrySwitch = True
+        , optDocTrySwitch = False
+        , optDocTryOption = True
+        , optDocDasheds =
+            [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+        , optDocDefault = Just "\"Hello\""
+        , optDocMetavar = Just "GREETING"
+        , optDocHelp = Just "Greeting to use"
+        }
+  , AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = True
+        , optDocTrySwitch = False
         , optDocTryOption = False
-        , optDocDasheds = [ DashedShort 'h' , DashedLong ('h' :| "elp") ]
-        , optDocDefault = Nothing
-        , optDocMetavar = Nothing
-        , optDocHelp = Just "Show this help text"
+        , optDocDasheds = []
+        , optDocDefault = Just "\"world\""
+        , optDocMetavar = Just "SUBJECT"
+        , optDocHelp = Just "Who to greet"
         }
   , AnyDocsSingle
       OptDoc
         { optDocTryArgument = False
         , optDocTrySwitch = True
         , optDocTryOption = False
-        , optDocDasheds =
-            [ DashedShort 'v' , DashedLong ('v' :| "ersion") ]
-        , optDocDefault = Nothing
-        , optDocMetavar = Nothing
-        , optDocHelp = Just "Output version information: 0.0.0"
+        , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+        , optDocDefault = Just "False"
+        , optDocMetavar = Just "ANY"
+        , optDocHelp = Just "Whether to be polite"
         }
-  , AnyDocsAnd
-      [ AnyDocsSingle
-          OptDoc
-            { optDocTryArgument = False
-            , optDocTrySwitch = False
-            , optDocTryOption = True
-            , optDocDasheds =
-                [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-            , optDocDefault = Just "\"Hello\""
-            , optDocMetavar = Just "GREETING"
-            , optDocHelp = Just "Greeting to use"
-            }
-      , AnyDocsSingle
-          OptDoc
-            { optDocTryArgument = True
-            , optDocTrySwitch = False
-            , optDocTryOption = False
-            , optDocDasheds = []
-            , optDocDefault = Just "\"world\""
-            , optDocMetavar = Just "SUBJECT"
-            , optDocHelp = Just "Who to greet"
-            }
-      , AnyDocsSingle
-          OptDoc
-            { optDocTryArgument = False
-            , optDocTrySwitch = True
-            , optDocTryOption = False
-            , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-            , optDocDefault = Just "False"
-            , optDocMetavar = Just "ANY"
-            , optDocHelp = Just "Whether to be polite"
-            }
-      ]
   ]
