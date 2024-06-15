@@ -426,6 +426,7 @@ subSettings prefix = subAll prefix settingsParser
 parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
 parserMapSetting func = runIdentity . parserTraverseSetting (Identity . func)
 
+{-# ANN parserTraverseSetting ("NOCOVER" :: String) #-}
 parserTraverseSetting ::
   forall f s.
   (Applicative f) =>
@@ -447,6 +448,7 @@ parserTraverseSetting func = go
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting s -> ParserSetting <$> func s
 
+{-# ANN commandTraverseSetting ("NOCOVER" :: String) #-}
 commandTraverseSetting ::
   forall f s.
   (Applicative f) =>

@@ -171,11 +171,11 @@
     "safe-coloured-text": {
       "flake": false,
       "locked": {
-        "lastModified": 1717875970,
-        "narHash": "sha256-W2zuNX2vKWfDlVdSmxxDOVyC1RH8d4MiDSP+2fpy7Oc=",
+        "lastModified": 1718481860,
+        "narHash": "sha256-Nu+rYgTXaH70kvwT0P/omNDRN2DfeD7SqPa0OpjTLbs=",
         "owner": "NorfairKing",
         "repo": "safe-coloured-text",
-        "rev": "db7374cce25fe8c89deeb794c4b3da410965caca",
+        "rev": "45fffe1482cdc820c3fea27a36505e536bcff181",
         "type": "github"
       },
       "original": {
