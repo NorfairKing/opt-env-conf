@@ -7,7 +7,30 @@ AnyDocsCommands
   , CommandDoc
       { commandDocArgument = "two"
       , commandDocHelp = "second"
-      , commandDocs = AnyDocsAnd []
+      , commandDocs =
+          AnyDocsAnd
+            [ AnyDocsSingle
+                ConfDoc
+                  { confDocKeys =
+                      ( "number" :| []
+                      , NumberSchema
+                          (Just
+                             NumberBounds
+                               { numberBoundsLower = -9.223372036854775808e18
+                               , numberBoundsUpper = 9.223372036854775807e18
+                               })
+                      ) :|
+                        []
+                  , confDocDefault = Nothing
+                  , confDocHelp = Just "number"
+                  }
+            , AnyDocsSingle
+                ConfDoc
+                  { confDocKeys = ( "enable" :| [] , BoolSchema ) :| []
+                  , confDocDefault = Nothing
+                  , confDocHelp = Just "enable extra"
+                  }
+            ]
       }
   , CommandDoc
       { commandDocArgument = "three"

@@ -452,9 +452,6 @@ renderLongOptDocs = unlinesChunks . go
               indent $
                 unwordsChunks [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]
                   : go commandDocs
-                  --  indent $
-                  --    [commandChunk commandDocArgument, helpChunk commandDocHelp]
-                  --      : go commandDocs
           )
           cs
       AnyDocsAnd ds -> case goTable (AnyDocsAnd ds) of
@@ -467,7 +464,7 @@ renderLongOptDocs = unlinesChunks . go
 
     goTable :: AnyDocs OptDoc -> Maybe [[[Chunk]]]
     goTable = \case
-      AnyDocsCommands cs -> Nothing
+      AnyDocsCommands _ -> Nothing
       AnyDocsAnd ds -> concat <$> mapM goTable ds
       AnyDocsOr ds -> concat <$> mapM goTable ds
       AnyDocsSingle od -> Just [renderOptDocLong od]
@@ -508,6 +505,7 @@ renderEnvDocs = layoutAsTable . go
   where
     go :: AnyDocs EnvDoc -> [[[Chunk]]]
     go = \case
+      AnyDocsCommands cs -> concatMap (go . commandDocs) cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle ed -> [indent $ renderEnvDoc ed]

@@ -209,7 +209,7 @@ emptyParser =
 
 data ThreeCommands
   = One !String
-  | Two !Int
+  | Two !Int !Bool
   | Three
 
 threeCommandsParser :: Parser ThreeCommands
@@ -230,8 +230,13 @@ threeCommandsParser =
               reader auto,
               option,
               metavar "INT",
-              long "number",
+              name "number",
               short 'n'
+            ]
+          <*> enableDisableSwitch
+            False
+            [ help "enable extra",
+              name "enable"
             ],
       command "three" "third" (pure Three)
     ]
