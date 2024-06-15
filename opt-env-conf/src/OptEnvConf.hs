@@ -16,6 +16,8 @@ module OptEnvConf
     subAll,
     subSettings,
     someNonEmpty,
+    choice,
+    checkMap,
     mapIO,
     withConfig,
     withYamlConfig,

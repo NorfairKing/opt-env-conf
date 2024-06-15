@@ -166,6 +166,7 @@ collectPossibleOpts = go
       ParserEmpty -> S.empty
       ParserAlt p1 p2 -> go p1 `S.union` go p2
       ParserMany p -> go p
+      ParserCheck _ p -> go p
       ParserMapIO _ p -> go p
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserSetting Setting {..} ->
@@ -191,11 +192,20 @@ runParserOn p args envVars mConfig =
     let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     runValidationT $ evalStateT (runReaderT (go p) ppEnv) args
   where
-    tryPP :: PP a -> PP (Either (NonEmpty ParseError) (a, PPState))
+    tryPP :: PP a -> PP (Maybe a)
     tryPP pp = do
       s <- get
       e <- ask
-      liftIO $ runPP pp s e
+      errOrRes <- liftIO $ runPP pp s e
+      case errOrRes of
+        -- Note that args are not consumed if the alternative failed.
+        Left errs ->
+          if all errorIsForgivable errs
+            then pure Nothing
+            else ppErrors errs
+        Right (a, s') -> do
+          put s'
+          pure $ Just a
     go ::
       Parser a ->
       PP a
@@ -208,23 +218,20 @@ runParserOn p args envVars mConfig =
       ParserAlt p1 p2 -> do
         eor <- tryPP (go p1)
         case eor of
-          Right (a, s') -> do
-            put s'
-            pure a
-          -- Note that args are not consumed if the alternative failed.
-          Left errs ->
-            -- TODO: Maybe collect the error?
-            if all errorIsForgivable errs
-              then go p2
-              else ppErrors errs
+          Just a -> pure a
+          Nothing -> go p2
       ParserMany p' -> do
         eor <- tryPP $ go p'
         case eor of
-          Left _ -> pure [] -- Err if fails, the end
-          Right (a, s') -> do
-            put s'
+          Nothing -> pure []
+          Just a -> do
             as <- go (ParserMany p')
             pure (a : as)
+      ParserCheck f p' -> do
+        a <- go p'
+        case f a of
+          Left err -> ppError $ ParseErrorCheckFailed err
+          Right b -> pure b
       ParserMapIO f p' -> do
         a <- go p'
         liftIO $ f a

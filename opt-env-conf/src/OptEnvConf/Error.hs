@@ -14,6 +14,7 @@ data ParseError
   = ParseErrorUnrecognised !Opt
   | ParseErrorEmpty
   | ParseErrorEmptySetting
+  | ParseErrorCheckFailed !String
   | ParseErrorMissingArgument !(Maybe OptDoc)
   | ParseErrorArgumentRead !(NonEmpty String)
   | ParseErrorMissingOption !(Maybe OptDoc)
@@ -31,6 +32,7 @@ errorIsForgivable = \case
   ParseErrorUnrecognised _ -> False
   ParseErrorEmpty -> True
   ParseErrorEmptySetting -> False
+  ParseErrorCheckFailed _ -> False
   ParseErrorMissingArgument _ -> True
   ParseErrorArgumentRead _ -> False
   ParseErrorMissingSwitch _ -> True
@@ -64,6 +66,8 @@ renderError = \case
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorEmptySetting ->
     [["This setting has not been configured to be able to parse anything."]]
+  ParseErrorCheckFailed err ->
+    [["Check failed:"], [chunk $ T.pack err]]
   ParseErrorMissingArgument o ->
     ["Missing argument:" : unwordsChunks (maybe (error "TODO") renderOptDocLong o)]
   ParseErrorArgumentRead errs ->

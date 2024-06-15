@@ -8,6 +8,8 @@
 module OptEnvConf.Parser
   ( -- * Parser API
     setting,
+    choice,
+    checkMap,
     subArgs,
     subArgs_,
     subEnv,
@@ -23,7 +25,6 @@ module OptEnvConf.Parser
     xdgYamlConfigFile,
     withLocalYamlConfig,
     enableDisableSwitch,
-    choice,
 
     -- * Parser implementation
     Parser (..),
@@ -71,6 +72,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
+  ParserCheck :: (a -> Either String b) -> Parser a -> Parser b
   -- | Apply a computation to the result of a parser
   --
   -- This is intended for use-cases like resolving a file to an absolute path.
@@ -86,6 +88,7 @@ instance Functor Parser where
   fmap f = \case
     ParserFmap g p -> ParserFmap (f . g) p
     ParserMapIO g p -> ParserMapIO (fmap f . g) p
+    ParserCheck g p -> ParserCheck (fmap f . g) p
     p -> ParserFmap f p
 
 instance Applicative Parser where
@@ -107,6 +110,7 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
+          ParserCheck _ p -> isEmpty p
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ -> False
@@ -151,6 +155,10 @@ showParserABit = ($ "") . go 0
       ParserMany p ->
         showParen (d > 10) $
           showString "Many "
+            . go 11 p
+      ParserCheck _ p ->
+        showParen (d > 10) $
+          showString "Check _ "
             . go 11 p
       ParserMapIO _ p ->
         showParen (d > 10) $
@@ -321,6 +329,9 @@ choice = \case
   [c] -> c
   (c : cs) -> c <|> choice cs
 
+checkMap :: (a -> Either String b) -> Parser a -> Parser b
+checkMap = ParserCheck
+
 {-# ANN subArgs ("NOCOVER" :: String) #-}
 subArgs :: String -> Parser a -> Parser a
 subArgs prefix = parserMapSetting $ \s ->
@@ -388,6 +399,7 @@ parserTraverseSetting func = go
       ParserEmpty -> pure ParserEmpty
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
+      ParserCheck f p -> ParserCheck f <$> go p
       ParserMapIO f p -> ParserMapIO f <$> go p
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting s -> ParserSetting <$> func s
