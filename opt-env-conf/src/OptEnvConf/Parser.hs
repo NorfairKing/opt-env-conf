@@ -11,6 +11,7 @@ module OptEnvConf.Parser
     choice,
     mapIO,
     checkMap,
+    checkMapIO,
     subArgs,
     subArgs_,
     subEnv,
@@ -71,8 +72,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
-  ParserCheckIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
-  ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
+  ParserCheck :: (a -> IO (Either String b)) -> Parser a -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- | General settings
@@ -80,9 +80,8 @@ data Parser a where
 
 instance Functor Parser where
   fmap f = \case
-    ParserMapIO g p -> ParserMapIO (fmap f . g) p
-    ParserCheckIO g p -> ParserCheckIO (fmap (fmap f) . g) p
-    p -> ParserCheckIO (pure . Right . f) p
+    ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
+    p -> ParserCheck (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -102,8 +101,7 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
-          ParserCheckIO _ p -> isEmpty p
-          ParserMapIO _ p' -> isEmpty p'
+          ParserCheck _ p -> isEmpty p
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ -> False
      in case (isEmpty p1, isEmpty p2) of
@@ -144,13 +142,9 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Many "
             . go 11 p
-      ParserCheckIO _ p ->
+      ParserCheck _ p ->
         showParen (d > 10) $
           showString "Check _ "
-            . go 11 p
-      ParserMapIO _ p ->
-        showParen (d > 10) $
-          showString "MapIO _ "
             . go 11 p
       ParserWithConfig p1 p2 ->
         showParen (d > 10) $
@@ -187,13 +181,13 @@ choice = \case
 -- It is morally ok for read-only IO actions but you will
 -- have a bad time if the action is not read-only.
 mapIO :: (a -> IO b) -> Parser a -> Parser b
-mapIO = ParserMapIO
+mapIO func = checkMapIO $ fmap Right . func
 
 checkMap :: (a -> Either String b) -> Parser a -> Parser b
 checkMap func = checkMapIO (pure . func)
 
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheckIO
+checkMapIO = ParserCheck
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
@@ -394,7 +388,6 @@ parserTraverseSetting func = go
       ParserEmpty -> pure ParserEmpty
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
-      ParserCheckIO f p -> ParserCheckIO f <$> go p
-      ParserMapIO f p -> ParserMapIO f <$> go p
+      ParserCheck f p -> ParserCheck f <$> go p
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting s -> ParserSetting <$> func s

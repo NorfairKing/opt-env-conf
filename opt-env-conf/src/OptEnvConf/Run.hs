@@ -165,8 +165,7 @@ collectPossibleOpts = go
       ParserEmpty -> S.empty
       ParserAlt p1 p2 -> go p1 `S.union` go p2
       ParserMany p -> go p
-      ParserCheckIO _ p -> go p
-      ParserMapIO _ p -> go p
+      ParserCheck _ p -> go p
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserSetting Setting {..} ->
         S.fromList $
@@ -225,15 +224,12 @@ runParserOn p args envVars mConfig =
           Just a -> do
             as <- go (ParserMany p')
             pure (a : as)
-      ParserCheckIO f p' -> do
+      ParserCheck f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
         case errOrB of
           Left err -> ppError $ ParseErrorCheckFailed err
           Right b -> pure b
-      ParserMapIO f p' -> do
-        a <- go p'
-        liftIO $ f a
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa

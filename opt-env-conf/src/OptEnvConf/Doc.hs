@@ -155,8 +155,7 @@ parserDocs = simplifyAnyDocs . go
       ParserEmpty -> AnyDocsOr []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
-      ParserCheckIO _ p -> go p
-      ParserMapIO _ p -> go p -- TODO: is this right? Maybe we want to document that it's not a pure parser?
+      ParserCheck _ p -> go p
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
 

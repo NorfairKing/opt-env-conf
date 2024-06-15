@@ -177,8 +177,7 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserAlt p1 p2 -> go p1 *> go p2
       -- TODO lint if we try to read config or env under many/some?
       ParserMany p -> go p
-      ParserCheckIO _ p -> go p
-      ParserMapIO _ p -> go p
+      ParserCheck _ p -> go p
       ParserWithConfig p1 p2 -> go p1 *> go p2
       ParserSetting Setting {..} -> do
         case settingHelp of
