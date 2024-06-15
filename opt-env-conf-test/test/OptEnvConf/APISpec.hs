@@ -21,6 +21,7 @@ spec = do
   exampleParserSpec "hidden" hiddenParser
   exampleParserSpec "enable-disable" enableDisableParser
   exampleParserSpec "greet" greetParser
+  exampleParserSpec "three-commands" threeCommandsParser
 
 exampleParserSpec :: FilePath -> Parser a -> Spec
 exampleParserSpec dir p = describe dir $ do
@@ -205,3 +206,16 @@ data Empty = Empty
 emptyParser :: Parser Empty
 emptyParser =
   pure Empty
+
+data ThreeCommands
+  = One
+  | Two
+  | Three
+
+threeCommandsParser :: Parser ThreeCommands
+threeCommandsParser =
+  commands
+    [ ("one", pure One),
+      ("two", pure Two),
+      ("three", pure Three)
+    ]

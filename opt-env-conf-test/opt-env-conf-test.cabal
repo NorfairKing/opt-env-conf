@@ -94,13 +94,27 @@ extra-source-files:
     test_resources/docs/optional/opt-short.txt
     test_resources/docs/optional/show.txt
     test_resources/docs/optional/version.txt
+    test_resources/docs/three-commands/config-docs.txt
+    test_resources/docs/three-commands/config.txt
+    test_resources/docs/three-commands/docs.txt
+    test_resources/docs/three-commands/env-docs.txt
+    test_resources/docs/three-commands/env.txt
+    test_resources/docs/three-commands/help.txt
+    test_resources/docs/three-commands/man.txt
+    test_resources/docs/three-commands/opt-docs.txt
+    test_resources/docs/three-commands/opt-long.txt
+    test_resources/docs/three-commands/opt-short.txt
+    test_resources/docs/three-commands/show.txt
+    test_resources/docs/three-commands/version.txt
     test_resources/error/empty.txt
     test_resources/error/missing-argument.txt
     test_resources/error/missing-option.txt
     test_resources/error/read-int-argument.txt
     test_resources/error/read-int-option.txt
+    test_resources/error/required-command.txt
     test_resources/error/some-none.txt
     test_resources/error/unrecognised-argument.txt
+    test_resources/error/unrecognised-command.txt
     test_resources/error/unrecognised-option-none.txt
     test_resources/error/unrecognised-option-other.txt
     test_resources/lint/empty-setting.txt

@@ -48,6 +48,24 @@ spec = do
     (some $ setting [reader str, argument] :: Parser [String])
     []
 
+  parseErrorSpec
+    "required-command"
+    ( commands
+        [ ("one", pure '1'),
+          ("two", pure '2')
+        ]
+    )
+    []
+
+  parseErrorSpec
+    "unrecognised-command"
+    ( commands
+        [ ("one", pure '1'),
+          ("two", pure '2')
+        ]
+    )
+    ["three"]
+
   -- Missing tests
   pending "RequiredFirst"
   pending "ConfigParse"

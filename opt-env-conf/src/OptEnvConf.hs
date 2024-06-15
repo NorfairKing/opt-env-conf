@@ -19,6 +19,7 @@ module OptEnvConf
     choice,
     checkMap,
     mapIO,
+    commands,
     withConfig,
     withYamlConfig,
     xdgYamlConfigFile,

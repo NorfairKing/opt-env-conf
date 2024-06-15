@@ -358,6 +358,16 @@ spec = do
           ([("ALTERNATIVE", "False")], False)
         ]
 
+      argParseSpecs
+        ( commands
+            [ ("one", pure '1'),
+              ("two", pure '2')
+            ]
+        )
+        [ (["one"], '1'),
+          (["two"], '2')
+        ]
+
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
 argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
 

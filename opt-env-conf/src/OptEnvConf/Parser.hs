@@ -12,6 +12,7 @@ module OptEnvConf.Parser
     mapIO,
     checkMap,
     checkMapIO,
+    commands,
     subArgs,
     subArgs_,
     subEnv,
@@ -60,6 +61,7 @@ import OptEnvConf.Reader
 import OptEnvConf.Setting
 import Path.IO
 import System.FilePath
+import Text.Show
 
 data Parser a where
   -- Functor
@@ -75,7 +77,7 @@ data Parser a where
   -- Map, Check, and IO
   ParserCheck :: (a -> IO (Either String b)) -> Parser a -> Parser b
   -- Commands
-  ParserCommands :: NonEmpty (String, Parser a) -> Parser a
+  ParserCommands :: [(String, Parser a)] -> Parser a
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- | General settings
@@ -90,7 +92,7 @@ instance Functor Parser where
     ParserEmpty -> ParserEmpty
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
-    ParserCommands ne -> ParserCommands (NE.map (second (fmap f)) ne)
+    ParserCommands ne -> ParserCommands (map (second (fmap f)) ne)
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
     -- TODO: make setting a parser and fmap here
     p -> ParserCheck (pure . Right . f) p
@@ -162,10 +164,10 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Check _ "
             . go 11 p
-      ParserCommands ne ->
+      ParserCommands cs ->
         showParen (d > 10) $
-          showString "Commands _ "
-            . showNonEmptyWith
+          showString "Commands "
+            . showListWith
               ( \(c, p) ->
                   showString "("
                     . showsPrec 11 c
@@ -173,7 +175,7 @@ showParserABit = ($ "") . go 0
                     . go 11 p
                     . showString ")"
               )
-              ne
+              cs
       ParserWithConfig p1 p2 ->
         showParen (d > 10) $
           showString "WithConfig _ "
@@ -216,6 +218,9 @@ checkMap func = checkMapIO (pure . func)
 
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIO = ParserCheck
+
+commands :: [(String, Parser a)] -> Parser a
+commands = ParserCommands
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig

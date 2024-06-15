@@ -24,6 +24,8 @@ data ParseError
   | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfVal !(Maybe ConfDoc)
   | ParseErrorConfigRead !String
+  | ParseErrorMissingCommand ![String]
+  | ParseErrorUnrecognisedCommand !String ![String]
   deriving (Show, Eq)
 
 -- Whether the other side of an 'Alt' should be tried if we find this error.
@@ -42,6 +44,8 @@ errorIsForgivable = \case
   ParseErrorEnvRead _ -> False
   ParseErrorMissingConfVal _ -> True
   ParseErrorConfigRead _ -> False
+  ParseErrorMissingCommand cs -> not $ null cs
+  ParseErrorUnrecognisedCommand _ _ -> False
 
 renderErrors :: NonEmpty ParseError -> [Chunk]
 renderErrors = unlinesChunks . concatMap renderError . NE.toList
@@ -86,3 +90,12 @@ renderError = \case
     ["Missing config value: "] : maybe (error "TODO") renderConfDoc md
   ParseErrorConfigRead s ->
     [["Failed to parse configuration:", chunk $ T.pack $ show s]]
+  ParseErrorMissingCommand cs ->
+    [ ["Missing command, available commands:"],
+      unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs
+    ]
+  ParseErrorUnrecognisedCommand c cs ->
+    [ [fore red "Unrecognised command: ", fore yellow $ chunk (T.pack c)],
+      [fore blue "available commands:"],
+      unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs
+    ]
