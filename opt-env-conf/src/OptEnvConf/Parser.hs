@@ -367,6 +367,7 @@ subAll prefix =
 subSettings :: (HasParser a) => String -> Parser a
 subSettings prefix = subAll prefix settingsParser
 
+{-# ANN parserMapSetting ("NOCOVER" :: String) #-}
 parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
 parserMapSetting func = runIdentity . parserTraverseSetting (Identity . func)
 
