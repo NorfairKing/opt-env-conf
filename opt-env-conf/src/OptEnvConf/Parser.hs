@@ -9,6 +9,7 @@ module OptEnvConf.Parser
   ( -- * Parser API
     setting,
     choice,
+    mapIO,
     checkMap,
     subArgs,
     subArgs_,
@@ -19,7 +20,6 @@ module OptEnvConf.Parser
     subAll,
     subSettings,
     someNonEmpty,
-    mapIO,
     withConfig,
     withYamlConfig,
     xdgYamlConfigFile,
@@ -72,11 +72,6 @@ data Parser a where
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
   ParserCheck :: (a -> Either String b) -> Parser a -> Parser b
-  -- | Apply a computation to the result of a parser
-  --
-  -- This is intended for use-cases like resolving a file to an absolute path.
-  -- It is morally ok for read-only IO actions but you will
-  -- have a bad time if the action is not read-only.
   ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
@@ -180,8 +175,22 @@ buildSetting = completeBuilder . mconcat
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty p = (:|) <$> p <*> many p
 
+choice :: [Parser a] -> Parser a
+choice = \case
+  [] -> ParserEmpty
+  [c] -> c
+  (c : cs) -> c <|> choice cs
+
+-- | Apply a computation to the result of a parser
+--
+-- This is intended for use-cases like resolving a file to an absolute path.
+-- It is morally ok for read-only IO actions but you will
+-- have a bad time if the action is not read-only.
 mapIO :: (a -> IO b) -> Parser a -> Parser b
 mapIO = ParserMapIO
+
+checkMap :: (a -> Either String b) -> Parser a -> Parser b
+checkMap = ParserCheck
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
@@ -315,15 +324,6 @@ enableDisableSwitch defaultBool builders =
     prefixDashedLong prefix = \case
       DashedShort _ -> Nothing
       d -> Just $ prefixDashed prefix d
-
-choice :: [Parser a] -> Parser a
-choice = \case
-  [] -> ParserEmpty
-  [c] -> c
-  (c : cs) -> c <|> choice cs
-
-checkMap :: (a -> Either String b) -> Parser a -> Parser b
-checkMap = ParserCheck
 
 {-# ANN subArgs ("NOCOVER" :: String) #-}
 subArgs :: String -> Parser a -> Parser a
