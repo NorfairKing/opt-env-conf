@@ -59,7 +59,7 @@ AnyDocsOr
             , setDocEnvVars = Just ("GREET_POLITE" :| [])
             , setDocConfKeys = Just (( "polite" :| [] , BoolSchema ) :| [])
             , setDocDefault = Just "False"
-            , setDocMetavar = Nothing
+            , setDocMetavar = Just "ANY"
             , setDocHelp = Just "Whether to be polite"
             }
       ]

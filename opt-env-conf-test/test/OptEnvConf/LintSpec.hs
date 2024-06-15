@@ -31,6 +31,7 @@ spec = do
     ( setting
         [ option,
           long "example",
+          metavar "STR",
           help "Example"
         ]
     )
@@ -38,6 +39,17 @@ spec = do
     "no-dashed-for-option"
     ( setting
         [ reader str,
+          option,
+          metavar "STR",
+          help "Example"
+        ] ::
+        Parser String
+    )
+  goldenLintTest
+    "no-metavar-for-option"
+    ( setting
+        [ reader str,
+          long "example",
           option,
           help "Example"
         ] ::
@@ -56,6 +68,15 @@ spec = do
         [ env "EXAMPLE",
           help "Example"
         ]
+    )
+  goldenLintTest
+    "no-metavar-for-env"
+    ( setting
+        [ reader str,
+          env "EXAMPLE",
+          help "Example"
+        ] ::
+        Parser String
     )
 
 goldenLintTest :: FilePath -> Parser a -> Spec

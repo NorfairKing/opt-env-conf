@@ -16,7 +16,7 @@
   
   [34mWhether to be polite[m
   switch: [37m-p[m[36m|[m[37m--polite[m
-  env: [37mGREET_POLITE[m [33mARG[m
+  env: [37mGREET_POLITE[m [33mANY[m
   config: [37mpolite[m: [33m<boolean>[m
   
 

@@ -32,8 +32,10 @@ data LintError
   | LintErrorNoReaderForArgument !(Maybe Help)
   | LintErrorNoReaderForOption !(Maybe Help)
   | LintErrorNoDashedForOption !(Maybe Help)
+  | LintErrorNoMetavarForOption !(Maybe Help)
   | LintErrorNoDashedForSwitch !(Maybe Help)
   | LintErrorNoReaderForEnvVar !(Maybe Help)
+  | LintErrorNoMetavarForEnvVar !(Maybe Help)
   deriving (Show, Eq)
 
 renderLintErrors :: NonEmpty LintError -> [Chunk]
@@ -102,6 +104,15 @@ renderLintError = \case
       ":"
     ]
       : mHelpLines h
+  LintErrorNoMetavarForOption h ->
+    [ errorChunk,
+      " ",
+      functionChunk "option",
+      " has no ",
+      functionChunk "metavar",
+      ":"
+    ]
+      : mHelpLines h
   LintErrorNoDashedForSwitch h ->
     [ errorChunk,
       " ",
@@ -119,6 +130,15 @@ renderLintError = \case
       functionChunk "env",
       " has no ",
       functionChunk "reader",
+      ":"
+    ]
+      : mHelpLines h
+  LintErrorNoMetavarForEnvVar h ->
+    [ errorChunk,
+      " ",
+      functionChunk "env",
+      " has no ",
+      functionChunk "metavar",
       ":"
     ]
       : mHelpLines h
@@ -188,9 +208,15 @@ lintParser = either Just (const Nothing) . validationToEither . go
         when (settingTryOption && null settingDasheds) $
           validationFailure $
             LintErrorNoDashedForOption settingHelp
+        when (settingTryOption && isNothing settingMetavar) $
+          validationFailure $
+            LintErrorNoMetavarForOption settingHelp
         when (isJust settingSwitchValue && null settingDasheds) $
           validationFailure $
             LintErrorNoDashedForSwitch settingHelp
         when (isJust settingEnvVars && null settingReaders) $
           validationFailure $
             LintErrorNoReaderForEnvVar settingHelp
+        when (isJust settingEnvVars && isNothing settingMetavar) $
+          validationFailure $
+            LintErrorNoMetavarForEnvVar settingHelp

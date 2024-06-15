@@ -78,5 +78,5 @@ Alt
                     (Just ("GREET_POLITE" :| []))
                     (Just [ ( "polite" :| [] , BoolCodec Nothing ) ])
                     (Just _)
-                    Nothing
+                    (Just "ANY")
                     (Just "Whether to be polite")))))))

@@ -130,6 +130,7 @@ greetParser =
           long "polite",
           env "POLITE",
           conf "polite",
+          metavar "ANY",
           value False,
           help "Whether to be polite"
         ]

@@ -106,6 +106,8 @@ extra-source-files:
     test_resources/lint/empty-setting.txt
     test_resources/lint/no-dashed-for-option.txt
     test_resources/lint/no-dashed-for-switch.txt
+    test_resources/lint/no-metavar-for-env.txt
+    test_resources/lint/no-metavar-for-option.txt
     test_resources/lint/no-reader-for-argument.txt
     test_resources/lint/no-reader-for-env.txt
     test_resources/lint/no-reader-for-option.txt

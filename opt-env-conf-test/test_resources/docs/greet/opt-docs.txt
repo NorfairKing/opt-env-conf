@@ -49,7 +49,7 @@ AnyDocsOr
             , optDocTryOption = False
             , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
             , optDocDefault = Just "False"
-            , optDocMetavar = Nothing
+            , optDocMetavar = Just "ANY"
             , optDocHelp = Just "Whether to be polite"
             }
       ]

@@ -28,7 +28,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Traversable
 import Data.Version
-import Debug.Trace
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
 import OptEnvConf.Doc
@@ -289,7 +288,6 @@ runParserOn p args envVars mConfig =
                         rs <- requireReaders settingReaders
                         es <- asks ppEnvEnv
                         let founds = mapMaybe (`EnvMap.lookup` es) (NE.toList ne)
-                        traceShowM founds
                         -- Run the parser on all specified env vars before
                         -- returning the first because we want to fail if any
                         -- of them fail, even if they wouldn't be the parse
