@@ -78,6 +78,9 @@ spec = do
         ] ::
         Parser String
     )
+  goldenLintTest
+    "no-commands"
+    (commands [])
 
 goldenLintTest :: FilePath -> Parser a -> Spec
 goldenLintTest fp parser = it "produces the same lint error for this parser" $

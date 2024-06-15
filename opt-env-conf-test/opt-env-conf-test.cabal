@@ -118,6 +118,7 @@ extra-source-files:
     test_resources/error/unrecognised-option-none.txt
     test_resources/error/unrecognised-option-other.txt
     test_resources/lint/empty-setting.txt
+    test_resources/lint/no-commands.txt
     test_resources/lint/no-dashed-for-option.txt
     test_resources/lint/no-dashed-for-switch.txt
     test_resources/lint/no-metavar-for-env.txt

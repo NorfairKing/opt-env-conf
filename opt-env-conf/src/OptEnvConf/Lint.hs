@@ -37,6 +37,7 @@ data LintError
   | LintErrorNoDashedForSwitch !(Maybe Help)
   | LintErrorNoReaderForEnvVar !(Maybe Help)
   | LintErrorNoMetavarForEnvVar !(Maybe Help)
+  | LintErrorNoCommands
   deriving (Show, Eq)
 
 renderLintErrors :: NonEmpty LintError -> [Chunk]
@@ -143,6 +144,13 @@ renderLintError = \case
       ":"
     ]
       : mHelpLines h
+  LintErrorNoCommands ->
+    [ [ errorChunk,
+        " ",
+        functionChunk "commands",
+        " was called with an empty list."
+      ]
+    ]
 
 errorChunk :: Chunk
 errorChunk = fore red "Error:"
@@ -179,7 +187,10 @@ lintParser = either Just (const Nothing) . validationToEither . go
       -- TODO lint if we try to read config or env under many/some?
       ParserMany p -> go p
       ParserCheck _ p -> go p
-      ParserCommands ne -> traverse_ (go . snd) ne
+      ParserCommands ls -> do
+        if null ls
+          then validationFailure LintErrorNoCommands
+          else traverse_ (go . snd) ls
       ParserWithConfig p1 p2 -> go p1 *> go p2
       ParserSetting Setting {..} -> do
         case settingHelp of
