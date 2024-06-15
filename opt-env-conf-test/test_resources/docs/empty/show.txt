@@ -37,4 +37,4 @@ Alt
               Nothing
               Nothing
               (Just "Show this help text")))
-        (Check _ (Pure _))))
+        (Pure _)))

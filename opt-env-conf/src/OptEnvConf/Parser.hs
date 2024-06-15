@@ -72,6 +72,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
+  -- Map, Check, and IO
   ParserCheck :: (a -> IO (Either String b)) -> Parser a -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
@@ -79,13 +80,24 @@ data Parser a where
   ParserSetting :: !(Setting a) -> Parser a
 
 instance Functor Parser where
+  -- We case-match to produce shallower parser structures.
   fmap f = \case
+    ParserPure a -> ParserPure (f a)
+    ParserAp pf pa -> ParserAp (fmap (fmap f) pf) pa
+    ParserSelect pe pf -> ParserSelect (fmap (fmap f) pe) (fmap (fmap f) pf)
+    ParserEmpty -> ParserEmpty
+    ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
+    ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
+    -- TODO: make setting a parser and fmap here
     p -> ParserCheck (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
-  (<*>) = ParserAp
+  (<*>) p1 p2 = case (p1, p2) of
+    -- Homomorphism law for applicative
+    (ParserPure f, ParserPure a) -> ParserPure (f a)
+    _ -> ParserAp p1 p2
 
 instance Selective Parser where
   select = ParserSelect
