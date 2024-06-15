@@ -227,7 +227,8 @@ runParserOn p args envVars mConfig =
             pure (a : as)
       ParserCheckIO f p' -> do
         a <- go p'
-        case f a of
+        errOrB <- liftIO $ f a
+        case errOrB of
           Left err -> ppError $ ParseErrorCheckFailed err
           Right b -> pure b
       ParserMapIO f p' -> do

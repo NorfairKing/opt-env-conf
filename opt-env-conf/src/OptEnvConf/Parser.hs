@@ -71,7 +71,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
-  ParserCheckIO :: (a -> Either String b) -> Parser a -> Parser b
+  ParserCheckIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
   ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
@@ -81,8 +81,8 @@ data Parser a where
 instance Functor Parser where
   fmap f = \case
     ParserMapIO g p -> ParserMapIO (fmap f . g) p
-    ParserCheckIO g p -> ParserCheckIO (fmap f . g) p
-    p -> ParserCheckIO (Right . f) p
+    ParserCheckIO g p -> ParserCheckIO (fmap (fmap f) . g) p
+    p -> ParserCheckIO (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -190,7 +190,10 @@ mapIO :: (a -> IO b) -> Parser a -> Parser b
 mapIO = ParserMapIO
 
 checkMap :: (a -> Either String b) -> Parser a -> Parser b
-checkMap = ParserCheckIO
+checkMap func = checkMapIO (pure . func)
+
+checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
+checkMapIO = ParserCheckIO
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
