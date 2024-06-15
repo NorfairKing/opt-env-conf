@@ -342,7 +342,11 @@ renderAnyDocs = unlinesChunks . go
       AnyDocsSingle d -> indent (renderSetDoc d)
 
     goCommand :: CommandDoc SetDoc -> [[Chunk]]
-    goCommand = undefined
+    goCommand CommandDoc {..} =
+      indent $
+        ["command: ", commandChunk commandDocArgument]
+          : [helpChunk commandDocHelp]
+          : go commandDocs
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: [AnyDocs SetDoc] -> [[Chunk]]
@@ -541,6 +545,7 @@ renderConfDocs = unlinesChunks . go
   where
     go :: AnyDocs ConfDoc -> [[Chunk]]
     go = \case
+      AnyDocsCommands cs -> concatMap (go . commandDocs) cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle ed -> indent (renderConfDoc ed)

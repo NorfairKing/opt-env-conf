@@ -1,9 +1,28 @@
-[36mUsage: [m[33mthree-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m
+[36mUsage: [m[33mthree-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[35mone[m [33mSTR[m [36m|[m [35mtwo[m [37m--number[m[36m|[m[37m-n[m [33mINT[m [37m--(enable|disable)-enable[m [36m|[m [35mthree[m[36m)[m
 
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
 
   [34mOutput version information: 0.0.0[m
   switch: [37m-v[m[36m|[m[37m--version[m
+
+  command: [35mone[m
+  [34mfirst[m
+    [34margument[m
+    argument: [33mSTR[m
+    
+  command: [35mtwo[m
+  [34msecond[m
+    [34mnumber[m
+    option: [37m--number[m[36m|[m[37m-n[m [33mINT[m
+    env: [37mNUMBER[m [33mINT[m
+    config: [37mnumber[m: [33m<number>[m # between [32m-9223372036854775808[m and [32m9223372036854775807[m
+    
+    [34menable extra[m
+    switch: [37m--(enable|disable)-enable[m
+    env: [37mENABLE[m [33mBOOL[m
+    config: [37menable[m: [33m<boolean>[m
   
+  command: [35mthree[m
+  [34mthird[m
 

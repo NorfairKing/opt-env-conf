@@ -20,18 +20,68 @@ AnyDocsCommands
       { commandDocArgument = "two"
       , commandDocHelp = "second"
       , commandDocs =
-          AnyDocsSingle
-            SetDoc
-              { setDocTryArgument = False
-              , setDocTrySwitch = False
-              , setDocTryOption = True
-              , setDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
-              , setDocEnvVars = Nothing
-              , setDocConfKeys = Nothing
-              , setDocDefault = Nothing
-              , setDocMetavar = Just "INT"
-              , setDocHelp = Just "number"
-              }
+          AnyDocsAnd
+            [ AnyDocsSingle
+                SetDoc
+                  { setDocTryArgument = False
+                  , setDocTrySwitch = False
+                  , setDocTryOption = True
+                  , setDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                  , setDocEnvVars = Just ("NUMBER" :| [])
+                  , setDocConfKeys =
+                      Just
+                        (( "number" :| []
+                         , NumberSchema
+                             (Just
+                                NumberBounds
+                                  { numberBoundsLower = -9.223372036854775808e18
+                                  , numberBoundsUpper = 9.223372036854775807e18
+                                  })
+                         ) :|
+                           [])
+                  , setDocDefault = Nothing
+                  , setDocMetavar = Just "INT"
+                  , setDocHelp = Just "number"
+                  }
+            , AnyDocsOr
+                [ AnyDocsSingle
+                    SetDoc
+                      { setDocTryArgument = False
+                      , setDocTrySwitch = True
+                      , setDocTryOption = False
+                      , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
+                      , setDocEnvVars = Nothing
+                      , setDocConfKeys = Nothing
+                      , setDocDefault = Nothing
+                      , setDocMetavar = Nothing
+                      , setDocHelp = Just "enable extra"
+                      }
+                , AnyDocsSingle
+                    SetDoc
+                      { setDocTryArgument = False
+                      , setDocTrySwitch = False
+                      , setDocTryOption = False
+                      , setDocDasheds = []
+                      , setDocEnvVars = Just ("ENABLE" :| [])
+                      , setDocConfKeys = Nothing
+                      , setDocDefault = Nothing
+                      , setDocMetavar = Just "BOOL"
+                      , setDocHelp = Just "enable extra"
+                      }
+                , AnyDocsSingle
+                    SetDoc
+                      { setDocTryArgument = False
+                      , setDocTrySwitch = False
+                      , setDocTryOption = False
+                      , setDocDasheds = []
+                      , setDocEnvVars = Nothing
+                      , setDocConfKeys = Just (( "enable" :| [] , BoolSchema ) :| [])
+                      , setDocDefault = Nothing
+                      , setDocMetavar = Nothing
+                      , setDocHelp = Just "enable extra"
+                      }
+                ]
+            ]
       }
   , CommandDoc
       { commandDocArgument = "three"

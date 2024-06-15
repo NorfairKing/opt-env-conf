@@ -7,7 +7,23 @@ AnyDocsCommands
   , CommandDoc
       { commandDocArgument = "two"
       , commandDocHelp = "second"
-      , commandDocs = AnyDocsAnd []
+      , commandDocs =
+          AnyDocsAnd
+            [ AnyDocsSingle
+                EnvDoc
+                  { envDocVars = "NUMBER" :| []
+                  , envDocDefault = Nothing
+                  , envDocMetavar = Just "INT"
+                  , envDocHelp = Just "number"
+                  }
+            , AnyDocsSingle
+                EnvDoc
+                  { envDocVars = "ENABLE" :| []
+                  , envDocDefault = Nothing
+                  , envDocMetavar = Just "BOOL"
+                  , envDocHelp = Just "enable extra"
+                  }
+            ]
       }
   , CommandDoc
       { commandDocArgument = "three"

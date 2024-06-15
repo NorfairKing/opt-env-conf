@@ -19,19 +19,99 @@ Commands
   , Command
       "two"
       "second"
-      (Check
-         _
-         (Setting
+      (Ap
+         (Check
+            _
             (Setting
-               [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
-               [ _ ]
-               False
-               Nothing
-               True
-               Nothing
-               Nothing
-               Nothing
-               (Just "INT")
-               (Just "number"))))
+               (Setting
+                  [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                  [ _ ]
+                  False
+                  Nothing
+                  True
+                  (Just ("NUMBER" :| []))
+                  (Just
+                     [ ( "number" :| []
+                       , BimapCodec
+                           _
+                           _
+                           (NumberCodec
+                              Nothing
+                              (Just
+                                 NumberBounds
+                                   { numberBoundsLower = -9.223372036854775808e18
+                                   , numberBoundsUpper = 9.223372036854775807e18
+                                   }))
+                       )
+                     ])
+                  Nothing
+                  (Just "INT")
+                  (Just "number"))))
+         (Alt
+            (Setting
+               (Setting
+                  [ DashedLong ('(' :| "enable|disable)-enable") ]
+                  []
+                  False
+                  (Just _)
+                  False
+                  Nothing
+                  Nothing
+                  Nothing
+                  Nothing
+                  (Just "enable extra")))
+            (Alt
+               (Setting
+                  (Setting
+                     [ DashedLong ('d' :| "isable-enable") ]
+                     []
+                     False
+                     (Just _)
+                     False
+                     Nothing
+                     Nothing
+                     Nothing
+                     Nothing
+                     Nothing))
+               (Alt
+                  (Setting
+                     (Setting
+                        [ DashedLong ('e' :| "nable-enable") ]
+                        []
+                        False
+                        (Just _)
+                        False
+                        Nothing
+                        Nothing
+                        Nothing
+                        Nothing
+                        Nothing))
+                  (Alt
+                     (Setting
+                        (Setting
+                           []
+                           [ _ ]
+                           False
+                           Nothing
+                           False
+                           (Just ("ENABLE" :| []))
+                           Nothing
+                           Nothing
+                           (Just "BOOL")
+                           (Just "enable extra")))
+                     (Alt
+                        (Setting
+                           (Setting
+                              []
+                              []
+                              False
+                              Nothing
+                              False
+                              Nothing
+                              (Just [ ( "enable" :| [] , BoolCodec Nothing ) ])
+                              Nothing
+                              Nothing
+                              (Just "enable extra")))
+                        (Pure _)))))))
   , Command "three" "third" (Pure _)
   ]
