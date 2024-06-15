@@ -26,4 +26,5 @@ spacer s = \case
   '-' -> s
   '_' -> s
   ' ' -> s
+  '.' -> s
   c -> c

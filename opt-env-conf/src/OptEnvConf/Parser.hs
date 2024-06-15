@@ -9,8 +9,11 @@ module OptEnvConf.Parser
   ( -- * Parser API
     setting,
     subArgs,
+    subArgs_,
     subEnv,
+    subEnv_,
     subConfig,
+    subConfig_,
     subAll,
     subSettings,
     someNonEmpty,
@@ -323,21 +326,43 @@ subArgs :: String -> Parser a -> Parser a
 subArgs prefix = parserMapSetting $ \s ->
   s {settingDasheds = map (prefixDashed prefix) (settingDasheds s)}
 
+-- | Helper function for calling 'subArgs' with 'toArgCase' and a '-' appended.
+--
+-- > subArgs_ s = subArgs (toArgCase s <> "-")
+subArgs_ :: String -> Parser a -> Parser a
+subArgs_ s = subArgs (toArgCase s <> "-")
+
 {-# ANN subEnv ("NOCOVER" :: String) #-}
 subEnv :: String -> Parser a -> Parser a
 subEnv prefix = parserMapSetting $ \s ->
   s {settingEnvVars = NE.map (prefix <>) <$> settingEnvVars s}
+
+-- | Helper function for calling 'subEnv' with 'toEnvCase' and a '_' appended.
+--
+-- > subEnv_ s = subEnv (toEnvCase s <> "_")
+subEnv_ :: String -> Parser a -> Parser a
+subEnv_ s = subEnv (toEnvCase s <> "_")
 
 {-# ANN subConfig ("NOCOVER" :: String) #-}
 subConfig :: String -> Parser a -> Parser a
 subConfig prefix = parserMapSetting $ \s ->
   s {settingConfigVals = NE.map (first (prefix <|)) <$> settingConfigVals s}
 
+-- | Helper function for calling 'subConfig' with 'toConfigCase'.
+--
+-- > subConfig_ s = subConfig (toConfigCase s)
+subConfig_ :: String -> Parser a -> Parser a
+subConfig_ s = subConfig (toConfigCase s)
+
+-- | Helper function for calling 'subArgs_', 'subEnv_' and 'subConfig_' with
+-- the same prefix.
+--
+-- > subAll = subArgs_ prefix . subEnv_ prefix . subConfig_ prefix
 subAll :: String -> Parser a -> Parser a
 subAll prefix =
-  subArgs (toArgCase prefix <> "-")
-    . subEnv (toEnvCase prefix <> "_")
-    . subConfig (toConfigCase prefix)
+  subArgs_ prefix
+    . subEnv_ prefix
+    . subConfig_ prefix
 
 subSettings :: (HasParser a) => String -> Parser a
 subSettings prefix = subAll prefix settingsParser

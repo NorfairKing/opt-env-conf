@@ -8,8 +8,11 @@ module OptEnvConf
     switch,
     setting,
     subArgs,
+    subArgs_,
     subEnv,
+    subEnv_,
     subConfig,
+    subConfig_,
     subAll,
     subSettings,
     someNonEmpty,
@@ -24,6 +27,7 @@ module OptEnvConf
     module OptEnvConf.Doc,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,
+    module OptEnvConf.Casing,
     module OptEnvConf.Setting,
     Parser,
     HasParser (..),
@@ -33,6 +37,7 @@ module OptEnvConf
 where
 
 import Control.Applicative
+import OptEnvConf.Casing
 import OptEnvConf.Doc
 import OptEnvConf.Parser
 import OptEnvConf.Reader
