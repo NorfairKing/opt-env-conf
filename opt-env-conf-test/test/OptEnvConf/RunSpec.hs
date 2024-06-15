@@ -64,7 +64,7 @@ spec = do
           unrecognisedOptions p (ArgMap.parse_ args) `shouldBe` []
 
   describe "runParser" $ do
-    describe "Pure" $ do
+    describe "pure" $ do
       it "can parse a pure value from anything" $
         forAllValid $ \args ->
           forAllValid $ \e ->
@@ -72,16 +72,16 @@ spec = do
               forAllValid $ \expected ->
                 shouldParse (pure expected) args e mConf (expected :: Int)
 
-    describe "Fmap" $ do
+    describe "fmap" $ do
       it "can parse a mapped value from anything" $
         forAllValid $ \args ->
           forAllValid $ \e ->
             forAllValid $ \mConf ->
               forAllValid $ \i -> do
                 let expected = succ i
-                shouldParse (ParserFmap succ $ pure i) args e mConf (expected :: Int)
+                shouldParse (fmap succ $ pure i) args e mConf (expected :: Int)
 
-    describe "Ap" $ do
+    describe "<*>" $ do
       it "can parse two values with ap" $
         forAllValid $ \args ->
           forAllValid $ \e ->

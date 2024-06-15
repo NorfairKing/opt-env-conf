@@ -171,7 +171,6 @@ lintParser = either Just (const Nothing) . validationToEither . go
     go :: Parser a -> Validation LintError ()
     go = \case
       ParserPure _ -> pure ()
-      ParserFmap _ p -> go p
       ParserAp p1 p2 -> go p1 *> go p2
       ParserSelect p1 p2 -> go p1 *> go p2
       ParserEmpty -> pure ()

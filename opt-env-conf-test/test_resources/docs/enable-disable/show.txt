@@ -37,7 +37,7 @@ Alt
               Nothing
               Nothing
               (Just "Show this help text")))
-        (Fmap
+        (Check
            _
            (Alt
               (Setting

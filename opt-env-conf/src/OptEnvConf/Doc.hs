@@ -149,7 +149,6 @@ parserDocs = simplifyAnyDocs . go
     noDocs = AnyDocsAnd []
     go :: Parser a -> AnyDocs SetDoc
     go = \case
-      ParserFmap _ p -> go p
       ParserPure _ -> noDocs
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
       ParserSelect p1 p2 -> AnyDocsAnd [go p1, go p2]

@@ -10,3 +10,6 @@
     name: "Use tuple-section"
 - ignore:
     name: "Use unless"
+- ignore:
+    name: "Redundant fmap"
+    within: OptEnvConf.RunSpec

@@ -64,7 +64,6 @@ data Parser a where
   -- Functor
   ParserPure :: !a -> Parser a
   -- Applicative
-  ParserFmap :: !(a -> b) -> !(Parser a) -> Parser b
   ParserAp :: !(Parser (a -> b)) -> !(Parser a) -> Parser b
   -- Selective
   ParserSelect :: !(Parser (Either a b)) -> !(Parser (a -> b)) -> Parser b
@@ -86,10 +85,9 @@ data Parser a where
 
 instance Functor Parser where
   fmap f = \case
-    ParserFmap g p -> ParserFmap (f . g) p
     ParserMapIO g p -> ParserMapIO (fmap f . g) p
     ParserCheck g p -> ParserCheck (fmap f . g) p
-    p -> ParserFmap f p
+    p -> ParserCheck (Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -103,7 +101,6 @@ instance Alternative Parser where
   (<|>) p1 p2 =
     let isEmpty :: Parser a -> Bool
         isEmpty = \case
-          ParserFmap _ p' -> isEmpty p'
           ParserPure _ -> False
           ParserAp pf pa -> isEmpty pf && isEmpty pa
           ParserSelect pe pf -> isEmpty pe && isEmpty pf
@@ -128,10 +125,6 @@ showParserABit = ($ "") . go 0
   where
     go :: Int -> Parser a -> ShowS
     go d = \case
-      ParserFmap _ p ->
-        showParen (d > 10) $
-          showString "Fmap _ "
-            . go 11 p
       ParserPure _ -> showParen (d > 10) $ showString "Pure _"
       ParserAp pf pa ->
         showParen (d > 10) $
@@ -393,7 +386,6 @@ parserTraverseSetting func = go
     go :: forall q. Parser q -> f (Parser q)
     go = \case
       ParserPure a -> pure $ ParserPure a
-      ParserFmap f p -> ParserFmap f <$> go p
       ParserAp p1 p2 -> ParserAp <$> go p1 <*> go p2
       ParserSelect p1 p2 -> ParserSelect <$> go p1 <*> go p2
       ParserEmpty -> pure ParserEmpty

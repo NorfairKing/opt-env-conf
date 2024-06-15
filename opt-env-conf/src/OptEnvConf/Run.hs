@@ -160,7 +160,6 @@ collectPossibleOpts = go
     go :: Parser a -> Set PossibleOpt
     go = \case
       ParserPure _ -> S.empty
-      ParserFmap _ p -> go p
       ParserAp p1 p2 -> go p1 `S.union` go p2
       ParserSelect p1 p2 -> go p1 `S.union` go p2
       ParserEmpty -> S.empty
@@ -210,7 +209,6 @@ runParserOn p args envVars mConfig =
       Parser a ->
       PP a
     go = \case
-      ParserFmap f p' -> f <$> go p'
       ParserPure a -> pure a
       ParserAp ff fa -> go ff <*> go fa
       ParserEmpty -> ppError ParseErrorEmpty
