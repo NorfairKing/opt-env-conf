@@ -442,21 +442,35 @@ orChunk :: Chunk
 orChunk = fore cyan "|"
 
 renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]
-renderLongOptDocs = layoutAsTable . go
+renderLongOptDocs = unlinesChunks . go
   where
-    go :: AnyDocs OptDoc -> [[[Chunk]]]
+    go :: AnyDocs OptDoc -> [[Chunk]]
     go = \case
       AnyDocsCommands cs ->
         concatMap
           ( \CommandDoc {..} ->
-              map indent $
-                [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]
+              indent $
+                unwordsChunks [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]
                   : go commandDocs
+                  --  indent $
+                  --    [commandChunk commandDocArgument, helpChunk commandDocHelp]
+                  --      : go commandDocs
           )
           cs
-      AnyDocsAnd ds -> concatMap go ds
-      AnyDocsOr ds -> concatMap go ds
-      AnyDocsSingle vs -> [indent $ renderOptDocLong vs]
+      AnyDocsAnd ds -> case goTable (AnyDocsAnd ds) of
+        Nothing -> concatMap go ds
+        Just csss -> layoutAsTableLines csss
+      AnyDocsOr ds -> case goTable (AnyDocsOr ds) of
+        Nothing -> concatMap go ds
+        Just csss -> layoutAsTableLines csss
+      AnyDocsSingle vs -> indent $ layoutAsTableLines [renderOptDocLong vs]
+
+    goTable :: AnyDocs OptDoc -> Maybe [[[Chunk]]]
+    goTable = \case
+      AnyDocsCommands cs -> Nothing
+      AnyDocsAnd ds -> concat <$> mapM goTable ds
+      AnyDocsOr ds -> concat <$> mapM goTable ds
+      AnyDocsSingle od -> Just [renderOptDocLong od]
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
