@@ -1,38 +1,65 @@
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.Reader where
 
+import Control.Monad.Reader (MonadReader (..))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.String
 import Text.Read
 
-type Reader a = String -> Either String a
+newtype Reader a = Reader {unReader :: String -> Either String a}
+  deriving (Functor)
+
+instance Applicative Reader where
+  pure = Reader . const . Right
+  (<*>) (Reader ff) (Reader fa) =
+    Reader $ \s ->
+      ff s <*> fa s
+
+instance Monad Reader where
+  (>>=) (Reader fa) fb = Reader $ \s -> do
+    a <- fa s
+    unReader (fb a) s
+
+instance MonadReader String Reader where
+  ask = Reader Right
+  reader f = Reader $ \s -> Right (f s)
+  local fs f = Reader $ \s ->
+    let s' = fs s
+     in unReader f s'
+
+runReader :: Reader a -> String -> Either String a
+runReader = unReader
 
 str :: (IsString s) => Reader s
-str = Right . fromString
+str = Reader $ Right . fromString
 
 auto :: (Read a) => Reader a
-auto s = case readMaybe s of
+auto = Reader $ \s -> case readMaybe s of
   Nothing -> Left $ "Un-Read-able value: " <> show s
   Just a -> Right a
 
 -- | Always return True
 exists :: Reader Bool
-exists = const $ Right True
+exists = maybeReader $ const $ Just True
 
 maybeReader :: (String -> Maybe a) -> Reader a
-maybeReader func s = case func s of
+maybeReader func = Reader $ \s -> case func s of
   Nothing -> Left $ "Unparsable value: " <> show s
   Just a -> Right a
 
 eitherReader :: (String -> Either String a) -> Reader a
-eitherReader = id
+eitherReader = Reader
 
 commaSeparated :: Reader a -> Reader (NonEmpty a)
-commaSeparated func = mapM func . parseCommaSeparated
+commaSeparated (Reader func) = Reader $ mapM func . parseCommaSeparated
 
 renderCommaSeparated :: NonEmpty String -> String
 renderCommaSeparated = intercalate "," . map escape . NE.toList

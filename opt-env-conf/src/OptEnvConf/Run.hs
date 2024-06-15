@@ -15,7 +15,7 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
-import Control.Monad.Reader hiding (Reader)
+import Control.Monad.Reader hiding (Reader, runReader)
 import Control.Monad.State
 import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
@@ -365,12 +365,12 @@ requireReaders rs = case NE.nonEmpty rs of
 tryReaders :: NonEmpty (Reader a) -> String -> Either (NonEmpty String) a
 tryReaders rs s = left NE.reverse $ go rs
   where
-    go (r :| rl) = case r s of
+    go (r :| rl) = case runReader r s of
       Left err -> go' (err :| []) rl
       Right a -> Right a
     go' errs = \case
       [] -> Left errs
-      (r : rl) -> case r s of
+      (r : rl) -> case runReader r s of
         Left err -> go' (err <| errs) rl
         Right a -> Right a
 
