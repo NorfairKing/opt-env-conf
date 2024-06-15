@@ -14,6 +14,7 @@ module OptEnvConf.Lint
 where
 
 import Control.Monad
+import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Text (Text)
@@ -178,6 +179,7 @@ lintParser = either Just (const Nothing) . validationToEither . go
       -- TODO lint if we try to read config or env under many/some?
       ParserMany p -> go p
       ParserCheck _ p -> go p
+      ParserCommands ne -> traverse_ (go . snd) ne
       ParserWithConfig p1 p2 -> go p1 *> go p2
       ParserSetting Setting {..} -> do
         case settingHelp of

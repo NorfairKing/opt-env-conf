@@ -166,6 +166,9 @@ collectPossibleOpts = go
       ParserAlt p1 p2 -> go p1 `S.union` go p2
       ParserMany p -> go p
       ParserCheck _ p -> go p
+      -- This isn't right. We need to know which command is in action to know which opts are unrecognised
+      -- For that we need context-aware opt parsing
+      ParserCommands ne -> S.unions $ NE.toList $ NE.map (go . snd) ne
       ParserWithConfig pc pa -> go pc `S.union` go pa
       ParserSetting Setting {..} ->
         S.fromList $
@@ -230,6 +233,13 @@ runParserOn p args envVars mConfig =
         case errOrB of
           Left err -> ppError $ ParseErrorCheckFailed err
           Right b -> pure b
+      ParserCommands ne -> do
+        mS <- ppArg
+        case mS of
+          Nothing -> error "TODO: Command required"
+          Just s -> case lookup s (NE.toList ne) of
+            Nothing -> error "TODO: Unrecognised command"
+            Just p' -> go p'
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa

@@ -108,6 +108,13 @@ showMaybeWith :: (a -> ShowS) -> Maybe a -> ShowS
 showMaybeWith _ Nothing = showString "Nothing"
 showMaybeWith func (Just a) = showParen True $ showString "Just " . func a
 
+showNonEmptyWith :: (a -> ShowS) -> NonEmpty a -> ShowS
+showNonEmptyWith func (a :| as) =
+  showParen True $
+    func a
+      . showString " :| "
+      . showListWith func as
+
 newtype Builder a = Builder {unBuilder :: Setting a -> Setting a}
 
 instance Semigroup (Builder f) where

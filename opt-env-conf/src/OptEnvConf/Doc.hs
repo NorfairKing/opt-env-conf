@@ -156,6 +156,8 @@ parserDocs = simplifyAnyDocs . go
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
       ParserCheck _ p -> go p
+      -- TODO nicer sections for commands
+      ParserCommands ne -> AnyDocsOr $ NE.toList $ NE.map (go . snd) ne
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
 

@@ -46,7 +46,7 @@ where
 
 import Autodocodec.Yaml
 import Control.Applicative
-import Control.Arrow (first)
+import Control.Arrow (first, second)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
@@ -74,6 +74,8 @@ data Parser a where
   ParserMany :: !(Parser a) -> Parser [a]
   -- Map, Check, and IO
   ParserCheck :: (a -> IO (Either String b)) -> Parser a -> Parser b
+  -- Commands
+  ParserCommands :: NonEmpty (String, Parser a) -> Parser a
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- | General settings
@@ -88,6 +90,7 @@ instance Functor Parser where
     ParserEmpty -> ParserEmpty
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
+    ParserCommands ne -> ParserCommands (NE.map (second (fmap f)) ne)
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
     -- TODO: make setting a parser and fmap here
     p -> ParserCheck (pure . Right . f) p
@@ -114,6 +117,7 @@ instance Alternative Parser where
           ParserAlt _ _ -> False
           ParserMany _ -> False
           ParserCheck _ p -> isEmpty p
+          ParserCommands _ -> False -- Make this null if we turn the commands list into a normal list instead of nonempty
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ -> False
      in case (isEmpty p1, isEmpty p2) of
@@ -158,6 +162,18 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Check _ "
             . go 11 p
+      ParserCommands ne ->
+        showParen (d > 10) $
+          showString "Commands _ "
+            . showNonEmptyWith
+              ( \(c, p) ->
+                  showString "("
+                    . showsPrec 11 c
+                    . showString ", "
+                    . go 11 p
+                    . showString ")"
+              )
+              ne
       ParserWithConfig p1 p2 ->
         showParen (d > 10) $
           showString "WithConfig _ "
@@ -401,5 +417,6 @@ parserTraverseSetting func = go
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
       ParserCheck f p -> ParserCheck f <$> go p
+      ParserCommands ne -> ParserCommands <$> traverse (\(c, p) -> (,) c <$> go p) ne
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting s -> ParserSetting <$> func s
