@@ -71,7 +71,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
-  ParserCheck :: (a -> Either String b) -> Parser a -> Parser b
+  ParserCheckIO :: (a -> Either String b) -> Parser a -> Parser b
   ParserMapIO :: !(a -> IO b) -> !(Parser a) -> Parser b
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
@@ -81,8 +81,8 @@ data Parser a where
 instance Functor Parser where
   fmap f = \case
     ParserMapIO g p -> ParserMapIO (fmap f . g) p
-    ParserCheck g p -> ParserCheck (fmap f . g) p
-    p -> ParserCheck (Right . f) p
+    ParserCheckIO g p -> ParserCheckIO (fmap f . g) p
+    p -> ParserCheckIO (Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -102,7 +102,7 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
-          ParserCheck _ p -> isEmpty p
+          ParserCheckIO _ p -> isEmpty p
           ParserMapIO _ p' -> isEmpty p'
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ -> False
@@ -144,7 +144,7 @@ showParserABit = ($ "") . go 0
         showParen (d > 10) $
           showString "Many "
             . go 11 p
-      ParserCheck _ p ->
+      ParserCheckIO _ p ->
         showParen (d > 10) $
           showString "Check _ "
             . go 11 p
@@ -190,7 +190,7 @@ mapIO :: (a -> IO b) -> Parser a -> Parser b
 mapIO = ParserMapIO
 
 checkMap :: (a -> Either String b) -> Parser a -> Parser b
-checkMap = ParserCheck
+checkMap = ParserCheckIO
 
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
@@ -391,7 +391,7 @@ parserTraverseSetting func = go
       ParserEmpty -> pure ParserEmpty
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
-      ParserCheck f p -> ParserCheck f <$> go p
+      ParserCheckIO f p -> ParserCheckIO f <$> go p
       ParserMapIO f p -> ParserMapIO f <$> go p
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting s -> ParserSetting <$> func s
