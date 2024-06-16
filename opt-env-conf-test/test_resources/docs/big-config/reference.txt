@@ -15,8 +15,8 @@
   
 
 [36mOptions[m:
-[37m-h[m[36m|[m[37m--help[m    [34mShow this help text[m               
-[37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
+  [37m-h[m[36m|[m[37m--help[m    [34mShow this help text[m               
+  [37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
 
 [36mConfiguration Values[m:
   [34mmulti-line config codec explanation, the same option twice.[m

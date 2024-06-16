@@ -14,9 +14,9 @@
 
 
 [36mOptions[m:
-[37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                 
-[37m-v[m[36m|[m[37m--version[m               [34mOutput version information: 0.0.0[m   
-[37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m 
+  [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                 
+  [37m-v[m[36m|[m[37m--version[m               [34mOutput version information: 0.0.0[m   
+  [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m 
 
 [36mEnvironment Variables[m:
   [37mEXAMPLE[m [33mBOOL[m   [34mExample of an enable/disable switch[m

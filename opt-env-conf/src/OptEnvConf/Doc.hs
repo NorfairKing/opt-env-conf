@@ -278,7 +278,17 @@ helpLines h =
    in map ((: []) . fore blue . chunk) ls
 
 renderManPage :: String -> AnyDocs SetDoc -> [Chunk]
-renderManPage = renderReferenceDocumentation
+renderManPage progname docs =
+  let optDocs = docsToOptDocs docs
+   in unlinesChunks $
+        concat
+          [ [["example description"]],
+            [[]],
+            [renderShortOptDocs progname optDocs],
+            [[]],
+            [["Options:"]],
+            [renderLongOptDocs optDocs]
+          ]
 
 renderReferenceDocumentation :: String -> AnyDocs SetDoc -> [Chunk]
 renderReferenceDocumentation progname docs =
@@ -467,10 +477,10 @@ renderLongOptDocs = unlinesChunks . go
           cs
       AnyDocsAnd ds -> case goTable (AnyDocsAnd ds) of
         Nothing -> concatMap go ds
-        Just csss -> layoutAsTableLines csss
+        Just csss -> indent $ layoutAsTableLines csss
       AnyDocsOr ds -> case goTable (AnyDocsOr ds) of
         Nothing -> concatMap go ds
-        Just csss -> layoutAsTableLines csss
+        Just csss -> indent $ layoutAsTableLines csss
       AnyDocsSingle vs -> indent $ layoutAsTableLines [renderOptDocLong vs]
 
     goTable :: AnyDocs OptDoc -> Maybe [[[Chunk]]]

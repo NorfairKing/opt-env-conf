@@ -6,6 +6,7 @@ with final.haskell.lib;
     final.symlinkJoin {
       name = "opt-env-conf-release";
       paths = final.lib.attrValues final.haskellPackages.optEnvConfPackages;
+      passthru = final.haskellPackages.optEnvConfPackages;
     };
   haskellPackages = prev.haskellPackages.override (old: {
     overrides = final.lib.composeExtensions (old.overrides or (_: _: { }))
@@ -68,9 +69,14 @@ with final.haskell.lib;
               } // (old.passthru or { });
             });
 
+            opt-env-conf-test =
+              installManpagesAndCompletions [ "opt-env-conf-example" ]
+                (optEnvConfPkg "opt-env-conf-test");
+
             optEnvConfPackages = {
-              inherit opt-env-conf;
-              opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
+              inherit
+                opt-env-conf
+                opt-env-conf-test;
             };
           in
           {

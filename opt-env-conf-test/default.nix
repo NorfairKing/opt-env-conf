@@ -9,9 +9,12 @@ mkDerivation {
   pname = "opt-env-conf-test";
   version = "0.0.0.0";
   src = ./.;
+  isLibrary = true;
+  isExecutable = true;
   libraryHaskellDepends = [
     base opt-env-conf safe-coloured-text sydtest text
   ];
+  executableHaskellDepends = [ base opt-env-conf ];
   testHaskellDepends = [
     aeson base containers envparse genvalidity genvalidity-aeson
     genvalidity-containers genvalidity-sydtest genvalidity-text
@@ -21,4 +24,5 @@ mkDerivation {
   testToolDepends = [ sydtest-discover ];
   license = lib.licenses.unfree;
   hydraPlatforms = lib.platforms.none;
+  mainProgram = "opt-env-conf-example";
 }
