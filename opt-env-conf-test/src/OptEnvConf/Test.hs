@@ -12,13 +12,14 @@ where
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Lint
 import Test.Syd
 import Text.Colour
 
-settingsLintSpec :: forall a. (HasParser a) => Spec
-settingsLintSpec = do
+settingsLintSpec :: forall a. (HasCallStack) => (HasParser a) => Spec
+settingsLintSpec = withFrozenCallStack $ do
   specify "pass the lint test" $
     parserLintTest (settingsParser @a)
 
@@ -29,8 +30,8 @@ parserLintTest parser =
     Just errs ->
       expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderLintErrors errs
 
-goldenReferenceDocumentationSpec :: forall a. (HasParser a) => FilePath -> String -> Spec
-goldenReferenceDocumentationSpec path progname = do
+goldenReferenceDocumentationSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> String -> Spec
+goldenReferenceDocumentationSpec path progname = withFrozenCallStack $ do
   specify "produces the same reference documentation as before" $
     pureGoldenReferenceDocumentation path progname (settingsParser @a)
 
