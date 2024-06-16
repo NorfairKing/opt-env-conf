@@ -346,9 +346,10 @@ renderAnyDocs = unlinesChunks . go
     goCommand :: CommandDoc SetDoc -> [[Chunk]]
     goCommand CommandDoc {..} =
       indent $
-        ["command: ", commandChunk commandDocArgument]
-          : [helpChunk commandDocHelp]
+        [helpChunk commandDocHelp]
+          : ["command: ", commandChunk commandDocArgument]
           : go commandDocs
+          ++ [[]]
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: [AnyDocs SetDoc] -> [[Chunk]]

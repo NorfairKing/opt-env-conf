@@ -6,13 +6,14 @@
   [34mOutput version information: 0.0.0[m
   switch: [37m-v[m[36m|[m[37m--version[m
 
-  command: [35mone[m
   [34mfirst[m
+  command: [35mone[m
     [34margument[m
     argument: [33mSTR[m
     
-  command: [35mtwo[m
+  
   [34msecond[m
+  command: [35mtwo[m
     [34mnumber[m
     option: [37m--number[m[36m|[m[37m-n[m [33mINT[m
     env: [37mNUMBER[m [33mINT[m
@@ -23,6 +24,8 @@
     env: [37mENABLE[m [33mBOOL[m
     config: [37menable[m: [33m<boolean>[m
   
-  command: [35mthree[m
+  
   [34mthird[m
+  command: [35mthree[m
+  
 

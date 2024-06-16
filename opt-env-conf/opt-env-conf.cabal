@@ -36,11 +36,8 @@ library
     , autodocodec-yaml
     , base
     , containers
-    , envparse
     , filepath
     , mtl
-    , optparse-applicative
-    , path
     , path-io
     , safe-coloured-text
     , safe-coloured-text-layout
@@ -49,5 +46,4 @@ library
     , text
     , validity
     , validity-containers
-    , yaml
   default-language: Haskell2010

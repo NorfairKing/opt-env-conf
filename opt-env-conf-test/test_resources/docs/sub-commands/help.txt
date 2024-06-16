@@ -6,21 +6,27 @@
   [34mOutput version information: 0.0.0[m
   switch: [37m-v[m[36m|[m[37m--version[m
 
-  command: [35mtop[m
   [34mcommand without subcommands[m
+  command: [35mtop[m
     [34mname[m
     option: [37m--name[m [33mNAME[m
     env: [37mNAME[m [33mNAME[m
     config: [37mname[m: [33m<string>[m
     
-  command: [35msub[m
+  
   [34mcommand with subcommands[m
-    command: [35ma[m
+  command: [35msub[m
     [34mA[m
-    command: [35mb[m
+    command: [35ma[m
+    
     [34mB[m
-    command: [35mc[m
+    command: [35mb[m
+    
     [34mC[m
-    command: [35md[m
+    command: [35mc[m
+    
     [34mD[m
+    command: [35md[m
+    
+  
 
