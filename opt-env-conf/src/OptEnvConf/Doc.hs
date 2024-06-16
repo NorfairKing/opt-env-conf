@@ -277,17 +277,49 @@ helpLines h =
   let ls = T.lines (T.pack h)
    in map ((: []) . fore blue . chunk) ls
 
-renderManPage :: String -> AnyDocs SetDoc -> [Chunk]
-renderManPage progname docs =
+renderManPage :: String -> Version -> AnyDocs SetDoc -> [Chunk]
+renderManPage progname version docs =
   let optDocs = docsToOptDocs docs
+      envDocs = docsToEnvDocs docs
+      confDocs = docsToConfDocs docs
    in unlinesChunks $
+        -- See https://man.openbsd.org/mdoc#MACRO_OVERVIEW
         concat
-          [ [["example description"]],
-            [[]],
-            [renderShortOptDocs progname optDocs],
-            [[]],
-            [["Options:"]],
-            [renderLongOptDocs optDocs]
+          [ [ -- Document date
+              [".Dd $Mdocdate$"],
+              -- Document title
+              [".Dt ", progNameChunk progname, " 1"],
+              -- Operating system footer
+              [".Os"],
+              -- Section header
+              [".Sh ", "NAME"],
+              [".Nm ", progNameChunk progname],
+              [".Nd ", "TODO one line about what it does"],
+              [".Sh ", "VERSION"],
+              [versionChunk version],
+              [".Sh ", "SYNOPSIS"],
+              renderShortOptDocs progname optDocs,
+              [".Sh ", "SETTINGS"],
+              renderAnyDocs docs
+            ],
+            concat
+              [ [ [".Sh ", "OPTIONS"],
+                  renderLongOptDocs optDocs
+                ]
+                | not (nullDocs optDocs)
+              ],
+            concat
+              [ [ [".Sh ", "ENVIRONMENT VARIABLES"],
+                  renderEnvDocs envDocs
+                ]
+                | not (nullDocs envDocs)
+              ],
+            concat
+              [ [ [".Sh ", "CONFIGURATION VALUES"],
+                  renderConfDocs confDocs
+                ]
+                | not (nullDocs confDocs)
+              ]
           ]
 
 renderReferenceDocumentation :: String -> AnyDocs SetDoc -> [Chunk]
@@ -297,7 +329,7 @@ renderReferenceDocumentation progname docs =
       confDocs = docsToConfDocs docs
    in unlinesChunks $
         concat
-          [ [ renderShortOptDocs progname optDocs,
+          [ [ usageChunk : renderShortOptDocs progname optDocs,
               [],
               headerChunks "All settings",
               renderAnyDocs docs
@@ -324,25 +356,27 @@ renderReferenceDocumentation progname docs =
 
 nullDocs :: AnyDocs a -> Bool
 nullDocs = \case
-  AnyDocsCommands [] -> True
-  AnyDocsCommands _ -> False
+  AnyDocsCommands cs -> all nullCommandDoc cs
   AnyDocsOr [] -> True
   AnyDocsOr _ -> False
   AnyDocsAnd [] -> True
   AnyDocsAnd _ -> False
   AnyDocsSingle _ -> False
+  where
+    nullCommandDoc :: CommandDoc a -> Bool
+    nullCommandDoc = nullDocs . commandDocs
 
 renderVersionPage :: String -> Version -> [Chunk]
 renderVersionPage progname version =
   unwordsChunks
     [ [progNameChunk progname],
-      [chunk $ T.pack $ showVersion version]
+      [versionChunk version]
     ]
 
 renderHelpPage :: String -> AnyDocs SetDoc -> [Chunk]
 renderHelpPage progname docs =
   unlinesChunks
-    [ renderShortOptDocs progname (docsToOptDocs docs),
+    [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
       [],
       renderAnyDocs docs
     ]
@@ -413,7 +447,7 @@ setDocOptDoc SetDoc {..} = do
   pure OptDoc {..}
 
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[fore cyan "Usage: ", progNameChunk progname], cs]) . go
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go
   where
     go :: AnyDocs OptDoc -> [Chunk]
     go = \case
@@ -582,6 +616,12 @@ renderConfDoc ConfDoc {..} =
 
 progNameChunk :: String -> Chunk
 progNameChunk = fore yellow . chunk . T.pack
+
+versionChunk :: Version -> Chunk
+versionChunk = chunk . T.pack . showVersion
+
+usageChunk :: Chunk
+usageChunk = fore cyan "Usage: "
 
 commandChunk :: String -> Chunk
 commandChunk = fore magenta . chunk . T.pack

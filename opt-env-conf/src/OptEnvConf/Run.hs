@@ -91,7 +91,7 @@ runParserWithLeftovers version p = do
           RenderMan -> do
             progname <- getProgName
             tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderManPage progname docs
+            hPutChunksLocaleWith tc stdout $ renderManPage progname version docs
             exitSuccess
           ParsedNormally a -> pure (a, leftovers)
 

@@ -1,3 +1,6 @@
+{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Main where
 
 import OptEnvConf
@@ -8,7 +11,7 @@ main = do
   s <- runSettingsParser version
   print (s :: Instructions)
 
-data Instructions = Instructions !Dispatch !Settings
+data Instructions = Instructions !Settings !Dispatch
   deriving (Show)
 
 instance HasParser Instructions where
@@ -17,14 +20,54 @@ instance HasParser Instructions where
       <$> settingsParser
       <*> settingsParser
 
-data Dispatch = Dispatch
+data Dispatch
+  = DispatchCreate !String
+  | DispatchRead
+  | DispatchUpdate !String !String
+  | DispatchDelete
   deriving (Show)
 
 instance HasParser Dispatch where
-  settingsParser = pure Dispatch
+  settingsParser =
+    commands
+      [ command "create" "Create" $
+          DispatchCreate
+            <$> setting
+              [ help "The item to create",
+                reader str,
+                argument,
+                metavar "STR"
+              ],
+        command "read" "Read" $ pure DispatchRead,
+        command "update" "Update" $
+          DispatchUpdate
+            <$> setting
+              [ help "The item identifier of the item to update",
+                reader str,
+                argument,
+                metavar "STR"
+              ]
+            <*> setting
+              [ help "The contents of the item to update",
+                reader str,
+                argument,
+                metavar "STR"
+              ],
+        command "delete" "Delete" $ pure DispatchDelete
+      ]
 
 data Settings = Settings
+  { settingLogLevel :: String
+  }
   deriving (Show)
 
 instance HasParser Settings where
-  settingsParser = pure Settings
+  settingsParser = do
+    settingLogLevel <-
+      setting
+        [ help "minimal severity of log messages",
+          reader str,
+          metavar "LOG_LEVEL",
+          name "log-level"
+        ]
+    pure Settings {..}

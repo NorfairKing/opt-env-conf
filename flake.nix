@@ -92,7 +92,7 @@
         doBenchmark = true;
         buildInputs = with pkgs; [
           zlib
-          help2man
+          mandoc
         ] ++ self.checks.${system}.pre-commit.enabledPackages;
         shellHook = self.checks.${system}.pre-commit.shellHook;
       };

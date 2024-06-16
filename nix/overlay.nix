@@ -45,7 +45,7 @@ with final.haskell.lib;
               postInstall = (drv.postInstall or "") + ''
                 mkdir -p $out/share/man/man1/
                 export NO_COLOR=1
-                ${final.help2man}/bin/help2man "''${!outputBin}/bin/${exeName}" --output ${exeName}.1 --help-option=--render-man-page
+                ''${!outputBin}/bin/${exeName} --render-man-page > ${exeName}.1
                 ${final.gzip}/bin/gzip -9 -c ${exeName}.1 > $out/share/man/man1/${exeName}.1.gz
               '';
             });
