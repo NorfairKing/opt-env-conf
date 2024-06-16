@@ -26,6 +26,7 @@ module OptEnvConf
     xdgYamlConfigFile,
     withLocalYamlConfig,
     enableDisableSwitch,
+    readTextSecretFile,
     runSettingsParser,
     runParser,
     module OptEnvConf.Doc,

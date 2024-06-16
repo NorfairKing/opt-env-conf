@@ -29,6 +29,7 @@ module OptEnvConf.Parser
     xdgYamlConfigFile,
     withLocalYamlConfig,
     enableDisableSwitch,
+    readTextSecretFile,
 
     -- * Parser implementation
     Parser (..),
@@ -58,6 +59,9 @@ import Data.Functor.Identity
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack)
 import OptEnvConf.ArgMap (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
@@ -381,6 +385,9 @@ enableDisableSwitch defaultBool builders =
     prefixDashedLong prefix = \case
       DashedShort _ -> Nothing
       d -> Just $ prefixDashed prefix d
+
+readTextSecretFile :: FilePath -> IO Text
+readTextSecretFile = fmap T.strip . T.readFile
 
 {-# ANN subArgs ("NOCOVER" :: String) #-}
 subArgs :: String -> Parser a -> Parser a
