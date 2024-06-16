@@ -28,7 +28,7 @@ import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
 data LintError
-  = LintErrorUndocumented
+  = LintErrorUndocumented !(Maybe SetDoc)
   | LintErrorEmptySetting !(Maybe Help)
   | LintErrorNoReaderForArgument !(Maybe Help)
   | LintErrorNoMetavarForArgument !(Maybe Help)
@@ -50,9 +50,9 @@ renderLintErrors =
 
 renderLintError :: LintError -> [[Chunk]]
 renderLintError = \case
-  LintErrorUndocumented ->
-    [ [errorChunk, " ", "Undocumented setting."]
-    ]
+  LintErrorUndocumented sd ->
+    [errorChunk, " ", "Undocumented setting"]
+      : maybe [["with no way to refer to it"]] renderSetDoc sd
   LintErrorEmptySetting h ->
     concat
       [ [ [ errorChunk,
@@ -171,7 +171,7 @@ functionChunk = fore yellow . chunk
 mHelpLines :: Maybe Help -> [[Chunk]]
 mHelpLines =
   maybe
-    [["This setting is undocument, so we cannot refer to it."]]
+    [["This setting is undocument."]]
     helpLines
 
 -- Put this in your test suite
@@ -202,12 +202,13 @@ lintParser = either Just (const Nothing) . validationToEither . go
           then validationFailure LintErrorNoCommands
           else traverse_ (go . commandParser) ls
       ParserWithConfig p1 p2 -> go p1 *> go p2
-      ParserSetting Setting {..} -> do
+      ParserSetting s@Setting {..} -> do
         case settingHelp of
           Nothing ->
             -- Hidden values may be undocumented
             when (not settingHidden) $
-              validationFailure LintErrorUndocumented
+              validationFailure $
+                LintErrorUndocumented (settingSetDoc s)
           Just _ -> pure ()
         when
           ( and

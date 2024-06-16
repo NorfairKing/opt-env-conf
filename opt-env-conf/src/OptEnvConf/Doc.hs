@@ -22,6 +22,8 @@ module OptEnvConf.Doc
     OptDoc (..),
     EnvDoc (..),
     ConfDoc (..),
+    settingSetDoc,
+    renderSetDoc,
     settingOptDoc,
     renderOptDocLong,
     settingEnvDoc,
