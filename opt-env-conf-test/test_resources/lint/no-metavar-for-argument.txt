@@ -1,4 +1,6 @@
 [31mSetting parser is invalid:[m
   
-  [31mError:[m [33margument[m has no [33mmetavar[m:
+  [31mError:[m [33margument[m has no [33mmetavar[m.
   [34mExample[m
+  argument: [33mMETAVAR[m
+  

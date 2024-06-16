@@ -1,7 +1,10 @@
 [31mSetting parser is invalid:[m
   
-  [31mError:[m Undocumented setting.
+  [31mError:[m Undocumented setting
+  [31mundocumented[m
   
-  [31mError:[m This [33msetting[m parses nothing:
-  This setting is undocument, so we cannot refer to it.
-  Add an [33margument[m, [33mswitch[m, [33moption[m, [33menv[m, [33mconf[m, or [33mvalue[m:
+  
+  [31mError:[m This [33msetting[m parses nothing.
+  Add an [33margument[m, [33mswitch[m, [33moption[m, [33menv[m, [33mconf[m, or [33mvalue[m.
+  [31mundocumented[m
+  

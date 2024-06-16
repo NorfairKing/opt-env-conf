@@ -27,17 +27,23 @@ import System.IO (stderr)
 import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
-data LintError
-  = LintErrorUndocumented !(Maybe SetDoc)
-  | LintErrorEmptySetting !(Maybe Help)
-  | LintErrorNoReaderForArgument !(Maybe Help)
-  | LintErrorNoMetavarForArgument !(Maybe Help)
-  | LintErrorNoReaderForOption !(Maybe Help)
-  | LintErrorNoDashedForOption !(Maybe Help)
-  | LintErrorNoMetavarForOption !(Maybe Help)
-  | LintErrorNoDashedForSwitch !(Maybe Help)
-  | LintErrorNoReaderForEnvVar !(Maybe Help)
-  | LintErrorNoMetavarForEnvVar !(Maybe Help)
+data LintError = LintError
+  { lintErrorSetDoc :: !(Maybe SetDoc),
+    lintErrorMessage :: !LintErrorMessage
+  }
+  deriving (Show, Eq)
+
+data LintErrorMessage
+  = LintErrorUndocumented
+  | LintErrorEmptySetting
+  | LintErrorNoReaderForArgument
+  | LintErrorNoMetavarForArgument
+  | LintErrorNoReaderForOption
+  | LintErrorNoDashedForOption
+  | LintErrorNoMetavarForOption
+  | LintErrorNoDashedForSwitch
+  | LintErrorNoReaderForEnvVar
+  | LintErrorNoMetavarForEnvVar
   | LintErrorNoCommands
   deriving (Show, Eq)
 
@@ -49,117 +55,119 @@ renderLintErrors =
     . concatMap (([] :) . renderLintError)
 
 renderLintError :: LintError -> [[Chunk]]
-renderLintError = \case
-  LintErrorUndocumented sd ->
-    [errorChunk, " ", "Undocumented setting"]
-      : maybe [["with no way to refer to it"]] renderSetDoc sd
-  LintErrorEmptySetting h ->
-    concat
-      [ [ [ errorChunk,
-            " This ",
-            functionChunk "setting",
-            " parses nothing:"
+renderLintError LintError {..} =
+  concat
+    [ case lintErrorMessage of
+        LintErrorUndocumented ->
+          [[errorChunk, " ", "Undocumented setting"]]
+        LintErrorEmptySetting ->
+          concat
+            [ [ [ errorChunk,
+                  " This ",
+                  functionChunk "setting",
+                  " parses nothing."
+                ]
+              ],
+              [ [ "Add an ",
+                  functionChunk "argument",
+                  ", ",
+                  functionChunk "switch",
+                  ", ",
+                  functionChunk "option",
+                  ", ",
+                  functionChunk "env",
+                  ", ",
+                  functionChunk "conf",
+                  ", or ",
+                  functionChunk "value",
+                  "."
+                ]
+              ]
+            ]
+        LintErrorNoReaderForArgument ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "argument",
+              " has no ",
+              functionChunk "reader",
+              "."
+            ]
           ]
-        ],
-        mHelpLines h,
-        [ [ "Add an ",
-            functionChunk "argument",
-            ", ",
-            functionChunk "switch",
-            ", ",
-            functionChunk "option",
-            ", ",
-            functionChunk "env",
-            ", ",
-            functionChunk "conf",
-            ", or ",
-            functionChunk "value",
-            ":"
+        LintErrorNoMetavarForArgument ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "argument",
+              " has no ",
+              functionChunk "metavar",
+              "."
+            ]
           ]
-        ]
-      ]
-  LintErrorNoReaderForArgument h ->
-    [ errorChunk,
-      " ",
-      functionChunk "argument",
-      " has no ",
-      functionChunk "reader",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoMetavarForArgument h ->
-    [ errorChunk,
-      " ",
-      functionChunk "argument",
-      " has no ",
-      functionChunk "metavar",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoReaderForOption h ->
-    [ errorChunk,
-      " ",
-      functionChunk "option",
-      " has no ",
-      functionChunk "reader",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoDashedForOption h ->
-    [ errorChunk,
-      " ",
-      functionChunk "option",
-      " has no ",
-      functionChunk "long",
-      " or ",
-      functionChunk "short",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoMetavarForOption h ->
-    [ errorChunk,
-      " ",
-      functionChunk "option",
-      " has no ",
-      functionChunk "metavar",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoDashedForSwitch h ->
-    [ errorChunk,
-      " ",
-      functionChunk "switch",
-      " has no ",
-      functionChunk "long",
-      " or ",
-      functionChunk "short",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoReaderForEnvVar h ->
-    [ errorChunk,
-      " ",
-      functionChunk "env",
-      " has no ",
-      functionChunk "reader",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoMetavarForEnvVar h ->
-    [ errorChunk,
-      " ",
-      functionChunk "env",
-      " has no ",
-      functionChunk "metavar",
-      ":"
-    ]
-      : mHelpLines h
-  LintErrorNoCommands ->
-    [ [ errorChunk,
-        " ",
-        functionChunk "commands",
-        " was called with an empty list."
-      ]
+        LintErrorNoReaderForOption ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "option",
+              " has no ",
+              functionChunk "reader",
+              "."
+            ]
+          ]
+        LintErrorNoDashedForOption ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "option",
+              " has no ",
+              functionChunk "long",
+              " or ",
+              functionChunk "short",
+              "."
+            ]
+          ]
+        LintErrorNoMetavarForOption ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "option",
+              " has no ",
+              functionChunk "metavar",
+              "."
+            ]
+          ]
+        LintErrorNoDashedForSwitch ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "switch",
+              " has no ",
+              functionChunk "long",
+              " or ",
+              functionChunk "short",
+              "."
+            ]
+          ]
+        LintErrorNoReaderForEnvVar ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "env",
+              " has no ",
+              functionChunk "reader",
+              "."
+            ]
+          ]
+        LintErrorNoMetavarForEnvVar ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "env",
+              " has no ",
+              functionChunk "metavar",
+              "."
+            ]
+          ]
+        LintErrorNoCommands ->
+          [ [ errorChunk,
+              " ",
+              functionChunk "commands",
+              " was called with an empty list."
+            ]
+          ],
+      maybe [] renderSetDoc lintErrorSetDoc
     ]
 
 errorChunk :: Chunk
@@ -167,12 +175,6 @@ errorChunk = fore red "Error:"
 
 functionChunk :: Text -> Chunk
 functionChunk = fore yellow . chunk
-
-mHelpLines :: Maybe Help -> [[Chunk]]
-mHelpLines =
-  maybe
-    [["This setting is undocument."]]
-    helpLines
 
 -- Put this in your test suite
 lintParserTest :: Parser a -> IO ()
@@ -199,16 +201,14 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserCheck _ p -> go p
       ParserCommands ls -> do
         if null ls
-          then validationFailure LintErrorNoCommands
+          then validationFailure $ LintError Nothing LintErrorNoCommands
           else traverse_ (go . commandParser) ls
       ParserWithConfig p1 p2 -> go p1 *> go p2
-      ParserSetting s@Setting {..} -> do
+      ParserSetting s@Setting {..} -> mapValidationFailure (LintError (settingSetDoc s)) $ do
         case settingHelp of
           Nothing ->
             -- Hidden values may be undocumented
-            when (not settingHidden) $
-              validationFailure $
-                LintErrorUndocumented (settingSetDoc s)
+            when (not settingHidden) $ validationFailure LintErrorUndocumented
           Just _ -> pure ()
         when
           ( and
@@ -220,29 +220,20 @@ lintParser = either Just (const Nothing) . validationToEither . go
                 isNothing settingDefaultValue
               ]
           )
-          $ validationFailure
-          $ LintErrorEmptySetting settingHelp
+          $ validationFailure LintErrorEmptySetting
         when (settingTryArgument && null settingReaders) $
-          validationFailure $
-            LintErrorNoReaderForArgument settingHelp
+          validationFailure LintErrorNoReaderForArgument
         when (settingTryArgument && isNothing settingMetavar) $
-          validationFailure $
-            LintErrorNoMetavarForArgument settingHelp
+          validationFailure LintErrorNoMetavarForArgument
         when (settingTryOption && null settingReaders) $
-          validationFailure $
-            LintErrorNoReaderForOption settingHelp
+          validationFailure LintErrorNoReaderForOption
         when (settingTryOption && null settingDasheds) $
-          validationFailure $
-            LintErrorNoDashedForOption settingHelp
+          validationFailure LintErrorNoDashedForOption
         when (settingTryOption && isNothing settingMetavar) $
-          validationFailure $
-            LintErrorNoMetavarForOption settingHelp
+          validationFailure LintErrorNoMetavarForOption
         when (isJust settingSwitchValue && null settingDasheds) $
-          validationFailure $
-            LintErrorNoDashedForSwitch settingHelp
+          validationFailure LintErrorNoDashedForSwitch
         when (isJust settingEnvVars && null settingReaders) $
-          validationFailure $
-            LintErrorNoReaderForEnvVar settingHelp
+          validationFailure LintErrorNoReaderForEnvVar
         when (isJust settingEnvVars && isNothing settingMetavar) $
-          validationFailure $
-            LintErrorNoMetavarForEnvVar settingHelp
+          validationFailure LintErrorNoMetavarForEnvVar

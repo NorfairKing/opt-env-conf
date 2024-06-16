@@ -1,5 +1,6 @@
 [31mSetting parser is invalid:[m
   
-  [31mError:[m This [33msetting[m parses nothing:
+  [31mError:[m This [33msetting[m parses nothing.
+  Add an [33margument[m, [33mswitch[m, [33moption[m, [33menv[m, [33mconf[m, or [33mvalue[m.
   [34mEmpty setting[m
-  Add an [33margument[m, [33mswitch[m, [33moption[m, [33menv[m, [33mconf[m, or [33mvalue[m:
+  
