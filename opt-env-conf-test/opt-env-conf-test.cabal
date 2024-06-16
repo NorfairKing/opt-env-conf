@@ -20,6 +20,7 @@ extra-source-files:
     test_resources/docs/args/opt-docs.txt
     test_resources/docs/args/opt-long.txt
     test_resources/docs/args/opt-short.txt
+    test_resources/docs/args/reference.txt
     test_resources/docs/args/show.txt
     test_resources/docs/args/version.txt
     test_resources/docs/big-config/config-docs.txt
@@ -32,6 +33,7 @@ extra-source-files:
     test_resources/docs/big-config/opt-docs.txt
     test_resources/docs/big-config/opt-long.txt
     test_resources/docs/big-config/opt-short.txt
+    test_resources/docs/big-config/reference.txt
     test_resources/docs/big-config/show.txt
     test_resources/docs/big-config/version.txt
     test_resources/docs/empty/config-docs.txt
@@ -44,6 +46,7 @@ extra-source-files:
     test_resources/docs/empty/opt-docs.txt
     test_resources/docs/empty/opt-long.txt
     test_resources/docs/empty/opt-short.txt
+    test_resources/docs/empty/reference.txt
     test_resources/docs/empty/show.txt
     test_resources/docs/empty/version.txt
     test_resources/docs/enable-disable/config-docs.txt
@@ -56,6 +59,7 @@ extra-source-files:
     test_resources/docs/enable-disable/opt-docs.txt
     test_resources/docs/enable-disable/opt-long.txt
     test_resources/docs/enable-disable/opt-short.txt
+    test_resources/docs/enable-disable/reference.txt
     test_resources/docs/enable-disable/show.txt
     test_resources/docs/enable-disable/version.txt
     test_resources/docs/greet/config-docs.txt
@@ -68,6 +72,7 @@ extra-source-files:
     test_resources/docs/greet/opt-docs.txt
     test_resources/docs/greet/opt-long.txt
     test_resources/docs/greet/opt-short.txt
+    test_resources/docs/greet/reference.txt
     test_resources/docs/greet/show.txt
     test_resources/docs/greet/version.txt
     test_resources/docs/hidden/config-docs.txt
@@ -80,6 +85,7 @@ extra-source-files:
     test_resources/docs/hidden/opt-docs.txt
     test_resources/docs/hidden/opt-long.txt
     test_resources/docs/hidden/opt-short.txt
+    test_resources/docs/hidden/reference.txt
     test_resources/docs/hidden/show.txt
     test_resources/docs/hidden/version.txt
     test_resources/docs/optional/config-docs.txt
@@ -92,6 +98,7 @@ extra-source-files:
     test_resources/docs/optional/opt-docs.txt
     test_resources/docs/optional/opt-long.txt
     test_resources/docs/optional/opt-short.txt
+    test_resources/docs/optional/reference.txt
     test_resources/docs/optional/show.txt
     test_resources/docs/optional/version.txt
     test_resources/docs/sub-commands/config-docs.txt
@@ -104,6 +111,7 @@ extra-source-files:
     test_resources/docs/sub-commands/opt-docs.txt
     test_resources/docs/sub-commands/opt-long.txt
     test_resources/docs/sub-commands/opt-short.txt
+    test_resources/docs/sub-commands/reference.txt
     test_resources/docs/sub-commands/show.txt
     test_resources/docs/sub-commands/version.txt
     test_resources/docs/three-commands/config-docs.txt
@@ -116,6 +124,7 @@ extra-source-files:
     test_resources/docs/three-commands/opt-docs.txt
     test_resources/docs/three-commands/opt-long.txt
     test_resources/docs/three-commands/opt-short.txt
+    test_resources/docs/three-commands/reference.txt
     test_resources/docs/three-commands/show.txt
     test_resources/docs/three-commands/version.txt
     test_resources/error/empty.txt

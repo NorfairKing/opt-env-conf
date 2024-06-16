@@ -68,11 +68,6 @@ exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
       renderHelpPage dir $
         parserDocs parser
 
-  it "documents the man page in the same way" $
-    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
-      renderManPage dir $
-        parserDocs parser
-
   it "documents the short opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs dir $
@@ -92,6 +87,16 @@ exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/config.txt") $
       renderConfDocs $
         parserConfDocs parser
+
+  it "documents the man page in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
+      renderManPage dir $
+        parserDocs parser
+
+  it "renders the reference documentation in the same way" $
+    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/reference.txt") $
+      renderReferenceDocumentation dir $
+        parserDocs parser
 
 pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
 pureGoldenChunksFile fp cs =

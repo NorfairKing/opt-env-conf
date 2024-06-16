@@ -8,9 +8,9 @@ Ap
                 { srcLocPackage = "main"
                 , srcLocModule = "OptEnvConf.APISpec"
                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                , srcLocStartLine = 111
+                , srcLocStartLine = 116
                 , srcLocStartCol = 11
-                , srcLocEndLine = 111
+                , srcLocEndLine = 116
                 , srcLocEndCol = 18
                 })
            (Setting
@@ -31,9 +31,9 @@ Ap
              { srcLocPackage = "main"
              , srcLocModule = "OptEnvConf.APISpec"
              , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 122
+             , srcLocStartLine = 127
              , srcLocStartCol = 11
-             , srcLocEndLine = 122
+             , srcLocEndLine = 127
              , srcLocEndCol = 18
              })
         (Setting
@@ -53,9 +53,9 @@ Ap
           { srcLocPackage = "main"
           , srcLocModule = "OptEnvConf.APISpec"
           , srcLocFile = "test/OptEnvConf/APISpec.hs"
-          , srcLocStartLine = 129
+          , srcLocStartLine = 134
           , srcLocStartCol = 11
-          , srcLocEndLine = 129
+          , srcLocEndLine = 134
           , srcLocEndCol = 18
           })
      (Setting

@@ -1,0 +1,40 @@
+[36mUsage: [m[33mgreet[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m [33mSUBJECT[m [37m-p[m[36m|[m[37m--polite[m[36m)[m
+
+[36mAll settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m-v[m[36m|[m[37m--version[m
+
+  [34mGreeting to use[m
+  option: [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m
+  env: [37mGREET_GREETING[m [33mGREETING[m
+  config: [37mgreeting[m: [33m<string>[m
+  
+  [34mWho to greet[m
+  argument: [33mSUBJECT[m
+  
+  [34mWhether to be polite[m
+  switch: [37m-p[m[36m|[m[37m--polite[m
+  env: [37mGREET_POLITE[m [33mANY[m
+  config: [37mpolite[m: [33m<boolean>[m
+  
+
+[36mOptions[m:
+[37m-h[m[36m|[m[37m--help[m     [34mShow this help text[m                               
+[37m-v[m[36m|[m[37m--version[m  [34mOutput version information: 0.0.0[m                 
+[37m-g[m[36m|[m[37m--greeting[m [34mGreeting to use[m                   default: [33m"Hello"[m
+[33mSUBJECT[m       [34mWho to greet[m                      default: [33m"world"[m
+[37m-p[m[36m|[m[37m--polite[m   [34mWhether to be polite[m              default: [33mFalse[m  
+
+[36mEnvironment Variables[m:
+  [37mGREET_GREETING[m [33mGREETING[m   [34mGreeting to use[m     
+  [37mGREET_POLITE[m [33mANY[m          [34mWhether to be polite[m
+
+[36mConfiguration Values[m:
+  [34mGreeting to use[m
+  [37mgreeting[m: [33m<string>[m
+  [34mWhether to be polite[m
+  [37mpolite[m: [33m<boolean>[m
+

@@ -8,6 +8,7 @@ module OptEnvConf.Doc
   ( renderVersionPage,
     renderHelpPage,
     renderManPage,
+    renderReferenceDocumentation,
     renderLongOptDocs,
     renderShortOptDocs,
     renderEnvDocs,
@@ -277,7 +278,10 @@ helpLines h =
    in map ((: []) . fore blue . chunk) ls
 
 renderManPage :: String -> AnyDocs SetDoc -> [Chunk]
-renderManPage progname docs =
+renderManPage = renderReferenceDocumentation
+
+renderReferenceDocumentation :: String -> AnyDocs SetDoc -> [Chunk]
+renderReferenceDocumentation progname docs =
   let optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs

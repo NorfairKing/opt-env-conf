@@ -3,9 +3,10 @@
 {-# LANGUAGE TypeApplications #-}
 
 module OptEnvConf.Test
-  ( settingsLintTest,
+  ( settingsLintSpec,
     parserLintTest,
-    pureGoldenManPage,
+    goldenReferenceDocumentationSpec,
+    pureGoldenReferenceDocumentation,
   )
 where
 
@@ -16,8 +17,8 @@ import OptEnvConf.Lint
 import Test.Syd
 import Text.Colour
 
-settingsLintTest :: forall a. (HasParser a) => Spec
-settingsLintTest = do
+settingsLintSpec :: forall a. (HasParser a) => Spec
+settingsLintSpec = do
   specify "pass the lint test" $
     parserLintTest (settingsParser @a)
 
@@ -28,9 +29,14 @@ parserLintTest parser =
     Just errs ->
       expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderLintErrors errs
 
-pureGoldenManPage :: FilePath -> String -> Parser a -> GoldenTest Text
-pureGoldenManPage path progname parser =
+goldenReferenceDocumentationSpec :: forall a. (HasParser a) => FilePath -> String -> Spec
+goldenReferenceDocumentationSpec path progname = do
+  specify "produces the same reference documentation as before" $
+    pureGoldenReferenceDocumentation path progname (settingsParser @a)
+
+pureGoldenReferenceDocumentation :: FilePath -> String -> Parser a -> GoldenTest Text
+pureGoldenReferenceDocumentation path progname parser =
   pureGoldenTextFile path $
     renderChunksText With24BitColours $
-      renderManPage progname $
+      renderReferenceDocumentation progname $
         parserDocs parser
