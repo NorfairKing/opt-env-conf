@@ -171,7 +171,7 @@ collectPossibleOpts = go
       -- For that we need context-aware opt parsing
       ParserCommands ne -> S.unions $ map goCommand ne
       ParserWithConfig pc pa -> go pc `S.union` go pa
-      ParserSetting Setting {..} ->
+      ParserSetting _ Setting {..} ->
         S.fromList $
           concat
             [ [PossibleArg | settingTryArgument],
@@ -246,7 +246,7 @@ runParserOn p args envVars mConfig =
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
-      ParserSetting set@Setting {..} -> do
+      ParserSetting _ set@Setting {..} -> do
         mArg <-
           if settingTryArgument
             then do

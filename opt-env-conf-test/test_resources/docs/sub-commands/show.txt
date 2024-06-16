@@ -5,6 +5,16 @@ Commands
       (Check
          _
          (Setting
+            (Just
+               SrcLoc
+                 { srcLocPackage = "main"
+                 , srcLocModule = "OptEnvConf.APISpec"
+                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                 , srcLocStartLine = 256
+                 , srcLocStartCol = 15
+                 , srcLocEndLine = 256
+                 , srcLocEndCol = 22
+                 })
             (Setting
                [ DashedLong ('n' :| "ame") ]
                [ _ ]

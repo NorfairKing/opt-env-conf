@@ -188,7 +188,7 @@ parserDocs = simplifyAnyDocs . go
       ParserCheck _ p -> go p
       ParserCommands cs -> AnyDocsCommands $ map goCommand cs
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
-      ParserSetting set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
+      ParserSetting _ set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
     goCommand :: Command a -> CommandDoc SetDoc
     goCommand Command {..} =
       CommandDoc

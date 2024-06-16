@@ -18,7 +18,8 @@ import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
 import Data.Text (Text)
-import OptEnvConf.Doc
+import qualified Data.Text as T
+import GHC.Stack (SrcLoc, prettySrcLoc)
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import OptEnvConf.Validation
@@ -28,7 +29,7 @@ import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
 data LintError = LintError
-  { lintErrorSetDoc :: !(Maybe SetDoc),
+  { lintErrorSrcLoc :: !(Maybe SrcLoc),
     lintErrorMessage :: !LintErrorMessage
   }
   deriving (Show, Eq)
@@ -57,13 +58,13 @@ renderLintErrors =
 renderLintError :: LintError -> [[Chunk]]
 renderLintError LintError {..} =
   concat
-    [ case lintErrorMessage of
+    [ [[fore red "Invalid Setting:"]],
+      case lintErrorMessage of
         LintErrorUndocumented ->
-          [[errorChunk, " ", "Undocumented setting"]]
+          [["missing ", functionChunk "help", "."]]
         LintErrorEmptySetting ->
           concat
-            [ [ [ errorChunk,
-                  " This ",
+            [ [ [ "This ",
                   functionChunk "setting",
                   " parses nothing."
                 ]
@@ -85,36 +86,28 @@ renderLintError LintError {..} =
               ]
             ]
         LintErrorNoReaderForArgument ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "argument",
+          [ [ functionChunk "argument",
               " has no ",
               functionChunk "reader",
               "."
             ]
           ]
         LintErrorNoMetavarForArgument ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "argument",
+          [ [ functionChunk "argument",
               " has no ",
               functionChunk "metavar",
               "."
             ]
           ]
         LintErrorNoReaderForOption ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "option",
+          [ [ functionChunk "option",
               " has no ",
               functionChunk "reader",
               "."
             ]
           ]
         LintErrorNoDashedForOption ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "option",
+          [ [ functionChunk "option",
               " has no ",
               functionChunk "long",
               " or ",
@@ -123,18 +116,14 @@ renderLintError LintError {..} =
             ]
           ]
         LintErrorNoMetavarForOption ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "option",
+          [ [ functionChunk "option",
               " has no ",
               functionChunk "metavar",
               "."
             ]
           ]
         LintErrorNoDashedForSwitch ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "switch",
+          [ [ functionChunk "switch",
               " has no ",
               functionChunk "long",
               " or ",
@@ -143,35 +132,26 @@ renderLintError LintError {..} =
             ]
           ]
         LintErrorNoReaderForEnvVar ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "env",
+          [ [ functionChunk "env",
               " has no ",
               functionChunk "reader",
               "."
             ]
           ]
         LintErrorNoMetavarForEnvVar ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "env",
+          [ [ functionChunk "env",
               " has no ",
               functionChunk "metavar",
               "."
             ]
           ]
         LintErrorNoCommands ->
-          [ [ errorChunk,
-              " ",
-              functionChunk "commands",
+          [ [ functionChunk "commands",
               " was called with an empty list."
             ]
           ],
-      maybe [] renderSetDoc lintErrorSetDoc
+      maybe [] (pure . ("Defined at: " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) lintErrorSrcLoc
     ]
-
-errorChunk :: Chunk
-errorChunk = fore red "Error:"
 
 functionChunk :: Text -> Chunk
 functionChunk = fore yellow . chunk
@@ -204,7 +184,7 @@ lintParser = either Just (const Nothing) . validationToEither . go
           then validationFailure $ LintError Nothing LintErrorNoCommands
           else traverse_ (go . commandParser) ls
       ParserWithConfig p1 p2 -> go p1 *> go p2
-      ParserSetting s@Setting {..} -> mapValidationFailure (LintError (settingSetDoc s)) $ do
+      ParserSetting mLoc Setting {..} -> mapValidationFailure (LintError mLoc) $ do
         case settingHelp of
           Nothing ->
             -- Hidden values may be undocumented

@@ -3,6 +3,16 @@ Ap
      (Check
         _
         (Setting
+           (Just
+              SrcLoc
+                { srcLocPackage = "main"
+                , srcLocModule = "OptEnvConf.APISpec"
+                , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                , srcLocStartLine = 111
+                , srcLocStartCol = 11
+                , srcLocEndLine = 111
+                , srcLocEndCol = 18
+                })
            (Setting
               [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
               [ _ ]
@@ -16,6 +26,16 @@ Ap
               (Just "GREETING")
               (Just "Greeting to use"))))
      (Setting
+        (Just
+           SrcLoc
+             { srcLocPackage = "main"
+             , srcLocModule = "OptEnvConf.APISpec"
+             , srcLocFile = "test/OptEnvConf/APISpec.hs"
+             , srcLocStartLine = 122
+             , srcLocStartCol = 11
+             , srcLocEndLine = 122
+             , srcLocEndCol = 18
+             })
         (Setting
            []
            [ _ ]
@@ -28,6 +48,16 @@ Ap
            (Just "SUBJECT")
            (Just "Who to greet"))))
   (Setting
+     (Just
+        SrcLoc
+          { srcLocPackage = "main"
+          , srcLocModule = "OptEnvConf.APISpec"
+          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+          , srcLocStartLine = 129
+          , srcLocStartCol = 11
+          , srcLocEndLine = 129
+          , srcLocEndCol = 18
+          })
      (Setting
         [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
         [ _ ]

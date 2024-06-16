@@ -10,6 +10,6 @@
   config: [37mbig[m:
     [37m<key>[m: 
       [37m<key>[m: 
-        [33m<number>[m # between [32m-9223372036854775808[m and [32m9223372036854775807[m
+        [33m<number>[m # [32m64 bit signed integer[m
   
 

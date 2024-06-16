@@ -1,6 +1,6 @@
 [31mSetting parser is invalid:[m
   
-  [31mError:[m This [33msetting[m parses nothing.
+  [31mInvalid Setting:[m
+  This [33msetting[m parses nothing.
   Add an [33margument[m, [33mswitch[m, [33moption[m, [33menv[m, [33mconf[m, or [33mvalue[m.
-  [34mEmpty setting[m
-  
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:19:7 in main:OptEnvConf.LintSpec[m

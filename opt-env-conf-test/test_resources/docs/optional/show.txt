@@ -2,6 +2,16 @@ Alt
   (Check
      _
      (Setting
+        (Just
+           SrcLoc
+             { srcLocPackage = "main"
+             , srcLocModule = "OptEnvConf.APISpec"
+             , srcLocFile = "test/OptEnvConf/APISpec.hs"
+             , srcLocStartLine = 172
+             , srcLocStartCol = 9
+             , srcLocEndLine = 172
+             , srcLocEndCol = 16
+             })
         (Setting
            []
            [ _ ]

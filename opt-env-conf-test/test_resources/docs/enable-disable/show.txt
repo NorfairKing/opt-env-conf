@@ -2,6 +2,16 @@ Alt
   (Check
      _
      (Setting
+        (Just
+           SrcLoc
+             { srcLocPackage = "main"
+             , srcLocModule = "OptEnvConf.APISpec"
+             , srcLocFile = "test/OptEnvConf/APISpec.hs"
+             , srcLocStartLine = 199
+             , srcLocStartCol = 9
+             , srcLocEndLine = 199
+             , srcLocEndCol = 28
+             })
         (Setting
            [ DashedLong ('(' :| "enable|disable)-example") ]
            []
@@ -17,6 +27,16 @@ Alt
      (Check
         _
         (Setting
+           (Just
+              SrcLoc
+                { srcLocPackage = "main"
+                , srcLocModule = "OptEnvConf.APISpec"
+                , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                , srcLocStartLine = 199
+                , srcLocStartCol = 9
+                , srcLocEndLine = 199
+                , srcLocEndCol = 28
+                })
            (Setting
               [ DashedLong ('d' :| "isable-example") ]
               []
@@ -32,6 +52,16 @@ Alt
         (Check
            _
            (Setting
+              (Just
+                 SrcLoc
+                   { srcLocPackage = "main"
+                   , srcLocModule = "OptEnvConf.APISpec"
+                   , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                   , srcLocStartLine = 199
+                   , srcLocStartCol = 9
+                   , srcLocEndLine = 199
+                   , srcLocEndCol = 28
+                   })
               (Setting
                  [ DashedLong ('e' :| "nable-example") ]
                  []
@@ -47,6 +77,16 @@ Alt
            (Check
               _
               (Setting
+                 (Just
+                    SrcLoc
+                      { srcLocPackage = "main"
+                      , srcLocModule = "OptEnvConf.APISpec"
+                      , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                      , srcLocStartLine = 199
+                      , srcLocStartCol = 9
+                      , srcLocEndLine = 199
+                      , srcLocEndCol = 28
+                      })
                  (Setting
                     []
                     [ _ ]
@@ -62,6 +102,16 @@ Alt
               (Check
                  _
                  (Setting
+                    (Just
+                       SrcLoc
+                         { srcLocPackage = "main"
+                         , srcLocModule = "OptEnvConf.APISpec"
+                         , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                         , srcLocStartLine = 199
+                         , srcLocStartCol = 9
+                         , srcLocEndLine = 199
+                         , srcLocEndCol = 28
+                         })
                     (Setting
                        []
                        []

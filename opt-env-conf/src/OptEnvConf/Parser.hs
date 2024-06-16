@@ -58,6 +58,7 @@ import Data.Functor.Identity
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack)
 import OptEnvConf.ArgMap (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
@@ -102,7 +103,7 @@ data Parser a where
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- | General settings
-  ParserSetting :: !(Setting a) -> Parser a
+  ParserSetting :: !(Maybe SrcLoc) -> !(Setting a) -> Parser a
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -142,7 +143,7 @@ instance Alternative Parser where
           ParserCheck _ p -> isEmpty p
           ParserCommands cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
-          ParserSetting _ -> False
+          ParserSetting _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty
           (True, False) -> p2
@@ -200,16 +201,20 @@ showParserPrec = go
             . go 11 p1
             . showString " "
             . go 11 p2
-      ParserSetting p ->
+      ParserSetting srcLoc p ->
         showParen (d > 10) $
           showString "Setting "
+            . showsPrec 11 srcLoc
+            . showString " "
             . showSettingABit p
 
 class HasParser a where
   settingsParser :: Parser a
 
-setting :: [Builder a] -> Parser a
-setting = ParserSetting . buildSetting
+setting :: (HasCallStack) => [Builder a] -> Parser a
+setting = ParserSetting mLoc . buildSetting
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 buildSetting :: [Builder a] -> Setting a
 buildSetting = completeBuilder . mconcat
@@ -273,7 +278,7 @@ withLocalYamlConfig =
           help "Path to the configuration file"
         ]
 
-enableDisableSwitch :: Bool -> [Builder Bool] -> Parser Bool
+enableDisableSwitch :: (HasCallStack) => Bool -> [Builder Bool] -> Parser Bool
 enableDisableSwitch defaultBool builders =
   choice $
     catMaybes
@@ -286,9 +291,10 @@ enableDisableSwitch defaultBool builders =
       ]
   where
     s = buildSetting builders
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
     parseEnableSwitch :: Parser Bool
     parseEnableSwitch =
-      ParserSetting $
+      ParserSetting mLoc $
         Setting
           { settingDasheds = mapMaybe (prefixDashedLong "enable-") (settingDasheds s),
             settingReaders = [],
@@ -304,7 +310,7 @@ enableDisableSwitch defaultBool builders =
           }
     parseDisableSwitch :: Parser Bool
     parseDisableSwitch =
-      ParserSetting $
+      ParserSetting mLoc $
         Setting
           { settingDasheds = mapMaybe (prefixDashedLong "disable-") (settingDasheds s),
             settingReaders = [],
@@ -323,7 +329,7 @@ enableDisableSwitch defaultBool builders =
     parseEnv = do
       ne <- settingEnvVars s
       pure $
-        ParserSetting $
+        ParserSetting mLoc $
           Setting
             { settingDasheds = [],
               settingReaders = (auto :: Reader Bool) : settingReaders s,
@@ -341,7 +347,7 @@ enableDisableSwitch defaultBool builders =
     parseConfigVal = do
       ne <- settingConfigVals s
       pure $
-        ParserSetting $
+        ParserSetting mLoc $
           Setting
             { settingDasheds = [],
               settingReaders = [],
@@ -357,7 +363,7 @@ enableDisableSwitch defaultBool builders =
             }
     parseDummy :: Parser Bool
     parseDummy =
-      ParserSetting $
+      ParserSetting mLoc $
         Setting
           { settingDasheds = mapMaybe (prefixDashedLong "(enable|disable)-") (settingDasheds s),
             settingReaders = [],
@@ -446,7 +452,7 @@ parserTraverseSetting func = go
       ParserCheck f p -> ParserCheck f <$> go p
       ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
-      ParserSetting s -> ParserSetting <$> func s
+      ParserSetting mLoc s -> ParserSetting mLoc <$> func s
 
 {-# ANN commandTraverseSetting ("NOCOVER" :: String) #-}
 commandTraverseSetting ::

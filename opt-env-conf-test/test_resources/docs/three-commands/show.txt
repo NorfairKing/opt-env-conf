@@ -5,6 +5,16 @@ Commands
       (Check
          _
          (Setting
+            (Just
+               SrcLoc
+                 { srcLocPackage = "main"
+                 , srcLocModule = "OptEnvConf.APISpec"
+                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                 , srcLocStartLine = 223
+                 , srcLocStartCol = 15
+                 , srcLocEndLine = 223
+                 , srcLocEndCol = 22
+                 })
             (Setting
                []
                [ _ ]
@@ -23,6 +33,16 @@ Commands
          (Check
             _
             (Setting
+               (Just
+                  SrcLoc
+                    { srcLocPackage = "main"
+                    , srcLocModule = "OptEnvConf.APISpec"
+                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                    , srcLocStartLine = 231
+                    , srcLocStartCol = 15
+                    , srcLocEndLine = 231
+                    , srcLocEndCol = 22
+                    })
                (Setting
                   [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
                   [ _ ]
@@ -49,6 +69,16 @@ Commands
                   (Just "number"))))
          (Alt
             (Setting
+               (Just
+                  SrcLoc
+                    { srcLocPackage = "main"
+                    , srcLocModule = "OptEnvConf.APISpec"
+                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                    , srcLocStartLine = 239
+                    , srcLocStartCol = 15
+                    , srcLocEndLine = 239
+                    , srcLocEndCol = 34
+                    })
                (Setting
                   [ DashedLong ('(' :| "enable|disable)-enable") ]
                   []
@@ -62,6 +92,16 @@ Commands
                   (Just "enable extra")))
             (Alt
                (Setting
+                  (Just
+                     SrcLoc
+                       { srcLocPackage = "main"
+                       , srcLocModule = "OptEnvConf.APISpec"
+                       , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                       , srcLocStartLine = 239
+                       , srcLocStartCol = 15
+                       , srcLocEndLine = 239
+                       , srcLocEndCol = 34
+                       })
                   (Setting
                      [ DashedLong ('d' :| "isable-enable") ]
                      []
@@ -75,6 +115,16 @@ Commands
                      Nothing))
                (Alt
                   (Setting
+                     (Just
+                        SrcLoc
+                          { srcLocPackage = "main"
+                          , srcLocModule = "OptEnvConf.APISpec"
+                          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                          , srcLocStartLine = 239
+                          , srcLocStartCol = 15
+                          , srcLocEndLine = 239
+                          , srcLocEndCol = 34
+                          })
                      (Setting
                         [ DashedLong ('e' :| "nable-enable") ]
                         []
@@ -88,6 +138,16 @@ Commands
                         Nothing))
                   (Alt
                      (Setting
+                        (Just
+                           SrcLoc
+                             { srcLocPackage = "main"
+                             , srcLocModule = "OptEnvConf.APISpec"
+                             , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                             , srcLocStartLine = 239
+                             , srcLocStartCol = 15
+                             , srcLocEndLine = 239
+                             , srcLocEndCol = 34
+                             })
                         (Setting
                            []
                            [ _ ]
@@ -101,6 +161,16 @@ Commands
                            (Just "enable extra")))
                      (Alt
                         (Setting
+                           (Just
+                              SrcLoc
+                                { srcLocPackage = "main"
+                                , srcLocModule = "OptEnvConf.APISpec"
+                                , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                                , srcLocStartLine = 239
+                                , srcLocStartCol = 15
+                                , srcLocEndLine = 239
+                                , srcLocEndCol = 34
+                                })
                            (Setting
                               []
                               []
