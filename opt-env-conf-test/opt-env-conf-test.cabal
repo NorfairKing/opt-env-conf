@@ -175,7 +175,6 @@ executable opt-env-conf-example
   build-depends:
       base
     , opt-env-conf
-    , opt-env-conf-test
   default-language: Haskell2010
 
 test-suite opt-env-conf-test
