@@ -1,8 +1,22 @@
-example description
+.Dd $Mdocdate$
+.Dt [33mempty[m 1
+.Os
+.Sh NAME
+.Nm [33mempty[m
+.Nd TODO one line about what it does
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+[33mempty[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m
+.Sh SETTINGS
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
 
-[36mUsage: [m[33mempty[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m
+  [34mOutput version information: 0.0.0[m
+  switch: [37m-v[m[36m|[m[37m--version[m
+  
 
-Options:
+.Sh OPTIONS
   [37m-h[m[36m|[m[37m--help[m    [34mShow this help text[m               
   [37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
 

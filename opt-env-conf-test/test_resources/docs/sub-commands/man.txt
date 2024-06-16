@@ -1,8 +1,45 @@
-example description
+.Dd $Mdocdate$
+.Dt [33msub-commands[m 1
+.Os
+.Sh NAME
+.Nm [33msub-commands[m
+.Nd TODO one line about what it does
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+.Sh SETTINGS
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
 
-[36mUsage: [m[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+  [34mOutput version information: 0.0.0[m
+  switch: [37m-v[m[36m|[m[37m--version[m
 
-Options:
+  [34mcommand without subcommands[m
+  command: [35mtop[m
+    [34mname[m
+    option: [37m--name[m [33mNAME[m
+    env: [37mNAME[m [33mNAME[m
+    config: [37mname[m: [33m<string>[m
+    
+  
+  [34mcommand with subcommands[m
+  command: [35msub[m
+    [34mA[m
+    command: [35ma[m
+    
+    [34mB[m
+    command: [35mb[m
+    
+    [34mC[m
+    command: [35mc[m
+    
+    [34mD[m
+    command: [35md[m
+    
+  
+
+.Sh OPTIONS
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
   [37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
   [35mtop[m [34mcommand without subcommands[m
@@ -12,4 +49,11 @@ Options:
       [35mb[m [34mB[m
       [35mc[m [34mC[m
       [35md[m [34mD[m
+
+.Sh ENVIRONMENT VARIABLES
+  [37mNAME[m [33mNAME[m   [34mname[m
+
+.Sh CONFIGURATION VALUES
+  [34mname[m
+  [37mname[m: [33m<string>[m
 

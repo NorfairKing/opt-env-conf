@@ -300,7 +300,7 @@ renderManPage progname version docs =
               [".Sh ", "SYNOPSIS"],
               renderShortOptDocs progname optDocs,
               [".Sh ", "SETTINGS"],
-              renderAnyDocs docs
+              renderSetDocs docs
             ],
             concat
               [ [ [".Sh ", "OPTIONS"],
@@ -332,7 +332,7 @@ renderReferenceDocumentation progname docs =
           [ [ usageChunk : renderShortOptDocs progname optDocs,
               [],
               headerChunks "All settings",
-              renderAnyDocs docs
+              renderSetDocs docs
             ],
             concat
               [ [ headerChunks "Options",
@@ -378,11 +378,11 @@ renderHelpPage progname docs =
   unlinesChunks
     [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
       [],
-      renderAnyDocs docs
+      renderSetDocs docs
     ]
 
-renderAnyDocs :: AnyDocs SetDoc -> [Chunk]
-renderAnyDocs = unlinesChunks . go
+renderSetDocs :: AnyDocs SetDoc -> [Chunk]
+renderSetDocs = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case

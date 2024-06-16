@@ -1,8 +1,35 @@
-example description
+.Dd $Mdocdate$
+.Dt [33mbig-config[m 1
+.Os
+.Sh NAME
+.Nm [33mbig-config[m
+.Nd TODO one line about what it does
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m
+.Sh SETTINGS
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
 
-[36mUsage: [m[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m
+  [34mOutput version information: 0.0.0[m
+  switch: [37m-v[m[36m|[m[37m--version[m
 
-Options:
+  [34mmulti-line config codec explanation, the same option twice.[m
+  config: [37mbig[m:
+    [37m<key>[m: 
+      [37m<key>[m: 
+        [33m<number>[m # [32m64 bit signed integer[m
+  
+
+.Sh OPTIONS
   [37m-h[m[36m|[m[37m--help[m    [34mShow this help text[m               
   [37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
+
+.Sh CONFIGURATION VALUES
+  [34mmulti-line config codec explanation, the same option twice.[m
+  [37mbig[m:
+    [37m<key>[m: 
+      [37m<key>[m: 
+        [33m<number>[m # [32m64 bit signed integer[m
 
