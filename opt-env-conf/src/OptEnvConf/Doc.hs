@@ -457,7 +457,7 @@ renderLongOptDocs = unlinesChunks . go
           ( \CommandDoc {..} ->
               indent $
                 unwordsChunks [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]
-                  : go commandDocs
+                  : indent (go commandDocs)
           )
           cs
       AnyDocsAnd ds -> case goTable (AnyDocsAnd ds) of
