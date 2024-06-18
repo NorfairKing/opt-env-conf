@@ -152,6 +152,7 @@ extra-source-files:
 
 library
   exposed-modules:
+      OptEnvConf.Gen
       OptEnvConf.Test
   other-modules:
       Paths_opt_env_conf_test
@@ -160,6 +161,8 @@ library
   ghc-options: -Wall
   build-depends:
       base
+    , genvalidity
+    , genvalidity-containers
     , opt-env-conf
     , safe-coloured-text
     , sydtest

@@ -12,7 +12,8 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base opt-env-conf safe-coloured-text sydtest text
+    base genvalidity genvalidity-containers opt-env-conf
+    safe-coloured-text sydtest text
   ];
   executableHaskellDepends = [ base opt-env-conf ];
   testHaskellDepends = [

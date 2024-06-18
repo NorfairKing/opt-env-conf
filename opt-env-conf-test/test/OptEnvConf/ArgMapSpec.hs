@@ -1,8 +1,12 @@
 module OptEnvConf.ArgMapSpec (spec) where
 
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
+import Data.Set (Set)
+import qualified Data.Set as S
+import OptEnvConf.ArgMap (Arg (..), ArgMap (..), Dashed (..), Opt (..), parseOptsWithContext)
 import qualified OptEnvConf.ArgMap as AM
+import OptEnvConf.Gen ()
 import Test.QuickCheck
 import Test.Syd
 import Test.Syd.Validity
@@ -76,3 +80,32 @@ spec = do
             `shouldBe` ArgMap
               { argMapOpts = [OptOption (DashedLong s) o]
               }
+
+  describe "renderDashed" $ do
+    it "roundtrips with parseSingleArg for long dashed" $
+      forAllValid $ \n ->
+        AM.parseSingleArg (AM.renderDashed (DashedLong n)) `shouldBe` ArgDashed True n
+
+    it "roundtrips with parseSingleArg for short dashed" $
+      forAllValid $ \c ->
+        AM.parseSingleArg (AM.renderDashed (DashedShort c)) `shouldBe` ArgDashed False (c :| [])
+
+  describe "parseOptsWithContext" $ do
+    -- it "can parse an argument" $
+    --   forAllValid $ \a ->
+    --     parseOptsWithContext True S.empty S.empty [a]
+    --       `shouldBe` [OptArg a]
+    -- it "can parse a switch" $
+    --   forAllValid $ \d ->
+    --     parseOptsWithContext False (S.singleton d) S.empty [AM.renderDashed d]
+    --       `shouldBe` [OptSwitch d]
+    -- it "can parse an option" $
+    --   forAllValid $ \d ->
+    --     forAllValid $ \a ->
+    --       parseOptsWithContext False S.empty (S.singleton d) [AM.renderDashed d, a]
+    --         `shouldBe` [OptOption d a]
+
+    it "parses anything after a double dash as an argument, irrespective of context" $
+      forAllValid $ \p ->
+        forAllValid $ \as ->
+          parseOptsWithContext p ("--" : as) `shouldBe` map OptArg as

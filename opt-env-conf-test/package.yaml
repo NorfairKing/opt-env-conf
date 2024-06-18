@@ -14,6 +14,8 @@ library:
   source-dirs: src/
   ghc-options: -Wall
   dependencies:
+  - genvalidity
+  - genvalidity-containers
   - opt-env-conf
   - safe-coloured-text
   - sydtest
