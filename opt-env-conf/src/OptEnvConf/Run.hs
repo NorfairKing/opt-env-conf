@@ -15,7 +15,7 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
-import Control.Monad.Reader hiding (Reader, runReader)
+import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
 import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
@@ -31,6 +31,7 @@ import Data.Traversable
 import Data.Version
 import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
 import qualified OptEnvConf.ArgMap as ArgMap
+import OptEnvConf.Completion
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
@@ -40,6 +41,7 @@ import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Setting
 import OptEnvConf.Validation
+import Path
 import System.Environment (getArgs, getEnvironment, getProgName)
 import System.Exit
 import System.IO
@@ -93,6 +95,13 @@ runParserWithLeftovers version p = do
             tc <- getTerminalCapabilitiesFromHandle stdout
             hPutChunksLocaleWith tc stdout $ renderManPage progname version docs
             exitSuccess
+          BashCompletionScript progPath -> do
+            progname <- getProgName
+            generateBashCompletionScript progPath progname
+            exitSuccess
+          BashCompletionQuery index ws -> do
+            runBashCompletionQuery p' index ws
+            exitSuccess
           ParsedNormally a -> pure (a, leftovers)
 
 -- Internal structure to help us do what the framework
@@ -101,6 +110,8 @@ data Internal a
   = ShowHelp
   | ShowVersion
   | RenderMan
+  | BashCompletionScript (Path Abs File)
+  | BashCompletionQuery !Int ![String]
   | ParsedNormally a
 
 internalParser :: Version -> Parser a -> Parser (Internal a)
@@ -124,6 +135,34 @@ internalParser version p =
           hidden,
           help "Show this help text"
         ],
+      BashCompletionScript
+        <$> mapIO
+          parseAbsFile
+          ( setting
+              [ option,
+                reader str,
+                long "bash-completion-script",
+                hidden,
+                help "Render the bash completion script"
+              ]
+          ),
+      BashCompletionQuery
+        <$> setting
+          [ option,
+            reader auto,
+            long "bash-completion-index",
+            hidden,
+            help "The index between the arguments where completion was invoked."
+          ]
+        <*> many
+          ( setting
+              [ option,
+                reader str,
+                long "bash-completion-word",
+                hidden,
+                help "The words (arguments) that have already been typed"
+              ]
+          ),
       ParsedNormally <$> p
     ]
 

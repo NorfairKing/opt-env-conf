@@ -120,7 +120,7 @@ instance Functor Parser where
     ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
     ParserCommands cs -> ParserCommands $ map (fmap f) cs
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
-    -- TODO: make setting a parser and fmap here
+    -- TODO: make setting a functor and fmap here
     p -> ParserCheck (pure . Right . f) p
 
 instance Applicative Parser where

@@ -203,17 +203,17 @@ lintParser = either Just (const Nothing) . validationToEither . go
           $ validationFailure LintErrorEmptySetting
         when (settingTryArgument && null settingReaders) $
           validationFailure LintErrorNoReaderForArgument
-        when (settingTryArgument && isNothing settingMetavar) $
+        when (settingTryArgument && not settingHidden && isNothing settingMetavar) $
           validationFailure LintErrorNoMetavarForArgument
         when (settingTryOption && null settingReaders) $
           validationFailure LintErrorNoReaderForOption
         when (settingTryOption && null settingDasheds) $
           validationFailure LintErrorNoDashedForOption
-        when (settingTryOption && isNothing settingMetavar) $
+        when (settingTryOption && not settingHidden && isNothing settingMetavar) $
           validationFailure LintErrorNoMetavarForOption
         when (isJust settingSwitchValue && null settingDasheds) $
           validationFailure LintErrorNoDashedForSwitch
         when (isJust settingEnvVars && null settingReaders) $
           validationFailure LintErrorNoReaderForEnvVar
-        when (isJust settingEnvVars && isNothing settingMetavar) $
+        when (isJust settingEnvVars && not settingHidden && isNothing settingMetavar) $
           validationFailure LintErrorNoMetavarForEnvVar

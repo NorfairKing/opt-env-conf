@@ -8,8 +8,10 @@ import Paths_opt_env_conf_test (version)
 
 main :: IO ()
 main = do
-  s <- runSettingsParser version
-  print (s :: Instructions)
+  s <- runParser version (pure 'a')
+  print s
+
+-- print (s :: Instructions)
 
 data Instructions = Instructions !Settings !Dispatch
   deriving (Show)

@@ -15,6 +15,7 @@ library
       OptEnvConf
       OptEnvConf.ArgMap
       OptEnvConf.Casing
+      OptEnvConf.Completion
       OptEnvConf.Doc
       OptEnvConf.EnvMap
       OptEnvConf.Error
@@ -38,6 +39,7 @@ library
     , containers
     , filepath
     , mtl
+    , path
     , path-io
     , safe-coloured-text
     , safe-coloured-text-layout

@@ -184,6 +184,7 @@ test-suite opt-env-conf-test
       OptEnvConf.APISpec
       OptEnvConf.ArgMap.Gen
       OptEnvConf.ArgMapSpec
+      OptEnvConf.CompletionSpec
       OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec

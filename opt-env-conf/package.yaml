@@ -17,6 +17,7 @@ library:
   - containers
   - filepath
   - mtl
+  - path
   - path-io
   - safe-coloured-text
   - safe-coloured-text-layout

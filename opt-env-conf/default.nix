@@ -1,6 +1,6 @@
 { mkDerivation, aeson, autodocodec, autodocodec-schema
-, autodocodec-yaml, base, containers, filepath, lib, mtl, path-io
-, safe-coloured-text, safe-coloured-text-layout
+, autodocodec-yaml, base, containers, filepath, lib, mtl, path
+, path-io, safe-coloured-text, safe-coloured-text-layout
 , safe-coloured-text-terminfo, selective, text, validity
 , validity-containers
 }:
@@ -10,7 +10,7 @@ mkDerivation {
   src = ./.;
   libraryHaskellDepends = [
     aeson autodocodec autodocodec-schema autodocodec-yaml base
-    containers filepath mtl path-io safe-coloured-text
+    containers filepath mtl path path-io safe-coloured-text
     safe-coloured-text-layout safe-coloured-text-terminfo selective
     text validity validity-containers
   ];
