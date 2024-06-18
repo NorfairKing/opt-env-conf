@@ -52,12 +52,9 @@ runSettingsParser :: (HasParser a) => Version -> IO a
 runSettingsParser version = runParser version settingsParser
 
 runParser :: Version -> Parser a -> IO a
-runParser version = fmap fst . runParserWithLeftovers version
-
-runParserWithLeftovers :: Version -> Parser a -> IO (a, [String])
-runParserWithLeftovers version p = do
+runParser version p = do
   args <- getArgs
-  let (argMap, leftovers) = ArgMap.parse args
+  let argMap = ArgMap.parse args
   envVars <- EnvMap.parse <$> getEnvironment
 
   case lintParser p of
@@ -102,7 +99,7 @@ runParserWithLeftovers version p = do
           BashCompletionQuery index ws -> do
             runBashCompletionQuery p' index ws
             exitSuccess
-          ParsedNormally a -> pure (a, leftovers)
+          ParsedNormally a -> pure a
 
 -- Internal structure to help us do what the framework
 -- is supposed to.

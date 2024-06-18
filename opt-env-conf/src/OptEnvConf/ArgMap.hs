@@ -8,7 +8,6 @@ module OptEnvConf.ArgMap
     renderDashed,
     prefixDashed,
     parse,
-    parse_,
     consumeArgument,
     consumeOption,
     consumeSwitch,
@@ -50,13 +49,8 @@ prefixDashed p = \case
   DashedLong l -> DashedLong $ p `NE.prependList` l
   DashedShort c -> DashedShort c
 
-parse :: [String] -> (ArgMap, [String])
-parse args =
-  let (opts, leftovers) = parseOpts args
-   in (ArgMap opts, leftovers)
-
-parse_ :: [String] -> ArgMap
-parse_ = fst . parse
+parse :: [String] -> ArgMap
+parse args = ArgMap $ parseOpts args
 
 -- This may be accidentally quadratic.
 -- We can probably make it faster by having a stack of only args
@@ -116,33 +110,31 @@ data Opt
 
 instance Validity Opt
 
-parseOpts :: [String] -> ([Opt], [String])
+parseOpts :: [String] -> [Opt]
 parseOpts = go
   where
     go = \case
-      [] -> ([], [])
+      [] -> []
       (s : rest) ->
-        let combs ls (ls', leftovers) = (ls ++ ls', leftovers)
-            comb l = combs [l]
-         in case parseSingleArg s of
-              ArgBareDoubleDash -> ([], rest)
-              ArgBareDash -> OptArg "-" `comb` go rest
-              ArgPlain a -> OptArg a `comb` go rest
-              ArgDashed isLong key ->
-                let ds = parseDasheds isLong key
-                    asSwitches = map OptSwitch (NE.toList ds) `combs` go rest
-                 in case NE.nonEmpty rest of
-                      Nothing -> asSwitches
-                      Just (a :| others) ->
-                        let asOption v =
-                              let ss = NE.init ds
-                                  o = NE.last ds
-                               in (map OptSwitch ss ++ [OptOption o v]) `combs` go others
-                         in case parseSingleArg a of
-                              ArgBareDoubleDash -> asSwitches
-                              ArgDashed _ _ -> asSwitches
-                              ArgPlain val -> asOption val
-                              ArgBareDash -> asOption "-"
+        case parseSingleArg s of
+          ArgBareDoubleDash -> map OptArg rest -- All further args are arguments, not options
+          ArgBareDash -> OptArg "-" : go rest
+          ArgPlain a -> OptArg a : go rest
+          ArgDashed isLong key ->
+            let ds = parseDasheds isLong key
+                asSwitches = map OptSwitch (NE.toList ds) ++ go rest
+             in case NE.nonEmpty rest of
+                  Nothing -> asSwitches
+                  Just (a :| others) ->
+                    let asOption v =
+                          let ss = NE.init ds
+                              o = NE.last ds
+                           in (map OptSwitch ss ++ [OptOption o v]) ++ go others
+                     in case parseSingleArg a of
+                          ArgBareDoubleDash -> asSwitches
+                          ArgDashed _ _ -> asSwitches
+                          ArgPlain val -> asOption val
+                          ArgBareDash -> asOption "-"
 
     parseDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
     parseDasheds b s =

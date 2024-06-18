@@ -1,14 +1,9 @@
 module OptEnvConf.CompletionSpec (spec) where
 
-import qualified Data.List.NonEmpty as NE
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
-import qualified OptEnvConf.ArgMap as AM
 import OptEnvConf.Completion
 import OptEnvConf.Parser
 import OptEnvConf.Setting
-import Test.QuickCheck
 import Test.Syd
-import Test.Syd.Validity
 
 spec :: Spec
 spec = do

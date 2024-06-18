@@ -57,7 +57,7 @@ runBashCompletionQuery parser index ws = do
 selectArgs :: Int -> [String] -> (ArgMap, Maybe String)
 selectArgs ix args =
   let selectedArgs = take ix args
-   in (fst $ ArgMap.parse selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
+   in (ArgMap.parse selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [String]
 pureCompletionQuery parser ix args =

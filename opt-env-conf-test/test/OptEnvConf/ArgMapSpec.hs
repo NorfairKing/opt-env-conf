@@ -24,20 +24,17 @@ spec = do
         shouldBeValid . AM.parse
 
     it "parses empty args as an empty arg map" $
-      AM.parse [] `shouldBe` (AM.empty, [])
+      AM.parse [] `shouldBe` AM.empty
 
     it "treats '-' as an argument" $
       AM.parse ["-"]
-        `shouldBe` ( ArgMap
-                       { argMapOpts = [OptArg "-"]
-                       },
-                     []
-                   )
+        `shouldBe` ArgMap
+          { argMapOpts = [OptArg "-"]
+          }
 
-    it "parses anything after -- as leftovers" $
+    it "parses anything after -- as arguments" $
       forAllValid $ \as ->
-        forAllValid $ \bs ->
-          snd (AM.parse (as ++ ["--"] ++ bs)) `shouldBe` bs
+        AM.parse ("--" : as) `shouldBe` ArgMap (map OptArg as)
 
     it "parses -a -b the same as -ab" $
       forAllValid $ \c1 ->
@@ -53,37 +50,29 @@ spec = do
     it "parses any string with one dash and no argument as a switch" $
       forAllValid $ \c ->
         AM.parse [['-', c]]
-          `shouldBe` ( ArgMap
-                         { argMapOpts = [OptSwitch (DashedShort c)]
-                         },
-                       []
-                     )
+          `shouldBe` ArgMap
+            { argMapOpts = [OptSwitch (DashedShort c)]
+            }
 
     it "parses any string with two dashes and no argument as a switch" $
       forAllValid $ \s ->
         AM.parse ["--" <> NE.toList s]
-          `shouldBe` ( ArgMap
-                         { argMapOpts = [OptSwitch (DashedLong s)]
-                         },
-                       []
-                     )
+          `shouldBe` ArgMap
+            { argMapOpts = [OptSwitch (DashedLong s)]
+            }
 
     it "parses any string with a dash and an argument as an option" $
       forAllValid $ \c ->
         forAllValid $ \o ->
           AM.parse [['-', c], o]
-            `shouldBe` ( ArgMap
-                           { argMapOpts = [OptOption (DashedShort c) o]
-                           },
-                         []
-                       )
+            `shouldBe` ArgMap
+              { argMapOpts = [OptOption (DashedShort c) o]
+              }
 
     it "parses any string with two dashes and an argument as an option" $
       forAllValid $ \s ->
         forAllValid $ \o ->
           AM.parse ["--" <> NE.toList s, o]
-            `shouldBe` ( ArgMap
-                           { argMapOpts = [OptOption (DashedLong s) o]
-                           },
-                         []
-                       )
+            `shouldBe` ArgMap
+              { argMapOpts = [OptOption (DashedLong s) o]
+              }
