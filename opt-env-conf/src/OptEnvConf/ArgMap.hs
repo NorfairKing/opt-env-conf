@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.ArgMap
   ( ArgMap (..),
@@ -14,16 +13,12 @@ module OptEnvConf.ArgMap
     consumeSwitch,
     Opt (..),
     parseSingleArg,
-    Possible (..),
-    parseOptsWithContext,
     Arg (..),
   )
 where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import Data.Set (Set)
-import qualified Data.Set as S
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
@@ -147,33 +142,6 @@ parseOpts = go
       if b
         then DashedLong s :| []
         else NE.map DashedShort s
-
-data Possible
-  = PossibleArg
-  | PossibleSwitch !Dashed
-  | PossibleOption !Dashed
-  | PossibleMany !Possible
-  | PossibleAnd !Possible !Possible
-  | PossibleOr !Possible !Possible
-  deriving (Show, Eq, Generic)
-
-instance Validity Possible
-
-consumePossible :: Arg -> Maybe Arg -> Possible -> Maybe (Possible, Opt)
-consumePossible a1 mA2 = go
-  where
-    go :: Possible -> Maybe (Possible, Opt)
-    go = \case
-      PossibleOr p1 p2 -> go p1 <|> go p2
-
-parseOptsWithContext :: Possible -> [String] -> [Opt]
-parseOptsWithContext _ = go
-  where
-    go = \case
-      [] -> []
-      (s : rest) ->
-        case parseSingleArg s of
-          ArgBareDoubleDash -> map OptArg rest -- All further args are arguments, not options
 
 data Arg
   = ArgBareDoubleDash
