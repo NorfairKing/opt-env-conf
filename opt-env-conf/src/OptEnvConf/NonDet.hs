@@ -92,6 +92,9 @@ instance (Monad f) => Applicative (ListT f) where
     a <- fa
     pure (f a)
 
+instance (MonadIO m) => MonadIO (ListT m) where
+  liftIO = lift . liftIO
+
 instance MonadTrans ListT where
   lift = ListT . fmap (`MCons` pure MNil)
 

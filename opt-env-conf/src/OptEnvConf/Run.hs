@@ -32,6 +32,7 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Lint
+import OptEnvConf.NonDet
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Setting
@@ -166,9 +167,11 @@ runParserOn ::
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig = do
   let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
-  errOrRes <- runPP (go p) args ppEnv
-  pure (validationToEither (fst <$> errOrRes))
+  undefined
   where
+    -- errOrRes <- runPP (go p) args ppEnv
+    -- pure (validationToEither (fst <$> errOrRes))
+
     tryPP :: PP a -> PP (Maybe a)
     tryPP pp = do
       s <- get
@@ -360,7 +363,7 @@ tryReaders rs s = left NE.reverse $ go rs
         Left err -> go' (err <| errs) rl
         Right a -> Right a
 
-type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
+type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError (NonDetT IO))) a
 
 type PPState = Args
 
@@ -373,9 +376,9 @@ runPP ::
   PP a ->
   Args ->
   PPEnv ->
-  IO (Validation ParseError (a, PPState))
+  IO [Validation ParseError (a, PPState)]
 runPP p args envVars =
-  runValidationT (runStateT (runReaderT p envVars) args)
+  runNonDetT (runValidationT (runStateT (runReaderT p envVars) args))
 
 ppArg :: PP (Maybe String)
 ppArg = state Args.consumeArgument
