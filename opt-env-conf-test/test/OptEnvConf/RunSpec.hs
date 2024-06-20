@@ -326,6 +326,16 @@ spec = do
         (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
 
+      argParseSpec
+        ["--foo", "bar"]
+        ((,) <$> setting [switch True, long "foo"] <*> setting [reader str, argument])
+        (True, "bar")
+
+      argParseSpec
+        ["--foo", "bar"]
+        ((,) <$> setting [reader str, argument] <*> setting [switch True, long "foo"])
+        ("bar", True)
+
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
         [ ([], True),
