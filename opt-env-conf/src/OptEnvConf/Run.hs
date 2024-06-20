@@ -13,6 +13,7 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
+import Control.Monad
 import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
 import Data.Aeson ((.:?))
@@ -167,7 +168,16 @@ runParserOn ::
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig = do
   let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
-  undefined
+  let go' p = do
+        a <- go p
+        s <- get
+        guard $ s == emptyArgs
+        pure a
+
+  v <- runPP (go' p) args ppEnv
+  case validationToEither v of
+    Left errs -> pure $ Left errs
+    Right (a : _, _) -> pure (Right a)
   where
     -- errOrRes <- runPP (go p) args ppEnv
     -- pure (validationToEither (fst <$> errOrRes))
@@ -176,18 +186,17 @@ runParserOn p args envVars mConfig = do
     tryPP pp = do
       s <- get
       e <- ask
-      results <- liftIO $ runPP pp s e
-      undefined (results :: _)
-    -- liftNonDetTListM $ map (\errOrRes -> _) results
-    -- case errOrRes of
-    --   -- Note that args are not consumed if the alternative failed.
-    --   Failure errs ->
-    --     if all errorIsForgivable errs
-    --       then pure Nothing
-    --       else ppErrors errs
-    --   Success (a, s') -> do
-    --     put s'
-    --     pure $ Just a
+      errOrRes <- liftIO $ runPP pp s e
+      -- Try the other way around with a lazy run
+      case errOrRes of
+        -- Note that args are not consumed if the alternative failed.
+        Failure errs ->
+          if all errorIsForgivable errs
+            then pure Nothing
+            else ppErrors errs
+        Success (a, s') -> do
+          put s'
+          lift $ liftNonDetTList $ Nothing : map Just a
     go ::
       Parser a ->
       PP a
@@ -365,7 +374,15 @@ tryReaders rs s = left NE.reverse $ go rs
         Left err -> go' (err <| errs) rl
         Right a -> Right a
 
-type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError (NonDetT IO))) a
+type PP a = ReaderT PPEnv (NonDetT (StateT PPState (ValidationT ParseError IO))) a
+
+runPP ::
+  PP a ->
+  Args ->
+  PPEnv ->
+  IO (Validation ParseError ([a], PPState))
+runPP p args envVars =
+  runValidationT (runStateT (runNonDetT (runReaderT p envVars)) args)
 
 type PPState = Args
 
@@ -373,14 +390,6 @@ data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
     ppEnvConf :: !(Maybe JSON.Object)
   }
-
-runPP ::
-  PP a ->
-  Args ->
-  PPEnv ->
-  IO [Validation ParseError (a, PPState)]
-runPP p args envVars =
-  runNonDetT (runValidationT (runStateT (runReaderT p envVars) args))
 
 ppArg :: PP (Maybe String)
 ppArg = state Args.consumeArgument
@@ -392,7 +401,7 @@ ppSwitch :: [Dashed] -> PP (Maybe ())
 ppSwitch ds = state $ Args.consumeSwitch ds
 
 ppErrors :: NonEmpty ParseError -> PP a
-ppErrors = lift . lift . ValidationT . pure . Failure
+ppErrors = lift . lift . lift . ValidationT . pure . Failure
 
 ppError :: ParseError -> PP a
 ppError = ppErrors . NE.singleton

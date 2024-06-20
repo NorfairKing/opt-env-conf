@@ -15,6 +15,7 @@ where
 import Control.Applicative
 import Control.Monad
 import Control.Monad.State
+import Control.Selective
 import Data.Functor.Identity
 
 type NonDet = NonDetT Identity
@@ -109,6 +110,9 @@ instance (Monad f) => Applicative (ListT f) where
     f <- ff
     a <- fa
     pure (f a)
+
+instance (Monad f) => Selective (ListT f) where
+  select = selectM
 
 instance (MonadIO m) => MonadIO (ListT m) where
   liftIO = lift . liftIO
