@@ -46,8 +46,8 @@ import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Version
-import OptEnvConf.ArgMap (Dashed (..))
-import qualified OptEnvConf.ArgMap as AM
+import OptEnvConf.Args (Dashed (..))
+import qualified OptEnvConf.Args as AM
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Text.Colour

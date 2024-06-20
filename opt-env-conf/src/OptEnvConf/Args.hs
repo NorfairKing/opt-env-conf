@@ -1,8 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 
-module OptEnvConf.ArgMap
-  ( ArgMap (..),
+module OptEnvConf.Args
+  ( Args (..),
     empty,
     Dashed (..),
     renderDashed,
@@ -23,15 +23,15 @@ import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
 
-newtype ArgMap = ArgMap
+newtype Args = Args
   { argMapOpts :: [Opt]
   }
   deriving (Show, Eq, Generic)
 
-instance Validity ArgMap
+instance Validity Args
 
-empty :: ArgMap
-empty = ArgMap []
+empty :: Args
+empty = Args []
 
 data Dashed
   = DashedShort !Char
@@ -50,14 +50,14 @@ prefixDashed p = \case
   DashedLong l -> DashedLong $ p `NE.prependList` l
   DashedShort c -> DashedShort c
 
-parse :: [String] -> ArgMap
-parse args = ArgMap $ parseOpts args
+parse :: [String] -> Args
+parse args = Args $ parseOpts args
 
 -- This may be accidentally quadratic.
 -- We can probably make it faster by having a stack of only args
 --
 -- The type is a bit strange, but it makes dealing with the state monad easier
-consumeArgument :: ArgMap -> (Maybe String, ArgMap)
+consumeArgument :: Args -> (Maybe String, Args)
 consumeArgument am =
   let (mS, opts') = go $ argMapOpts am
    in (mS, am {argMapOpts = opts'})
@@ -75,7 +75,7 @@ consumeArgument am =
 -- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
 --
 -- The type is a bit strange, but it makes dealing with the state monad easier
-consumeOption :: [Dashed] -> ArgMap -> (Maybe String, ArgMap)
+consumeOption :: [Dashed] -> Args -> (Maybe String, Args)
 consumeOption dasheds am =
   let (mS, opts') = go $ argMapOpts am
    in (mS, am {argMapOpts = opts'})
@@ -89,7 +89,7 @@ consumeOption dasheds am =
             let (mS, os) = go rest
              in (mS, o : os)
 
-consumeSwitch :: [Dashed] -> ArgMap -> (Maybe (), ArgMap)
+consumeSwitch :: [Dashed] -> Args -> (Maybe (), Args)
 consumeSwitch dasheds am =
   let (mS, opts') = go $ argMapOpts am
    in (mS, am {argMapOpts = opts'})

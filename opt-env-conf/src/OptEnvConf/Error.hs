@@ -6,7 +6,7 @@ module OptEnvConf.Error where
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
-import OptEnvConf.ArgMap (Opt (..), renderDashed)
+import OptEnvConf.Args (Opt (..), renderDashed)
 import OptEnvConf.Doc
 import Text.Colour
 

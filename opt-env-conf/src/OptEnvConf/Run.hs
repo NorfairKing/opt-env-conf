@@ -29,8 +29,8 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Traversable
 import Data.Version
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
-import qualified OptEnvConf.ArgMap as ArgMap
+import OptEnvConf.Args (Args (..), Dashed (..), Opt (..))
+import qualified OptEnvConf.Args as Args
 import OptEnvConf.Completion
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
@@ -54,7 +54,7 @@ runSettingsParser version = runParser version settingsParser
 runParser :: Version -> Parser a -> IO a
 runParser version p = do
   args <- getArgs
-  let argMap = ArgMap.parse args
+  let argMap = Args.parse args
   envVars <- EnvMap.parse <$> getEnvironment
 
   case lintParser p of
@@ -166,7 +166,7 @@ internalParser version p =
 -- 'runParserOn' _and_ 'unrecognisedOptions'
 runParserComplete ::
   Parser a ->
-  ArgMap ->
+  Args ->
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
@@ -175,7 +175,7 @@ runParserComplete p args e mConf =
     Just unrecogniseds -> pure $ Left $ NE.map ParseErrorUnrecognised unrecogniseds
     Nothing -> runParserOn p args e mConf
 
-unrecognisedOptions :: Parser a -> ArgMap -> [Opt]
+unrecognisedOptions :: Parser a -> Args -> [Opt]
 unrecognisedOptions p args =
   let possibleOpts = collectPossibleOpts p
       isRecognised =
@@ -223,7 +223,7 @@ collectPossibleOpts = go
 
 runParserOn ::
   Parser a ->
-  ArgMap ->
+  Args ->
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
@@ -425,7 +425,7 @@ tryReaders rs s = left NE.reverse $ go rs
 
 type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError IO)) a
 
-type PPState = ArgMap
+type PPState = Args
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
@@ -434,20 +434,20 @@ data PPEnv = PPEnv
 
 runPP ::
   PP a ->
-  ArgMap ->
+  Args ->
   PPEnv ->
   IO (Either (NonEmpty ParseError) (a, PPState))
 runPP p args envVars =
   validationToEither <$> runValidationT (runStateT (runReaderT p envVars) args)
 
 ppArg :: PP (Maybe String)
-ppArg = state ArgMap.consumeArgument
+ppArg = state Args.consumeArgument
 
 ppOpt :: [Dashed] -> PP (Maybe String)
-ppOpt ds = state $ ArgMap.consumeOption ds
+ppOpt ds = state $ Args.consumeOption ds
 
 ppSwitch :: [Dashed] -> PP (Maybe ())
-ppSwitch ds = state $ ArgMap.consumeSwitch ds
+ppSwitch ds = state $ Args.consumeSwitch ds
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . ValidationT . pure . Failure

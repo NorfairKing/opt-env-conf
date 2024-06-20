@@ -185,8 +185,8 @@ test-suite opt-env-conf-test
   main-is: Spec.hs
   other-modules:
       OptEnvConf.APISpec
-      OptEnvConf.ArgMap.Gen
-      OptEnvConf.ArgMapSpec
+      OptEnvConf.Args.Gen
+      OptEnvConf.ArgsSpec
       OptEnvConf.CompletionSpec
       OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec

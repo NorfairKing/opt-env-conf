@@ -63,7 +63,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack)
-import OptEnvConf.ArgMap (Dashed (..), prefixDashed)
+import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
 import OptEnvConf.Setting

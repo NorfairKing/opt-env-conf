@@ -13,15 +13,15 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
-import OptEnvConf.ArgMap (ArgMap (..), Dashed (..), Opt (..))
-import qualified OptEnvConf.ArgMap as ArgMap
-import OptEnvConf.ArgMap.Gen ()
+import OptEnvConf.Args (Args (..), Dashed (..), Opt (..))
+import qualified OptEnvConf.Args as Args
+import OptEnvConf.Args.Gen ()
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Error
 import OptEnvConf.Parser
-import Test.QuickCheck
+import Test.QuickCheck hiding (Args)
 import Test.Syd
 import Test.Syd.Validity
 import Text.Colour
@@ -32,20 +32,20 @@ spec = do
     it "says that any argument is unrecognised when no arguments would be parsed" $
       forAllValid $ \args -> do
         let p = pure 'a'
-        unrecognisedOptions p (ArgMap.parse args) `shouldBe` map OptArg args
+        unrecognisedOptions p (Args.parse args) `shouldBe` map OptArg args
 
     it "recognises arguments when they would be parsed" $
       forAllValid $ \arg -> do
         let p = setting [reader str, argument] :: Parser String
         let args = [arg]
-        unrecognisedOptions p (ArgMap.parse args) `shouldBe` []
+        unrecognisedOptions p (Args.parse args) `shouldBe` []
 
     it "says that an option is unrecognised when no options would not parsed" $
       forAllValid $ \d ->
         forAllValid $ \v -> do
           let p = pure 'a'
-          let args = [ArgMap.renderDashed d, v]
-          unrecognisedOptions p (ArgMap.parse args) `shouldBe` [OptOption d v]
+          let args = [Args.renderDashed d, v]
+          unrecognisedOptions p (Args.parse args) `shouldBe` [OptOption d v]
 
     it "says that an option is unrecognised when that options would not parsed" $
       forAllValid $ \l1 -> do
@@ -53,15 +53,15 @@ spec = do
           forAllValid $ \v -> do
             let p = setting [reader str, option, long (NE.toList l1)] :: Parser String
             let d = DashedLong l2
-            let args = [ArgMap.renderDashed d, v]
-            unrecognisedOptions p (ArgMap.parse args) `shouldBe` [OptOption d v]
+            let args = [Args.renderDashed d, v]
+            unrecognisedOptions p (Args.parse args) `shouldBe` [OptOption d v]
 
     it "recognises an option that would be parsed" $
       forAllValid $ \l -> do
         forAllValid $ \v -> do
           let p = setting [reader str, option, long $ NE.toList l] :: Parser String
-          let args = [ArgMap.renderDashed (DashedLong l), v]
-          unrecognisedOptions p (ArgMap.parse args) `shouldBe` []
+          let args = [Args.renderDashed (DashedLong l), v]
+          unrecognisedOptions p (Args.parse args) `shouldBe` []
 
   describe "runParser" $ do
     describe "pure" $ do
@@ -144,7 +144,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = ArgMap.empty {argMapOpts = map OptArg ls}
+              let args = Args.empty {argMapOpts = map OptArg ls}
               let p = many $ setting [reader str, argument]
               let expected = ls
               shouldParse p args e mConf expected
@@ -153,7 +153,7 @@ spec = do
       it "fails to parse zero args" $
         forAllValid $ \e ->
           forAllValid $ \mConf -> do
-            let args = ArgMap.empty {argMapOpts = []}
+            let args = Args.empty {argMapOpts = []}
             let p = some $ setting [reader str, argument] :: Parser [String]
             shouldFail p args e mConf $ \case
               ParseErrorMissingArgument _ :| [] -> True
@@ -163,7 +163,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = ArgMap.empty {argMapOpts = map OptArg $ NE.toList ls}
+              let args = Args.empty {argMapOpts = map OptArg $ NE.toList ls}
               let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args e mConf expected
@@ -199,7 +199,7 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \prefix ->
                 forAllValid $ \(key, val) -> do
-                  let prefixedKey = ArgMap.prefixDashed prefix (DashedLong key)
+                  let prefixedKey = Args.prefixDashed prefix (DashedLong key)
                   let a = a' {argMapOpts = OptSwitch prefixedKey : argMapOpts a'}
                   let p =
                         subArgs prefix $
@@ -217,7 +217,7 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \prefix ->
                 forAllValid $ \(key, val) -> do
-                  let prefixedKey = ArgMap.prefixDashed prefix (DashedLong key)
+                  let prefixedKey = Args.prefixDashed prefix (DashedLong key)
                   let a = a' {argMapOpts = OptOption prefixedKey val : argMapOpts a'}
                   let p =
                         subArgs prefix $
@@ -261,7 +261,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \arg -> do
-              let args = ArgMap.empty {argMapOpts = [OptArg arg]}
+              let args = Args.empty {argMapOpts = [OptArg arg]}
               let p = setting [reader str, argument]
               let expected = arg
               shouldParse p args e mConf expected
@@ -270,7 +270,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
-              let args = ArgMap.empty {argMapOpts = [OptOption (DashedLong l) r]}
+              let args = Args.empty {argMapOpts = [OptOption (DashedLong l) r]}
               let p = setting [reader str, option, long $ NE.toList l]
               let expected = r
               shouldParse p args e mConf expected
@@ -279,7 +279,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
-              let args = ArgMap.empty {argMapOpts = map (OptOption (DashedLong l)) rs}
+              let args = Args.empty {argMapOpts = map (OptOption (DashedLong l)) rs}
               let p = many $ setting [reader str, option, long $ NE.toList l]
               let expected = rs
               shouldParse p args e mConf expected
@@ -445,7 +445,7 @@ argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParse
 argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a -> Spec
 argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses ", show args, "as", show expected]) $ do
-    let argMap = ArgMap.parse args
+    let argMap = Args.parse args
     errOrRes <- runParserOn p argMap EnvMap.empty Nothing
     case errOrRes of
       Left err -> expectationFailure $ show err
@@ -458,7 +458,7 @@ envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser
 envParseSpec envVars p expected = withFrozenCallStack $ do
   it (unwords ["parses ", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
-    errOrRes <- runParserOn p ArgMap.empty envMap Nothing
+    errOrRes <- runParserOn p Args.empty envMap Nothing
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -466,7 +466,7 @@ envParseSpec envVars p expected = withFrozenCallStack $ do
 shouldParse ::
   (Show a, Eq a) =>
   Parser a ->
-  ArgMap ->
+  Args ->
   EnvMap ->
   Maybe JSON.Object ->
   a ->
@@ -480,7 +480,7 @@ shouldParse p args e mConf expected = do
 shouldFail ::
   (Show a) =>
   Parser a ->
-  ArgMap ->
+  Args ->
   EnvMap ->
   Maybe JSON.Object ->
   (NonEmpty ParseError -> Bool) ->

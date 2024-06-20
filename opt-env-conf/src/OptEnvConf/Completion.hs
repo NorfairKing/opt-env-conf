@@ -13,8 +13,8 @@ import Control.Monad.State
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import OptEnvConf.ArgMap (ArgMap)
-import qualified OptEnvConf.ArgMap as ArgMap
+import OptEnvConf.Args (Args)
+import qualified OptEnvConf.Args as Args
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
@@ -54,22 +54,22 @@ runBashCompletionQuery parser index ws = do
   putStr $ unlines completions
   pure ()
 
-selectArgs :: Int -> [String] -> (ArgMap, Maybe String)
+selectArgs :: Int -> [String] -> (Args, Maybe String)
 selectArgs ix args =
   let selectedArgs = take ix args
-   in (ArgMap.parse selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
+   in (Args.parse selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [String]
 pureCompletionQuery parser ix args =
   -- TODO use the index properly (?)
-  fromMaybe [] $ evalState (go parser) selectedArgMap
+  fromMaybe [] $ evalState (go parser) selectedArgs
   where
-    (selectedArgMap, mCursorArg) = selectArgs ix args
-    goCommand :: Command a -> State ArgMap (Maybe [String])
+    (selectedArgs, mCursorArg) = selectArgs ix args
+    goCommand :: Command a -> State Args (Maybe [String])
     goCommand = go . commandParser -- TODO complete with the command
     -- Nothing means "this branch was not valid"
     -- Just means "no completions"
-    go :: Parser a -> State ArgMap (Maybe [String])
+    go :: Parser a -> State Args (Maybe [String])
     go = \case
       ParserPure _ -> pure $ Just []
       ParserAp p1 p2 -> do
@@ -106,7 +106,7 @@ pureCompletionQuery parser ix args =
             case mCursorArg of
               Nothing -> pure $ Just []
               Just arg -> do
-                pure $ Just $ filter (arg `isPrefixOf`) (map ArgMap.renderDashed settingDasheds)
+                pure $ Just $ filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
 
 -- ParserAp p1 p2 -> do
 --   s1s <- go p1 |> go p2

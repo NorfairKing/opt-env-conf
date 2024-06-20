@@ -1,11 +1,11 @@
-module OptEnvConf.ArgMapSpec (spec) where
+module OptEnvConf.ArgsSpec (spec) where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import OptEnvConf.ArgMap (Arg (..), ArgMap (..), Dashed (..), Opt (..))
-import qualified OptEnvConf.ArgMap as AM
+import OptEnvConf.Args (Arg (..), Args (..), Dashed (..), Opt (..))
+import qualified OptEnvConf.Args as AM
 import OptEnvConf.Gen ()
-import Test.QuickCheck
+import Test.QuickCheck hiding (Args)
 import Test.Syd
 import Test.Syd.Validity
 
@@ -16,12 +16,12 @@ spec = do
       producesValid AM.parseSingleArg
 
   describe "AM.parse" $ do
-    it "produces valid ArgMaps" $
+    it "produces valid Argss" $
       producesValid AM.parse
 
     let annoyingStrings :: Gen [String]
         annoyingStrings = genListOf $ genListOf $ oneof [genValid, pure '-']
-    it "produces valid ArgMaps for annoying strings" $
+    it "produces valid Argss for annoying strings" $
       forAll annoyingStrings $
         shouldBeValid . AM.parse
 
@@ -30,13 +30,13 @@ spec = do
 
     it "treats '-' as an argument" $
       AM.parse ["-"]
-        `shouldBe` ArgMap
+        `shouldBe` Args
           { argMapOpts = [OptArg "-"]
           }
 
     it "parses anything after -- as arguments" $
       forAllValid $ \as ->
-        AM.parse ("--" : as) `shouldBe` ArgMap (map OptArg as)
+        AM.parse ("--" : as) `shouldBe` Args (map OptArg as)
 
     it "parses -a -b the same as -ab" $
       forAllValid $ \c1 ->
@@ -52,14 +52,14 @@ spec = do
     it "parses any string with one dash and no argument as a switch" $
       forAllValid $ \c ->
         AM.parse [['-', c]]
-          `shouldBe` ArgMap
+          `shouldBe` Args
             { argMapOpts = [OptSwitch (DashedShort c)]
             }
 
     it "parses any string with two dashes and no argument as a switch" $
       forAllValid $ \s ->
         AM.parse ["--" <> NE.toList s]
-          `shouldBe` ArgMap
+          `shouldBe` Args
             { argMapOpts = [OptSwitch (DashedLong s)]
             }
 
@@ -67,7 +67,7 @@ spec = do
       forAllValid $ \c ->
         forAllValid $ \o ->
           AM.parse [['-', c], o]
-            `shouldBe` ArgMap
+            `shouldBe` Args
               { argMapOpts = [OptOption (DashedShort c) o]
               }
 
@@ -75,7 +75,7 @@ spec = do
       forAllValid $ \s ->
         forAllValid $ \o ->
           AM.parse ["--" <> NE.toList s, o]
-            `shouldBe` ArgMap
+            `shouldBe` Args
               { argMapOpts = [OptOption (DashedLong s) o]
               }
 
