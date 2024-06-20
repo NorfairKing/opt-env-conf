@@ -47,7 +47,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Version
 import OptEnvConf.Args (Dashed (..))
-import qualified OptEnvConf.Args as AM
+import qualified OptEnvConf.Args as Args
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Text.Colour
@@ -639,7 +639,7 @@ dashedChunksNE :: NonEmpty Dashed -> [Chunk]
 dashedChunksNE = intersperse (fore cyan "|") . map dashedChunk . NE.toList
 
 dashedChunk :: Dashed -> Chunk
-dashedChunk = fore white . chunk . T.pack . AM.renderDashed
+dashedChunk = fore white . chunk . T.pack . Args.renderDashed
 
 envVarChunksNE :: NonEmpty String -> [Chunk]
 envVarChunksNE = intersperse (fore cyan "|") . map envVarChunk . NE.toList
