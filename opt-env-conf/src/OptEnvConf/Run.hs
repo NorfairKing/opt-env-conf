@@ -13,13 +13,13 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
-import Control.Monad
 import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
 import Data.Aeson ((.:?))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.Types as JSON
+import Data.Either
 import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
@@ -160,6 +160,19 @@ internalParser version p =
       ParsedNormally <$> p
     ]
 
+-- TODO: Figure out when this list can be empty
+chooseBestResult :: [Validation e a] -> Maybe (Either (NonEmpty e) a)
+chooseBestResult vs =
+  let (errs, as) = partitionEithers $ map validationToEither vs
+   in case listToMaybe as of
+        -- A succesful parse, return it.
+        Just a -> Just (Right a)
+        -- No succesful result, try to return an error
+        -- TODO maybe return them all?
+        Nothing -> case listToMaybe errs of
+          Just err -> Just (Left err)
+          Nothing -> Nothing
+
 runParserOn ::
   Parser a ->
   Args ->
@@ -168,35 +181,9 @@ runParserOn ::
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig = do
   let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
-  let go' p = do
-        a <- go p
-        s <- get
-        guard $ s == emptyArgs
-        pure a
-
-  v <- runPP (go' p) args ppEnv
-  case validationToEither v of
-    Left errs -> pure $ Left errs
-    Right (a : _, _) -> pure (Right a)
+  validations <- runPP (go p) args ppEnv
+  pure $ fmap fst $ fromMaybe (error "TODO figure out when this list can be empty") $ chooseBestResult validations
   where
-    -- errOrRes <- runPP (go p) args ppEnv
-    -- pure (validationToEither (fst <$> errOrRes))
-
-    tryPP :: PP a -> PP (Maybe a)
-    tryPP pp = do
-      s <- get
-      e <- ask
-      errOrRes <- liftIO $ runPP pp s e
-      -- Try the other way around with a lazy run
-      case errOrRes of
-        -- Note that args are not consumed if the alternative failed.
-        Failure errs ->
-          if all errorIsForgivable errs
-            then pure Nothing
-            else ppErrors errs
-        Success (a, s') -> do
-          put s'
-          lift $ liftNonDetTList $ Nothing : map Just a
     go ::
       Parser a ->
       PP a
@@ -374,15 +361,34 @@ tryReaders rs s = left NE.reverse $ go rs
         Left err -> go' (err <| errs) rl
         Right a -> Right a
 
-type PP a = ReaderT PPEnv (NonDetT (StateT PPState (ValidationT ParseError IO))) a
+type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError (NonDetT IO))) a
 
 runPP ::
   PP a ->
   Args ->
   PPEnv ->
-  IO (Validation ParseError ([a], PPState))
+  IO [Validation ParseError (a, PPState)]
 runPP p args envVars =
-  runValidationT (runStateT (runNonDetT (runReaderT p envVars)) args)
+  runNonDetT (runValidationT (runStateT (runReaderT p envVars) args))
+
+tryPP :: PP a -> PP (Maybe a)
+tryPP pp = do
+  s <- get
+  e <- ask
+  results <- liftIO $ runPP pp s e
+  errOrRes <- ppNonDet $ liftNonDetTList results
+  case errOrRes of
+    -- Note that args are not consumed if the alternative failed.
+    Failure errs ->
+      if all errorIsForgivable errs
+        then pure Nothing
+        else ppErrors errs
+    Success (a, s') -> do
+      put s'
+      pure $ Just a
+
+ppNonDet :: NonDetT IO a -> PP a
+ppNonDet = lift . lift . lift
 
 type PPState = Args
 
@@ -401,7 +407,7 @@ ppSwitch :: [Dashed] -> PP (Maybe ())
 ppSwitch ds = state $ Args.consumeSwitch ds
 
 ppErrors :: NonEmpty ParseError -> PP a
-ppErrors = lift . lift . lift . ValidationT . pure . Failure
+ppErrors = lift . lift . ValidationT . pure . Failure
 
 ppError :: ParseError -> PP a
 ppError = ppErrors . NE.singleton

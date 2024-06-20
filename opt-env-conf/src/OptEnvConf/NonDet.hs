@@ -133,6 +133,10 @@ instance (Monad f) => Alternative (ListT f) where
 instance (Monad f) => Monad (ListT f) where
   (>>=) m f = joinListT $ fmap f m
 
+instance (Monad f) => MonadPlus (ListT f) where
+  mzero = empty
+  mplus = (<|>)
+
 joinListT :: (Monad m) => ListT m (ListT m a) -> ListT m a
 joinListT (ListT xss) = ListT . joinMMMList $ fmap (fmap unListT) xss
 
