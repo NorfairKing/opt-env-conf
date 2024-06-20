@@ -167,7 +167,7 @@ runParserOn ::
 runParserOn p args envVars mConfig = do
   let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
   errOrRes <- runPP (go p) args ppEnv
-  pure (fst <$> errOrRes)
+  pure (validationToEither (fst <$> errOrRes))
   where
     tryPP :: PP a -> PP (Maybe a)
     tryPP pp = do
@@ -176,11 +176,11 @@ runParserOn p args envVars mConfig = do
       errOrRes <- liftIO $ runPP pp s e
       case errOrRes of
         -- Note that args are not consumed if the alternative failed.
-        Left errs ->
+        Failure errs ->
           if all errorIsForgivable errs
             then pure Nothing
             else ppErrors errs
-        Right (a, s') -> do
+        Success (a, s') -> do
           put s'
           pure $ Just a
     go ::
@@ -373,9 +373,9 @@ runPP ::
   PP a ->
   Args ->
   PPEnv ->
-  IO (Either (NonEmpty ParseError) (a, PPState))
+  IO (Validation ParseError (a, PPState))
 runPP p args envVars =
-  validationToEither <$> runValidationT (runStateT (runReaderT p envVars) args)
+  runValidationT (runStateT (runReaderT p envVars) args)
 
 ppArg :: PP (Maybe String)
 ppArg = state Args.consumeArgument
