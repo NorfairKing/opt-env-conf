@@ -372,8 +372,30 @@ spec = do
         (setting [reader str, option, long "foo"])
         "-dfu"
 
-      pending "same name as command, but as option value"
-      pending "same name as command, but as argument"
+      -- Here an argument has a value that looks like a command name but
+      -- should still be treated as an argument.
+      argParseSpec
+        ["command", "arg"]
+        ( (,)
+            <$> setting [reader str, argument]
+            <*> commands
+              [ command "command" "command" (pure '1'),
+                command "arg" "command" (pure '2')
+              ]
+        )
+        ("command", '2')
+
+      -- Same as above but with an option instead of an argument
+      argParseSpec
+        ["--option", "command", "arg"]
+        ( (,)
+            <$> setting [reader str, option, long "option"]
+            <*> commands
+              [ command "command" "command" (pure '1'),
+                command "arg" "command" (pure '2')
+              ]
+        )
+        ("command", '2')
 
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
