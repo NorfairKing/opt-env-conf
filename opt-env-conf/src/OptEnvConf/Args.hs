@@ -76,7 +76,8 @@ consumeArgument' am = do
   where
     go :: (Monad m) => [Arg] -> NonDetT m (String, [Arg])
     go = \case
-      [] -> liftNonDetT []
+      -- Nothing to consume
+      [] -> empty
       -- Every arg could be the argument we consume.
       (o : rest) ->
         pure (renderArg o, rest) <|> do
@@ -90,7 +91,8 @@ consumeArgument'' = do
   where
     go :: (Monad m) => [Arg] -> [Arg] -> NonDetT (StateT Args m) String
     go argsBefore = \case
-      [] -> liftNonDetT []
+      -- Nothing to consume
+      [] -> empty
       -- Every arg could be the argument we consume.
       (o : rest) ->
         -- Consume the arg

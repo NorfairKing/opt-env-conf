@@ -176,16 +176,18 @@ runParserOn p args envVars mConfig = do
     tryPP pp = do
       s <- get
       e <- ask
-      errOrRes <- liftIO $ runPP pp s e
-      case errOrRes of
-        -- Note that args are not consumed if the alternative failed.
-        Failure errs ->
-          if all errorIsForgivable errs
-            then pure Nothing
-            else ppErrors errs
-        Success (a, s') -> do
-          put s'
-          pure $ Just a
+      results <- liftIO $ runPP pp s e
+      undefined (results :: _)
+    -- liftNonDetTListM $ map (\errOrRes -> _) results
+    -- case errOrRes of
+    --   -- Note that args are not consumed if the alternative failed.
+    --   Failure errs ->
+    --     if all errorIsForgivable errs
+    --       then pure Nothing
+    --       else ppErrors errs
+    --   Success (a, s') -> do
+    --     put s'
+    --     pure $ Just a
     go ::
       Parser a ->
       PP a

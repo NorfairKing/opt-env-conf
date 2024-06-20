@@ -14,8 +14,8 @@ spec = do
     it "can guard against previous values" $
       runNonDet
         ( do
-            a <- liftListT [1, 2 :: Int]
-            b <- liftListT [3, 4]
+            a <- liftNonDetTList [1, 2 :: Int]
+            b <- liftNonDetTList [3, 4]
             guard $ even $ a + b
             pure (a, b)
         )
@@ -23,8 +23,8 @@ spec = do
     it "can recover from failures with <|>" $
       runNonDet
         ( do
-            a <- liftListT [1, 2 :: Int]
-            f <- liftListT [even] <|> liftListT [odd]
+            a <- liftNonDetTList [1, 2 :: Int]
+            f <- liftNonDetTList [even] <|> liftNonDetTList [odd]
             guard $ f a
             pure a
         )
@@ -34,10 +34,10 @@ spec = do
     it "can recover from underlying errors" $ do
       let f :: NonDetT (Either String) Int
           f = do
-            i <- liftListT [1, 2]
+            i <- liftNonDetTList [1, 2]
             if odd i
               then do
-                cutListT
+                () <- empty
                 lift (Left "err")
               else pure i
 

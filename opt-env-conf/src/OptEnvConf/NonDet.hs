@@ -3,7 +3,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module OptEnvConf.NonDet where
+module OptEnvConf.NonDet
+  ( runNonDet,
+    runNonDetT,
+    liftNonDetTList,
+    liftNonDetTListM,
+    NonDetT,
+  )
+where
 
 import Control.Applicative
 import Control.Monad
@@ -20,8 +27,11 @@ type NonDetT = ListT
 runNonDetT :: (Monad m) => NonDetT m a -> m [a]
 runNonDetT = runListTComplete
 
-liftNonDetT :: (Applicative m) => [a] -> NonDetT m a
-liftNonDetT = liftListT
+liftNonDetTList :: (Applicative m) => [a] -> NonDetT m a
+liftNonDetTList = liftListT
+
+liftNonDetTListM :: (Applicative m) => [m a] -> NonDetT m a
+liftNonDetTListM = liftListTM
 
 -- The monadic list type
 data MList m a
@@ -81,6 +91,14 @@ runListTComplete = unListT >=> go
 
 liftListT :: (Applicative m) => [a] -> ListT m a
 liftListT = ListT . pure . liftMList
+
+liftListTM :: (Applicative m) => [m a] -> ListT m a
+liftListTM = ListT . go
+  where
+    go :: (Applicative m) => [m a] -> m (MList m a)
+    go = \case
+      [] -> pure MNil
+      (ma : mas) -> MCons <$> ma <*> pure (go mas)
 
 instance (Functor f) => Functor (ListT f) where
   fmap f = ListT . fmap (fmap f) . unListT
