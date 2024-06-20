@@ -151,6 +151,7 @@ library
   exposed-modules:
       OptEnvConf.Args.Gen
       OptEnvConf.EnvMap.Gen
+      OptEnvConf.NonDet.Gen
       OptEnvConf.Test
   other-modules:
       Paths_opt_env_conf_test
@@ -188,6 +189,7 @@ test-suite opt-env-conf-test
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
       OptEnvConf.LintSpec
+      OptEnvConf.NonDetSpec
       OptEnvConf.ReaderSpec
       OptEnvConf.RunSpec
       Paths_opt_env_conf_test
