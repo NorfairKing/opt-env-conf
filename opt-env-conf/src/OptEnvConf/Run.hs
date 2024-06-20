@@ -164,10 +164,10 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn p args envVars mConfig =
-  validationToEither <$> do
-    let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
-    runValidationT $ evalStateT (runReaderT (go p) ppEnv) args
+runParserOn p args envVars mConfig = do
+  let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
+  errOrRes <- runPP (go p) args ppEnv
+  pure (fst <$> errOrRes)
   where
     tryPP :: PP a -> PP (Maybe a)
     tryPP pp = do
