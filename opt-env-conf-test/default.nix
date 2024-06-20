@@ -1,6 +1,6 @@
 { mkDerivation, aeson, base, containers, envparse, genvalidity
 , genvalidity-aeson, genvalidity-containers, genvalidity-sydtest
-, genvalidity-text, lib, opt-env-conf, optparse-applicative
+, genvalidity-text, lib, mtl, opt-env-conf, optparse-applicative
 , pretty-show, QuickCheck, safe-coloured-text
 , safe-coloured-text-terminfo, sydtest, sydtest-discover, text
 , yaml
@@ -18,7 +18,7 @@ mkDerivation {
   executableHaskellDepends = [ base opt-env-conf ];
   testHaskellDepends = [
     aeson base containers envparse genvalidity genvalidity-aeson
-    genvalidity-containers genvalidity-sydtest genvalidity-text
+    genvalidity-containers genvalidity-sydtest genvalidity-text mtl
     opt-env-conf optparse-applicative pretty-show QuickCheck
     safe-coloured-text safe-coloured-text-terminfo sydtest text yaml
   ];

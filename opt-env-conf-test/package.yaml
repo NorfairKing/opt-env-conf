@@ -48,7 +48,9 @@ tests:
     - genvalidity-containers
     - genvalidity-sydtest
     - genvalidity-text
+    - mtl
     - opt-env-conf
+    - opt-env-conf-test
     - optparse-applicative
     - pretty-show
     - safe-coloured-text
@@ -56,4 +58,3 @@ tests:
     - sydtest
     - text
     - yaml
-    - opt-env-conf-test

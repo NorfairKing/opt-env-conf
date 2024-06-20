@@ -151,7 +151,6 @@ library
   exposed-modules:
       OptEnvConf.Args.Gen
       OptEnvConf.EnvMap.Gen
-      OptEnvConf.NonDet.Gen
       OptEnvConf.Test
   other-modules:
       Paths_opt_env_conf_test
@@ -209,6 +208,7 @@ test-suite opt-env-conf-test
     , genvalidity-containers
     , genvalidity-sydtest
     , genvalidity-text
+    , mtl
     , opt-env-conf
     , opt-env-conf-test
     , optparse-applicative

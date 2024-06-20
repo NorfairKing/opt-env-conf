@@ -7,8 +7,6 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Trans
 import Data.Functor.Identity
-import Data.Validity
-import GHC.Generics (Generic)
 
 type NonDet = NonDetT Identity
 
@@ -92,13 +90,20 @@ instance (Monad f) => Applicative (ListT f) where
     a <- fa
     pure (f a)
 
+instance MonadTrans ListT where
+  lift = ListT . fmap (`MCons` pure MNil)
+
 -- Note: This alternative instance only "alternates" on the nondeterminism, not the
 -- underlying effect.
 instance (Monad f) => Alternative (ListT f) where
   empty = ListT $ pure MNil
+  (<|>) (ListT l1) (ListT l2) = ListT $ appendMMMList l1 l2
 
 instance (Monad f) => Monad (ListT f) where
   (>>=) m f = joinListT $ fmap f m
 
-joinListT :: (Functor m, Monad m) => ListT m (ListT m a) -> ListT m a
+joinListT :: (Monad m) => ListT m (ListT m a) -> ListT m a
 joinListT (ListT xss) = ListT . joinMMMList $ fmap (fmap unListT) xss
+
+cutListT :: (Applicative f) => ListT f ()
+cutListT = liftListT []
