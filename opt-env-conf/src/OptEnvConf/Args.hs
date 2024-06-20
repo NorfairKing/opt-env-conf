@@ -63,16 +63,13 @@ consumeArgument am = do
       (ArgBareDoubleDash : o : rest) -> [(renderArg o, ArgBareDoubleDash : rest)]
       -- A bare dash could be an argument
       (ArgBareDash : rest) -> [(renderArg ArgBareDash, rest)]
-      -- Any argument after a dashed argument could be an option value so we should also keep looking.
-      (o@(ArgDashed {}) : o2 : rest) ->
+      -- Any argument after a dashed argument could be an option value so we
+      -- should also keep looking after that.
+      (o1@(ArgDashed {}) : o2 : rest) ->
         -- TODO put this option at the back so it's considered last
-        (renderArg o, o2 : rest)
-          : (renderArg o2, o : rest)
-          : map (second ((o :) . (o2 :))) (go rest)
-      -- A dashed could be an argument, but we should definitely keep looking for others
-      (o@(ArgDashed {}) : rest) ->
-        -- TODO put this option at the back so it's considered last
-        (renderArg o, rest) : map (second (o :)) (go rest)
+        (renderArg o1, o2 : rest)
+          : (renderArg o2, o1 : rest)
+          : map (second ((o1 :) . (o2 :))) (go rest)
       -- A plain argument could definitely be an argument.
       (ArgPlain a : rest) -> [(a, rest)]
 

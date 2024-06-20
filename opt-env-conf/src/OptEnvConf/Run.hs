@@ -181,6 +181,8 @@ runParserOn ::
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig = do
   let ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
+  -- TODO: Try running this lazily. The first success should stop so we don't
+  -- do too much IO.
   validations <- runPP (go p) args ppEnv
   pure $ fmap fst $ fromMaybe (error "TODO figure out when this list can be empty") $ chooseBestResult validations
   where

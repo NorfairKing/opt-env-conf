@@ -6,6 +6,7 @@
 module OptEnvConf.NonDet
   ( runNonDet,
     runNonDetT,
+    runNonDetTLazy,
     liftNonDetTList,
     liftNonDetTListM,
     NonDetT,
@@ -28,6 +29,9 @@ type NonDetT = ListT
 runNonDetT :: (Monad m) => NonDetT m a -> m [a]
 runNonDetT = runListTComplete
 
+runNonDetTLazy :: (Monad m) => NonDetT m a -> m (Maybe (a, NonDetT m a))
+runNonDetTLazy = runListTLazy
+
 liftNonDetTList :: (Applicative m) => [a] -> NonDetT m a
 liftNonDetTList = liftListT
 
@@ -49,11 +53,6 @@ liftMList = \case
   [] -> MNil
   (a : as) -> MCons a $ pure $ liftMList as
 
-joinMList :: (Monad m) => MList m (MList m a) -> m (MList m a)
-joinMList = \case
-  MNil -> pure MNil
-  MCons a m -> appendMList a <$> (m >>= joinMList)
-
 joinMMList :: (Monad m) => MList m (m (MList m a)) -> m (MList m a)
 joinMMList = \case
   MNil -> pure MNil
@@ -65,9 +64,6 @@ joinMMMList = (>>= joinMMList)
 appendMList :: (Functor m) => MList m a -> MList m a -> MList m a
 appendMList MNil ml = ml
 appendMList (MCons a ml1) ml2 = MCons a $ (`appendMList` ml2) <$> ml1
-
-appendMMList :: (Applicative m) => MList m a -> m (MList m a) -> m (MList m a)
-appendMMList ml1 ml2 = appendMList ml1 <$> ml2
 
 appendMMMList :: (Applicative m) => m (MList m a) -> m (MList m a) -> m (MList m a)
 appendMMMList ml1 ml2 = appendMList <$> ml1 <*> ml2
@@ -139,12 +135,3 @@ instance (Monad f) => MonadPlus (ListT f) where
 
 joinListT :: (Monad m) => ListT m (ListT m a) -> ListT m a
 joinListT (ListT xss) = ListT . joinMMMList $ fmap (fmap unListT) xss
-
-cutListT :: (Applicative f) => ListT f ()
-cutListT = liftListT []
-
-runListT' :: ListT m a -> m [m a]
-runListT' = go . unListT
-  where
-    go :: m (MList m a) -> m [m a]
-    go = undefined
