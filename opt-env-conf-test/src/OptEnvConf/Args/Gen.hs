@@ -8,6 +8,6 @@ import OptEnvConf.Args
 
 instance GenValid Dashed
 
-instance GenValid Opt
+instance GenValid Arg
 
 instance GenValid Args

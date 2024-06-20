@@ -6,10 +6,8 @@
 module OptEnvConf.Run
   ( runSettingsParser,
     runParser,
-    runParserComplete,
     runParserOn,
     internalParser,
-    unrecognisedOptions,
   )
 where
 
@@ -25,11 +23,9 @@ import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import Data.Set (Set)
-import qualified Data.Set as S
 import Data.Traversable
 import Data.Version
-import OptEnvConf.Args (Args (..), Dashed (..), Opt (..))
+import OptEnvConf.Args (Args (..), Dashed (..))
 import qualified OptEnvConf.Args as Args
 import OptEnvConf.Completion
 import OptEnvConf.Doc
@@ -66,7 +62,7 @@ runParser version p = do
       let p' = internalParser version p
       let docs = parserDocs p'
       errOrResult <-
-        runParserComplete
+        runParserOn
           p'
           argMap
           envVars
@@ -162,64 +158,6 @@ internalParser version p =
           ),
       ParsedNormally <$> p
     ]
-
--- 'runParserOn' _and_ 'unrecognisedOptions'
-runParserComplete ::
-  Parser a ->
-  Args ->
-  EnvMap ->
-  Maybe JSON.Object ->
-  IO (Either (NonEmpty ParseError) a)
-runParserComplete p args e mConf =
-  case NE.nonEmpty $ unrecognisedOptions p args of
-    Just unrecogniseds -> pure $ Left $ NE.map ParseErrorUnrecognised unrecogniseds
-    Nothing -> runParserOn p args e mConf
-
-unrecognisedOptions :: Parser a -> Args -> [Opt]
-unrecognisedOptions p args =
-  let possibleOpts = collectPossibleOpts p
-      isRecognised =
-        (`S.member` possibleOpts) . \case
-          OptArg _ -> PossibleArg
-          OptSwitch d -> PossibleSwitch d
-          OptOption d _ -> PossibleOption d
-   in filter (not . isRecognised) (argMapOpts args)
-
-data PossibleOpt
-  = PossibleArg
-  | PossibleSwitch !Dashed
-  | PossibleOption !Dashed
-  deriving (Show, Eq, Ord)
-
-collectPossibleOpts :: Parser a -> Set PossibleOpt
-collectPossibleOpts = go
-  where
-    go :: Parser a -> Set PossibleOpt
-    go = \case
-      ParserPure _ -> S.empty
-      ParserAp p1 p2 -> go p1 `S.union` go p2
-      ParserSelect p1 p2 -> go p1 `S.union` go p2
-      ParserEmpty -> S.empty
-      ParserAlt p1 p2 -> go p1 `S.union` go p2
-      ParserMany p -> go p
-      ParserCheck _ p -> go p
-      -- This isn't right. We need to know which command is in action to know which opts are unrecognised
-      -- For that we need context-aware opt parsing
-      ParserCommands ne -> S.unions $ map goCommand ne
-      ParserWithConfig pc pa -> go pc `S.union` go pa
-      ParserSetting _ Setting {..} ->
-        S.fromList $
-          concat
-            [ [PossibleArg | settingTryArgument],
-              case settingSwitchValue of
-                Nothing -> []
-                Just _ -> map PossibleSwitch settingDasheds,
-              if settingTryOption
-                then map PossibleOption settingDasheds
-                else []
-            ]
-    goCommand :: Command a -> Set PossibleOpt
-    goCommand Command {..} = S.insert PossibleArg (go commandParser)
 
 runParserOn ::
   Parser a ->

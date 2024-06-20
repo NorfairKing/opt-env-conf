@@ -134,10 +134,7 @@ extra-source-files:
     test_resources/error/read-int-option.txt
     test_resources/error/required-command.txt
     test_resources/error/some-none.txt
-    test_resources/error/unrecognised-argument.txt
     test_resources/error/unrecognised-command.txt
-    test_resources/error/unrecognised-option-none.txt
-    test_resources/error/unrecognised-option-other.txt
     test_resources/lint/empty-setting.txt
     test_resources/lint/no-commands.txt
     test_resources/lint/no-dashed-for-option.txt
@@ -152,7 +149,8 @@ extra-source-files:
 
 library
   exposed-modules:
-      OptEnvConf.Gen
+      OptEnvConf.Args.Gen
+      OptEnvConf.EnvMap.Gen
       OptEnvConf.Test
   other-modules:
       Paths_opt_env_conf_test
@@ -185,10 +183,8 @@ test-suite opt-env-conf-test
   main-is: Spec.hs
   other-modules:
       OptEnvConf.APISpec
-      OptEnvConf.Args.Gen
       OptEnvConf.ArgsSpec
       OptEnvConf.CompletionSpec
-      OptEnvConf.EnvMap.Gen
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
       OptEnvConf.LintSpec

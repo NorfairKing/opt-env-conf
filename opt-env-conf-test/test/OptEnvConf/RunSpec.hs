@@ -13,7 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
-import OptEnvConf.Args (Args (..), Dashed (..), Opt (..))
+import OptEnvConf.Args (Arg (..), Args (..), Dashed (..))
 import qualified OptEnvConf.Args as Args
 import OptEnvConf.Args.Gen ()
 import OptEnvConf.EnvMap (EnvMap (..))
@@ -21,48 +21,12 @@ import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Error
 import OptEnvConf.Parser
-import Test.QuickCheck hiding (Args)
 import Test.Syd
 import Test.Syd.Validity
 import Text.Colour
 
 spec :: Spec
 spec = do
-  describe "unrecognisedOptions" $ do
-    it "says that any argument is unrecognised when no arguments would be parsed" $
-      forAllValid $ \args -> do
-        let p = pure 'a'
-        unrecognisedOptions p (Args.parse args) `shouldBe` map OptArg args
-
-    it "recognises arguments when they would be parsed" $
-      forAllValid $ \arg -> do
-        let p = setting [reader str, argument] :: Parser String
-        let args = [arg]
-        unrecognisedOptions p (Args.parse args) `shouldBe` []
-
-    it "says that an option is unrecognised when no options would not parsed" $
-      forAllValid $ \d ->
-        forAllValid $ \v -> do
-          let p = pure 'a'
-          let args = [Args.renderDashed d, v]
-          unrecognisedOptions p (Args.parse args) `shouldBe` [OptOption d v]
-
-    it "says that an option is unrecognised when that options would not parsed" $
-      forAllValid $ \l1 -> do
-        forAll (genValid `suchThat` (/= l1)) $ \l2 -> do
-          forAllValid $ \v -> do
-            let p = setting [reader str, option, long (NE.toList l1)] :: Parser String
-            let d = DashedLong l2
-            let args = [Args.renderDashed d, v]
-            unrecognisedOptions p (Args.parse args) `shouldBe` [OptOption d v]
-
-    it "recognises an option that would be parsed" $
-      forAllValid $ \l -> do
-        forAllValid $ \v -> do
-          let p = setting [reader str, option, long $ NE.toList l] :: Parser String
-          let args = [Args.renderDashed (DashedLong l), v]
-          unrecognisedOptions p (Args.parse args) `shouldBe` []
-
   describe "runParser" $ do
     describe "pure" $ do
       it "can parse a pure value from anything" $
@@ -144,7 +108,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = Args.empty {argMapOpts = map OptArg ls}
+              let args = Args.empty {unArgs = map ArgPlain ls}
               let p = many $ setting [reader str, argument]
               let expected = ls
               shouldParse p args e mConf expected
@@ -153,7 +117,7 @@ spec = do
       it "fails to parse zero args" $
         forAllValid $ \e ->
           forAllValid $ \mConf -> do
-            let args = Args.empty {argMapOpts = []}
+            let args = Args.empty {unArgs = []}
             let p = some $ setting [reader str, argument] :: Parser [String]
             shouldFail p args e mConf $ \case
               ParseErrorMissingArgument _ :| [] -> True
@@ -163,7 +127,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = Args.empty {argMapOpts = map OptArg $ NE.toList ls}
+              let args = Args.empty {unArgs = map ArgPlain $ NE.toList ls}
               let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args e mConf expected
@@ -200,7 +164,7 @@ spec = do
               forAllValid $ \prefix ->
                 forAllValid $ \(key, val) -> do
                   let prefixedKey = Args.prefixDashed prefix (DashedLong key)
-                  let a = a' {argMapOpts = OptSwitch prefixedKey : argMapOpts a'}
+                  let a = a' {unArgs = Args.renderDashedArg prefixedKey : unArgs a'}
                   let p =
                         subArgs prefix $
                           setting
@@ -218,7 +182,7 @@ spec = do
               forAllValid $ \prefix ->
                 forAllValid $ \(key, val) -> do
                   let prefixedKey = Args.prefixDashed prefix (DashedLong key)
-                  let a = a' {argMapOpts = OptOption prefixedKey val : argMapOpts a'}
+                  let a = a' {unArgs = Args.renderDashedArg prefixedKey : ArgPlain val : unArgs a'}
                   let p =
                         subArgs prefix $
                           setting
@@ -261,7 +225,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \arg -> do
-              let args = Args.empty {argMapOpts = [OptArg arg]}
+              let args = Args.empty {unArgs = [ArgPlain arg]}
               let p = setting [reader str, argument]
               let expected = arg
               shouldParse p args e mConf expected
@@ -270,7 +234,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
-              let args = Args.empty {argMapOpts = [OptOption (DashedLong l) r]}
+              let args = Args.empty {unArgs = [Args.renderDashedArg (DashedLong l), ArgPlain r]}
               let p = setting [reader str, option, long $ NE.toList l]
               let expected = r
               shouldParse p args e mConf expected
@@ -279,9 +243,9 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
-              let args = Args.empty {argMapOpts = map (OptOption (DashedLong l)) rs}
+              let args = Args.empty {unArgs = concatMap (\v -> [Args.renderDashedArg (DashedLong l), ArgPlain v]) rs}
               let p = many $ setting [reader str, option, long $ NE.toList l]
-              let expected = rs
+              let expected = rs :: [String]
               shouldParse p args e mConf expected
 
       it "can parse a single env var" $
@@ -347,7 +311,7 @@ spec = do
         ((,) <$> setting [reader str, argument] <*> setting [switch True, long "foo"])
         ("bar", True)
 
-      -- Dashed as argument (should we allow this?)
+      -- Dashed as argument
       -- This example shows that we can't just skip dasheds when looking for
       -- arguments.
       argParseSpec

@@ -6,13 +6,11 @@ module OptEnvConf.Error where
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Text as T
-import OptEnvConf.Args (Opt (..), renderDashed)
 import OptEnvConf.Doc
 import Text.Colour
 
 data ParseError
-  = ParseErrorUnrecognised !Opt
-  | ParseErrorEmpty
+  = ParseErrorEmpty
   | ParseErrorEmptySetting
   | ParseErrorCheckFailed !String
   | ParseErrorMissingArgument !(Maybe OptDoc)
@@ -31,7 +29,6 @@ data ParseError
 -- Whether the other side of an 'Alt' should be tried if we find this error.
 errorIsForgivable :: ParseError -> Bool
 errorIsForgivable = \case
-  ParseErrorUnrecognised _ -> False
   ParseErrorEmpty -> True
   ParseErrorEmptySetting -> False
   ParseErrorCheckFailed _ -> False
@@ -52,20 +49,6 @@ renderErrors = unlinesChunks . concatMap renderError . NE.toList
 
 renderError :: ParseError -> [[Chunk]]
 renderError = \case
-  ParseErrorUnrecognised opt ->
-    case opt of
-      OptArg s ->
-        [ ["Unexpected argument: ", chunk $ T.pack $ show s],
-          ["No arguments are expected to be parsed."]
-        ]
-      OptSwitch d ->
-        [ ["Unexpected switch: ", chunk $ T.pack $ renderDashed d],
-          ["This option is not expected to be parsed."]
-        ]
-      OptOption d v ->
-        [ ["Unexpected option: ", chunk $ T.pack $ unwords [renderDashed d, show v]],
-          ["This option is not expected to be parsed."]
-        ]
   ParseErrorEmpty ->
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorEmptySetting ->

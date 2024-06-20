@@ -2,6 +2,7 @@ module OptEnvConf.ErrorSpec (spec) where
 
 import Data.GenValidity.Aeson ()
 import Data.Text (Text)
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import qualified OptEnvConf.Args as Args
 import qualified OptEnvConf.EnvMap as EnvMap
@@ -11,18 +12,6 @@ import Text.Colour
 
 spec :: Spec
 spec = do
-  parseErrorSpec
-    "unrecognised-argument"
-    (pure 'a')
-    ["arg1", "arg2"]
-  parseErrorSpec
-    "unrecognised-option-none"
-    (pure 'a')
-    ["--foo", "bar"]
-  parseErrorSpec
-    "unrecognised-option-other"
-    (setting [reader str, option, long "foo"] :: Parser String)
-    ["--quux", "bar"]
   parseErrorSpec
     "empty"
     (empty :: Parser String)
@@ -70,15 +59,16 @@ spec = do
   pending "RequiredFirst"
   pending "ConfigParse"
 
-parseErrorSpec :: (Show a) => FilePath -> Parser a -> [String] -> Spec
+parseErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseErrorSpec fp p args =
-  it (unwords ["renders the", fp, "error the same as before"]) $
-    let path = "test_resources/error/" <> fp <> ".txt"
-     in goldenChunksFile path $ do
-          errOrResult <- runParserComplete p (Args.parse args) EnvMap.empty Nothing
-          case errOrResult of
-            Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
-            Left errs -> pure $ renderErrors errs
+  withFrozenCallStack $
+    it (unwords ["renders the", fp, "error the same as before"]) $
+      let path = "test_resources/error/" <> fp <> ".txt"
+       in goldenChunksFile path $ do
+            errOrResult <- runParserOn p (Args.parse args) EnvMap.empty Nothing
+            case errOrResult of
+              Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
+              Left errs -> pure $ renderErrors errs
 
 goldenChunksFile :: FilePath -> IO [Chunk] -> GoldenTest Text
 goldenChunksFile fp cs =

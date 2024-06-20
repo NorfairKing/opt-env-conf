@@ -4,16 +4,19 @@
 module OptEnvConf.Args
   ( Args (..),
     empty,
-    Dashed (..),
-    renderDashed,
-    prefixDashed,
     parse,
     consumeArgument,
     consumeOption,
     consumeSwitch,
-    Opt (..),
-    parseSingleArg,
     Arg (..),
+    parseArg,
+    renderArg,
+    unfoldArg,
+    Dashed (..),
+    renderDashed,
+    renderDashedArg,
+    prefixDashed,
+    unfoldDasheds,
   )
 where
 
@@ -24,7 +27,7 @@ import Data.Validity.Containers ()
 import GHC.Generics (Generic)
 
 newtype Args = Args
-  { argMapOpts :: [Opt]
+  { unArgs :: [Arg]
   }
   deriving (Show, Eq, Generic)
 
@@ -33,25 +36,8 @@ instance Validity Args
 empty :: Args
 empty = Args []
 
-data Dashed
-  = DashedShort !Char
-  | DashedLong !(NonEmpty Char)
-  deriving (Show, Eq, Ord, Generic)
-
-instance Validity Dashed
-
-renderDashed :: Dashed -> String
-renderDashed = \case
-  DashedShort c -> ['-', c]
-  DashedLong cs -> '-' : '-' : NE.toList cs
-
-prefixDashed :: String -> Dashed -> Dashed
-prefixDashed p = \case
-  DashedLong l -> DashedLong $ p `NE.prependList` l
-  DashedShort c -> DashedShort c
-
 parse :: [String] -> Args
-parse args = Args $ parseOpts args
+parse args = Args $ map parseArg args
 
 -- This may be accidentally quadratic.
 -- We can probably make it faster by having a stack of only args
@@ -59,17 +45,20 @@ parse args = Args $ parseOpts args
 -- The type is a bit strange, but it makes dealing with the state monad easier
 consumeArgument :: Args -> (Maybe String, Args)
 consumeArgument am =
-  let (mS, opts') = go $ argMapOpts am
-   in (mS, am {argMapOpts = opts'})
+  let (mS, opts') = go $ unArgs am
+   in (mS, am {unArgs = opts'})
   where
-    go =
-      \case
-        [] -> (Nothing, [])
-        (o : rest) -> case o of
-          OptArg v -> (Just v, rest)
-          _ ->
-            let (mS, os) = go rest
-             in (mS, o : os)
+    go = \case
+      [] -> (Nothing, [])
+      (o : rest) -> case o of
+        ArgPlain a -> (Just a, rest)
+        ArgBareDoubleDash -> goPlain rest
+        _ ->
+          let (mS, os) = go rest
+           in (mS, o : os)
+    goPlain = \case
+      [] -> (Nothing, [])
+      (a : rest) -> (Just (renderArg a), rest)
 
 -- This may be accidentally cubic.
 -- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
@@ -77,71 +66,36 @@ consumeArgument am =
 -- The type is a bit strange, but it makes dealing with the state monad easier
 consumeOption :: [Dashed] -> Args -> (Maybe String, Args)
 consumeOption dasheds am =
-  let (mS, opts') = go $ argMapOpts am
-   in (mS, am {argMapOpts = opts'})
+  let (mS, opts') = go $ unArgs am
+   in (mS, am {unArgs = opts'})
   where
     go =
       \case
         [] -> (Nothing, [])
-        (o : rest) -> case o of
-          OptOption k v | k `elem` dasheds -> (Just v, rest)
+        [a] -> (Nothing, [a])
+        (k : v : rest) -> case k of
+          ArgDashed isLong cs
+            | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
+                (pure (renderArg v), rest)
           _ ->
-            let (mS, os) = go rest
-             in (mS, o : os)
+            let (mS, as) = go (v : rest)
+             in (mS, k : as)
 
 consumeSwitch :: [Dashed] -> Args -> (Maybe (), Args)
 consumeSwitch dasheds am =
-  let (mS, opts') = go $ argMapOpts am
-   in (mS, am {argMapOpts = opts'})
+  let (mS, opts') = go $ unArgs am
+   in (mS, am {unArgs = opts'})
   where
     go =
       \case
         [] -> (Nothing, [])
         (o : rest) -> case o of
-          OptSwitch k | k `elem` dasheds -> (Just (), rest)
+          ArgDashed isLong cs
+            | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
+                (Just (), rest)
           _ ->
             let (mS, os) = go rest
              in (mS, o : os)
-
-data Opt
-  = OptArg String
-  | OptSwitch !Dashed
-  | OptOption !Dashed !String
-  deriving (Show, Eq, Generic)
-
-instance Validity Opt
-
-parseOpts :: [String] -> [Opt]
-parseOpts = go
-  where
-    go = \case
-      [] -> []
-      (s : rest) ->
-        case parseSingleArg s of
-          ArgBareDoubleDash -> map OptArg rest -- All further args are arguments, not options
-          ArgBareDash -> OptArg "-" : go rest
-          ArgPlain a -> OptArg a : go rest
-          ArgDashed isLong key ->
-            let ds = parseDasheds isLong key
-                asSwitches = map OptSwitch (NE.toList ds) ++ go rest
-             in case NE.nonEmpty rest of
-                  Nothing -> asSwitches
-                  Just (a :| others) ->
-                    let asOption v =
-                          let ss = NE.init ds
-                              o = NE.last ds
-                           in (map OptSwitch ss ++ [OptOption o v]) ++ go others
-                     in case parseSingleArg a of
-                          ArgBareDoubleDash -> asSwitches
-                          ArgDashed _ _ -> asSwitches
-                          ArgPlain val -> asOption val
-                          ArgBareDash -> asOption "-"
-
-    parseDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
-    parseDasheds b s =
-      if b
-        then DashedLong s :| []
-        else NE.map DashedShort s
 
 data Arg
   = ArgBareDoubleDash
@@ -162,8 +116,8 @@ instance Validity Arg where
           _ -> valid
       ]
 
-parseSingleArg :: String -> Arg
-parseSingleArg = \case
+parseArg :: String -> Arg
+parseArg = \case
   '-' : '-' : rest -> case NE.nonEmpty rest of
     Nothing -> ArgBareDoubleDash
     Just ne -> ArgDashed True ne
@@ -171,3 +125,45 @@ parseSingleArg = \case
     Nothing -> ArgBareDash
     Just ne -> ArgDashed False ne
   s -> ArgPlain s
+
+renderArg :: Arg -> String
+renderArg = \case
+  ArgBareDoubleDash -> "--"
+  ArgBareDash -> "-"
+  ArgDashed l cs -> (if l then "--" else "-") <> NE.toList cs
+  ArgPlain a -> a
+
+unfoldArg :: Arg -> NonEmpty String
+unfoldArg = \case
+  ArgBareDoubleDash -> "--" :| []
+  ArgBareDash -> "-" :| []
+  ArgDashed l cs -> NE.map renderDashed (unfoldDasheds l cs)
+  ArgPlain a -> a :| []
+
+unfoldDasheds :: Bool -> NonEmpty Char -> NonEmpty Dashed
+unfoldDasheds b s =
+  if b
+    then DashedLong s :| []
+    else NE.map DashedShort s
+
+data Dashed
+  = DashedShort !Char
+  | DashedLong !(NonEmpty Char)
+  deriving (Show, Eq, Ord, Generic)
+
+instance Validity Dashed
+
+renderDashed :: Dashed -> String
+renderDashed = \case
+  DashedShort c -> ['-', c]
+  DashedLong cs -> '-' : '-' : NE.toList cs
+
+renderDashedArg :: Dashed -> Arg
+renderDashedArg = \case
+  DashedShort c -> ArgDashed False (c :| [])
+  DashedLong cs -> ArgDashed True cs
+
+prefixDashed :: String -> Dashed -> Dashed
+prefixDashed p = \case
+  DashedLong l -> DashedLong $ p `NE.prependList` l
+  DashedShort c -> DashedShort c
