@@ -6,8 +6,6 @@ module OptEnvConf.Args
     emptyArgs,
     parseArgs,
     consumeArgument,
-    consumeArgument',
-    consumeArgument'',
     consumeOption,
     consumeOption',
     consumeOption'',
@@ -27,6 +25,7 @@ module OptEnvConf.Args
 where
 
 import Control.Applicative
+import Control.Arrow
 import Control.Monad.State
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -48,62 +47,34 @@ emptyArgs = Args []
 parseArgs :: [String] -> Args
 parseArgs args = Args $ map parseArg args
 
--- This may be accidentally quadratic.
--- We can probably make it faster by having a stack of only args
---
--- The type is a bit strange, but it makes dealing with the state monad easier
-consumeArgument :: Args -> (Maybe String, Args)
-consumeArgument am =
-  let (mS, opts') = go $ unArgs am
-   in (mS, am {unArgs = opts'})
-  where
-    go = \case
-      [] -> (Nothing, [])
-      (o : rest) -> case o of
-        ArgPlain a -> (Just a, rest)
-        ArgBareDoubleDash -> goPlain rest
-        _ ->
-          let (mS, os) = go rest
-           in (mS, o : os)
-    goPlain = \case
-      [] -> (Nothing, [])
-      (a : rest) -> (Just (renderArg a), rest)
-
-consumeArgument' :: (Monad m) => Args -> NonDetT m (String, Args)
-consumeArgument' am = do
+consumeArgument :: Args -> [(String, Args)]
+consumeArgument am = do
   (s, opts') <- go $ unArgs am
   pure (s, am {unArgs = opts'})
   where
-    go :: (Monad m) => [Arg] -> NonDetT m (String, [Arg])
+    go :: [Arg] -> [(String, [Arg])]
     go = \case
       -- Nothing to consume
       [] -> empty
+      -- If the last arg is a "--", it could be an argument, I guess
       -- Every arg could be the argument we consume.
-      (o : rest) ->
-        pure (renderArg o, rest) <|> do
-          (r, others) <- go rest
-          pure (r, o : others)
-
-consumeArgument'' :: (Monad m) => NonDetT (StateT Args m) String
-consumeArgument'' = do
-  as <- gets unArgs
-  go [] as
-  where
-    go :: (Monad m) => [Arg] -> [Arg] -> NonDetT (StateT Args m) String
-    go argsBefore = \case
-      -- Nothing to consume
-      [] -> empty
-      -- Every arg could be the argument we consume.
-      (o : rest) ->
-        -- Consume the arg
-        ( do
-            -- Delete the o from the arguments because it's been consumed
-            put (Args $ reverse argsBefore ++ rest)
-            pure (renderArg o)
-        )
-          -- Or don't consume the arg
-          -- ... that's the question
-          <|> go (o : argsBefore) rest
+      [o] -> [(renderArg o, [])]
+      -- Anything after a "--" should be considered an argument
+      (ArgBareDoubleDash : o : rest) -> [(renderArg o, ArgBareDoubleDash : rest)]
+      -- A bare dash could be an argument
+      (ArgBareDash : rest) -> [(renderArg ArgBareDash, rest)]
+      -- Any argument after a dashed argument could be an option value so we should also keep looking.
+      (o@(ArgDashed {}) : o2 : rest) ->
+        -- TODO put this option at the back so it's considered last
+        (renderArg o, o2 : rest)
+          : (renderArg o2, o : rest)
+          : map (second ((o :) . (o2 :))) (go rest)
+      -- A dashed could be an argument, but we should definitely keep looking for others
+      (o@(ArgDashed {}) : rest) ->
+        -- TODO put this option at the back so it's considered last
+        (renderArg o, rest) : map (second (o :)) (go rest)
+      -- A plain argument could definitely be an argument.
+      (ArgPlain a : rest) -> [(a, rest)]
 
 -- This may be accidentally cubic.
 -- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.

@@ -376,7 +376,7 @@ tryPP pp = do
   s <- get
   e <- ask
   results <- liftIO $ runPP pp s e
-  errOrRes <- ppNonDet $ liftNonDetTList results
+  errOrRes <- ppNonDetList results
   case errOrRes of
     -- Note that args are not consumed if the alternative failed.
     Failure errs ->
@@ -390,6 +390,9 @@ tryPP pp = do
 ppNonDet :: NonDetT IO a -> PP a
 ppNonDet = lift . lift . lift
 
+ppNonDetList :: [a] -> PP a
+ppNonDetList = ppNonDet . liftNonDetTList
+
 type PPState = Args
 
 data PPEnv = PPEnv
@@ -398,7 +401,14 @@ data PPEnv = PPEnv
   }
 
 ppArg :: PP (Maybe String)
-ppArg = state Args.consumeArgument
+ppArg = do
+  args <- get
+  case Args.consumeArgument args of
+    [] -> pure Nothing
+    as -> do
+      (a, s) <- ppNonDetList as
+      put s
+      pure (Just a)
 
 ppOpt :: [Dashed] -> PP (Maybe String)
 ppOpt ds = state $ Args.consumeOption ds
