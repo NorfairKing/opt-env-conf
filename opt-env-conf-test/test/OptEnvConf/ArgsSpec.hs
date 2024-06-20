@@ -16,18 +16,18 @@ spec = do
       forAllValid $ \s ->
         renderArg (parseArg s) `shouldBe` s
 
-  describe "parse" $ do
-    it "produces valid Argss" $
-      producesValid parse
+  describe "parseArgs" $ do
+    it "produces valid Args" $
+      producesValid parseArgs
 
     let annoyingStrings :: Gen [String]
         annoyingStrings = genListOf $ genListOf $ oneof [genValid, pure '-']
     it "produces valid Argss for annoying strings" $
       forAll annoyingStrings $
-        shouldBeValid . parse
+        shouldBeValid . parseArgs
 
     it "parses empty args as an empty arg map" $
-      parse [] `shouldBe` empty
+      parseArgs [] `shouldBe` emptyArgs
 
   describe "renderDashed" $ do
     it "roundtrips with parseArg for long dashed" $

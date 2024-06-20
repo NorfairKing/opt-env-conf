@@ -1,11 +1,13 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module OptEnvConf.NonDet where
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Trans
+import Control.Monad.State
 import Data.Functor.Identity
 
 type NonDet = NonDetT Identity
@@ -93,6 +95,10 @@ instance (Monad f) => Applicative (ListT f) where
 instance MonadTrans ListT where
   lift = ListT . fmap (`MCons` pure MNil)
 
+instance (MonadState s m) => MonadState s (ListT m) where
+  get = lift get
+  put = lift . put
+
 -- Note: This alternative instance only "alternates" on the nondeterminism, not the
 -- underlying effect.
 instance (Monad f) => Alternative (ListT f) where
@@ -107,3 +113,9 @@ joinListT (ListT xss) = ListT . joinMMMList $ fmap (fmap unListT) xss
 
 cutListT :: (Applicative f) => ListT f ()
 cutListT = liftListT []
+
+runListT' :: ListT m a -> m [m a]
+runListT' = go . unListT
+  where
+    go :: m (MList m a) -> m [m a]
+    go = undefined

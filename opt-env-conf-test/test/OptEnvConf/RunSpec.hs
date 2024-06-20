@@ -13,8 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
-import OptEnvConf.Args (Arg (..), Args (..), Dashed (..))
-import qualified OptEnvConf.Args as Args
+import OptEnvConf.Args as Args
 import OptEnvConf.Args.Gen ()
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
@@ -108,7 +107,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = Args.empty {unArgs = map ArgPlain ls}
+              let args = emptyArgs {unArgs = map ArgPlain ls}
               let p = many $ setting [reader str, argument]
               let expected = ls
               shouldParse p args e mConf expected
@@ -117,7 +116,7 @@ spec = do
       it "fails to parse zero args" $
         forAllValid $ \e ->
           forAllValid $ \mConf -> do
-            let args = Args.empty {unArgs = []}
+            let args = emptyArgs {unArgs = []}
             let p = some $ setting [reader str, argument] :: Parser [String]
             shouldFail p args e mConf $ \case
               ParseErrorMissingArgument _ :| [] -> True
@@ -127,7 +126,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = Args.empty {unArgs = map ArgPlain $ NE.toList ls}
+              let args = emptyArgs {unArgs = map ArgPlain $ NE.toList ls}
               let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args e mConf expected
@@ -225,7 +224,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \arg -> do
-              let args = Args.empty {unArgs = [ArgPlain arg]}
+              let args = emptyArgs {unArgs = [ArgPlain arg]}
               let p = setting [reader str, argument]
               let expected = arg
               shouldParse p args e mConf expected
@@ -234,7 +233,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
-              let args = Args.empty {unArgs = [Args.renderDashedArg (DashedLong l), ArgPlain r]}
+              let args = emptyArgs {unArgs = [Args.renderDashedArg (DashedLong l), ArgPlain r]}
               let p = setting [reader str, option, long $ NE.toList l]
               let expected = r
               shouldParse p args e mConf expected
@@ -243,7 +242,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
-              let args = Args.empty {unArgs = concatMap (\v -> [Args.renderDashedArg (DashedLong l), ArgPlain v]) rs}
+              let args = emptyArgs {unArgs = concatMap (\v -> [Args.renderDashedArg (DashedLong l), ArgPlain v]) rs}
               let p = many $ setting [reader str, option, long $ NE.toList l]
               let expected = rs :: [String]
               shouldParse p args e mConf expected
@@ -409,7 +408,7 @@ argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParse
 argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a -> Spec
 argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses ", show args, "as", show expected]) $ do
-    let argMap = Args.parse args
+    let argMap = parseArgs args
     errOrRes <- runParserOn p argMap EnvMap.empty Nothing
     case errOrRes of
       Left err -> expectationFailure $ show err
@@ -422,7 +421,7 @@ envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser
 envParseSpec envVars p expected = withFrozenCallStack $ do
   it (unwords ["parses ", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
-    errOrRes <- runParserOn p Args.empty envMap Nothing
+    errOrRes <- runParserOn p emptyArgs envMap Nothing
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected

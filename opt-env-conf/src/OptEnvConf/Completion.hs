@@ -13,8 +13,7 @@ import Control.Monad.State
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import OptEnvConf.Args (Args)
-import qualified OptEnvConf.Args as Args
+import OptEnvConf.Args as Args
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
@@ -57,7 +56,7 @@ runBashCompletionQuery parser index ws = do
 selectArgs :: Int -> [String] -> (Args, Maybe String)
 selectArgs ix args =
   let selectedArgs = take ix args
-   in (Args.parse selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
+   in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [String]
 pureCompletionQuery parser ix args =

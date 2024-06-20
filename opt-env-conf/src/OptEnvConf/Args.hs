@@ -3,11 +3,17 @@
 
 module OptEnvConf.Args
   ( Args (..),
-    empty,
-    parse,
+    emptyArgs,
+    parseArgs,
     consumeArgument,
+    consumeArgument',
+    consumeArgument'',
     consumeOption,
+    consumeOption',
+    consumeOption'',
     consumeSwitch,
+    consumeSwitch',
+    consumeSwitch'',
     Arg (..),
     parseArg,
     renderArg,
@@ -20,11 +26,14 @@ module OptEnvConf.Args
   )
 where
 
+import Control.Applicative
+import Control.Monad.State
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
+import OptEnvConf.NonDet
 
 newtype Args = Args
   { unArgs :: [Arg]
@@ -33,11 +42,11 @@ newtype Args = Args
 
 instance Validity Args
 
-empty :: Args
-empty = Args []
+emptyArgs :: Args
+emptyArgs = Args []
 
-parse :: [String] -> Args
-parse args = Args $ map parseArg args
+parseArgs :: [String] -> Args
+parseArgs args = Args $ map parseArg args
 
 -- This may be accidentally quadratic.
 -- We can probably make it faster by having a stack of only args
@@ -60,6 +69,40 @@ consumeArgument am =
       [] -> (Nothing, [])
       (a : rest) -> (Just (renderArg a), rest)
 
+consumeArgument' :: (Monad m) => Args -> NonDetT m (String, Args)
+consumeArgument' am = do
+  (s, opts') <- go $ unArgs am
+  pure (s, am {unArgs = opts'})
+  where
+    go :: (Monad m) => [Arg] -> NonDetT m (String, [Arg])
+    go = \case
+      [] -> liftNonDetT []
+      -- Every arg could be the argument we consume.
+      (o : rest) ->
+        pure (renderArg o, rest) <|> do
+          (r, others) <- go rest
+          pure (r, o : others)
+
+consumeArgument'' :: (Monad m) => NonDetT (StateT Args m) String
+consumeArgument'' = do
+  as <- gets unArgs
+  go [] as
+  where
+    go :: (Monad m) => [Arg] -> [Arg] -> NonDetT (StateT Args m) String
+    go argsBefore = \case
+      [] -> liftNonDetT []
+      -- Every arg could be the argument we consume.
+      (o : rest) ->
+        -- Consume the arg
+        ( do
+            -- Delete the o from the arguments because it's been consumed
+            put (Args $ reverse argsBefore ++ rest)
+            pure (renderArg o)
+        )
+          -- Or don't consume the arg
+          -- ... that's the question
+          <|> go (o : argsBefore) rest
+
 -- This may be accidentally cubic.
 -- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
 --
@@ -81,6 +124,12 @@ consumeOption dasheds am =
             let (mS, as) = go (v : rest)
              in (mS, k : as)
 
+consumeOption' :: [Dashed] -> Args -> NonDetT m (String, Args)
+consumeOption' = undefined
+
+consumeOption'' :: [Dashed] -> NonDetT (StateT Args m) String
+consumeOption'' = undefined
+
 consumeSwitch :: [Dashed] -> Args -> (Maybe (), Args)
 consumeSwitch dasheds am =
   let (mS, opts') = go $ unArgs am
@@ -96,6 +145,12 @@ consumeSwitch dasheds am =
           _ ->
             let (mS, os) = go rest
              in (mS, o : os)
+
+consumeSwitch' :: [Dashed] -> Args -> NonDetT m ((), Args)
+consumeSwitch' = undefined
+
+consumeSwitch'' :: [Dashed] -> NonDetT (StateT Args m) ()
+consumeSwitch'' = undefined
 
 data Arg
   = ArgBareDoubleDash

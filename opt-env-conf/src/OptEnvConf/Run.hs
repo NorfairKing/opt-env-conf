@@ -25,8 +25,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Traversable
 import Data.Version
-import OptEnvConf.Args (Args (..), Dashed (..))
-import qualified OptEnvConf.Args as Args
+import OptEnvConf.Args as Args
 import OptEnvConf.Completion
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
@@ -50,7 +49,7 @@ runSettingsParser version = runParser version settingsParser
 runParser :: Version -> Parser a -> IO a
 runParser version p = do
   args <- getArgs
-  let argMap = Args.parse args
+  let argMap = parseArgs args
   envVars <- EnvMap.parse <$> getEnvironment
 
   case lintParser p of

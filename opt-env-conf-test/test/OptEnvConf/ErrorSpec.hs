@@ -4,7 +4,7 @@ import Data.GenValidity.Aeson ()
 import Data.Text (Text)
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
-import qualified OptEnvConf.Args as Args
+import OptEnvConf.Args as Args
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import Test.Syd
@@ -65,7 +65,7 @@ parseErrorSpec fp p args =
     it (unwords ["renders the", fp, "error the same as before"]) $
       let path = "test_resources/error/" <> fp <> ".txt"
        in goldenChunksFile path $ do
-            errOrResult <- runParserOn p (Args.parse args) EnvMap.empty Nothing
+            errOrResult <- runParserOn p (parseArgs args) EnvMap.empty Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
               Left errs -> pure $ renderErrors errs
