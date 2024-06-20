@@ -326,15 +326,54 @@ spec = do
         (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
 
+      -- Switch before argument
       argParseSpec
         ["--foo", "bar"]
         ((,) <$> setting [switch True, long "foo"] <*> setting [reader str, argument])
         (True, "bar")
 
+      -- Note that this could also be parsed as (False, "--foo") with a
+      -- leftover argument but somehow that's not what we want.
+      -- (Maybe we could "just" disallow extra arguments while parsing?
+      -- No because then "--help" doesn't work.)
+      argParseSpec
+        ["--foo", "bar"]
+        ((,) <$> setting [switch True, long "foo", value False] <*> setting [reader str, argument])
+        (True, "bar")
+
+      -- Switch before argument, but defined after
       argParseSpec
         ["--foo", "bar"]
         ((,) <$> setting [reader str, argument] <*> setting [switch True, long "foo"])
         ("bar", True)
+
+      -- Dashed as argument (should we allow this?)
+      -- This example shows that we can't just skip dasheds when looking for
+      -- arguments.
+      argParseSpec
+        ["--foo", "bar"]
+        ((,) <$> setting [reader str, argument] <*> setting [reader str, argument])
+        ("--foo", "bar")
+
+      -- Dashed as value for an option
+      -- This example shows that we can't "just" treat any argument with dashed
+      -- as an option key or switch.
+      -- They could be a value.
+      argParseSpec
+        ["--foo", "--bar"]
+        (setting [reader str, option, long "foo"])
+        "--bar"
+
+      -- Short dashed as a value for an option
+      -- This example shows that we can't "just" unfold combined short options.
+      -- They could be a value.
+      argParseSpec
+        ["--foo", "-dfu"]
+        (setting [reader str, option, long "foo"])
+        "-dfu"
+
+      pending "same name as command, but as option value"
+      pending "same name as command, but as argument"
 
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
