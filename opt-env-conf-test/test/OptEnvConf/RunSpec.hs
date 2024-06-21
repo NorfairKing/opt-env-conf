@@ -360,12 +360,46 @@ spec = do
         )
         ("command", '2')
 
+      -- Unfolding switches
       argParseSpecs
-        (length <$> many (setting [switch (), short 'v']))
+        ( length
+            <$> many
+              ( setting
+                  [ help "verbosity",
+                    switch (),
+                    short 'v'
+                  ]
+              )
+        )
         [ (["-v"], 1),
           (["-v", "-v"], 2),
           (["-vv"], 3),
           (["-vv", "-v"], 3)
+        ]
+
+      -- Unfolding short options as well
+      argParseSpecs
+        ( (,)
+            <$> ( length
+                    <$> many
+                      ( setting
+                          [ help "verbosity",
+                            switch (),
+                            short 'v'
+                          ]
+                      )
+                )
+            <*> setting
+              [ reader str,
+                option,
+                short 'f',
+                example ("file" :: String)
+              ]
+        )
+        [ (["-v", "-f", "foo"], (1, "foo")),
+          (["-vf", "foo", "-v"], (2, "foo")),
+          (["-vvf", "foo"], (3, "foo")),
+          (["-vvf", "foo", "-v"], (3, "foo"))
         ]
 
       argParseSpecs
