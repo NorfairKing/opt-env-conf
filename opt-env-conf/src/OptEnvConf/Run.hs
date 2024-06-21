@@ -45,9 +45,23 @@ import System.IO
 import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
+-- | Run 'runParser' on your @Settings@' type's 'settingsParser'.
 runSettingsParser :: (HasParser a) => Version -> IO a
 runSettingsParser version = runParser version settingsParser
 
+-- | Run a parser
+--
+-- This function with exit on:
+--
+--     * Parse failure
+--     * @-h|--help@: Show help text
+--     * @--version@: Show version information
+--     * @--render-man-page@: Render a man page
+--     * @--bash-completion-script@: Render a bash completion script
+--     * @--zsh-completion-script@: Render a zsh completion script
+--     * @--fish-completion-script@: Render a fish completion script
+--
+-- This gets the arguments and environment variables from the current process.
 runParser :: Version -> Parser a -> IO a
 runParser version p = do
   args <- getArgs
@@ -119,7 +133,6 @@ internalParser version p =
         ],
       setting
         [ switch ShowVersion,
-          short 'v',
           long "version",
           help $ "Output version information: " <> showVersion version
         ],
@@ -173,6 +186,8 @@ chooseBestResult vs =
           Just err -> Just (Left err)
           Nothing -> Nothing
 
+-- | Run a parser on given arguments and environment instead of getting them
+-- from the current process.
 runParserOn ::
   Parser a ->
   Args ->

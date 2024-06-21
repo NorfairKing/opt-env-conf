@@ -7,13 +7,13 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33mgreet[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m [33mSUBJECT[m [37m-p[m[36m|[m[37m--polite[m[36m)[m
+[33mgreet[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m [33mSUBJECT[m [37m-p[m[36m|[m[37m--polite[m[36m)[m
 .Sh SETTINGS
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
 
   [34mOutput version information: 0.0.0[m
-  switch: [37m-v[m[36m|[m[37m--version[m
+  switch: [37m--version[m
 
   [34mGreeting to use[m
   option: [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m
@@ -31,7 +31,7 @@
 
 .Sh OPTIONS
   [37m-h[m[36m|[m[37m--help[m     [34mShow this help text[m                               
-  [37m-v[m[36m|[m[37m--version[m  [34mOutput version information: 0.0.0[m                 
+  [37m--version[m     [34mOutput version information: 0.0.0[m                 
   [37m-g[m[36m|[m[37m--greeting[m [34mGreeting to use[m                   default: [33m"Hello"[m
   [33mSUBJECT[m       [34mWho to greet[m                      default: [33m"world"[m
   [37m-p[m[36m|[m[37m--polite[m   [34mWhether to be polite[m              default: [33mFalse[m  

@@ -89,6 +89,26 @@ showCommandABit Command {..} =
     . showString " "
     . showParserPrec 11 commandParser
 
+-- | A 'Parser' structure
+--
+-- A @Parser a@ value represents each of these all at once:
+--
+--     * A way to run it to parse an @a@
+--     * A way to document it in various ways
+--     * A way to run it to perform shell completion
+--
+-- Much of the way you build parsers happens via its type
+-- class instances.
+-- In particular:
+--
+--     * '<$>' from 'Functor' to map over 'Parser's
+--     * '<*>' from 'Applicative' to "and" 'Parser's
+--     * '<|>' from 'Alternative' to "or" 'Parser's
+--     * 'optional' from 'Alternative' to optionally run a parser
+--     * 'many' and 'some' from 'Alternative' to run the same parser multiple times.
+--
+-- You can run a parser with 'runParser', or give your type an instance of
+-- 'HasParser' and run the parser with 'runSettingsParser'.
 data Parser a where
   -- Functor
   ParserPure :: !a -> Parser a
@@ -212,9 +232,87 @@ showParserPrec = go
             . showString " "
             . showSettingABit p
 
+-- | A class of types that have a canonical settings parser.
 class HasParser a where
   settingsParser :: Parser a
 
+-- | 'setting's are the building blocks of 'Parser's.
+--
+-- 'setting' lets you put together different builders to define what to parse.
+--
+-- Here are some common examples:
+--
+--     * Argument
+--
+--         @
+--         setting
+--            [ help "Document your argument"
+--            , reader str -- The argument is a string
+--            , argument
+--            ] :: Parser String
+--         @
+--
+--     * Switch
+--
+--         @
+--         setting
+--            [ help "Document your switch"
+--            , switch True -- The value of the switch when activated
+--            , long 'foo' -- "--foo"
+--            , short 'f' -- "-f"
+--            , value False -- The default value of the switch
+--            ] :: Parser Bool
+--         @
+--
+--     * Option
+--
+--         @
+--         setting
+--            [ help "Document your option"
+--            , reader str -- The argument is a string
+--            , long 'foo' -- "--foo"
+--            , short 'f' -- "-f"
+--            , option
+--            ] :: Parser String
+--         @
+--
+--     * Environment Variable
+--
+--         @
+--         setting
+--            [ help "Document your environment variable"
+--            , reader str -- The argument is a string
+--            , env "FOO_BAR"
+--            ] :: Parser String
+--         @
+--
+--     * Configuration Value
+--
+--         @
+--         setting
+--            [ help "Document your configuration value"
+--            , conf "foo-bar"
+--            ] :: Parser String
+--         @
+--
+--     * Some combination
+--
+--         @
+--         setting
+--            [ help "Document your configuration value"
+--            , conf "foo-bar"
+--            ] :: Parser String
+--         @
+--
+--         Note that parsing is always tried in this order when using a combined setting:
+--
+--         1. Argument
+--         2. Switch
+--         3. Option
+--         4. Environment variable
+--         5. Configuration value
+--
+--         (Hence the name of the package.)
 setting :: (HasCallStack) => [Builder a] -> Parser a
 setting = ParserSetting mLoc . buildSetting
   where
@@ -223,9 +321,11 @@ setting = ParserSetting mLoc . buildSetting
 buildSetting :: [Builder a] -> Setting a
 buildSetting = completeBuilder . mconcat
 
+-- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty p = (:|) <$> p <*> many p
 
+-- | Try a list of parsers in order
 choice :: [Parser a] -> Parser a
 choice = \case
   [] -> ParserEmpty
@@ -246,18 +346,23 @@ checkMap func = checkMapIO (pure . func)
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIO = ParserCheck
 
+-- | Declare multiple commands
 commands :: [Command a] -> Parser a
 commands = ParserCommands
 
+-- | Declare a single command with a name, documentation and parser
 command :: String -> String -> Parser a -> Command a
 command = Command
 
+-- | Load a configuration value and use it for the given parser
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
 
+-- | Load a YAML config file and use it for the given parser
 withYamlConfig :: Parser (Maybe FilePath) -> Parser a -> Parser a
 withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >=> readYamlConfigFile)) pathParser
 
+-- | Load @config.yaml@ from the given XDG configuration subdirectory
 xdgYamlConfigFile :: FilePath -> Parser FilePath
 xdgYamlConfigFile subdir =
   (\xdgDir -> xdgDir </> subdir </> "config.yaml")
@@ -268,6 +373,8 @@ xdgYamlConfigFile subdir =
         help "Path to the XDG configuration directory"
       ]
 
+-- | Load a config file that is reconfigurable with an option and environment
+-- variable but @config.yaml@ in the local working directory by default.
 withLocalYamlConfig :: Parser a -> Parser a
 withLocalYamlConfig =
   withYamlConfig $
@@ -282,6 +389,11 @@ withLocalYamlConfig =
           help "Path to the configuration file"
         ]
 
+-- | Define a setting for a 'Bool' with a given default value.
+--
+-- If you pass in `long` values, it will have `--enable-foobar` and `--disable-foobar` switches.
+-- If you pass in `env` values, it will read an environment variable too.
+-- If you pass in `conf` values, it will read a configuration value too.
 enableDisableSwitch :: (HasCallStack) => Bool -> [Builder Bool] -> Parser Bool
 enableDisableSwitch defaultBool builders =
   choice $
@@ -386,6 +498,8 @@ enableDisableSwitch defaultBool builders =
       DashedShort _ -> Nothing
       d -> Just $ prefixDashed prefix d
 
+-- | Read a text file but strip whitespace so it can be edited with an editor
+-- that messes with line endings.
 readTextSecretFile :: FilePath -> IO Text
 readTextSecretFile = fmap T.strip . T.readFile
 

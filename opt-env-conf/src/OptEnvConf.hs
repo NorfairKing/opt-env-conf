@@ -3,10 +3,46 @@
 {-# OPTIONS_GHC -Wno-duplicate-exports #-}
 
 module OptEnvConf
-  ( argument,
+  ( -- * Running parsers
+    runParser,
+    Parser,
+    HasParser (..),
+    runSettingsParser,
+
+    -- * Building parsers
+
+    -- ** Settings
+    setting,
+
+    -- *** Building settings
+    help,
+    reader,
+    argument,
     option,
     switch,
-    setting,
+    long,
+    short,
+    env,
+    conf,
+    name,
+    value,
+    hidden,
+    metavar,
+
+    -- ** Commands
+    commands,
+    command,
+
+    -- ** Composing settings with the usual type-classes
+    optional,
+    (<$>),
+    (<*>),
+    (<|>),
+    many,
+    some,
+    select,
+
+    -- ** Prefixing parsers
     subArgs,
     subArgs_,
     subEnv,
@@ -15,28 +51,29 @@ module OptEnvConf
     subConfig_,
     subAll,
     subSettings,
+
+    -- ** Helper functions
     someNonEmpty,
-    choice,
     checkMap,
     mapIO,
-    commands,
-    command,
+    choice,
+
+    -- ** Loading configuration files
     withConfig,
     withYamlConfig,
     xdgYamlConfigFile,
     withLocalYamlConfig,
+
+    -- ** Common use
     enableDisableSwitch,
     readTextSecretFile,
-    runSettingsParser,
-    runParser,
+
+    -- * Re-exports, just in case
     module OptEnvConf.Doc,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,
     module OptEnvConf.Casing,
     module OptEnvConf.Setting,
-    Parser,
-    HasParser (..),
-    optional,
     module Control.Applicative,
   )
 where

@@ -127,38 +127,62 @@ instance Monoid (Builder f) where
 completeBuilder :: Builder a -> Setting a
 completeBuilder b = unBuilder b emptySetting
 
+-- | Document a setting
 help :: String -> Builder a
 help s = Builder $ \op -> op {settingHelp = Just s}
 
+-- | Document an 'option' or 'env' var.
 metavar :: String -> Builder a
 metavar mv = Builder $ \s -> s {settingMetavar = Just mv}
 
+-- | Try to parse an argument.
+--
+-- You'll also need to add a 'reader'.
 argument :: Builder a
 argument = Builder $ \s -> s {settingTryArgument = True}
 
+-- | Try to parse an argument.
+--
+-- You'll also need to add a 'reader', at least one 'long' or 'short', and a
+-- 'metavar'.
 option :: Builder a
 option = Builder $ \s -> s {settingTryOption = True}
 
-reader :: Reader a -> Builder a
-reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
-
+-- | Try to parse a switch, activate the given value when succesful
+--
+-- You'll also need to add at least one 'long' or 'short'.
 switch :: a -> Builder a
 switch v = Builder $ \s -> s {settingSwitchValue = Just v}
 
+-- | Declare how to parse an argument, option, or environment variable.
+reader :: Reader a -> Builder a
+reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
+
+-- | Try to parse this 'long' 'option' or 'switch'.
+--
+-- @long "foo"@ corresponds to @--foo@
 long :: String -> Builder a
 long l = Builder $ \s -> case NE.nonEmpty l of
   Nothing -> s
   Just ne -> s {settingDasheds = DashedLong ne : settingDasheds s}
 
+-- | Try to parse this 'short' 'option' or 'switch'.
+--
+-- @short 'f'@ corresponds to @-f@
 short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
+-- | Try to parse an environment variable.
+--
+-- You'll also need to add a 'reader' and a 'metavar'.
 env :: String -> Builder a
 env v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
 
+-- | Try to parse a configuration value at the given key.
 conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
 
+-- | Short-hand function for 'option', 'long', 'env', and 'conf' at the same time.
 name :: (HasCodec a) => String -> Builder a
 name s =
   mconcat
@@ -168,12 +192,16 @@ name s =
       conf (toConfigCase s)
     ]
 
+-- | Like 'conf' but with a custom 'Codec' for parsing the value.
 confWith :: String -> ValueCodec void a -> Builder a
 confWith k c =
   let t = (k :| [], DecodingCodec c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value
+--
+-- API Note: @default@ is not a valid identifier in Haskell.
+-- I'd also have preferred @default@ instead.
 value :: (Show a) => a -> Builder a
 value a = valueWithShown a (show a)
 
@@ -181,11 +209,14 @@ value a = valueWithShown a (show a)
 valueWithShown :: a -> String -> Builder a
 valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown)}
 
+-- | Provide an example value for documentation
+--
 -- Use the show function in the setting
 -- Lint when the show function is absent
 -- re-use the show function for 'value'
 example :: (Show a) => a -> Builder a
 example = help . show
 
+-- | Don't show this setting in documentation
 hidden :: Builder a
 hidden = Builder $ \s -> s {settingHidden = True}

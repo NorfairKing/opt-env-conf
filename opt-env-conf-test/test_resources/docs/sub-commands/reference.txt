@@ -1,11 +1,11 @@
-[36mUsage: [m[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [36m([m[37m-v[m[36m|[m[37m--version[m[36m)[m [36m|[m [36m([m[35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+[36mUsage: [m[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
 
 [36mAll settings[m:
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
 
   [34mOutput version information: 0.0.0[m
-  switch: [37m-v[m[36m|[m[37m--version[m
+  switch: [37m--version[m
 
   [34mcommand without subcommands[m
   command: [35mtop[m
@@ -33,7 +33,7 @@
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
-  [37m-v[m[36m|[m[37m--version[m [34mOutput version information: 0.0.0[m 
+  [37m--version[m [34mOutput version information: 0.0.0[m 
   [35mtop[m [34mcommand without subcommands[m
       [37m--name[m [34mname[m 
   [35msub[m [34mcommand with subcommands[m
