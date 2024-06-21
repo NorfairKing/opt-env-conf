@@ -361,6 +361,14 @@ spec = do
         ("command", '2')
 
       argParseSpecs
+        (length <$> many (setting [switch (), short 'v']))
+        [ (["-v"], 1),
+          (["-v", "-v"], 2),
+          (["-vv"], 3),
+          (["-vv", "-v"], 3)
+        ]
+
+      argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
         [ ([], True),
           (["--enable-example"], True),

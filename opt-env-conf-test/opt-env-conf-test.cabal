@@ -127,6 +127,19 @@ extra-source-files:
     test_resources/docs/three-commands/reference.txt
     test_resources/docs/three-commands/show.txt
     test_resources/docs/three-commands/version.txt
+    test_resources/docs/verbose/config-docs.txt
+    test_resources/docs/verbose/config.txt
+    test_resources/docs/verbose/docs.txt
+    test_resources/docs/verbose/env-docs.txt
+    test_resources/docs/verbose/env.txt
+    test_resources/docs/verbose/help.txt
+    test_resources/docs/verbose/man.txt
+    test_resources/docs/verbose/opt-docs.txt
+    test_resources/docs/verbose/opt-long.txt
+    test_resources/docs/verbose/opt-short.txt
+    test_resources/docs/verbose/reference.txt
+    test_resources/docs/verbose/show.txt
+    test_resources/docs/verbose/version.txt
     test_resources/error/empty.txt
     test_resources/error/missing-argument.txt
     test_resources/error/missing-option.txt

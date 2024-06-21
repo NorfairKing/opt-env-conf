@@ -10,9 +10,9 @@ Commands
                  { srcLocPackage = "main"
                  , srcLocModule = "OptEnvConf.APISpec"
                  , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                 , srcLocStartLine = 261
+                 , srcLocStartLine = 262
                  , srcLocStartCol = 15
-                 , srcLocEndLine = 261
+                 , srcLocEndLine = 262
                  , srcLocEndCol = 22
                  })
             (Setting

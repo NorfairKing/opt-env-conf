@@ -7,9 +7,9 @@ Alt
              { srcLocPackage = "main"
              , srcLocModule = "OptEnvConf.APISpec"
              , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 204
+             , srcLocStartLine = 205
              , srcLocStartCol = 9
-             , srcLocEndLine = 204
+             , srcLocEndLine = 205
              , srcLocEndCol = 28
              })
         (Setting
@@ -32,9 +32,9 @@ Alt
                 { srcLocPackage = "main"
                 , srcLocModule = "OptEnvConf.APISpec"
                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                , srcLocStartLine = 204
+                , srcLocStartLine = 205
                 , srcLocStartCol = 9
-                , srcLocEndLine = 204
+                , srcLocEndLine = 205
                 , srcLocEndCol = 28
                 })
            (Setting
@@ -57,9 +57,9 @@ Alt
                    { srcLocPackage = "main"
                    , srcLocModule = "OptEnvConf.APISpec"
                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                   , srcLocStartLine = 204
+                   , srcLocStartLine = 205
                    , srcLocStartCol = 9
-                   , srcLocEndLine = 204
+                   , srcLocEndLine = 205
                    , srcLocEndCol = 28
                    })
               (Setting
@@ -82,9 +82,9 @@ Alt
                       { srcLocPackage = "main"
                       , srcLocModule = "OptEnvConf.APISpec"
                       , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                      , srcLocStartLine = 204
+                      , srcLocStartLine = 205
                       , srcLocStartCol = 9
-                      , srcLocEndLine = 204
+                      , srcLocEndLine = 205
                       , srcLocEndCol = 28
                       })
                  (Setting
@@ -107,9 +107,9 @@ Alt
                          { srcLocPackage = "main"
                          , srcLocModule = "OptEnvConf.APISpec"
                          , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                         , srcLocStartLine = 204
+                         , srcLocStartLine = 205
                          , srcLocStartCol = 9
-                         , srcLocEndLine = 204
+                         , srcLocEndLine = 205
                          , srcLocEndCol = 28
                          })
                     (Setting

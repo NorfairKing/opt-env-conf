@@ -21,6 +21,7 @@ spec = do
   exampleParserSpec "big-config" bigConfigParser
   exampleParserSpec "hidden" hiddenParser
   exampleParserSpec "enable-disable" enableDisableParser
+  exampleParserSpec "verbose" verboseParser
   exampleParserSpec "greet" greetParser
   exampleParserSpec "three-commands" threeCommandsParser
   exampleParserSpec "sub-commands" subCommandsParser
@@ -284,3 +285,14 @@ sub2Parser =
     [ command "c" "C" $ pure C,
       command "d" "D" $ pure D
     ]
+
+verboseParser :: Parser Int
+verboseParser =
+  length
+    <$> many
+      ( setting
+          [ help "Verbosity level. Use multiple to increase verbosity",
+            short 'v',
+            switch ()
+          ]
+      )

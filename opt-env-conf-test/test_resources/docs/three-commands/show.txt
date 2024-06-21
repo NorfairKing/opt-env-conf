@@ -10,9 +10,9 @@ Commands
                  { srcLocPackage = "main"
                  , srcLocModule = "OptEnvConf.APISpec"
                  , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                 , srcLocStartLine = 228
+                 , srcLocStartLine = 229
                  , srcLocStartCol = 15
-                 , srcLocEndLine = 228
+                 , srcLocEndLine = 229
                  , srcLocEndCol = 22
                  })
             (Setting
@@ -38,9 +38,9 @@ Commands
                     { srcLocPackage = "main"
                     , srcLocModule = "OptEnvConf.APISpec"
                     , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                    , srcLocStartLine = 236
+                    , srcLocStartLine = 237
                     , srcLocStartCol = 15
-                    , srcLocEndLine = 236
+                    , srcLocEndLine = 237
                     , srcLocEndCol = 22
                     })
                (Setting
@@ -74,9 +74,9 @@ Commands
                     { srcLocPackage = "main"
                     , srcLocModule = "OptEnvConf.APISpec"
                     , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                    , srcLocStartLine = 244
+                    , srcLocStartLine = 245
                     , srcLocStartCol = 15
-                    , srcLocEndLine = 244
+                    , srcLocEndLine = 245
                     , srcLocEndCol = 34
                     })
                (Setting
@@ -97,9 +97,9 @@ Commands
                        { srcLocPackage = "main"
                        , srcLocModule = "OptEnvConf.APISpec"
                        , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                       , srcLocStartLine = 244
+                       , srcLocStartLine = 245
                        , srcLocStartCol = 15
-                       , srcLocEndLine = 244
+                       , srcLocEndLine = 245
                        , srcLocEndCol = 34
                        })
                   (Setting
@@ -120,9 +120,9 @@ Commands
                           { srcLocPackage = "main"
                           , srcLocModule = "OptEnvConf.APISpec"
                           , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                          , srcLocStartLine = 244
+                          , srcLocStartLine = 245
                           , srcLocStartCol = 15
-                          , srcLocEndLine = 244
+                          , srcLocEndLine = 245
                           , srcLocEndCol = 34
                           })
                      (Setting
@@ -143,9 +143,9 @@ Commands
                              { srcLocPackage = "main"
                              , srcLocModule = "OptEnvConf.APISpec"
                              , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                             , srcLocStartLine = 244
+                             , srcLocStartLine = 245
                              , srcLocStartCol = 15
-                             , srcLocEndLine = 244
+                             , srcLocEndLine = 245
                              , srcLocEndCol = 34
                              })
                         (Setting
@@ -166,9 +166,9 @@ Commands
                                 { srcLocPackage = "main"
                                 , srcLocModule = "OptEnvConf.APISpec"
                                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                                , srcLocStartLine = 244
+                                , srcLocStartLine = 245
                                 , srcLocStartCol = 15
-                                , srcLocEndLine = 244
+                                , srcLocEndLine = 245
                                 , srcLocEndCol = 34
                                 })
                            (Setting
