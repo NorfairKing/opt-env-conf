@@ -62,6 +62,10 @@ spec = do
       consumeOption ["-f"] ["-f", "foo"] `shouldBe` Just ("foo", [])
     it "consumes a long option" $
       consumeOption ["--foo"] ["--foo", "foo"] `shouldBe` Just ("foo", [])
+    it "consumes an option at the front first" $
+      consumeOption ["-f"] ["-f", "foo", "-f", "bar"] `shouldBe` Just ("foo", ["-f", "bar"])
+    it "consumes a folded option" $
+      consumeOption ["-f"] ["-vf", "foo"] `shouldBe` Just ("foo", ["-v"])
 
   describe "consumeSwitch" $ do
     it "fails to consume if there are no dasheds" $

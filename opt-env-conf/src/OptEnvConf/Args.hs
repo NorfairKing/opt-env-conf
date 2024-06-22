@@ -25,6 +25,7 @@ import Control.Applicative
 import Control.Arrow
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe
 import Data.String
 import Data.Validity
 import Data.Validity.Containers ()
@@ -85,7 +86,7 @@ consumeOption dasheds am = do
       [] -> Nothing
       [_] -> Nothing
       (k : v : rest) -> case k of
-        ArgDashed isLong cs -> case consumeDashed dasheds isLong cs of
+        ArgDashed isLong cs -> case consumeDashedOption dasheds isLong cs of
           Nothing -> second (k :) <$> go (v : rest)
           Just Nothing -> Just (renderArg v, rest)
           Just (Just cs') -> Just (renderArg v, ArgDashed isLong cs' : rest)
@@ -93,29 +94,13 @@ consumeOption dasheds am = do
           (mS, as) <- go (v : rest)
           pure (mS, k : as)
 
-consumeSwitch :: [Dashed] -> Args -> Maybe Args
-consumeSwitch dasheds am = do
-  opts' <- go $ unArgs am
-  pure $ am {unArgs = opts'}
-  where
-    go :: [Arg] -> Maybe [Arg]
-    go = \case
-      [] -> Nothing
-      (o : rest) -> case o of
-        ArgDashed isLong cs -> case consumeDashed dasheds isLong cs of
-          Nothing -> (o :) <$> go rest
-          Just Nothing -> Just rest
-          Just (Just cs') -> Just $ ArgDashed isLong cs' : rest
-        _ -> do
-          os <- go rest
-          pure $ o : os
-
-consumeDashed ::
+-- Can consume only the last in a folded dashed
+consumeDashedOption ::
   [Dashed] ->
   Bool ->
   NonEmpty Char ->
   Maybe (Maybe (NonEmpty Char))
-consumeDashed dasheds isLong cs =
+consumeDashedOption dasheds isLong cs =
   if isLong
     then
       if DashedLong cs `elem` dasheds
@@ -135,6 +120,57 @@ unsnocNE = go []
        in case mRest of
             Nothing -> (NE.nonEmpty $ reverse acc, a)
             Just rest -> go (a : acc) rest
+
+consumeSwitch :: [Dashed] -> Args -> Maybe Args
+consumeSwitch dasheds am = do
+  opts' <- go $ unArgs am
+  pure $ am {unArgs = opts'}
+  where
+    go :: [Arg] -> Maybe [Arg]
+    go = \case
+      [] -> Nothing
+      (o : rest) -> case o of
+        ArgDashed isLong cs -> case consumeDashedSwitch dasheds isLong cs of
+          Nothing -> (o :) <$> go rest
+          Just Nothing -> Just rest
+          Just (Just cs') -> Just $ ArgDashed isLong cs' : rest
+        _ -> do
+          os <- go rest
+          pure $ o : os
+
+-- Can consume anywhere in a folded dashed
+consumeDashedSwitch ::
+  [Dashed] ->
+  Bool ->
+  NonEmpty Char ->
+  Maybe (Maybe (NonEmpty Char))
+consumeDashedSwitch dasheds isLong cs =
+  if isLong
+    then
+      if DashedLong cs `elem` dasheds
+        then Just Nothing
+        else Nothing
+    else
+      let shorts =
+            mapMaybe
+              ( \case
+                  DashedShort c -> Just c
+                  DashedLong _ -> Nothing
+              )
+              dasheds
+       in consumeChar shorts cs
+
+consumeChar :: [Char] -> NonEmpty Char -> Maybe (Maybe (NonEmpty Char))
+consumeChar cs = go
+  where
+    go :: NonEmpty Char -> Maybe (Maybe (NonEmpty Char))
+    go (c :| rest) =
+      if c `elem` cs
+        then Just (NE.nonEmpty rest)
+        else do
+          rest' <- NE.nonEmpty rest
+          new <- go rest'
+          pure $ Just $ maybe (c :| []) (c NE.<|) new
 
 data Arg
   = ArgBareDoubleDash
