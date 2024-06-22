@@ -367,14 +367,19 @@ spec = do
               ( setting
                   [ help "verbosity",
                     switch (),
+                    long "verbose",
                     short 'v'
                   ]
               )
         )
-        [ (["-v"], 1),
+        [ ([], 0),
+          (["-v"], 1),
+          (["--verbose"], 1),
           (["-v", "-v"], 2),
-          (["-vv"], 3),
-          (["-vv", "-v"], 3)
+          (["-v", "--verbose"], 2),
+          (["-vv"], 2),
+          (["-vv", "--verbose"], 3),
+          (["-vv", "--verbose", "-v"], 4)
         ]
 
       -- Unfolding short options as well
@@ -396,10 +401,36 @@ spec = do
                 example ("file" :: String)
               ]
         )
-        [ (["-v", "-f", "foo"], (1, "foo")),
+        [ (["-f", "foo"], (0, "foo")),
+          (["-v", "-f", "foo"], (1, "foo")),
           (["-vf", "foo", "-v"], (2, "foo")),
           (["-vvf", "foo"], (3, "foo")),
           (["-vvf", "foo", "-v"], (3, "foo"))
+        ]
+
+      argParseSpecs
+        ( (,)
+            <$> many
+              ( setting
+                  [ reader str,
+                    option,
+                    long "file",
+                    short 'f'
+                  ]
+              )
+            <*> ( length
+                    <$> many
+                      ( setting
+                          [ help "verbosity",
+                            switch (),
+                            short 'v'
+                          ]
+                      )
+                )
+        )
+        [ ([], ([], 0)),
+          (["--file", "foo"], (["foo"], 0)),
+          (["-vf", "foo"], (["foo"], 1))
         ]
 
       argParseSpecs

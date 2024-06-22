@@ -7,11 +7,7 @@ module OptEnvConf.Args
     parseArgs,
     consumeArgument,
     consumeOption,
-    consumeOption',
-    consumeOption'',
     consumeSwitch,
-    consumeSwitch',
-    consumeSwitch'',
     Arg (..),
     parseArg,
     renderArg,
@@ -26,13 +22,11 @@ where
 
 import Control.Applicative
 import Control.Arrow
-import Control.Monad.State
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
-import OptEnvConf.NonDet
 
 newtype Args = Args
   { unArgs :: [Arg]
@@ -77,28 +71,22 @@ consumeArgument am = do
 -- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
 --
 -- The type is a bit strange, but it makes dealing with the state monad easier
-consumeOption :: [Dashed] -> Args -> (Maybe String, Args)
-consumeOption dasheds am =
-  let (mS, opts') = go $ unArgs am
-   in (mS, am {unArgs = opts'})
+consumeOption :: [Dashed] -> Args -> [(String, Args)]
+consumeOption dasheds am = do
+  (mS, opts') <- go $ unArgs am
+  pure (mS, am {unArgs = opts'})
   where
-    go =
-      \case
-        [] -> (Nothing, [])
-        [a] -> (Nothing, [a])
-        (k : v : rest) -> case k of
-          ArgDashed isLong cs
-            | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
-                (pure (renderArg v), rest)
-          _ ->
-            let (mS, as) = go (v : rest)
-             in (mS, k : as)
-
-consumeOption' :: [Dashed] -> Args -> NonDetT m (String, Args)
-consumeOption' = undefined
-
-consumeOption'' :: [Dashed] -> NonDetT (StateT Args m) String
-consumeOption'' = undefined
+    go :: [Arg] -> [(String, [Arg])]
+    go = \case
+      [] -> []
+      [_] -> []
+      (k : v : rest) -> case k of
+        ArgDashed isLong cs
+          | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
+              [(renderArg v, rest)]
+        _ -> do
+          (mS, as) <- go (v : rest)
+          pure (mS, k : as)
 
 consumeSwitch :: [Dashed] -> Args -> (Maybe (), Args)
 consumeSwitch dasheds am =
@@ -115,12 +103,6 @@ consumeSwitch dasheds am =
           _ ->
             let (mS, os) = go rest
              in (mS, o : os)
-
-consumeSwitch' :: [Dashed] -> Args -> NonDetT m ((), Args)
-consumeSwitch' = undefined
-
-consumeSwitch'' :: [Dashed] -> NonDetT (StateT Args m) ()
-consumeSwitch'' = undefined
 
 data Arg
   = ArgBareDoubleDash
