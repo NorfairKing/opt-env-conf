@@ -55,9 +55,14 @@ spec = do
     )
     ["three"]
 
-  -- Missing tests
-  pending "RequiredFirst"
-  pending "ConfigParse"
+  parseErrorSpec
+    "unfolding-tombstone"
+    ( (,)
+        <$> setting [option, short 'a', reader str]
+        <*> setting [option, short 'b', reader str] ::
+        Parser (String, String)
+    )
+    ["-ba", "foo", "bar"]
 
 parseErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseErrorSpec fp p args =
