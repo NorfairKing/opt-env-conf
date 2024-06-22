@@ -67,10 +67,7 @@ consumeArgument am = do
       -- A plain argument could definitely be an argument.
       (ArgPlain a : rest) -> [(a, rest)]
 
--- This may be accidentally cubic.
--- We can probably make this faster by having an actual (Map (Set Dashed) (NonEmpty String)) insetad of just a list that we consume from.
---
--- The type is a bit strange, but it makes dealing with the state monad easier
+-- TODO make this a maybe instead of a list
 consumeOption :: [Dashed] -> Args -> [(String, Args)]
 consumeOption dasheds am = do
   (mS, opts') <- go $ unArgs am
@@ -81,13 +78,15 @@ consumeOption dasheds am = do
       [] -> []
       [_] -> []
       (k : v : rest) -> case k of
-        ArgDashed isLong cs
-          | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
-              [(renderArg v, rest)]
+        ArgDashed isLong cs -> case consumeDashed dasheds isLong cs of
+          Nothing -> second (k :) <$> go (v : rest)
+          Just Nothing -> [(renderArg v, rest)]
+          Just (Just cs') -> [(renderArg v, ArgDashed isLong cs' : rest)]
         _ -> do
           (mS, as) <- go (v : rest)
           pure (mS, k : as)
 
+-- TODO make this a maybe instead of a list
 consumeSwitch :: [Dashed] -> Args -> [Args]
 consumeSwitch dasheds am = do
   opts' <- go $ unArgs am
@@ -97,12 +96,39 @@ consumeSwitch dasheds am = do
     go = \case
       [] -> []
       (o : rest) -> case o of
-        ArgDashed isLong cs
-          | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
-              [rest]
+        ArgDashed isLong cs -> case consumeDashed dasheds isLong cs of
+          Nothing -> (o :) <$> go rest
+          Just Nothing -> [rest]
+          Just (Just cs') -> [ArgDashed isLong cs' : rest]
         _ -> do
           os <- go rest
           pure $ o : os
+
+consumeDashed ::
+  [Dashed] ->
+  Bool ->
+  NonEmpty Char ->
+  Maybe (Maybe (NonEmpty Char))
+consumeDashed dasheds isLong cs =
+  if isLong
+    then
+      if DashedLong cs `elem` dasheds
+        then Just Nothing
+        else Nothing
+    else
+      let (mRest, c) = unsnocNE cs
+       in if DashedShort c `elem` dasheds
+            then Just mRest
+            else Nothing
+
+unsnocNE :: NonEmpty a -> (Maybe (NonEmpty a), a)
+unsnocNE = go []
+  where
+    go acc ne =
+      let (a, mRest) = NE.uncons ne
+       in case mRest of
+            Nothing -> (NE.nonEmpty $ reverse acc, a)
+            Just rest -> go (a : acc) rest
 
 data Arg
   = ArgBareDoubleDash
