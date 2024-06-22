@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module OptEnvConf.Args
   ( Args (..),
@@ -24,9 +25,11 @@ import Control.Applicative
 import Control.Arrow
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.String
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
+import GHC.IsList
 
 newtype Args = Args
   { unArgs :: [Arg]
@@ -34,6 +37,11 @@ newtype Args = Args
   deriving (Show, Eq, Generic)
 
 instance Validity Args
+
+instance IsList Args where
+  type Item Args = Arg
+  fromList = Args
+  toList = unArgs
 
 emptyArgs :: Args
 emptyArgs = Args []
@@ -60,14 +68,13 @@ consumeArgument am = do
       -- Any argument after a dashed argument could be an option value so we
       -- should also keep looking after that.
       (o1@(ArgDashed {}) : o2 : rest) ->
-        -- TODO put this option at the back so it's considered last
+        -- TODO put this option at the back so it's considered last ?
         (renderArg o1, o2 : rest)
           : (renderArg o2, o1 : rest)
           : map (second ((o1 :) . (o2 :))) (go rest)
       -- A plain argument could definitely be an argument.
       (ArgPlain a : rest) -> [(a, rest)]
 
--- TODO make this a maybe instead of a list
 consumeOption :: [Dashed] -> Args -> Maybe (String, Args)
 consumeOption dasheds am = do
   (mS, opts') <- go $ unArgs am
@@ -86,7 +93,6 @@ consumeOption dasheds am = do
           (mS, as) <- go (v : rest)
           pure (mS, k : as)
 
--- TODO make this a maybe instead of a list
 consumeSwitch :: [Dashed] -> Args -> Maybe Args
 consumeSwitch dasheds am = do
   opts' <- go $ unArgs am
@@ -149,6 +155,9 @@ instance Validity Arg where
           _ -> valid
       ]
 
+instance IsString Arg where
+  fromString = parseArg
+
 parseArg :: String -> Arg
 parseArg = \case
   '-' : '-' : rest -> case NE.nonEmpty rest of
@@ -185,6 +194,12 @@ data Dashed
   deriving (Show, Eq, Ord, Generic)
 
 instance Validity Dashed
+
+instance IsString Dashed where
+  fromString s = case fromString s of
+    ArgDashed True cs -> DashedLong cs
+    ArgDashed False (c :| []) -> DashedShort c
+    _ -> error "Invalid dashed"
 
 renderDashed :: Dashed -> String
 renderDashed = \case

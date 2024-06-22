@@ -480,7 +480,7 @@ argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParse
 
 argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a -> Spec
 argParseSpec args p expected = withFrozenCallStack $ do
-  it (unwords ["parses ", show args, "as", show expected]) $ do
+  it (unwords ["parses", show args, "as", show expected]) $ do
     let argMap = parseArgs args
     errOrRes <- runParserOn p argMap EnvMap.empty Nothing
     case errOrRes of
@@ -492,7 +492,7 @@ envParseSpecs p table = withFrozenCallStack $ mapM_ (\(envs, result) -> envParse
 
 envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser a -> a -> Spec
 envParseSpec envVars p expected = withFrozenCallStack $ do
-  it (unwords ["parses ", show envVars, "as", show expected]) $ do
+  it (unwords ["parses", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
     errOrRes <- runParserOn p emptyArgs envMap Nothing
     case errOrRes of
