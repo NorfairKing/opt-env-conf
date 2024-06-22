@@ -431,9 +431,8 @@ ppOpt :: [Dashed] -> PP (Maybe String)
 ppOpt ds = do
   args <- get
   case Args.consumeOption ds args of
-    [] -> pure Nothing
-    as -> do
-      (a, s) <- ppNonDetList as
+    Nothing -> pure Nothing
+    Just (a, s) -> do
       put s
       pure (Just a)
 
@@ -441,9 +440,8 @@ ppSwitch :: [Dashed] -> PP (Maybe ())
 ppSwitch ds = do
   args <- get
   case Args.consumeSwitch ds args of
-    [] -> pure Nothing
-    as -> do
-      s <- ppNonDetList as
+    Nothing -> pure Nothing
+    Just s -> do
       put s
       pure (Just ())
 

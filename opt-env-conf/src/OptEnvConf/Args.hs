@@ -68,38 +68,38 @@ consumeArgument am = do
       (ArgPlain a : rest) -> [(a, rest)]
 
 -- TODO make this a maybe instead of a list
-consumeOption :: [Dashed] -> Args -> [(String, Args)]
+consumeOption :: [Dashed] -> Args -> Maybe (String, Args)
 consumeOption dasheds am = do
   (mS, opts') <- go $ unArgs am
   pure (mS, am {unArgs = opts'})
   where
-    go :: [Arg] -> [(String, [Arg])]
+    go :: [Arg] -> Maybe (String, [Arg])
     go = \case
-      [] -> []
-      [_] -> []
+      [] -> Nothing
+      [_] -> Nothing
       (k : v : rest) -> case k of
         ArgDashed isLong cs -> case consumeDashed dasheds isLong cs of
           Nothing -> second (k :) <$> go (v : rest)
-          Just Nothing -> [(renderArg v, rest)]
-          Just (Just cs') -> [(renderArg v, ArgDashed isLong cs' : rest)]
+          Just Nothing -> Just (renderArg v, rest)
+          Just (Just cs') -> Just (renderArg v, ArgDashed isLong cs' : rest)
         _ -> do
           (mS, as) <- go (v : rest)
           pure (mS, k : as)
 
 -- TODO make this a maybe instead of a list
-consumeSwitch :: [Dashed] -> Args -> [Args]
+consumeSwitch :: [Dashed] -> Args -> Maybe Args
 consumeSwitch dasheds am = do
   opts' <- go $ unArgs am
   pure $ am {unArgs = opts'}
   where
-    go :: [Arg] -> [[Arg]]
+    go :: [Arg] -> Maybe [Arg]
     go = \case
-      [] -> []
+      [] -> Nothing
       (o : rest) -> case o of
         ArgDashed isLong cs -> case consumeDashed dasheds isLong cs of
           Nothing -> (o :) <$> go rest
-          Just Nothing -> [rest]
-          Just (Just cs') -> [ArgDashed isLong cs' : rest]
+          Just Nothing -> Just rest
+          Just (Just cs') -> Just $ ArgDashed isLong cs' : rest
         _ -> do
           os <- go rest
           pure $ o : os
