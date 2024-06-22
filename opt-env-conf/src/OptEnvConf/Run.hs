@@ -438,7 +438,14 @@ ppOpt ds = do
       pure (Just a)
 
 ppSwitch :: [Dashed] -> PP (Maybe ())
-ppSwitch ds = state $ Args.consumeSwitch ds
+ppSwitch ds = do
+  args <- get
+  case Args.consumeSwitch ds args of
+    [] -> pure Nothing
+    as -> do
+      s <- ppNonDetList as
+      put s
+      pure (Just ())
 
 ppErrors :: NonEmpty ParseError -> PP a
 ppErrors = lift . lift . ValidationT . pure . Failure

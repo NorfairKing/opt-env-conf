@@ -88,21 +88,21 @@ consumeOption dasheds am = do
           (mS, as) <- go (v : rest)
           pure (mS, k : as)
 
-consumeSwitch :: [Dashed] -> Args -> (Maybe (), Args)
-consumeSwitch dasheds am =
-  let (mS, opts') = go $ unArgs am
-   in (mS, am {unArgs = opts'})
+consumeSwitch :: [Dashed] -> Args -> [Args]
+consumeSwitch dasheds am = do
+  opts' <- go $ unArgs am
+  pure $ am {unArgs = opts'}
   where
-    go =
-      \case
-        [] -> (Nothing, [])
-        (o : rest) -> case o of
-          ArgDashed isLong cs
-            | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
-                (Just (), rest)
-          _ ->
-            let (mS, os) = go rest
-             in (mS, o : os)
+    go :: [Arg] -> [[Arg]]
+    go = \case
+      [] -> []
+      (o : rest) -> case o of
+        ArgDashed isLong cs
+          | NE.last (unfoldDasheds isLong cs) `elem` dasheds ->
+              [rest]
+        _ -> do
+          os <- go rest
+          pure $ o : os
 
 data Arg
   = ArgBareDoubleDash
