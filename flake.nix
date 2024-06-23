@@ -13,8 +13,7 @@
     validity.flake = false;
     autodocodec.url = "github:NorfairKing/autodocodec/opt-env-conf";
     autodocodec.flake = false;
-    # TODO put this branch back once we release safe-coloured-text
-    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text/opt-env-conf";
+    safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
     safe-coloured-text.flake = false;
     fast-myers-diff.url = "github:NorfairKing/fast-myers-diff";
     fast-myers-diff.flake = false;
