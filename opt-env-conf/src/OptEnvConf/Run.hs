@@ -15,9 +15,10 @@ import Autodocodec
 import Control.Arrow (left)
 import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
-import Data.Aeson ((.:?))
+import Data.Aeson (parseJSON, (.:?))
 import qualified Data.Aeson as JSON
 import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KeyMap
 import qualified Data.Aeson.Types as JSON
 import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
@@ -310,14 +311,16 @@ runParserOn p args envVars mConfig = do
                           Nothing -> pure NotRun
                           Just ((ne, DecodingCodec c) :| _) -> do
                             -- TODO try parsing with the others
-                            -- TODO handle subconfig prefix here?
                             mObj <- asks ppEnvConf
                             case mObj of
                               Nothing -> pure NotFound
                               Just obj -> do
                                 let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
                                     jsonParser o (k :| rest) = case NE.nonEmpty rest of
-                                      Nothing -> o .:? Key.fromString k
+                                      Nothing -> do
+                                        case KeyMap.lookup (Key.fromString k) o of
+                                          Nothing -> pure Nothing
+                                          Just v -> Just <$> parseJSON v
                                       Just neRest -> do
                                         mO' <- o .:? Key.fromString k
                                         case mO' of
