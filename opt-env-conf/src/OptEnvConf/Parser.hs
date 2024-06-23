@@ -69,8 +69,8 @@ import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
 import OptEnvConf.Setting
+import Path
 import Path.IO
-import System.FilePath
 import Text.Show
 
 data Command a = Command
@@ -367,12 +367,23 @@ withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >
 -- | Load @config.yaml@ from the given XDG configuration subdirectory
 xdgYamlConfigFile :: FilePath -> Parser FilePath
 xdgYamlConfigFile subdir =
-  (\xdgDir -> xdgDir </> subdir </> "config.yaml")
-    <$> setting
-      [ reader str,
+  mapIO
+    ( \mXdgDir -> do
+        xdgDir <- case mXdgDir of
+          Just d -> resolveDir' d
+          Nothing -> do
+            home <- getHomeDir
+            resolveDir home ".config"
+        configDir <- resolveDir xdgDir subdir
+        fromAbsFile <$> resolveFile configDir "config.yaml"
+    )
+    $ optional
+    $ setting
+      [ help "Path to the XDG configuration directory",
+        reader str,
         env "XDG_CONFIG_HOME",
         metavar "DIRECTORY",
-        help "Path to the XDG configuration directory"
+        hidden
       ]
 
 -- | Load a config file that is reconfigurable with an option and environment
