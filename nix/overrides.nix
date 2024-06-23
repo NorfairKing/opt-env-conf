@@ -19,13 +19,8 @@ let
         "--ghc-options=-Werror"
       ];
       doBenchmark = true;
-      doHaddock = false;
       doCoverage = false;
-      doHoogle = false;
       doCheck = false; # Only for coverage
-      hyperlinkSource = false;
-      enableLibraryProfiling = false;
-      enableExecutableProfiling = false;
       # Ugly hack because we can't just add flags to the 'test' invocation.
       # Show test output as we go, instead of all at once afterwards.
       testTarget = (old.testTarget or "") + " --show-details=direct";
