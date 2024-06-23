@@ -28,6 +28,8 @@ module OptEnvConf.Parser
     withYamlConfig,
     xdgYamlConfigFile,
     withLocalYamlConfig,
+    withConfigurableYamlConfig,
+    configuredConfigFile,
     enableDisableSwitch,
     readTextSecretFile,
 
@@ -376,18 +378,21 @@ xdgYamlConfigFile subdir =
 -- | Load a config file that is reconfigurable with an option and environment
 -- variable but @config.yaml@ in the local working directory by default.
 withLocalYamlConfig :: Parser a -> Parser a
-withLocalYamlConfig =
-  withYamlConfig $
-    Just
-      <$> setting
-        [ reader str,
-          option,
-          long "config-file",
-          env "CONFIG_FILE",
-          metavar "FILE",
-          value "config.yaml",
-          help "Path to the configuration file"
-        ]
+withLocalYamlConfig = withConfigurableYamlConfig $ pure "config.yaml"
+
+withConfigurableYamlConfig :: Parser FilePath -> Parser a -> Parser a
+withConfigurableYamlConfig p = withYamlConfig $ Just <$> (configuredConfigFile <|> p)
+
+configuredConfigFile :: Parser FilePath
+configuredConfigFile =
+  setting
+    [ reader str,
+      option,
+      long "config-file",
+      env "CONFIG_FILE",
+      metavar "FILE",
+      help "Path to the configuration file"
+    ]
 
 -- | Define a setting for a 'Bool' with a given default value.
 --

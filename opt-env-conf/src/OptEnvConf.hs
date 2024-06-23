@@ -68,6 +68,7 @@ module OptEnvConf
     withYamlConfig,
     xdgYamlConfigFile,
     withLocalYamlConfig,
+    withConfigurableYamlConfig,
 
     -- ** Common use
     enableDisableSwitch,
