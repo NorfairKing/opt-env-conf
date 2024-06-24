@@ -33,7 +33,7 @@ library
   ghc-options: -Wall
   build-depends:
       aeson
-    , autodocodec
+    , autodocodec >=0.2.3.0
     , autodocodec-schema
     , autodocodec-yaml
     , base
@@ -42,8 +42,8 @@ library
     , mtl
     , path
     , path-io
-    , safe-coloured-text
-    , safe-coloured-text-layout
+    , safe-coloured-text >=0.3.0.2
+    , safe-coloured-text-layout >=0.2.0.0
     , safe-coloured-text-terminfo
     , selective
     , text

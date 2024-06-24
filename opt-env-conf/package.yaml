@@ -11,7 +11,7 @@ library:
   ghc-options: -Wall
   dependencies:
   - aeson
-  - autodocodec
+  - autodocodec >= 0.2.3.0
   - autodocodec-schema
   - autodocodec-yaml
   - containers
@@ -19,8 +19,8 @@ library:
   - mtl
   - path
   - path-io
-  - safe-coloured-text
-  - safe-coloured-text-layout
+  - safe-coloured-text >= 0.3.0.2
+  - safe-coloured-text-layout >= 0.2.0.0
   - safe-coloured-text-terminfo # TODO Don't depend on this on windows
   - selective
   - text
