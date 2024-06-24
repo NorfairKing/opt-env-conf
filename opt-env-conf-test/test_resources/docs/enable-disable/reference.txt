@@ -1,4 +1,4 @@
-[36mUsage: [m[33menable-disable[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [37m--(enable|disable)-example[m
+[36mUsage: [m[33menable-disable[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [37m--(enable|disable)-example[m[36m)[m
 
 [36mAll settings[m:
   [34mShow this help text[m
@@ -7,6 +7,10 @@
   [34mOutput version information: 0.0.0[m
   switch: [37m--version[m
 
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE[m
+  env: [37mCONFIG_FILE[m [33mFILE[m
+  
   [34mExample of an enable/disable switch[m
   switch: [37m--(enable|disable)-example[m
   env: [37mEXAMPLE[m [33mBOOL[m
@@ -16,10 +20,12 @@
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                 
   [37m--version[m                  [34mOutput version information: 0.0.0[m   
+  [37m--config-file[m              [34mPath to the configuration file[m      
   [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m 
 
 [36mEnvironment Variables[m:
-  [37mEXAMPLE[m [33mBOOL[m   [34mExample of an enable/disable switch[m
+  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m     
+  [37mEXAMPLE[m [33mBOOL[m       [34mExample of an enable/disable switch[m
 
 [36mConfiguration Values[m:
   [34mExample of an enable/disable switch[m

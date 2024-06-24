@@ -4,6 +4,18 @@ AnyDocsAnd
         { setDocTryArgument = False
         , setDocTrySwitch = False
         , setDocTryOption = True
+        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+        , setDocEnvVars = Just ("GREET_CONFIG_FILE" :| [])
+        , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
+        , setDocMetavar = Just "FILE"
+        , setDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = True
         , setDocDasheds =
             [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
         , setDocEnvVars = Just ("GREET_GREETING" :| [])

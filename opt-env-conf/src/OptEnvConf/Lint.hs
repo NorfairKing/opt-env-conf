@@ -13,6 +13,7 @@ module OptEnvConf.Lint
 where
 
 import Control.Monad
+import Control.Monad.Reader
 import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Maybe
@@ -41,6 +42,7 @@ data LintErrorMessage
   | LintErrorNoReaderForEnvVar
   | LintErrorNoMetavarForEnvVar
   | LintErrorNoCommands
+  | LintErrorConfigWithoutLoad
 
 renderLintErrors :: NonEmpty LintError -> [Chunk]
 renderLintErrors =
@@ -143,6 +145,11 @@ renderLintError LintError {..} =
           [ [ functionChunk "commands",
               " was called with an empty list."
             ]
+          ]
+        LintErrorConfigWithoutLoad ->
+          [ [ functionChunk "conf",
+              " was called with no way to load configuration."
+            ]
           ],
       maybe [] (pure . ("Defined at: " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) lintErrorSrcLoc
     ]
@@ -151,9 +158,14 @@ functionChunk :: Text -> Chunk
 functionChunk = fore yellow . chunk
 
 lintParser :: Parser a -> Maybe (NonEmpty LintError)
-lintParser = either Just (const Nothing) . validationToEither . go
+lintParser =
+  either Just (const Nothing)
+    . validationToEither
+    . (`runReader` False) -- Set to true for parsers that have a way to load conf
+    . runValidationT
+    . go
   where
-    go :: Parser a -> Validation LintError ()
+    go :: Parser a -> ValidationT LintError (Reader Bool) ()
     go = \case
       ParserPure _ -> pure ()
       ParserAp p1 p2 -> go p1 *> go p2
@@ -165,14 +177,14 @@ lintParser = either Just (const Nothing) . validationToEither . go
       ParserCheck _ p -> go p
       ParserCommands ls -> do
         if null ls
-          then validationFailure $ LintError Nothing LintErrorNoCommands
+          then validationTFailure $ LintError Nothing LintErrorNoCommands
           else traverse_ (go . commandParser) ls
-      ParserWithConfig p1 p2 -> go p1 *> go p2
-      ParserSetting mLoc Setting {..} -> mapValidationFailure (LintError mLoc) $ do
+      ParserWithConfig p1 p2 -> go p1 *> local (const True) (go p2)
+      ParserSetting mLoc Setting {..} -> mapValidationTFailure (LintError mLoc) $ do
         case settingHelp of
           Nothing ->
             -- Hidden values may be undocumented
-            when (not settingHidden) $ validationFailure LintErrorUndocumented
+            when (not settingHidden) $ validationTFailure LintErrorUndocumented
           Just _ -> pure ()
         when
           ( and
@@ -184,20 +196,23 @@ lintParser = either Just (const Nothing) . validationToEither . go
                 isNothing settingDefaultValue
               ]
           )
-          $ validationFailure LintErrorEmptySetting
+          $ validationTFailure LintErrorEmptySetting
         when (settingTryArgument && null settingReaders) $
-          validationFailure LintErrorNoReaderForArgument
+          validationTFailure LintErrorNoReaderForArgument
         when (settingTryArgument && not settingHidden && isNothing settingMetavar) $
-          validationFailure LintErrorNoMetavarForArgument
+          validationTFailure LintErrorNoMetavarForArgument
         when (settingTryOption && null settingReaders) $
-          validationFailure LintErrorNoReaderForOption
+          validationTFailure LintErrorNoReaderForOption
         when (settingTryOption && null settingDasheds) $
-          validationFailure LintErrorNoDashedForOption
+          validationTFailure LintErrorNoDashedForOption
         when (settingTryOption && not settingHidden && isNothing settingMetavar) $
-          validationFailure LintErrorNoMetavarForOption
+          validationTFailure LintErrorNoMetavarForOption
         when (isJust settingSwitchValue && null settingDasheds) $
-          validationFailure LintErrorNoDashedForSwitch
+          validationTFailure LintErrorNoDashedForSwitch
         when (isJust settingEnvVars && null settingReaders) $
-          validationFailure LintErrorNoReaderForEnvVar
+          validationTFailure LintErrorNoReaderForEnvVar
         when (isJust settingEnvVars && not settingHidden && isNothing settingMetavar) $
-          validationFailure LintErrorNoMetavarForEnvVar
+          validationTFailure LintErrorNoMetavarForEnvVar
+        hasConfig <- ask
+        when (isJust settingConfigVals && not hasConfig) $
+          validationTFailure LintErrorConfigWithoutLoad

@@ -1,6 +1,13 @@
 AnyDocsAnd
   [ AnyDocsSingle
       EnvDoc
+        { envDocVars = "GREET_CONFIG_FILE" :| []
+        , envDocDefault = Nothing
+        , envDocMetavar = Just "FILE"
+        , envDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsSingle
+      EnvDoc
         { envDocVars = "GREET_GREETING" :| []
         , envDocDefault = Just "\"Hello\""
         , envDocMetavar = Just "GREETING"

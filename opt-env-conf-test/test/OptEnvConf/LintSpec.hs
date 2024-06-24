@@ -92,6 +92,14 @@ spec = do
   goldenLintTest
     "no-commands"
     (commands [])
+  goldenLintTest
+    "config-without-load"
+    ( setting
+        [ help "Config parser with no way to load a config.",
+          conf "example"
+        ] ::
+        Parser String
+    )
 
 goldenLintTest :: (HasCallStack) => FilePath -> Parser a -> Spec
 goldenLintTest fp parser = withFrozenCallStack $

@@ -1,1 +1,10 @@
-AnyDocsAnd []
+AnyDocsSingle
+  OptDoc
+    { optDocTryArgument = False
+    , optDocTrySwitch = False
+    , optDocTryOption = True
+    , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+    , optDocDefault = Nothing
+    , optDocMetavar = Just "FILE"
+    , optDocHelp = Just "Path to the configuration file"
+    }

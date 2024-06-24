@@ -1,28 +1,33 @@
-Alt
+WithConfig
+  _
   (Check
      _
-     (Setting
-        (Just
-           SrcLoc
-             { srcLocPackage = "main"
-             , srcLocModule = "OptEnvConf.APISpec"
-             , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 199
-             , srcLocStartCol = 9
-             , srcLocEndLine = 199
-             , srcLocEndCol = 28
-             })
-        (Setting
-           [ DashedLong ('(' :| "enable|disable)-example") ]
-           []
-           False
-           (Just _)
-           False
-           Nothing
-           Nothing
-           Nothing
-           Nothing
-           (Just "Example of an enable/disable switch"))))
+     (Alt
+        (Check
+           _
+           (Setting
+              (Just
+                 SrcLoc
+                   { srcLocPackage = "opt-env-conf-0.0.0.0-CzxqsBAzD4KFFnWObAPTqz"
+                   , srcLocModule = "OptEnvConf.Parser"
+                   , srcLocFile = "src/OptEnvConf/Parser.hs"
+                   , srcLocStartLine = 399
+                   , srcLocStartCol = 3
+                   , srcLocEndLine = 399
+                   , srcLocEndCol = 10
+                   })
+              (Setting
+                 [ DashedLong ('c' :| "onfig-file") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just ("CONFIG_FILE" :| []))
+                 Nothing
+                 Nothing
+                 (Just "FILE")
+                 (Just "Path to the configuration file"))))
+        (Pure _)))
   (Alt
      (Check
         _
@@ -32,13 +37,13 @@ Alt
                 { srcLocPackage = "main"
                 , srcLocModule = "OptEnvConf.APISpec"
                 , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                , srcLocStartLine = 199
-                , srcLocStartCol = 9
-                , srcLocEndLine = 199
-                , srcLocEndCol = 28
+                , srcLocStartLine = 202
+                , srcLocStartCol = 11
+                , srcLocEndLine = 202
+                , srcLocEndCol = 30
                 })
            (Setting
-              [ DashedLong ('d' :| "isable-example") ]
+              [ DashedLong ('(' :| "enable|disable)-example") ]
               []
               False
               (Just _)
@@ -47,7 +52,7 @@ Alt
               Nothing
               Nothing
               Nothing
-              Nothing)))
+              (Just "Example of an enable/disable switch"))))
      (Alt
         (Check
            _
@@ -57,13 +62,13 @@ Alt
                    { srcLocPackage = "main"
                    , srcLocModule = "OptEnvConf.APISpec"
                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                   , srcLocStartLine = 199
-                   , srcLocStartCol = 9
-                   , srcLocEndLine = 199
-                   , srcLocEndCol = 28
+                   , srcLocStartLine = 202
+                   , srcLocStartCol = 11
+                   , srcLocEndLine = 202
+                   , srcLocEndCol = 30
                    })
               (Setting
-                 [ DashedLong ('e' :| "nable-example") ]
+                 [ DashedLong ('d' :| "isable-example") ]
                  []
                  False
                  (Just _)
@@ -82,22 +87,22 @@ Alt
                       { srcLocPackage = "main"
                       , srcLocModule = "OptEnvConf.APISpec"
                       , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                      , srcLocStartLine = 199
-                      , srcLocStartCol = 9
-                      , srcLocEndLine = 199
-                      , srcLocEndCol = 28
+                      , srcLocStartLine = 202
+                      , srcLocStartCol = 11
+                      , srcLocEndLine = 202
+                      , srcLocEndCol = 30
                       })
                  (Setting
+                    [ DashedLong ('e' :| "nable-example") ]
                     []
-                    [ _ ]
+                    False
+                    (Just _)
                     False
                     Nothing
-                    False
-                    (Just ("EXAMPLE" :| []))
                     Nothing
                     Nothing
-                    (Just "BOOL")
-                    (Just "Example of an enable/disable switch"))))
+                    Nothing
+                    Nothing)))
            (Alt
               (Check
                  _
@@ -107,20 +112,45 @@ Alt
                          { srcLocPackage = "main"
                          , srcLocModule = "OptEnvConf.APISpec"
                          , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                         , srcLocStartLine = 199
-                         , srcLocStartCol = 9
-                         , srcLocEndLine = 199
-                         , srcLocEndCol = 28
+                         , srcLocStartLine = 202
+                         , srcLocStartCol = 11
+                         , srcLocEndLine = 202
+                         , srcLocEndCol = 30
                          })
                     (Setting
                        []
-                       []
+                       [ _ ]
                        False
                        Nothing
                        False
+                       (Just ("EXAMPLE" :| []))
                        Nothing
-                       (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
                        Nothing
-                       Nothing
+                       (Just "BOOL")
                        (Just "Example of an enable/disable switch"))))
-              (Pure _)))))
+              (Alt
+                 (Check
+                    _
+                    (Setting
+                       (Just
+                          SrcLoc
+                            { srcLocPackage = "main"
+                            , srcLocModule = "OptEnvConf.APISpec"
+                            , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                            , srcLocStartLine = 202
+                            , srcLocStartCol = 11
+                            , srcLocEndLine = 202
+                            , srcLocEndCol = 30
+                            })
+                       (Setting
+                          []
+                          []
+                          False
+                          Nothing
+                          False
+                          Nothing
+                          (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
+                          Nothing
+                          Nothing
+                          (Just "Example of an enable/disable switch"))))
+                 (Pure _))))))

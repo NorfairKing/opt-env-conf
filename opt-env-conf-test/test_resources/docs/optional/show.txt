@@ -7,9 +7,9 @@ Alt
              { srcLocPackage = "main"
              , srcLocModule = "OptEnvConf.APISpec"
              , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 172
+             , srcLocStartLine = 174
              , srcLocStartCol = 9
-             , srcLocEndLine = 172
+             , srcLocEndLine = 174
              , srcLocEndCol = 16
              })
         (Setting

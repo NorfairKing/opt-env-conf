@@ -1,50 +1,64 @@
-AnyDocsCommands
-  [ CommandDoc
-      { commandDocArgument = "top"
-      , commandDocHelp = "command without subcommands"
-      , commandDocs =
-          AnyDocsSingle
-            SetDoc
-              { setDocTryArgument = False
-              , setDocTrySwitch = False
-              , setDocTryOption = True
-              , setDocDasheds = [ DashedLong ('n' :| "ame") ]
-              , setDocEnvVars = Just ("NAME" :| [])
-              , setDocConfKeys = Just (( "name" :| [] , StringSchema ) :| [])
-              , setDocDefault = Nothing
-              , setDocMetavar = Just "NAME"
-              , setDocHelp = Just "name"
-              }
-      }
-  , CommandDoc
-      { commandDocArgument = "sub"
-      , commandDocHelp = "command with subcommands"
-      , commandDocs =
-          AnyDocsAnd
-            [ AnyDocsCommands
-                [ CommandDoc
-                    { commandDocArgument = "a"
-                    , commandDocHelp = "A"
-                    , commandDocs = AnyDocsAnd []
-                    }
-                , CommandDoc
-                    { commandDocArgument = "b"
-                    , commandDocHelp = "B"
-                    , commandDocs = AnyDocsAnd []
-                    }
+AnyDocsAnd
+  [ AnyDocsSingle
+      SetDoc
+        { setDocTryArgument = False
+        , setDocTrySwitch = False
+        , setDocTryOption = True
+        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+        , setDocEnvVars = Just ("CONFIG_FILE" :| [])
+        , setDocConfKeys = Nothing
+        , setDocDefault = Nothing
+        , setDocMetavar = Just "FILE"
+        , setDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsCommands
+      [ CommandDoc
+          { commandDocArgument = "top"
+          , commandDocHelp = "command without subcommands"
+          , commandDocs =
+              AnyDocsSingle
+                SetDoc
+                  { setDocTryArgument = False
+                  , setDocTrySwitch = False
+                  , setDocTryOption = True
+                  , setDocDasheds = [ DashedLong ('n' :| "ame") ]
+                  , setDocEnvVars = Just ("NAME" :| [])
+                  , setDocConfKeys = Just (( "name" :| [] , StringSchema ) :| [])
+                  , setDocDefault = Nothing
+                  , setDocMetavar = Just "NAME"
+                  , setDocHelp = Just "name"
+                  }
+          }
+      , CommandDoc
+          { commandDocArgument = "sub"
+          , commandDocHelp = "command with subcommands"
+          , commandDocs =
+              AnyDocsAnd
+                [ AnyDocsCommands
+                    [ CommandDoc
+                        { commandDocArgument = "a"
+                        , commandDocHelp = "A"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    , CommandDoc
+                        { commandDocArgument = "b"
+                        , commandDocHelp = "B"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    ]
+                , AnyDocsCommands
+                    [ CommandDoc
+                        { commandDocArgument = "c"
+                        , commandDocHelp = "C"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    , CommandDoc
+                        { commandDocArgument = "d"
+                        , commandDocHelp = "D"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    ]
                 ]
-            , AnyDocsCommands
-                [ CommandDoc
-                    { commandDocArgument = "c"
-                    , commandDocHelp = "C"
-                    , commandDocs = AnyDocsAnd []
-                    }
-                , CommandDoc
-                    { commandDocArgument = "d"
-                    , commandDocHelp = "D"
-                    , commandDocs = AnyDocsAnd []
-                    }
-                ]
-            ]
-      }
+          }
+      ]
   ]

@@ -7,9 +7,9 @@ Check
              { srcLocPackage = "main"
              , srcLocModule = "OptEnvConf.APISpec"
              , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 158
+             , srcLocStartLine = 160
              , srcLocStartCol = 9
-             , srcLocEndLine = 158
+             , srcLocEndLine = 160
              , srcLocEndCol = 16
              })
         (Setting

@@ -1,10 +1,22 @@
-AnyDocsSingle
-  OptDoc
-    { optDocTryArgument = False
-    , optDocTrySwitch = True
-    , optDocTryOption = False
-    , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
-    , optDocDefault = Nothing
-    , optDocMetavar = Nothing
-    , optDocHelp = Just "Example of an enable/disable switch"
-    }
+AnyDocsAnd
+  [ AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = False
+        , optDocTryOption = True
+        , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Just "FILE"
+        , optDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = True
+        , optDocTryOption = False
+        , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Nothing
+        , optDocHelp = Just "Example of an enable/disable switch"
+        }
+  ]

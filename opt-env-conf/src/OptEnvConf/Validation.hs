@@ -1,10 +1,13 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module OptEnvConf.Validation where
 
 import Control.Monad.IO.Class
-import Control.Monad.Trans
+import Control.Monad.Reader
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 
@@ -28,11 +31,21 @@ instance (Monad m) => Monad (ValidationT e m) where
 instance MonadTrans (ValidationT e) where
   lift f = ValidationT $ Success <$> f
 
+instance (MonadReader env m) => MonadReader env (ValidationT err m) where
+  ask = lift ask
+  local func = ValidationT . local func . unValidationT
+
 instance (MonadIO m) => MonadIO (ValidationT e m) where
   liftIO io = ValidationT $ Success <$> liftIO io
 
 runValidationT :: ValidationT e m a -> m (Validation e a)
 runValidationT = unValidationT
+
+validationTFailure :: (Applicative m) => e -> ValidationT e m a
+validationTFailure = ValidationT . pure . validationFailure
+
+mapValidationTFailure :: (Functor m) => (e1 -> e2) -> ValidationT e1 m a -> ValidationT e2 m a
+mapValidationTFailure f = ValidationT . fmap (mapValidationFailure f) . unValidationT
 
 data Validation e a
   = Failure !(NonEmpty e)

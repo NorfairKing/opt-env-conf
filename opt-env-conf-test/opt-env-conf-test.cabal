@@ -150,6 +150,7 @@ extra-source-files:
     test_resources/error/unfolding-tombstone-option.txt
     test_resources/error/unfolding-tombstone-switch.txt
     test_resources/error/unrecognised-command.txt
+    test_resources/lint/config-without-load.txt
     test_resources/lint/empty-setting.txt
     test_resources/lint/no-commands.txt
     test_resources/lint/no-dashed-for-option.txt

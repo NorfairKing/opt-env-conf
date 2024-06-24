@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
 .Sh SETTINGS
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
@@ -15,6 +15,10 @@
   [34mOutput version information: 0.0.0[m
   switch: [37m--version[m
 
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE[m
+  env: [37mCONFIG_FILE[m [33mFILE[m
+  
   [34mcommand without subcommands[m
   command: [35mtop[m
     [34mname[m
@@ -42,6 +46,7 @@
 .Sh OPTIONS
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
   [37m--version[m [34mOutput version information: 0.0.0[m 
+  [37m--config-file[m [34mPath to the configuration file[m 
   [35mtop[m [34mcommand without subcommands[m
       [37m--name[m [34mname[m 
   [35msub[m [34mcommand with subcommands[m
@@ -51,7 +56,8 @@
       [35md[m [34mD[m
 
 .Sh ENVIRONMENT VARIABLES
-  [37mNAME[m [33mNAME[m   [34mname[m
+  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m
+  [37mNAME[m [33mNAME[m          [34mname[m                          
 
 .Sh CONFIGURATION VALUES
   [34mname[m

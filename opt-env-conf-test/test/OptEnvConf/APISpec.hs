@@ -108,46 +108,48 @@ data Greet = Greet !String !String !Bool
 greetParser :: Parser Greet
 greetParser =
   subEnv "GREET_" $
-    Greet
-      <$> setting
-        [ reader str,
-          option,
-          short 'g',
-          long "greeting",
-          metavar "GREETING",
-          env "GREETING",
-          conf "greeting",
-          value "Hello",
-          help "Greeting to use"
-        ]
-      <*> setting
-        [ reader str,
-          argument,
-          help "Who to greet",
-          value "world",
-          metavar "SUBJECT"
-        ]
-      <*> setting
-        [ reader exists,
-          switch True,
-          short 'p',
-          long "polite",
-          env "POLITE",
-          conf "polite",
-          metavar "ANY",
-          value False,
-          help "Whether to be polite"
-        ]
+    withLocalYamlConfig $
+      Greet
+        <$> setting
+          [ reader str,
+            option,
+            short 'g',
+            long "greeting",
+            metavar "GREETING",
+            env "GREETING",
+            conf "greeting",
+            value "Hello",
+            help "Greeting to use"
+          ]
+        <*> setting
+          [ reader str,
+            argument,
+            help "Who to greet",
+            value "world",
+            metavar "SUBJECT"
+          ]
+        <*> setting
+          [ reader exists,
+            switch True,
+            short 'p',
+            long "polite",
+            env "POLITE",
+            conf "polite",
+            metavar "ANY",
+            value False,
+            help "Whether to be polite"
+          ]
 
 data BigConfig = BigConfig (Map String (Map String Int))
 
 bigConfigParser :: Parser BigConfig
 bigConfigParser =
-  BigConfig
-    <$> setting
-      [ conf "big",
-        help "multi-line config codec explanation, the same option twice."
-      ]
+  withLocalYamlConfig $
+    BigConfig
+      <$> setting
+        [ conf "big",
+          help "multi-line config codec explanation, the same option twice."
+        ]
 
 data Args = Args [String]
 
@@ -195,14 +197,15 @@ data EnableDisable = EnableDisable Bool
 
 enableDisableParser :: Parser EnableDisable
 enableDisableParser =
-  EnableDisable
-    <$> enableDisableSwitch
-      True
-      [ long "example",
-        help "Example of an enable/disable switch",
-        env "EXAMPLE",
-        conf "example"
-      ]
+  withLocalYamlConfig $
+    EnableDisable
+      <$> enableDisableSwitch
+        True
+        [ long "example",
+          help "Example of an enable/disable switch",
+          env "EXAMPLE",
+          conf "example"
+        ]
 
 data Empty = Empty
 
@@ -217,32 +220,33 @@ data ThreeCommands
 
 threeCommandsParser :: Parser ThreeCommands
 threeCommandsParser =
-  commands
-    [ command "one" "first" $
-        One
-          <$> setting
-            [ help "argument",
-              reader str,
-              metavar "STR",
-              argument
-            ],
-      command "two" "second" $
-        Two
-          <$> setting
-            [ help "number",
-              reader auto,
-              option,
-              metavar "INT",
-              name "number",
-              short 'n'
-            ]
-          <*> enableDisableSwitch
-            False
-            [ help "enable extra",
-              name "enable"
-            ],
-      command "three" "third" (pure Three)
-    ]
+  withLocalYamlConfig $
+    commands
+      [ command "one" "first" $
+          One
+            <$> setting
+              [ help "argument",
+                reader str,
+                metavar "STR",
+                argument
+              ],
+        command "two" "second" $
+          Two
+            <$> setting
+              [ help "number",
+                reader auto,
+                option,
+                metavar "INT",
+                name "number",
+                short 'n'
+              ]
+            <*> enableDisableSwitch
+              False
+              [ help "enable extra",
+                name "enable"
+              ],
+        command "three" "third" (pure Three)
+      ]
 
 data SubCommands
   = Top !String
@@ -250,17 +254,18 @@ data SubCommands
 
 subCommandsParser :: Parser SubCommands
 subCommandsParser =
-  commands
-    [ command "top" "command without subcommands" $
-        Top
-          <$> setting
-            [ help "name",
-              reader str,
-              metavar "NAME",
-              name "name"
-            ],
-      command "sub" "command with subcommands" $ Sub <$> sub1Parser <*> sub2Parser
-    ]
+  withLocalYamlConfig $
+    commands
+      [ command "top" "command without subcommands" $
+          Top
+            <$> setting
+              [ help "name",
+                reader str,
+                metavar "NAME",
+                name "name"
+              ],
+        command "sub" "command with subcommands" $ Sub <$> sub1Parser <*> sub2Parser
+      ]
 
 data Sub1 = A | B
 
