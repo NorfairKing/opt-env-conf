@@ -6,16 +6,7 @@ WithConfig
         (Check
            _
            (Setting
-              (Just
-                 SrcLoc
-                   { srcLocPackage = "opt-env-conf-0.0.0.0-CzxqsBAzD4KFFnWObAPTqz"
-                   , srcLocModule = "OptEnvConf.Parser"
-                   , srcLocFile = "src/OptEnvConf/Parser.hs"
-                   , srcLocStartLine = 399
-                   , srcLocStartCol = 3
-                   , srcLocEndLine = 399
-                   , srcLocEndCol = 10
-                   })
+              Nothing
               (Setting
                  [ DashedLong ('c' :| "onfig-file") ]
                  [ _ ]
@@ -32,16 +23,7 @@ WithConfig
      (Check
         _
         (Setting
-           (Just
-              SrcLoc
-                { srcLocPackage = "main"
-                , srcLocModule = "OptEnvConf.APISpec"
-                , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                , srcLocStartLine = 202
-                , srcLocStartCol = 11
-                , srcLocEndLine = 202
-                , srcLocEndCol = 30
-                })
+           Nothing
            (Setting
               [ DashedLong ('(' :| "enable|disable)-example") ]
               []
@@ -57,16 +39,7 @@ WithConfig
         (Check
            _
            (Setting
-              (Just
-                 SrcLoc
-                   { srcLocPackage = "main"
-                   , srcLocModule = "OptEnvConf.APISpec"
-                   , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                   , srcLocStartLine = 202
-                   , srcLocStartCol = 11
-                   , srcLocEndLine = 202
-                   , srcLocEndCol = 30
-                   })
+              Nothing
               (Setting
                  [ DashedLong ('d' :| "isable-example") ]
                  []
@@ -82,16 +55,7 @@ WithConfig
            (Check
               _
               (Setting
-                 (Just
-                    SrcLoc
-                      { srcLocPackage = "main"
-                      , srcLocModule = "OptEnvConf.APISpec"
-                      , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                      , srcLocStartLine = 202
-                      , srcLocStartCol = 11
-                      , srcLocEndLine = 202
-                      , srcLocEndCol = 30
-                      })
+                 Nothing
                  (Setting
                     [ DashedLong ('e' :| "nable-example") ]
                     []
@@ -107,16 +71,7 @@ WithConfig
               (Check
                  _
                  (Setting
-                    (Just
-                       SrcLoc
-                         { srcLocPackage = "main"
-                         , srcLocModule = "OptEnvConf.APISpec"
-                         , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                         , srcLocStartLine = 202
-                         , srcLocStartCol = 11
-                         , srcLocEndLine = 202
-                         , srcLocEndCol = 30
-                         })
+                    Nothing
                     (Setting
                        []
                        [ _ ]
@@ -132,16 +87,7 @@ WithConfig
                  (Check
                     _
                     (Setting
-                       (Just
-                          SrcLoc
-                            { srcLocPackage = "main"
-                            , srcLocModule = "OptEnvConf.APISpec"
-                            , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                            , srcLocStartLine = 202
-                            , srcLocStartCol = 11
-                            , srcLocEndLine = 202
-                            , srcLocEndCol = 30
-                            })
+                       Nothing
                        (Setting
                           []
                           []

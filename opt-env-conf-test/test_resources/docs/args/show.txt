@@ -2,16 +2,7 @@ Check
   _
   (Many
      (Setting
-        (Just
-           SrcLoc
-             { srcLocPackage = "main"
-             , srcLocModule = "OptEnvConf.APISpec"
-             , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 160
-             , srcLocStartCol = 9
-             , srcLocEndLine = 160
-             , srcLocEndCol = 16
-             })
+        Nothing
         (Setting
            []
            [ _ ]

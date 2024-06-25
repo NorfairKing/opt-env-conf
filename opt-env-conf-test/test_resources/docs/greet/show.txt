@@ -6,16 +6,7 @@ WithConfig
         (Check
            _
            (Setting
-              (Just
-                 SrcLoc
-                   { srcLocPackage = "opt-env-conf-0.0.0.0-CzxqsBAzD4KFFnWObAPTqz"
-                   , srcLocModule = "OptEnvConf.Parser"
-                   , srcLocFile = "src/OptEnvConf/Parser.hs"
-                   , srcLocStartLine = 399
-                   , srcLocStartCol = 3
-                   , srcLocEndLine = 399
-                   , srcLocEndCol = 10
-                   })
+              Nothing
               (Setting
                  [ DashedLong ('c' :| "onfig-file") ]
                  [ _ ]
@@ -33,16 +24,7 @@ WithConfig
         (Check
            _
            (Setting
-              (Just
-                 SrcLoc
-                   { srcLocPackage = "main"
-                   , srcLocModule = "OptEnvConf.APISpec"
-                   , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                   , srcLocStartLine = 113
-                   , srcLocStartCol = 13
-                   , srcLocEndLine = 113
-                   , srcLocEndCol = 20
-                   })
+              Nothing
               (Setting
                  [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
                  [ _ ]
@@ -56,16 +38,7 @@ WithConfig
                  (Just "GREETING")
                  (Just "Greeting to use"))))
         (Setting
-           (Just
-              SrcLoc
-                { srcLocPackage = "main"
-                , srcLocModule = "OptEnvConf.APISpec"
-                , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                , srcLocStartLine = 124
-                , srcLocStartCol = 13
-                , srcLocEndLine = 124
-                , srcLocEndCol = 20
-                })
+           Nothing
            (Setting
               []
               [ _ ]
@@ -78,16 +51,7 @@ WithConfig
               (Just "SUBJECT")
               (Just "Who to greet"))))
      (Setting
-        (Just
-           SrcLoc
-             { srcLocPackage = "main"
-             , srcLocModule = "OptEnvConf.APISpec"
-             , srcLocFile = "test/OptEnvConf/APISpec.hs"
-             , srcLocStartLine = 131
-             , srcLocStartCol = 13
-             , srcLocEndLine = 131
-             , srcLocEndCol = 20
-             })
+        Nothing
         (Setting
            [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
            [ _ ]

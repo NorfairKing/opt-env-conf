@@ -16,9 +16,10 @@ data Instructions = Instructions !Settings !Dispatch
 
 instance HasParser Instructions where
   settingsParser =
-    Instructions
-      <$> settingsParser
-      <*> settingsParser
+    withLocalYamlConfig $
+      Instructions
+        <$> settingsParser
+        <*> settingsParser
 
 data Dispatch
   = DispatchCreate !String
@@ -68,6 +69,7 @@ instance HasParser Settings where
         [ help "minimal severity of log messages",
           reader str,
           metavar "LOG_LEVEL",
-          name "log-level"
+          name "log-level",
+          name "DEBUG"
         ]
     pure Settings {..}

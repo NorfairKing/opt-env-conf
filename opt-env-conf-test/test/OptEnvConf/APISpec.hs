@@ -36,7 +36,7 @@ exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
 
   it "shows the parser in the same way" $
     goldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
-      case Pretty.parseValue (showParserABit p) of
+      case Pretty.parseValue (showParserABit (parserEraseSrcLocs p)) of
         Nothing -> expectationFailure "Error parsing value"
         Just v -> pure $ Pretty.valToStr v
 

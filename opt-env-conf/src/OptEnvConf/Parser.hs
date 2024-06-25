@@ -40,8 +40,11 @@ module OptEnvConf.Parser
     Metavar,
     Help,
     showParserABit,
+    parserEraseSrcLocs,
     parserMapSetting,
-    parserTraverseSetting,
+    parserMapSettingParser,
+    parserTraverseSettingParser,
+    commandTraverseSettingParser,
 
     -- ** Re-exports
     Functor (..),
@@ -572,16 +575,24 @@ subSettings prefix = subAll prefix settingsParser
 
 {-# ANN parserMapSetting ("NOCOVER" :: String) #-}
 parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
-parserMapSetting func = runIdentity . parserTraverseSetting (Identity . func)
+parserMapSetting func = parserMapSettingParser $ \mLoc s -> (mLoc, func s)
 
-{-# ANN parserTraverseSetting ("NOCOVER" :: String) #-}
-parserTraverseSetting ::
+{-# ANN parserEraseSrcLocs ("NOCOVER" :: String) #-}
+parserEraseSrcLocs :: Parser a -> Parser a
+parserEraseSrcLocs = parserMapSettingParser (\_ set -> (Nothing, set))
+
+{-# ANN parserMapSettingParser ("NOCOVER" :: String) #-}
+parserMapSettingParser :: (forall a. Maybe SrcLoc -> Setting a -> (Maybe SrcLoc, Setting a)) -> Parser s -> Parser s
+parserMapSettingParser func = runIdentity . parserTraverseSettingParser (\mLoc set -> Identity $ func mLoc set)
+
+{-# ANN parserTraverseSettingParser ("NOCOVER" :: String) #-}
+parserTraverseSettingParser ::
   forall f s.
   (Applicative f) =>
-  (forall a. Setting a -> f (Setting a)) ->
+  (forall a. Maybe SrcLoc -> Setting a -> f (Maybe SrcLoc, Setting a)) ->
   Parser s ->
   f (Parser s)
-parserTraverseSetting func = go
+parserTraverseSettingParser func = go
   where
     go :: forall q. Parser q -> f (Parser q)
     go = \case
@@ -592,17 +603,17 @@ parserTraverseSetting func = go
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
       ParserCheck f p -> ParserCheck f <$> go p
-      ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSetting func) cs
+      ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSettingParser func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
-      ParserSetting mLoc s -> ParserSetting mLoc <$> func s
+      ParserSetting mLoc s -> uncurry ParserSetting <$> func mLoc s
 
-{-# ANN commandTraverseSetting ("NOCOVER" :: String) #-}
-commandTraverseSetting ::
+{-# ANN commandTraverseSettingParser ("NOCOVER" :: String) #-}
+commandTraverseSettingParser ::
   forall f s.
   (Applicative f) =>
-  (forall a. Setting a -> f (Setting a)) ->
+  (forall a. Maybe SrcLoc -> Setting a -> f (Maybe SrcLoc, Setting a)) ->
   Command s ->
   f (Command s)
-commandTraverseSetting func c = do
+commandTraverseSettingParser func c = do
   (\p -> c {commandParser = p})
-    <$> parserTraverseSetting func (commandParser c)
+    <$> parserTraverseSettingParser func (commandParser c)

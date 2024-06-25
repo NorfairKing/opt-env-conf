@@ -6,16 +6,7 @@ WithConfig
         (Check
            _
            (Setting
-              (Just
-                 SrcLoc
-                   { srcLocPackage = "opt-env-conf-0.0.0.0-CzxqsBAzD4KFFnWObAPTqz"
-                   , srcLocModule = "OptEnvConf.Parser"
-                   , srcLocFile = "src/OptEnvConf/Parser.hs"
-                   , srcLocStartLine = 399
-                   , srcLocStartCol = 3
-                   , srcLocEndLine = 399
-                   , srcLocEndCol = 10
-                   })
+              Nothing
               (Setting
                  [ DashedLong ('c' :| "onfig-file") ]
                  [ _ ]
@@ -35,16 +26,7 @@ WithConfig
          (Check
             _
             (Setting
-               (Just
-                  SrcLoc
-                    { srcLocPackage = "main"
-                    , srcLocModule = "OptEnvConf.APISpec"
-                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
-                    , srcLocStartLine = 261
-                    , srcLocStartCol = 17
-                    , srcLocEndLine = 261
-                    , srcLocEndCol = 24
-                    })
+               Nothing
                (Setting
                   [ DashedLong ('n' :| "ame") ]
                   [ _ ]
