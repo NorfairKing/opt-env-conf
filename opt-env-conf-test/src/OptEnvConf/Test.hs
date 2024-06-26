@@ -4,8 +4,10 @@
 
 module OptEnvConf.Test
   ( settingsLintSpec,
+    parserLintSpec,
     parserLintTest,
-    goldenReferenceDocumentationSpec,
+    goldenSettingsReferenceDocumentationSpec,
+    goldenParserReferenceDocumentationSpec,
     pureGoldenReferenceDocumentation,
   )
 where
@@ -19,9 +21,13 @@ import Test.Syd
 import Text.Colour
 
 settingsLintSpec :: forall a. (HasCallStack) => (HasParser a) => Spec
-settingsLintSpec = withFrozenCallStack $ do
-  specify "pass the lint test" $
-    parserLintTest (settingsParser @a)
+settingsLintSpec = withFrozenCallStack $ parserLintSpec (settingsParser @a)
+
+parserLintSpec :: forall a. (HasCallStack) => Parser a -> Spec
+parserLintSpec parser =
+  withFrozenCallStack $
+    specify "pass the lint test" $
+      parserLintTest parser
 
 parserLintTest :: Parser a -> IO ()
 parserLintTest parser =
@@ -30,10 +36,13 @@ parserLintTest parser =
     Just errs ->
       expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderLintErrors errs
 
-goldenReferenceDocumentationSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> String -> Spec
-goldenReferenceDocumentationSpec path progname = withFrozenCallStack $ do
+goldenSettingsReferenceDocumentationSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> String -> Spec
+goldenSettingsReferenceDocumentationSpec path progname = withFrozenCallStack $ goldenParserReferenceDocumentationSpec (settingsParser @a) path progname
+
+goldenParserReferenceDocumentationSpec :: (HasCallStack) => Parser a -> FilePath -> String -> Spec
+goldenParserReferenceDocumentationSpec parser path progname = withFrozenCallStack $ do
   specify "produces the same reference documentation as before" $
-    pureGoldenReferenceDocumentation path progname (settingsParser @a)
+    pureGoldenReferenceDocumentation path progname parser
 
 pureGoldenReferenceDocumentation :: FilePath -> String -> Parser a -> GoldenTest Text
 pureGoldenReferenceDocumentation path progname parser =
