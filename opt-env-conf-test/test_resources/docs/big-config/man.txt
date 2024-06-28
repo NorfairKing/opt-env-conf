@@ -1,43 +1,43 @@
 .Dd $Mdocdate$
-.Dt [33mbig-config[m 1
+.Dt big-config 1
 .Os
 .Sh NAME
-.Nm [33mbig-config[m
+.Nm big-config
 .Nd TODO one line about what it does
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m[36m)[m
+big-config (-h|--help) | --version | (--config-file FILE)
 .Sh SETTINGS
-  [34mShow this help text[m
-  switch: [37m-h[m[36m|[m[37m--help[m
+  Show this help text
+  switch: -h|--help
 
-  [34mOutput version information: 0.0.0[m
-  switch: [37m--version[m
+  Output version information: 0.0.0
+  switch: --version
 
-  [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE[m
-  env: [37mCONFIG_FILE[m [33mFILE[m
+  Path to the configuration file
+  option: --config-file FILE
+  env: CONFIG_FILE FILE
   
-  [34mmulti-line config codec explanation, the same option twice.[m
-  config: [37mbig[m:
-    [37m<key>[m: 
-      [37m<key>[m: 
-        [33m<number>[m # [32m64 bit signed integer[m
+  multi-line config codec explanation, the same option twice.
+  config: big:
+    <key>: 
+      <key>: 
+        <number> # 64 bit signed integer
   
 
 .Sh OPTIONS
-  [37m-h[m[36m|[m[37m--help[m     [34mShow this help text[m               
-  [37m--version[m     [34mOutput version information: 0.0.0[m 
-  [37m--config-file[m [34mPath to the configuration file[m    
+  -h|--help     Show this help text               
+  --version     Output version information: 0.0.0 
+  --config-file Path to the configuration file    
 
 .Sh ENVIRONMENT VARIABLES
-  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m
+  CONFIG_FILE FILE   Path to the configuration file
 
 .Sh CONFIGURATION VALUES
-  [34mmulti-line config codec explanation, the same option twice.[m
-  [37mbig[m:
-    [37m<key>[m: 
-      [37m<key>[m: 
-        [33m<number>[m # [32m64 bit signed integer[m
+  multi-line config codec explanation, the same option twice.
+  big:
+    <key>: 
+      <key>: 
+        <number> # 64 bit signed integer
 

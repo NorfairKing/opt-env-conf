@@ -1,65 +1,65 @@
 .Dd $Mdocdate$
-.Dt [33msub-commands[m 1
+.Dt sub-commands 1
 .Os
 .Sh NAME
-.Nm [33msub-commands[m
+.Nm sub-commands
 .Nd TODO one line about what it does
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub a | b c | d)
 .Sh SETTINGS
-  [34mShow this help text[m
-  switch: [37m-h[m[36m|[m[37m--help[m
+  Show this help text
+  switch: -h|--help
 
-  [34mOutput version information: 0.0.0[m
-  switch: [37m--version[m
+  Output version information: 0.0.0
+  switch: --version
 
-  [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE[m
-  env: [37mCONFIG_FILE[m [33mFILE[m
+  Path to the configuration file
+  option: --config-file FILE
+  env: CONFIG_FILE FILE
   
-  [34mcommand without subcommands[m
-  command: [35mtop[m
-    [34mname[m
-    option: [37m--name[m [33mNAME[m
-    env: [37mNAME[m [33mNAME[m
-    config: [37mname[m: [33m<string>[m
+  command without subcommands
+  command: top
+    name
+    option: --name NAME
+    env: NAME NAME
+    config: name: <string>
     
   
-  [34mcommand with subcommands[m
-  command: [35msub[m
-    [34mA[m
-    command: [35ma[m
+  command with subcommands
+  command: sub
+    A
+    command: a
     
-    [34mB[m
-    command: [35mb[m
+    B
+    command: b
     
-    [34mC[m
-    command: [35mc[m
+    C
+    command: c
     
-    [34mD[m
-    command: [35md[m
+    D
+    command: d
     
   
 
 .Sh OPTIONS
-  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
-  [37m--version[m [34mOutput version information: 0.0.0[m 
-  [37m--config-file[m [34mPath to the configuration file[m 
-  [35mtop[m [34mcommand without subcommands[m
-      [37m--name[m [34mname[m 
-  [35msub[m [34mcommand with subcommands[m
-      [35ma[m [34mA[m
-      [35mb[m [34mB[m
-      [35mc[m [34mC[m
-      [35md[m [34mD[m
+  -h|--help Show this help text 
+  --version Output version information: 0.0.0 
+  --config-file Path to the configuration file 
+  top command without subcommands
+      --name name 
+  sub command with subcommands
+      a A
+      b B
+      c C
+      d D
 
 .Sh ENVIRONMENT VARIABLES
-  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m
-  [37mNAME[m [33mNAME[m          [34mname[m                          
+  CONFIG_FILE FILE   Path to the configuration file
+  NAME NAME          name                          
 
 .Sh CONFIGURATION VALUES
-  [34mname[m
-  [37mname[m: [33m<string>[m
+  name
+  name: <string>
 

@@ -91,9 +91,10 @@ exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
         parserConfDocs parser
 
   it "documents the man page in the same way" $
-    pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/man.txt") $
-      renderManPage dir version $
-        parserDocs parser
+    pureGoldenTextFile ("test_resources/docs/" <> dir <> "/man.txt") $
+      renderChunksText WithoutColours $
+        renderManPage dir version $
+          parserDocs parser
 
   it "renders the reference documentation in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/reference.txt") $

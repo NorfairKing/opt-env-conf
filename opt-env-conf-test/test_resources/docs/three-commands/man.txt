@@ -1,66 +1,66 @@
 .Dd $Mdocdate$
-.Dt [33mthree-commands[m 1
+.Dt three-commands 1
 .Os
 .Sh NAME
-.Nm [33mthree-commands[m
+.Nm three-commands
 .Nd TODO one line about what it does
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33mthree-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [35mone[m [33mSTR[m [36m|[m [35mtwo[m [37m--number[m[36m|[m[37m-n[m [33mINT[m [37m--(enable|disable)-enable[m [36m|[m [35mthree[m[36m)[m
+three-commands (-h|--help) | --version | (--config-file FILE one STR | two --number|-n INT --(enable|disable)-enable | three)
 .Sh SETTINGS
-  [34mShow this help text[m
-  switch: [37m-h[m[36m|[m[37m--help[m
+  Show this help text
+  switch: -h|--help
 
-  [34mOutput version information: 0.0.0[m
-  switch: [37m--version[m
+  Output version information: 0.0.0
+  switch: --version
 
-  [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE[m
-  env: [37mCONFIG_FILE[m [33mFILE[m
+  Path to the configuration file
+  option: --config-file FILE
+  env: CONFIG_FILE FILE
   
-  [34mfirst[m
-  command: [35mone[m
-    [34margument[m
-    argument: [33mSTR[m
+  first
+  command: one
+    argument
+    argument: STR
     
   
-  [34msecond[m
-  command: [35mtwo[m
-    [34mnumber[m
-    option: [37m--number[m[36m|[m[37m-n[m [33mINT[m
-    env: [37mNUMBER[m [33mINT[m
-    config: [37mnumber[m: [33m<number>[m # [32m64 bit signed integer[m
+  second
+  command: two
+    number
+    option: --number|-n INT
+    env: NUMBER INT
+    config: number: <number> # 64 bit signed integer
     
-    [34menable extra[m
-    switch: [37m--(enable|disable)-enable[m
-    env: [37mENABLE[m [33mBOOL[m
-    config: [37menable[m: [33m<boolean>[m
+    enable extra
+    switch: --(enable|disable)-enable
+    env: ENABLE BOOL
+    config: enable: <boolean>
   
   
-  [34mthird[m
-  command: [35mthree[m
+  third
+  command: three
   
 
 .Sh OPTIONS
-  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
-  [37m--version[m [34mOutput version information: 0.0.0[m 
-  [37m--config-file[m [34mPath to the configuration file[m 
-  [35mone[m [34mfirst[m
-      [33mSTR[m [34margument[m 
-  [35mtwo[m [34msecond[m
-      [37m--number[m[36m|[m[37m-n[m               [34mnumber[m       
-      [37m--(enable|disable)-enable[m [34menable extra[m 
-  [35mthree[m [34mthird[m
+  -h|--help Show this help text 
+  --version Output version information: 0.0.0 
+  --config-file Path to the configuration file 
+  one first
+      STR argument 
+  two second
+      --number|-n               number       
+      --(enable|disable)-enable enable extra 
+  three third
 
 .Sh ENVIRONMENT VARIABLES
-  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m
-  [37mNUMBER[m [33mINT[m         [34mnumber[m                        
-  [37mENABLE[m [33mBOOL[m        [34menable extra[m                  
+  CONFIG_FILE FILE   Path to the configuration file
+  NUMBER INT         number                        
+  ENABLE BOOL        enable extra                  
 
 .Sh CONFIGURATION VALUES
-  [34mnumber[m
-  [37mnumber[m: [33m<number>[m # [32m64 bit signed integer[m
-  [34menable extra[m
-  [37menable[m: [33m<boolean>[m
+  number
+  number: <number> # 64 bit signed integer
+  enable extra
+  enable: <boolean>
 

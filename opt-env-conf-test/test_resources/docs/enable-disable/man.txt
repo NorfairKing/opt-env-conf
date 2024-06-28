@@ -1,41 +1,41 @@
 .Dd $Mdocdate$
-.Dt [33menable-disable[m 1
+.Dt enable-disable 1
 .Os
 .Sh NAME
-.Nm [33menable-disable[m
+.Nm enable-disable
 .Nd TODO one line about what it does
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33menable-disable[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [37m--(enable|disable)-example[m[36m)[m
+enable-disable (-h|--help) | --version | (--config-file FILE --(enable|disable)-example)
 .Sh SETTINGS
-  [34mShow this help text[m
-  switch: [37m-h[m[36m|[m[37m--help[m
+  Show this help text
+  switch: -h|--help
 
-  [34mOutput version information: 0.0.0[m
-  switch: [37m--version[m
+  Output version information: 0.0.0
+  switch: --version
 
-  [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE[m
-  env: [37mCONFIG_FILE[m [33mFILE[m
+  Path to the configuration file
+  option: --config-file FILE
+  env: CONFIG_FILE FILE
   
-  [34mExample of an enable/disable switch[m
-  switch: [37m--(enable|disable)-example[m
-  env: [37mEXAMPLE[m [33mBOOL[m
-  config: [37mexample[m: [33m<boolean>[m
+  Example of an enable/disable switch
+  switch: --(enable|disable)-example
+  env: EXAMPLE BOOL
+  config: example: <boolean>
 
 
 .Sh OPTIONS
-  [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                 
-  [37m--version[m                  [34mOutput version information: 0.0.0[m   
-  [37m--config-file[m              [34mPath to the configuration file[m      
-  [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m 
+  -h|--help                  Show this help text                 
+  --version                  Output version information: 0.0.0   
+  --config-file              Path to the configuration file      
+  --(enable|disable)-example Example of an enable/disable switch 
 
 .Sh ENVIRONMENT VARIABLES
-  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m     
-  [37mEXAMPLE[m [33mBOOL[m       [34mExample of an enable/disable switch[m
+  CONFIG_FILE FILE   Path to the configuration file     
+  EXAMPLE BOOL       Example of an enable/disable switch
 
 .Sh CONFIGURATION VALUES
-  [34mExample of an enable/disable switch[m
-  [37mexample[m: [33m<boolean>[m
+  Example of an enable/disable switch
+  example: <boolean>
 

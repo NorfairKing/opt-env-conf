@@ -1,26 +1,26 @@
 .Dd $Mdocdate$
-.Dt [33mverbose[m 1
+.Dt verbose 1
 .Os
 .Sh NAME
-.Nm [33mverbose[m
+.Nm verbose
 .Nd TODO one line about what it does
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-[33mverbose[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [37m-v[m
+verbose (-h|--help) | --version | -v
 .Sh SETTINGS
-  [34mShow this help text[m
-  switch: [37m-h[m[36m|[m[37m--help[m
+  Show this help text
+  switch: -h|--help
 
-  [34mOutput version information: 0.0.0[m
-  switch: [37m--version[m
+  Output version information: 0.0.0
+  switch: --version
 
-  [34mVerbosity level. Use multiple to increase verbosity[m
-  switch: [37m-v[m
+  Verbosity level. Use multiple to increase verbosity
+  switch: -v
   
 
 .Sh OPTIONS
-  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m                                 
-  [37m--version[m [34mOutput version information: 0.0.0[m                   
-  [37m-v[m        [34mVerbosity level. Use multiple to increase verbosity[m 
+  -h|--help Show this help text                                 
+  --version Output version information: 0.0.0                   
+  -v        Verbosity level. Use multiple to increase verbosity 
 
