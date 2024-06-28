@@ -72,6 +72,8 @@ module OptEnvConf
 
     -- ** Common use
     enableDisableSwitch,
+    yesNoSwitch,
+    makeDoubleSwitch,
     readTextSecretFile,
 
     -- * Re-exports, just in case

@@ -1,0 +1,2 @@
+  [34mExample of a yes/no switch[m
+  [37mexample[m: [33m<boolean>[m

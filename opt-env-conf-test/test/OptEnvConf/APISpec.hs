@@ -21,6 +21,7 @@ spec = do
   exampleParserSpec "big-config" bigConfigParser
   exampleParserSpec "hidden" hiddenParser
   exampleParserSpec "enable-disable" enableDisableParser
+  exampleParserSpec "yes-no" yesNoParser
   exampleParserSpec "verbose" verboseParser
   exampleParserSpec "greet" greetParser
   exampleParserSpec "three-commands" threeCommandsParser
@@ -203,6 +204,20 @@ enableDisableParser =
         True
         [ long "example",
           help "Example of an enable/disable switch",
+          env "EXAMPLE",
+          conf "example"
+        ]
+
+data YesNo = YesNo Bool
+
+yesNoParser :: Parser YesNo
+yesNoParser =
+  withLocalYamlConfig $
+    YesNo
+      <$> yesNoSwitch
+        True
+        [ long "example",
+          help "Example of a yes/no switch",
           env "EXAMPLE",
           conf "example"
         ]

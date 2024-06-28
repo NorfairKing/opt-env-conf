@@ -1,0 +1,102 @@
+WithConfig
+  _
+  (Check
+     _
+     (Alt
+        (Check
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('c' :| "onfig-file") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just ("CONFIG_FILE" :| []))
+                 Nothing
+                 Nothing
+                 (Just "FILE")
+                 (Just "Path to the configuration file"))))
+        (Pure _)))
+  (Alt
+     (Check
+        _
+        (Setting
+           Nothing
+           (Setting
+              [ DashedLong ('[' :| "no-]example") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "Example of a yes/no switch"))))
+     (Alt
+        (Check
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('n' :| "o-example") ]
+                 []
+                 False
+                 (Just _)
+                 False
+                 Nothing
+                 Nothing
+                 Nothing
+                 Nothing
+                 Nothing)))
+        (Alt
+           (Check
+              _
+              (Setting
+                 Nothing
+                 (Setting
+                    [ DashedLong ('e' :| "xample") ]
+                    []
+                    False
+                    (Just _)
+                    False
+                    Nothing
+                    Nothing
+                    Nothing
+                    Nothing
+                    Nothing)))
+           (Alt
+              (Check
+                 _
+                 (Setting
+                    Nothing
+                    (Setting
+                       []
+                       [ _ ]
+                       False
+                       Nothing
+                       False
+                       (Just ("EXAMPLE" :| []))
+                       Nothing
+                       Nothing
+                       (Just "BOOL")
+                       (Just "Example of a yes/no switch"))))
+              (Alt
+                 (Check
+                    _
+                    (Setting
+                       Nothing
+                       (Setting
+                          []
+                          []
+                          False
+                          Nothing
+                          False
+                          Nothing
+                          (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
+                          Nothing
+                          Nothing
+                          (Just "Example of a yes/no switch"))))
+                 (Pure _))))))

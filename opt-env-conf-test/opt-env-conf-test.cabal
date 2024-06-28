@@ -140,6 +140,19 @@ extra-source-files:
     test_resources/docs/verbose/reference.txt
     test_resources/docs/verbose/show.txt
     test_resources/docs/verbose/version.txt
+    test_resources/docs/yes-no/config-docs.txt
+    test_resources/docs/yes-no/config.txt
+    test_resources/docs/yes-no/docs.txt
+    test_resources/docs/yes-no/env-docs.txt
+    test_resources/docs/yes-no/env.txt
+    test_resources/docs/yes-no/help.txt
+    test_resources/docs/yes-no/man.txt
+    test_resources/docs/yes-no/opt-docs.txt
+    test_resources/docs/yes-no/opt-long.txt
+    test_resources/docs/yes-no/opt-short.txt
+    test_resources/docs/yes-no/reference.txt
+    test_resources/docs/yes-no/show.txt
+    test_resources/docs/yes-no/version.txt
     test_resources/error/empty.txt
     test_resources/error/missing-argument.txt
     test_resources/error/missing-option.txt

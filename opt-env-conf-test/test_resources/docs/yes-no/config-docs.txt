@@ -1,0 +1,16 @@
+AnyDocsAnd
+  [ AnyDocsSingle
+      EnvDoc
+        { envDocVars = "CONFIG_FILE" :| []
+        , envDocDefault = Nothing
+        , envDocMetavar = Just "FILE"
+        , envDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsSingle
+      EnvDoc
+        { envDocVars = "EXAMPLE" :| []
+        , envDocDefault = Nothing
+        , envDocMetavar = Just "BOOL"
+        , envDocHelp = Just "Example of a yes/no switch"
+        }
+  ]

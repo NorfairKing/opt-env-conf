@@ -1,0 +1,22 @@
+AnyDocsAnd
+  [ AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = False
+        , optDocTryOption = True
+        , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Just "FILE"
+        , optDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsSingle
+      OptDoc
+        { optDocTryArgument = False
+        , optDocTrySwitch = True
+        , optDocTryOption = False
+        , optDocDasheds = [ DashedLong ('[' :| "no-]example") ]
+        , optDocDefault = Nothing
+        , optDocMetavar = Nothing
+        , optDocHelp = Just "Example of a yes/no switch"
+        }
+  ]

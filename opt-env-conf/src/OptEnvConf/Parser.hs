@@ -31,6 +31,8 @@ module OptEnvConf.Parser
     withConfigurableYamlConfig,
     configuredConfigFile,
     enableDisableSwitch,
+    yesNoSwitch,
+    makeDoubleSwitch,
     readTextSecretFile,
 
     -- * Parser implementation
@@ -67,7 +69,7 @@ import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack)
+import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
@@ -410,11 +412,28 @@ configuredConfigFile =
 
 -- | Define a setting for a 'Bool' with a given default value.
 --
+-- If you pass in `long` values, it will have `--foobar` and `--no-foobar` switches.
+-- If you pass in `env` values, it will read an environment variable too.
+-- If you pass in `conf` values, it will read a configuration value too.
+yesNoSwitch :: (HasCallStack) => Bool -> [Builder Bool] -> Parser Bool
+yesNoSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "" "no-" "[no-]" defaultBool builders
+
+-- | Define a setting for a 'Bool' with a given default value.
+--
 -- If you pass in `long` values, it will have `--enable-foobar` and `--disable-foobar` switches.
 -- If you pass in `env` values, it will read an environment variable too.
 -- If you pass in `conf` values, it will read a configuration value too.
 enableDisableSwitch :: (HasCallStack) => Bool -> [Builder Bool] -> Parser Bool
-enableDisableSwitch defaultBool builders =
+enableDisableSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
+
+makeDoubleSwitch ::
+  String ->
+  String ->
+  String ->
+  Bool ->
+  [Builder Bool] ->
+  Parser Bool
+makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
   choice $
     catMaybes
       [ Just parseDummy,
@@ -431,7 +450,7 @@ enableDisableSwitch defaultBool builders =
     parseEnableSwitch =
       ParserSetting mLoc $
         Setting
-          { settingDasheds = mapMaybe (prefixDashedLong "enable-") (settingDasheds s),
+          { settingDasheds = mapMaybe (prefixDashedLong truePrefix) (settingDasheds s),
             settingReaders = [],
             settingTryArgument = False,
             settingSwitchValue = Just True,
@@ -448,7 +467,7 @@ enableDisableSwitch defaultBool builders =
     parseDisableSwitch =
       ParserSetting mLoc $
         Setting
-          { settingDasheds = mapMaybe (prefixDashedLong "disable-") (settingDasheds s),
+          { settingDasheds = mapMaybe (prefixDashedLong falsePrefix) (settingDasheds s),
             settingReaders = [],
             settingTryArgument = False,
             settingSwitchValue = Just False,
@@ -504,7 +523,7 @@ enableDisableSwitch defaultBool builders =
     parseDummy =
       ParserSetting mLoc $
         Setting
-          { settingDasheds = mapMaybe (prefixDashedLong "(enable|disable)-") (settingDasheds s),
+          { settingDasheds = mapMaybe (prefixDashedLong helpPrefix) (settingDasheds s),
             settingReaders = [],
             settingTryArgument = False,
             settingSwitchValue = Just defaultBool, -- Unused
