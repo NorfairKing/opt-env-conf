@@ -70,6 +70,6 @@ instance HasParser Settings where
           reader str,
           metavar "LOG_LEVEL",
           name "log-level",
-          name "DEBUG"
+          value "DEBUG"
         ]
     pure Settings {..}
