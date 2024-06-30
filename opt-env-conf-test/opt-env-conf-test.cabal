@@ -231,20 +231,14 @@ test-suite opt-env-conf-test
     , aeson
     , base
     , containers
-    , envparse
-    , genvalidity
     , genvalidity-aeson
-    , genvalidity-containers
     , genvalidity-sydtest
     , genvalidity-text
     , mtl
     , opt-env-conf
     , opt-env-conf-test
-    , optparse-applicative
     , pretty-show
     , safe-coloured-text
-    , safe-coloured-text-terminfo
     , sydtest
     , text
-    , yaml
   default-language: Haskell2010

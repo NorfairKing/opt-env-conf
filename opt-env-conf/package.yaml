@@ -15,7 +15,6 @@ library:
   - autodocodec-schema
   - autodocodec-yaml
   - containers
-  - filepath
   - mtl
   - path
   - path-io

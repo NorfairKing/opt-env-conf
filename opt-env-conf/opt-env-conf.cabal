@@ -38,7 +38,6 @@ library
     , autodocodec-yaml
     , base
     , containers
-    , filepath
     , mtl
     , path
     , path-io
