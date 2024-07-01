@@ -14,14 +14,14 @@ data ParseError
   | ParseErrorEmptySetting
   | ParseErrorCheckFailed !String
   | ParseErrorMissingArgument !(Maybe OptDoc)
-  | ParseErrorArgumentRead !(NonEmpty String)
+  | ParseErrorArgumentRead !(Maybe OptDoc) !(NonEmpty String)
   | ParseErrorMissingOption !(Maybe OptDoc)
-  | ParseErrorOptionRead !(NonEmpty String)
+  | ParseErrorOptionRead !(Maybe OptDoc) !(NonEmpty String)
   | ParseErrorMissingEnvVar !(Maybe EnvDoc)
-  | ParseErrorEnvRead !(NonEmpty String)
+  | ParseErrorEnvRead !(Maybe EnvDoc) !(NonEmpty String)
   | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfVal !(Maybe ConfDoc)
-  | ParseErrorConfigRead !String
+  | ParseErrorConfigRead !(Maybe ConfDoc) !String
   | ParseErrorMissingCommand ![String]
   | ParseErrorUnrecognisedCommand !String ![String]
   deriving (Show)
@@ -33,14 +33,14 @@ errorIsForgivable = \case
   ParseErrorEmptySetting -> False
   ParseErrorCheckFailed _ -> False
   ParseErrorMissingArgument _ -> True
-  ParseErrorArgumentRead _ -> False
+  ParseErrorArgumentRead _ _ -> False
   ParseErrorMissingSwitch _ -> True
-  ParseErrorOptionRead _ -> False
+  ParseErrorOptionRead _ _ -> False
   ParseErrorMissingOption _ -> True
   ParseErrorMissingEnvVar _ -> True
-  ParseErrorEnvRead _ -> False
+  ParseErrorEnvRead _ _ -> False
   ParseErrorMissingConfVal _ -> True
-  ParseErrorConfigRead _ -> False
+  ParseErrorConfigRead _ _ -> False
   ParseErrorMissingCommand cs -> not $ null cs
   ParseErrorUnrecognisedCommand _ _ -> False
 
@@ -54,25 +54,36 @@ renderError = \case
   ParseErrorEmptySetting ->
     [["This setting has not been configured to be able to parse anything."]]
   ParseErrorCheckFailed err ->
-    [["Check failed:"], [chunk $ T.pack err]]
+    [["Check failed: "], [chunk $ T.pack err]]
   ParseErrorMissingArgument o ->
-    ["Missing argument:" : unwordsChunks (maybe [] renderOptDocLong o)]
-  ParseErrorArgumentRead errs ->
-    ["Failed to read argument:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
+    [ "Missing argument: "
+        : unwordsChunks (maybe [] renderOptDocLong o)
+    ]
+  ParseErrorArgumentRead md errs ->
+    ["Failed to read argument: "]
+      : unwordsChunks (maybe [] renderOptDocLong md)
+      : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingOption o ->
-    ["Missing option:" : unwordsChunks (maybe [] renderOptDocLong o)]
+    ["Missing option: " : unwordsChunks (maybe [] renderOptDocLong o)]
   ParseErrorMissingSwitch o ->
-    ["Missing switch:" : unwordsChunks (maybe [] renderOptDocLong o)]
-  ParseErrorOptionRead errs ->
-    ["Failed to read option:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
+    ["Missing switch: " : unwordsChunks (maybe [] renderOptDocLong o)]
+  ParseErrorOptionRead md errs ->
+    ["Failed to read option: "]
+      : unwordsChunks (maybe [] renderOptDocLong md)
+      : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingEnvVar md ->
-    ["Missing option: "] : maybe [] (pure . pure . chunk . T.pack . show) md
-  ParseErrorEnvRead errs ->
-    ["Failed to read env var:"] : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
+    ["Missing option: "]
+      : maybe [] renderEnvDoc md
+  ParseErrorEnvRead md errs ->
+    ["Failed to read env var: "]
+      : maybe [] renderEnvDoc md
+      ++ map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingConfVal md ->
     ["Missing config value: "] : maybe [] renderConfDoc md
-  ParseErrorConfigRead s ->
-    [["Failed to parse configuration:", chunk $ T.pack $ show s]]
+  ParseErrorConfigRead md s ->
+    ["Failed to parse configuration: "]
+      : maybe [] renderConfDoc md
+      ++ [[chunk $ T.pack $ show s]]
   ParseErrorMissingCommand cs ->
     [ ["Missing command, available commands:"],
       unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs

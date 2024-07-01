@@ -1,2 +1,3 @@
-Failed to read argument:
+Failed to read argument: 
+[33mINT[m [34minteger option[m 
 Un-Read-able value: "five"

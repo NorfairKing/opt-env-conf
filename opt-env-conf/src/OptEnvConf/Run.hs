@@ -238,6 +238,7 @@ runParserOn p args envVars mConfig = do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
       ParserSetting _ set@Setting {..} -> do
+        let mOptDoc = settingOptDoc set
         mArg <-
           if settingTryArgument
             then do
@@ -249,7 +250,7 @@ runParserOn p args envVars mConfig = do
                 Nothing -> pure NotFound
                 Just argStr -> do
                   case tryReaders rs argStr of
-                    Left errs -> ppError $ ParseErrorArgumentRead errs
+                    Left errs -> ppError $ ParseErrorArgumentRead mOptDoc errs
                     Right a -> pure $ Found a
             else pure NotRun
 
@@ -279,13 +280,14 @@ runParserOn p args envVars mConfig = do
                         Nothing -> pure NotFound
                         Just optionStr -> do
                           case tryReaders rs optionStr of
-                            Left err -> ppError $ ParseErrorOptionRead err
+                            Left err -> ppError $ ParseErrorOptionRead mOptDoc err
                             Right a -> pure $ Found a
                     else pure NotRun
 
                 case mOpt of
                   Found a -> pure a
                   _ -> do
+                    let mEnvDoc = settingEnvDoc set
                     mEnv <- case settingEnvVars of
                       Nothing -> pure NotRun
                       Just ne -> do
@@ -300,13 +302,14 @@ runParserOn p args envVars mConfig = do
                         -- result.
                         results <- for founds $ \varStr ->
                           case tryReaders rs varStr of
-                            Left errs -> ppError $ ParseErrorEnvRead errs
+                            Left errs -> ppError $ ParseErrorEnvRead mEnvDoc errs
                             Right a -> pure a
                         pure $ maybe NotFound Found $ listToMaybe results
 
                     case mEnv of
                       Found a -> pure a
                       _ -> do
+                        let mConfDoc = settingConfDoc set
                         mConf <- case settingConfigVals of
                           Nothing -> pure NotRun
                           Just ((ne, DecodingCodec c) :| _) -> do
@@ -327,11 +330,11 @@ runParserOn p args envVars mConfig = do
                                           Nothing -> pure Nothing
                                           Just o' -> jsonParser o' neRest
                                 case JSON.parseEither (jsonParser obj) ne of
-                                  Left err -> ppError $ ParseErrorConfigRead err
+                                  Left err -> ppError $ ParseErrorConfigRead mConfDoc err
                                   Right mV -> case mV of
                                     Nothing -> pure NotFound
                                     Just v -> case JSON.parseEither (parseJSONVia c) v of
-                                      Left err -> ppError $ ParseErrorConfigRead err
+                                      Left err -> ppError $ ParseErrorConfigRead mConfDoc err
                                       Right a -> pure $ Found a
 
                         case mConf of
@@ -340,9 +343,6 @@ runParserOn p args envVars mConfig = do
                             case settingDefaultValue of
                               Just (a, _) -> pure a
                               Nothing -> do
-                                let mOptDoc = settingOptDoc set
-                                let mEnvDoc = settingEnvDoc set
-                                let mConfDoc = settingConfDoc set
                                 let parseResultError e res = case res of
                                       NotRun -> Nothing
                                       NotFound -> Just e
