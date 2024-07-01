@@ -1,2 +1,4 @@
   [34mname[m
-  [37mname[m: [33m<string>[m
+  [37mname[m:
+    # [32mor null[m
+    [33m<string>[m

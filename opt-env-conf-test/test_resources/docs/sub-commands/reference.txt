@@ -16,7 +16,9 @@
     [34mname[m
     option: [37m--name[m [33mNAME[m
     env: [37mNAME[m [33mNAME[m
-    config: [37mname[m: [33m<string>[m
+    config: [37mname[m:
+      # [32mor null[m
+      [33m<string>[m
     
   
   [34mcommand with subcommands[m
@@ -53,5 +55,7 @@
 
 [36mConfiguration Values[m:
   [34mname[m
-  [37mname[m: [33m<string>[m
+  [37mname[m:
+    # [32mor null[m
+    [33m<string>[m
 

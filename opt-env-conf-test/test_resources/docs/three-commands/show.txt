@@ -58,13 +58,19 @@ WithConfig
                           , BimapCodec
                               _
                               _
-                              (NumberCodec
-                                 Nothing
-                                 (Just
-                                    NumberBounds
-                                      { numberBoundsLower = -9.223372036854775808e18
-                                      , numberBoundsUpper = 9.223372036854775807e18
-                                      }))
+                              (EitherCodec
+                                 PossiblyJointUnion
+                                 NullCodec
+                                 (BimapCodec
+                                    _
+                                    _
+                                    (NumberCodec
+                                       Nothing
+                                       (Just
+                                          NumberBounds
+                                            { numberBoundsLower = -9.223372036854775808e18
+                                            , numberBoundsUpper = 9.223372036854775807e18
+                                            }))))
                           )
                         ])
                      Nothing
@@ -136,7 +142,15 @@ WithConfig
                                  Nothing
                                  False
                                  Nothing
-                                 (Just [ ( "enable" :| [] , BoolCodec Nothing ) ])
+                                 (Just
+                                    [ ( "enable" :| []
+                                      , BimapCodec
+                                          _
+                                          _
+                                          (EitherCodec
+                                             PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                                      )
+                                    ])
                                  Nothing
                                  Nothing
                                  (Just "enable extra")))

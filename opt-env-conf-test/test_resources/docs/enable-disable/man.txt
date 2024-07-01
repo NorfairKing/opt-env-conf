@@ -22,7 +22,9 @@ enable-disable (-h|--help) | --version | (--config-file FILE --(enable|disable)-
   Example of an enable/disable switch
   switch: --(enable|disable)-example
   env: EXAMPLE BOOL
-  config: example: <boolean>
+  config: example:
+    # or null
+    <boolean>
 
 
 .Sh OPTIONS
@@ -37,5 +39,7 @@ enable-disable (-h|--help) | --version | (--config-file FILE --(enable|disable)-
 
 .Sh CONFIGURATION VALUES
   Example of an enable/disable switch
-  example: <boolean>
+  example:
+    # or null
+    <boolean>
 

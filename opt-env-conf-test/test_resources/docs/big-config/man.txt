@@ -21,6 +21,7 @@ big-config (-h|--help) | --version | (--config-file FILE)
   
   multi-line config codec explanation, the same option twice.
   config: big:
+    # or null
     <key>: 
       <key>: 
         <number> # 64 bit signed integer
@@ -37,6 +38,7 @@ big-config (-h|--help) | --version | (--config-file FILE)
 .Sh CONFIGURATION VALUES
   multi-line config codec explanation, the same option twice.
   big:
+    # or null
     <key>: 
       <key>: 
         <number> # 64 bit signed integer

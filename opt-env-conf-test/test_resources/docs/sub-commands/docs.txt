@@ -23,7 +23,10 @@ AnyDocsAnd
                   , setDocTryOption = True
                   , setDocDasheds = [ DashedLong ('n' :| "ame") ]
                   , setDocEnvVars = Just ("NAME" :| [])
-                  , setDocConfKeys = Just (( "name" :| [] , StringSchema ) :| [])
+                  , setDocConfKeys =
+                      Just
+                        (( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
+                           [])
                   , setDocDefault = Nothing
                   , setDocMetavar = Just "NAME"
                   , setDocHelp = Just "name"

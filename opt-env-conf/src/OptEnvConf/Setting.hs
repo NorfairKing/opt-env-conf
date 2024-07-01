@@ -54,7 +54,7 @@ data Setting a = Setting
     settingHelp :: !(Maybe String)
   }
 
-data DecodingCodec a = forall void. DecodingCodec (ValueCodec void a)
+data DecodingCodec a = forall void. DecodingCodec (ValueCodec void (Maybe a))
 
 emptySetting :: Setting a
 emptySetting =
@@ -198,7 +198,11 @@ name s =
 
 -- | Like 'conf' but with a custom 'Codec' for parsing the value.
 confWith :: String -> ValueCodec void a -> Builder a
-confWith k c =
+confWith k c = confWith' k (maybeCodec c)
+
+-- | Like 'confWith' but allows interpreting 'Null' as a value other than "Not found".
+confWith' :: String -> ValueCodec void (Maybe a) -> Builder a
+confWith' k c =
   let t = (k :| [], DecodingCodec c)
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 

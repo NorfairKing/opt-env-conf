@@ -1,2 +1,4 @@
   [34mExample of a yes/no switch[m
-  [37mexample[m: [33m<boolean>[m
+  [37mexample[m:
+    # [32mor null[m
+    [33m<boolean>[m

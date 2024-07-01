@@ -335,7 +335,7 @@ runParserOn p args envVars mConfig = do
                                     Nothing -> pure NotFound
                                     Just v -> case JSON.parseEither (parseJSONVia c) v of
                                       Left err -> ppError $ ParseErrorConfigRead mConfDoc err
-                                      Right a -> pure $ Found a
+                                      Right a -> pure $ maybe NotFound Found a
 
                         case mConf of
                           Found a -> pure a

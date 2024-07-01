@@ -43,7 +43,12 @@ AnyDocsAnd
             , setDocTryOption = False
             , setDocDasheds = []
             , setDocEnvVars = Nothing
-            , setDocConfKeys = Just (( "example" :| [] , BoolSchema ) :| [])
+            , setDocConfKeys =
+                Just
+                  (( "example" :| []
+                   , AnyOfSchema (NullSchema :| [ BoolSchema ])
+                   ) :|
+                     [])
             , setDocDefault = Nothing
             , setDocMetavar = Nothing
             , setDocHelp = Just "Example of a yes/no switch"

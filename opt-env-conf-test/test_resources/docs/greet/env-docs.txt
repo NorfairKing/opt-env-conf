@@ -1,13 +1,19 @@
 AnyDocsAnd
   [ AnyDocsSingle
       ConfDoc
-        { confDocKeys = ( "greeting" :| [] , StringSchema ) :| []
+        { confDocKeys =
+            ( "greeting" :| []
+            , AnyOfSchema (NullSchema :| [ StringSchema ])
+            ) :|
+              []
         , confDocDefault = Just "\"Hello\""
         , confDocHelp = Just "Greeting to use"
         }
   , AnyDocsSingle
       ConfDoc
-        { confDocKeys = ( "polite" :| [] , BoolSchema ) :| []
+        { confDocKeys =
+            ( "polite" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+              []
         , confDocDefault = Just "False"
         , confDocHelp = Just "Whether to be polite"
         }

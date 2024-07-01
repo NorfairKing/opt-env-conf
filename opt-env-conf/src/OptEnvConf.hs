@@ -24,6 +24,8 @@ module OptEnvConf
     short,
     env,
     conf,
+    confWith,
+    confWith',
     name,
     value,
     hidden,

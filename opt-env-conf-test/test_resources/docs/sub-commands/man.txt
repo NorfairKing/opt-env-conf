@@ -24,7 +24,9 @@ sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub
     name
     option: --name NAME
     env: NAME NAME
-    config: name: <string>
+    config: name:
+      # or null
+      <string>
     
   
   command with subcommands
@@ -61,5 +63,7 @@ sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub
 
 .Sh CONFIGURATION VALUES
   name
-  name: <string>
+  name:
+    # or null
+    <string>
 

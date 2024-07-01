@@ -5,7 +5,9 @@ AnyDocsCommands
       , commandDocs =
           AnyDocsSingle
             ConfDoc
-              { confDocKeys = ( "name" :| [] , StringSchema ) :| []
+              { confDocKeys =
+                  ( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
+                    []
               , confDocDefault = Nothing
               , confDocHelp = Just "name"
               }

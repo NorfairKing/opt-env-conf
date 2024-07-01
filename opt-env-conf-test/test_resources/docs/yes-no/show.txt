@@ -95,7 +95,14 @@ WithConfig
                           Nothing
                           False
                           Nothing
-                          (Just [ ( "example" :| [] , BoolCodec Nothing ) ])
+                          (Just
+                             [ ( "example" :| []
+                               , BimapCodec
+                                   _
+                                   _
+                                   (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                               )
+                             ])
                           Nothing
                           Nothing
                           (Just "Example of a yes/no switch"))))

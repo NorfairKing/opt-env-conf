@@ -22,7 +22,9 @@ greet (-h|--help) | --version | (--config-file FILE -g|--greeting GREETING SUBJE
   Greeting to use
   option: -g|--greeting GREETING
   env: GREET_GREETING GREETING
-  config: greeting: <string>
+  config: greeting:
+    # or null
+    <string>
   
   Who to greet
   argument: SUBJECT
@@ -30,7 +32,9 @@ greet (-h|--help) | --version | (--config-file FILE -g|--greeting GREETING SUBJE
   Whether to be polite
   switch: -p|--polite
   env: GREET_POLITE ANY
-  config: polite: <boolean>
+  config: polite:
+    # or null
+    <boolean>
   
 
 .Sh OPTIONS
@@ -48,7 +52,11 @@ greet (-h|--help) | --version | (--config-file FILE -g|--greeting GREETING SUBJE
 
 .Sh CONFIGURATION VALUES
   Greeting to use
-  greeting: <string>
+  greeting:
+    # or null
+    <string>
   Whether to be polite
-  polite: <boolean>
+  polite:
+    # or null
+    <boolean>
 

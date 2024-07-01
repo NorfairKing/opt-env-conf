@@ -19,7 +19,12 @@ AnyDocsAnd
         , setDocDasheds =
             [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
         , setDocEnvVars = Just ("GREET_GREETING" :| [])
-        , setDocConfKeys = Just (( "greeting" :| [] , StringSchema ) :| [])
+        , setDocConfKeys =
+            Just
+              (( "greeting" :| []
+               , AnyOfSchema (NullSchema :| [ StringSchema ])
+               ) :|
+                 [])
         , setDocDefault = Just "\"Hello\""
         , setDocMetavar = Just "GREETING"
         , setDocHelp = Just "Greeting to use"
@@ -43,7 +48,10 @@ AnyDocsAnd
         , setDocTryOption = False
         , setDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
         , setDocEnvVars = Just ("GREET_POLITE" :| [])
-        , setDocConfKeys = Just (( "polite" :| [] , BoolSchema ) :| [])
+        , setDocConfKeys =
+            Just
+              (( "polite" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+                 [])
         , setDocDefault = Just "False"
         , setDocMetavar = Just "ANY"
         , setDocHelp = Just "Whether to be polite"

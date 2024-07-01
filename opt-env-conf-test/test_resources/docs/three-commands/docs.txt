@@ -44,12 +44,15 @@ AnyDocsAnd
                       , setDocConfKeys =
                           Just
                             (( "number" :| []
-                             , NumberSchema
-                                 (Just
-                                    NumberBounds
-                                      { numberBoundsLower = -9.223372036854775808e18
-                                      , numberBoundsUpper = 9.223372036854775807e18
-                                      })
+                             , AnyOfSchema
+                                 (NullSchema :|
+                                    [ NumberSchema
+                                        (Just
+                                           NumberBounds
+                                             { numberBoundsLower = -9.223372036854775808e18
+                                             , numberBoundsUpper = 9.223372036854775807e18
+                                             })
+                                    ])
                              ) :|
                                [])
                       , setDocDefault = Nothing
@@ -88,7 +91,10 @@ AnyDocsAnd
                           , setDocTryOption = False
                           , setDocDasheds = []
                           , setDocEnvVars = Nothing
-                          , setDocConfKeys = Just (( "enable" :| [] , BoolSchema ) :| [])
+                          , setDocConfKeys =
+                              Just
+                                (( "enable" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+                                   [])
                           , setDocDefault = Nothing
                           , setDocMetavar = Nothing
                           , setDocHelp = Just "enable extra"

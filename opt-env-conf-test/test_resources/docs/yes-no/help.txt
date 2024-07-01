@@ -13,6 +13,8 @@
   [34mExample of a yes/no switch[m
   switch: [37m--[no-]example[m
   env: [37mEXAMPLE[m [33mBOOL[m
-  config: [37mexample[m: [33m<boolean>[m
+  config: [37mexample[m:
+    # [32mor null[m
+    [33m<boolean>[m
 
 

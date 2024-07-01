@@ -3,7 +3,7 @@
 module OptEnvConf.RunSpec (spec) where
 
 import Control.Applicative
-import Data.Aeson as JSON (Object, toJSON)
+import Data.Aeson as JSON (Object, Value (Null), toJSON)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KeyMap
 import Data.GenValidity.Aeson ()
@@ -281,6 +281,17 @@ spec = do
                 let c = KeyMap.insert key (toJSON val) c'
                 let p = setting [conf (Key.toString key)]
                 let expected = val :: Text
+                shouldParse p args e (Just c) expected
+
+      it "parses Null as the default value" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \c' ->
+              forAllValid $ \key -> do
+                let c = KeyMap.insert key JSON.Null c'
+                let defaultVal = "hi"
+                let p = setting [conf (Key.toString key), value defaultVal]
+                let expected = defaultVal
                 shouldParse p args e (Just c) expected
 
     describe "Unit tests" $ do
