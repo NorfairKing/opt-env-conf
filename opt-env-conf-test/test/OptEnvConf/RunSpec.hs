@@ -526,6 +526,17 @@ spec = do
           (["two"], '2')
         ]
 
+      argParseSpecs
+        ((Left <$> setting [switch True, long "bash-completion-script"]) <|> (Right <$> setting [reader str, argument]))
+        [ (["--bash-completion-script"], Left True),
+          (["arg"], Right "arg")
+        ]
+      argParseSpecs
+        ((Left <$> setting [switch True, long "bash-completion-script"]) <|> (Right <$> optional (setting [reader str, argument])))
+        [ (["--bash-completion-script"], Left True),
+          (["arg"], Right (Just "arg"))
+        ]
+
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
 argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
 
