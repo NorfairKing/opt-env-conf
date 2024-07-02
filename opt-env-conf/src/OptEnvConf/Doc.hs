@@ -375,7 +375,8 @@ renderVersionPage :: String -> Version -> [Chunk]
 renderVersionPage progname version =
   unwordsChunks
     [ [progNameChunk progname],
-      [versionChunk version]
+      [versionChunk version],
+      ["\n"]
     ]
 
 -- | Render the output of @--help@
