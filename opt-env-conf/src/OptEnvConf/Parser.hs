@@ -362,8 +362,12 @@ checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIO = ParserCheck False
 
 -- Like 'checkMap', but allow trying the other side of any alternative if the result is Nothing.
-checkMapForgivable :: (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapForgivable = ParserCheck True
+checkMapForgivable :: (a -> Either String b) -> Parser a -> Parser b
+checkMapForgivable func = checkMapIOForgivable (pure . func)
+
+-- Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
+checkMapIOForgivable :: (a -> IO (Either String b)) -> Parser a -> Parser b
+checkMapIOForgivable = ParserCheck True
 
 -- | Declare multiple commands
 commands :: [Command a] -> Parser a
