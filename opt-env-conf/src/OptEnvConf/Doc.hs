@@ -266,8 +266,14 @@ renderSetDocWithoutHeader SetDoc {..} =
                   [line] ->
                     [["config: ", confValChunk key, ": "] ++ line]
                   ls ->
-                    ["config: ", confValChunk key, ":"]
-                      : indent ls
+                    ["config:"]
+                      : indent
+                        ( case ls of
+                            [] -> [["TODO"]]
+                            (l : ll) ->
+                              ([confValChunk key, ": "] ++ l)
+                                : indent ll
+                        )
             )
             (NE.toList confs)
           | confs <- maybeToList setDocConfKeys

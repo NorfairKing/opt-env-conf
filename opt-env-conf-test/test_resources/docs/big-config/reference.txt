@@ -12,11 +12,11 @@
   env: [37mCONFIG_FILE[m [33mFILE[m
   
   [34mmulti-line config codec explanation, the same option twice.[m
-  config: [37mbig[m:
-    # [32mor null[m
-    [37m<key>[m: 
+  config:
+    [37mbig[m: # [32mor null[m
       [37m<key>[m: 
-        [33m<number>[m # [32m64 bit signed integer[m
+        [37m<key>[m: 
+          [33m<number>[m # [32m64 bit signed integer[m
   
 
 [36mOptions[m:

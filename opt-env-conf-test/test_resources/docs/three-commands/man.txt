@@ -30,16 +30,16 @@ three-commands (-h|--help) | --version | (--config-file FILE one STR | two --num
     number
     option: --number|-n INT
     env: NUMBER INT
-    config: number:
-      # or null
-      <number> # 64 bit signed integer
+    config:
+      number: # or null
+        <number> # 64 bit signed integer
     
     enable extra
     switch: --(enable|disable)-enable
     env: ENABLE BOOL
-    config: enable:
-      # or null
-      <boolean>
+    config:
+      enable: # or null
+        <boolean>
   
   
   third

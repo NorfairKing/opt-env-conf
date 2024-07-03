@@ -24,9 +24,9 @@ sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub
     name
     option: --name NAME
     env: NAME NAME
-    config: name:
-      # or null
-      <string>
+    config:
+      name: # or null
+        <string>
     
   
   command with subcommands

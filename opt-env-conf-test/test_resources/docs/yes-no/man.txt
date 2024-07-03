@@ -22,9 +22,9 @@ yes-no (-h|--help) | --version | (--config-file FILE --[no-]example)
   Example of a yes/no switch
   switch: --[no-]example
   env: EXAMPLE BOOL
-  config: example:
-    # or null
-    <boolean>
+  config:
+    example: # or null
+      <boolean>
 
 
 .Sh OPTIONS

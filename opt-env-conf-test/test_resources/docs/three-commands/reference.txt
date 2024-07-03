@@ -22,16 +22,16 @@
     [34mnumber[m
     option: [37m--number[m[36m|[m[37m-n[m [33mINT[m
     env: [37mNUMBER[m [33mINT[m
-    config: [37mnumber[m:
-      # [32mor null[m
-      [33m<number>[m # [32m64 bit signed integer[m
+    config:
+      [37mnumber[m: # [32mor null[m
+        [33m<number>[m # [32m64 bit signed integer[m
     
     [34menable extra[m
     switch: [37m--(enable|disable)-enable[m
     env: [37mENABLE[m [33mBOOL[m
-    config: [37menable[m:
-      # [32mor null[m
-      [33m<boolean>[m
+    config:
+      [37menable[m: # [32mor null[m
+        [33m<boolean>[m
   
   
   [34mthird[m

@@ -20,11 +20,11 @@ big-config (-h|--help) | --version | (--config-file FILE)
   env: CONFIG_FILE FILE
   
   multi-line config codec explanation, the same option twice.
-  config: big:
-    # or null
-    <key>: 
+  config:
+    big: # or null
       <key>: 
-        <number> # 64 bit signed integer
+        <key>: 
+          <number> # 64 bit signed integer
   
 
 .Sh OPTIONS
