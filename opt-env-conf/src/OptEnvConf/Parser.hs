@@ -13,6 +13,7 @@ module OptEnvConf.Parser
     mapIO,
     checkMap,
     checkMapIO,
+    checkMapForgivable,
     commands,
     command,
     subArgs,
@@ -128,7 +129,12 @@ data Parser a where
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
   -- Map, Check, and IO
-  ParserCheck :: (a -> IO (Either String b)) -> Parser a -> Parser b
+  ParserCheck ::
+    -- | Forgivable
+    !Bool ->
+    !(a -> IO (Either String b)) ->
+    !(Parser a) ->
+    Parser b
   -- Commands
   ParserCommands :: [Command a] -> Parser a
   -- | Load a configuration value and use it for the continuing parser
@@ -144,11 +150,11 @@ instance Functor Parser where
     ParserSelect pe pf -> ParserSelect (fmap (fmap f) pe) (fmap (fmap f) pf)
     ParserEmpty -> ParserEmpty
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
-    ParserCheck g p -> ParserCheck (fmap (fmap f) . g) p
+    ParserCheck forgivable g p -> ParserCheck forgivable (fmap (fmap f) . g) p
     ParserCommands cs -> ParserCommands $ map (fmap f) cs
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
     -- TODO: make setting a functor and fmap here
-    p -> ParserCheck (pure . Right . f) p
+    p -> ParserCheck True (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -171,7 +177,7 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
-          ParserCheck _ p -> isEmpty p
+          ParserCheck _ _ p -> isEmpty p
           ParserCommands cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
@@ -216,9 +222,11 @@ showParserPrec = go
         showParen (d > 10) $
           showString "Many "
             . go 11 p
-      ParserCheck _ p ->
+      ParserCheck forgivable _ p ->
         showParen (d > 10) $
-          showString "Check _ "
+          showString "Check "
+            . showsPrec 11 forgivable
+            . showString " _ "
             . go 11 p
       ParserCommands cs ->
         showParen (d > 10) $
@@ -351,7 +359,11 @@ checkMap :: (a -> Either String b) -> Parser a -> Parser b
 checkMap func = checkMapIO (pure . func)
 
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheck
+checkMapIO = ParserCheck False
+
+-- Like 'checkMap', but allow trying the other side of any alternative if the result is Nothing.
+checkMapForgivable :: (a -> IO (Either String b)) -> Parser a -> Parser b
+checkMapForgivable = ParserCheck True
 
 -- | Declare multiple commands
 commands :: [Command a] -> Parser a
@@ -621,7 +633,7 @@ parserTraverseSettingParser func = go
       ParserEmpty -> pure ParserEmpty
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
-      ParserCheck f p -> ParserCheck f <$> go p
+      ParserCheck forgivable f p -> ParserCheck forgivable f <$> go p
       ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSettingParser func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting mLoc s -> uncurry ParserSetting <$> func mLoc s

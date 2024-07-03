@@ -1,9 +1,11 @@
 WithConfig
   _
   (Check
+     False
      _
      (Alt
         (Check
+           True
            _
            (Setting
               Nothing
@@ -20,6 +22,7 @@ WithConfig
                  (Just "Path to the configuration file"))))
         (Pure _)))
   (Check
+     True
      _
      (Setting
         Nothing

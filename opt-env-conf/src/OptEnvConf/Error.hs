@@ -12,7 +12,7 @@ import Text.Colour
 data ParseError
   = ParseErrorEmpty
   | ParseErrorEmptySetting
-  | ParseErrorCheckFailed !String
+  | ParseErrorCheckFailed !Bool !String
   | ParseErrorMissingArgument !(Maybe OptDoc)
   | ParseErrorArgumentRead !(Maybe OptDoc) !(NonEmpty String)
   | ParseErrorMissingOption !(Maybe OptDoc)
@@ -31,7 +31,7 @@ errorIsForgivable :: ParseError -> Bool
 errorIsForgivable = \case
   ParseErrorEmpty -> True
   ParseErrorEmptySetting -> False
-  ParseErrorCheckFailed _ -> False
+  ParseErrorCheckFailed forgivable _ -> forgivable
   ParseErrorMissingArgument _ -> True
   ParseErrorArgumentRead _ _ -> False
   ParseErrorMissingSwitch _ -> True
@@ -53,7 +53,7 @@ renderError = \case
     [["Hit the 'empty' case of the Parser type, this should not happen."]]
   ParseErrorEmptySetting ->
     [["This setting has not been configured to be able to parse anything."]]
-  ParseErrorCheckFailed err ->
+  ParseErrorCheckFailed _ err ->
     [["Check failed: "], [chunk $ T.pack err]]
   ParseErrorMissingArgument o ->
     [ "Missing argument: "

@@ -1,9 +1,11 @@
 WithConfig
   _
   (Check
+     False
      _
      (Alt
         (Check
+           True
            _
            (Setting
               Nothing
@@ -21,6 +23,7 @@ WithConfig
         (Pure _)))
   (Alt
      (Check
+        True
         _
         (Setting
            Nothing
@@ -37,6 +40,7 @@ WithConfig
               (Just "Example of a yes/no switch"))))
      (Alt
         (Check
+           True
            _
            (Setting
               Nothing
@@ -53,6 +57,7 @@ WithConfig
                  Nothing)))
         (Alt
            (Check
+              True
               _
               (Setting
                  Nothing
@@ -69,6 +74,7 @@ WithConfig
                     Nothing)))
            (Alt
               (Check
+                 True
                  _
                  (Setting
                     Nothing
@@ -85,6 +91,7 @@ WithConfig
                        (Just "Example of a yes/no switch"))))
               (Alt
                  (Check
+                    True
                     _
                     (Setting
                        Nothing

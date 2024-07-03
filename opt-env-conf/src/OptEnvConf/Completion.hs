@@ -93,7 +93,7 @@ pureCompletionQuery parser ix args =
         case mR of
           Nothing -> pure Nothing
           Just os -> fmap (os ++) <$> go p
-      ParserCheck _ p -> go p
+      ParserCheck _ _ p -> go p
       ParserCommands cs -> do
         -- Don't re-use the state accross commands
         Just . concat . catMaybes <$> mapM goCommand cs

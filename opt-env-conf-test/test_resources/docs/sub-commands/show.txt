@@ -1,9 +1,11 @@
 WithConfig
   _
   (Check
+     False
      _
      (Alt
         (Check
+           True
            _
            (Setting
               Nothing
@@ -24,6 +26,7 @@ WithConfig
          "top"
          "command without subcommands"
          (Check
+            True
             _
             (Setting
                Nothing

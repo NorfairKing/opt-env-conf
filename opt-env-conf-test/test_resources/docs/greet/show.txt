@@ -1,9 +1,11 @@
 WithConfig
   _
   (Check
+     False
      _
      (Alt
         (Check
+           True
            _
            (Setting
               Nothing
@@ -22,6 +24,7 @@ WithConfig
   (Ap
      (Ap
         (Check
+           True
            _
            (Setting
               Nothing
