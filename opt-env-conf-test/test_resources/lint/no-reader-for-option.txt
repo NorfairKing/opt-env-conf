@@ -2,4 +2,4 @@
   
   [31mInvalid Setting:[m
   [33moption[m has no [33mreader[m.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:42:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:49:7 in main:OptEnvConf.LintSpec[m

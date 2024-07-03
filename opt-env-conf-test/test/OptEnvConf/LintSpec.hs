@@ -21,6 +21,13 @@ spec = do
         ]
     )
   goldenLintTest
+    "only-default"
+    ( setting
+        [ help "Only a default value",
+          value ()
+        ]
+    )
+  goldenLintTest
     "no-reader-for-argument"
     ( setting
         [ argument,
