@@ -78,6 +78,13 @@ module OptEnvConf
     makeDoubleSwitch,
     readTextSecretFile,
 
+    -- ** Readers
+    str,
+    auto,
+    commaSeparatedList,
+    commaSeparated,
+    commaSeparatedSet,
+
     -- * Re-exports, just in case
     module OptEnvConf.Doc,
     module OptEnvConf.Reader,

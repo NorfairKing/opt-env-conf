@@ -11,6 +11,8 @@ import Control.Monad.Reader (MonadReader (..))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.String
 import Text.Read
 
@@ -57,6 +59,12 @@ maybeReader func = Reader $ \s -> case func s of
 
 eitherReader :: (String -> Either String a) -> Reader a
 eitherReader = Reader
+
+commaSeparatedSet :: (Ord a) => Reader a -> Reader (Set a)
+commaSeparatedSet func = S.fromList <$> commaSeparatedList func
+
+commaSeparatedList :: Reader a -> Reader [a]
+commaSeparatedList func = NE.toList <$> commaSeparated func
 
 commaSeparated :: Reader a -> Reader (NonEmpty a)
 commaSeparated (Reader func) = Reader $ mapM func . parseCommaSeparated
