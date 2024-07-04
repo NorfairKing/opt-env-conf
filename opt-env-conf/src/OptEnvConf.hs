@@ -64,6 +64,8 @@ module OptEnvConf
     checkMap,
     checkMapIO,
     checkMapForgivable,
+    checkMapIOForgivable,
+    checkMapMaybe,
     mapIO,
     choice,
 
@@ -89,6 +91,7 @@ module OptEnvConf
 
     -- * Re-exports, just in case
     module OptEnvConf.Doc,
+    module OptEnvConf.Parser,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,
     module OptEnvConf.Casing,

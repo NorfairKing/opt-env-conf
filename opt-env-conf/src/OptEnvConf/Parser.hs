@@ -11,9 +11,13 @@ module OptEnvConf.Parser
     setting,
     choice,
     mapIO,
+    runIO,
+    checkMapMaybe,
     checkMap,
     checkMapIO,
     checkMapForgivable,
+    checkMapIOForgivable,
+    allOrNothing,
     commands,
     command,
     subArgs,
@@ -128,6 +132,7 @@ data Parser a where
   ParserEmpty :: Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
+  -- TODO: ParserAllOrNothing :: !(Parser a) -> Parser a
   -- Map, Check, and IO
   ParserCheck ::
     -- | Forgivable
@@ -355,17 +360,42 @@ choice = \case
 mapIO :: (a -> IO b) -> Parser a -> Parser b
 mapIO func = checkMapIO $ fmap Right . func
 
+-- | Run an IO action without parsing anything
+--
+-- This action may be run more than once, so prefer to do IO outside of the parser.
+runIO :: IO a -> Parser a
+runIO func = mapIO (\() -> func) $ pure ()
+
+-- | Like 'checkMap' but without a helpful error message.
+--
+-- Prefer 'checkMap'.
+-- TODO add a SRCLoc here
+checkMapMaybe :: (a -> Maybe b) -> Parser a -> Parser b
+checkMapMaybe func =
+  checkMap
+    ( \a -> case func a of
+        Nothing -> Left "checkMapMaybe failed without a helpful error message"
+        Just b -> Right b
+    )
+
 checkMap :: (a -> Either String b) -> Parser a -> Parser b
 checkMap func = checkMapIO (pure . func)
 
+-- TODO add a SRCLoc here
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIO = ParserCheck False
+
+-- If each setting has a corresponding forgivable error, consider this forgivable.
+-- Consider all other forgivable errors unforgivable
+allOrNothing :: Parser a -> Parser a
+allOrNothing = undefined -- ParserAllOrNothing
 
 -- Like 'checkMap', but allow trying the other side of any alternative if the result is Nothing.
 checkMapForgivable :: (a -> Either String b) -> Parser a -> Parser b
 checkMapForgivable func = checkMapIOForgivable (pure . func)
 
 -- Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
+-- TODO add a SRCLoc here
 checkMapIOForgivable :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIOForgivable = ParserCheck True
 

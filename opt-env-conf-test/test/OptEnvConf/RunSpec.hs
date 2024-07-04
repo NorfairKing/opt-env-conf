@@ -19,7 +19,6 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Error
-import OptEnvConf.Parser
 import Test.Syd
 import Test.Syd.Validity
 import Text.Colour

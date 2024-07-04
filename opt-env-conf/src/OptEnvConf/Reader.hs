@@ -43,6 +43,9 @@ runReader = unReader
 str :: (IsString s) => Reader s
 str = Reader $ Right . fromString
 
+-- | Read via the 'Read' instance
+--
+-- You cannot use this for bare strings, because 'Read' for strings parses quotes.
 auto :: (Read a) => Reader a
 auto = Reader $ \s -> case readMaybe s of
   Nothing -> Left $ "Un-Read-able value: " <> show s

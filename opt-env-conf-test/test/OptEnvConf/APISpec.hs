@@ -7,7 +7,6 @@ import Data.Text (Text)
 import Data.Version
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
-import OptEnvConf.Parser
 import OptEnvConf.Test
 import Test.Syd
 import Text.Colour

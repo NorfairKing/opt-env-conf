@@ -72,7 +72,7 @@ renderError = \case
       : unwordsChunks (maybe [] renderOptDocLong md)
       : map (\err -> [chunk $ T.pack err]) (NE.toList errs)
   ParseErrorMissingEnvVar md ->
-    ["Missing option: "]
+    ["Missing env var: "]
       : maybe [] renderEnvDoc md
   ParseErrorEnvRead md errs ->
     ["Failed to read env var: "]
