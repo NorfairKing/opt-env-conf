@@ -31,6 +31,10 @@ module OptEnvConf.Parser
     someNonEmpty,
     withConfig,
     withYamlConfig,
+    withFirstYamlConfig,
+    withCombinedYamlConfigs,
+    withCombinedYamlConfigs',
+    combineConfigObjects,
     xdgYamlConfigFile,
     withLocalYamlConfig,
     withConfigurableYamlConfig,
@@ -67,6 +71,7 @@ import Control.Arrow (first)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
+import qualified Data.Aeson.KeyMap as KM
 import Data.Functor.Identity
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
@@ -414,6 +419,41 @@ withConfig = ParserWithConfig
 -- | Load a YAML config file and use it for the given parser
 withYamlConfig :: Parser (Maybe FilePath) -> Parser a -> Parser a
 withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >=> readYamlConfigFile)) pathParser
+
+-- | Load the Yaml config in the first of the filepaths that points to something that exists.
+withFirstYamlConfig :: Parser [FilePath] -> Parser a -> Parser a
+withFirstYamlConfig parsers = withConfig $ mapIO go parsers
+  where
+    go :: [FilePath] -> IO (Maybe JSON.Object)
+    go = \case
+      [] -> pure Nothing
+      (f : fs) -> do
+        mObject <- resolveFile' f >>= readYamlConfigFile
+        case mObject of
+          Just o -> pure (Just o)
+          Nothing -> go fs
+
+-- | Combine all Yaml config files that exist into a single combined config object.
+withCombinedYamlConfigs :: Parser [FilePath] -> Parser a -> Parser a
+withCombinedYamlConfigs = withCombinedYamlConfigs' combineConfigObjects
+
+withCombinedYamlConfigs' :: (Object -> JSON.Object -> JSON.Object) -> Parser [FilePath] -> Parser a -> Parser a
+withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) parsers
+  where
+    resolveYamlConfigFile :: Maybe JSON.Object -> FilePath -> IO (Maybe JSON.Object)
+    resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . (resolveFile' >=> readYamlConfigFile)
+    -- left biased, first one wins
+    combineMaybeObjects :: Maybe JSON.Object -> Maybe JSON.Object -> Maybe JSON.Object
+    combineMaybeObjects Nothing mo = mo
+    combineMaybeObjects mo Nothing = mo
+    combineMaybeObjects (Just o1) (Just o2) = Just (combiner o1 o2)
+
+combineConfigObjects :: JSON.Object -> JSON.Object -> JSON.Object
+combineConfigObjects = KM.unionWith combineValues
+  where
+    combineValues :: Value -> Value -> Value
+    combineValues (Object o) (Object o') = JSON.Object (combineConfigObjects o o')
+    combineValues v _ = v
 
 -- | Load @config.yaml@ from the given XDG configuration subdirectory
 xdgYamlConfigFile :: FilePath -> Parser FilePath

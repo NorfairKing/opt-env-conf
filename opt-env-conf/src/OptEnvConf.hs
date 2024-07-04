@@ -72,6 +72,9 @@ module OptEnvConf
     -- ** Loading configuration files
     withConfig,
     withYamlConfig,
+    withFirstYamlConfig,
+    withCombinedYamlConfigs,
+    withCombinedYamlConfigs',
     xdgYamlConfigFile,
     withLocalYamlConfig,
     withConfigurableYamlConfig,
