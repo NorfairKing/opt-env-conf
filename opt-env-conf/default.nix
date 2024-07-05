@@ -14,6 +14,5 @@ mkDerivation {
     safe-coloured-text-layout safe-coloured-text-terminfo selective
     text validity validity-containers
   ];
-  license = lib.licenses.unfree;
-  hydraPlatforms = lib.platforms.none;
+  license = lib.licenses.lgpl3Only;
 }

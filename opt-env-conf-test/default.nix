@@ -20,7 +20,6 @@ mkDerivation {
     safe-coloured-text sydtest text
   ];
   testToolDepends = [ sydtest-discover ];
-  license = lib.licenses.unfree;
-  hydraPlatforms = lib.platforms.none;
+  license = "unknown";
   mainProgram = "opt-env-conf-example";
 }

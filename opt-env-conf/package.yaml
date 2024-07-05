@@ -1,7 +1,8 @@
 name: opt-env-conf
 version: '0.0.0.0'
 copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
-license: AllRightsReserved
+license: LGPL-3
+license-file: LICENSE
   
 dependencies:
 - base

@@ -7,7 +7,8 @@ cabal-version: 1.12
 name:           opt-env-conf-test
 version:        0.0.0.0
 copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
-license:        AllRightsReserved
+license:        OtherLicense
+license-file:   LICENSE.md
 build-type:     Simple
 extra-source-files:
     test_resources/docs/args/config-docs.txt
