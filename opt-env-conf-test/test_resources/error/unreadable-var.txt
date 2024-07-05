@@ -1,0 +1,4 @@
+Failed to read env var: 
+[37mFOO[m [33mMETAVAR[m
+[31mundocumented[m
+Un-Read-able value: "n"

@@ -1,0 +1,3 @@
+Missing env var: 
+[37mFOO[m [33mMETAVAR[m
+[31mundocumented[m

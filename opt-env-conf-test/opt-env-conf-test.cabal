@@ -157,12 +157,18 @@ extra-source-files:
     test_resources/error/empty.txt
     test_resources/error/missing-argument.txt
     test_resources/error/missing-option.txt
+    test_resources/error/missing-options.txt
+    test_resources/error/missing-var.txt
+    test_resources/error/missing-vars.txt
     test_resources/error/read-int-argument.txt
     test_resources/error/read-int-option.txt
+    test_resources/error/read-int-options.txt
     test_resources/error/required-command.txt
     test_resources/error/some-none.txt
     test_resources/error/unfolding-tombstone-option.txt
     test_resources/error/unfolding-tombstone-switch.txt
+    test_resources/error/unreadable-var.txt
+    test_resources/error/unreadable-vars.txt
     test_resources/error/unrecognised-command.txt
     test_resources/lint/config-without-load.txt
     test_resources/lint/empty-setting.txt
