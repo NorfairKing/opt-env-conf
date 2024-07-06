@@ -1,2 +1,3 @@
 Missing command, available commands:
 [33mone[m [33mtwo[m
+see [36mtest/OptEnvConf/ErrorSpec.hs:58:7 in main:OptEnvConf.ErrorSpec[m

@@ -296,12 +296,12 @@ runParserOn p args envVars mConfig = do
         case errOrB of
           Left err -> ppError mLoc $ ParseErrorCheckFailed forgivable err
           Right b -> pure b
-      ParserCommands cs -> do
+      ParserCommands mLoc cs -> do
         mS <- ppArg
         case mS of
-          Nothing -> ppError Nothing $ ParseErrorMissingCommand $ map commandArg cs
+          Nothing -> ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
           Just s -> case find ((== s) . commandArg) cs of
-            Nothing -> ppError Nothing $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+            Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
             Just c -> go $ commandParser c
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc

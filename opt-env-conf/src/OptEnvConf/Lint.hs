@@ -208,9 +208,9 @@ lintParser =
       -- TODO lint if we try to read config or env under many/some?
       ParserMany p -> go p
       ParserCheck _ _ _ p -> go p
-      ParserCommands ls -> do
+      ParserCommands mLoc ls -> do
         if null ls
-          then validationTFailure $ LintError Nothing LintErrorNoCommands
+          then validationTFailure $ LintError mLoc LintErrorNoCommands
           else traverse_ (go . commandParser) ls
       ParserWithConfig p1 p2 -> go p1 *> local (const True) (go p2)
       ParserSetting mLoc Setting {..} -> mapValidationTFailure (LintError mLoc) $ do

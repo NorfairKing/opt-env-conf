@@ -97,9 +97,10 @@ import Path.IO
 import Text.Show
 
 data Command a = Command
-  { commandArg :: String,
-    commandHelp :: Help,
-    commandParser :: Parser a
+  { commandSrcLoc :: !(Maybe SrcLoc),
+    commandArg :: !String,
+    commandHelp :: !Help,
+    commandParser :: !(Parser a)
   }
 
 instance Functor Command where
@@ -158,7 +159,7 @@ data Parser a where
     !(Parser a) ->
     Parser b
   -- Commands
-  ParserCommands :: [Command a] -> Parser a
+  ParserCommands :: !(Maybe SrcLoc) -> [Command a] -> Parser a
   -- | Load a configuration value and use it for the continuing parser
   ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
   -- | General settings
@@ -173,7 +174,7 @@ instance Functor Parser where
     ParserEmpty mLoc -> ParserEmpty mLoc
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
-    ParserCommands cs -> ParserCommands $ map (fmap f) cs
+    ParserCommands mLoc cs -> ParserCommands mLoc $ map (fmap f) cs
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
     -- TODO: make setting a functor and fmap here
     p -> ParserCheck Nothing True (pure . Right . f) p
@@ -200,7 +201,7 @@ instance Alternative Parser where
           ParserAlt _ _ -> False
           ParserMany _ -> False
           ParserCheck _ _ _ p -> isEmpty p
-          ParserCommands cs -> null cs
+          ParserCommands _ cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
@@ -254,9 +255,11 @@ showParserPrec = go
             . showsPrec 11 forgivable
             . showString " _ "
             . go 11 p
-      ParserCommands cs ->
+      ParserCommands mLoc cs ->
         showParen (d > 10) $
           showString "Commands "
+            . showsPrec 11 mLoc
+            . showString " "
             . showListWith
               showCommandABit
               cs
@@ -506,11 +509,14 @@ checkMapIOForgivable = ParserCheck mLoc True
 -- | Declare multiple commands
 --
 -- Use 'command' to define a 'Command'.
-commands :: [Command a] -> Parser a
-commands = ParserCommands
+commands :: (HasCallStack) => [Command a] -> Parser a
+commands = ParserCommands mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Declare a single command with a name, documentation and parser
 command ::
+  (HasCallStack) =>
   -- | Name
   String ->
   -- | Documentation
@@ -518,7 +524,9 @@ command ::
   -- | Parser
   Parser a ->
   Command a
-command = Command
+command = Command mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Load a configuration value and use it for the given parser
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
@@ -829,12 +837,16 @@ parserEraseSrcLocs = go
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
       ParserMany p -> ParserMany (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
-      ParserCommands cs -> ParserCommands $ map commandEraseSrcLocs cs
+      ParserCommands mLoc cs -> ParserCommands mLoc $ map commandEraseSrcLocs cs
       ParserWithConfig p1 p2 -> ParserWithConfig (go p1) (go p2)
       ParserSetting _ s -> ParserSetting Nothing s
 
 commandEraseSrcLocs :: Command a -> Command a
-commandEraseSrcLocs c = c {commandParser = parserEraseSrcLocs (commandParser c)}
+commandEraseSrcLocs c =
+  c
+    { commandSrcLoc = Nothing,
+      commandParser = parserEraseSrcLocs (commandParser c)
+    }
 
 -- | Map all 'Setting' in a 'Parser'.
 {-# ANN parserMapSetting ("NOCOVER" :: String) #-}
@@ -860,7 +872,7 @@ parserTraverseSetting func = go
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
-      ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSetting func) cs
+      ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
       ParserSetting mLoc s -> ParserSetting mLoc <$> func s
 

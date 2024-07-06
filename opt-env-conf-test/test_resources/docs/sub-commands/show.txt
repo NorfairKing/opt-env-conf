@@ -24,6 +24,16 @@ WithConfig
                  (Just "Path to the configuration file"))))
         (Check Nothing False _ (Pure _))))
   (Commands
+     (Just
+        SrcLoc
+          { srcLocPackage = "main"
+          , srcLocModule = "OptEnvConf.APISpec"
+          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+          , srcLocStartLine = 273
+          , srcLocStartCol = 5
+          , srcLocEndLine = 273
+          , srcLocEndCol = 13
+          })
      [ Command
          "top"
          "command without subcommands"
@@ -58,6 +68,28 @@ WithConfig
          "sub"
          "command with subcommands"
          (Ap
-            (Commands [ Command "a" "A" (Pure _) , Command "b" "B" (Pure _) ])
-            (Commands [ Command "c" "C" (Pure _) , Command "d" "D" (Pure _) ]))
+            (Commands
+               (Just
+                  SrcLoc
+                    { srcLocPackage = "main"
+                    , srcLocModule = "OptEnvConf.APISpec"
+                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                    , srcLocStartLine = 289
+                    , srcLocStartCol = 3
+                    , srcLocEndLine = 289
+                    , srcLocEndCol = 11
+                    })
+               [ Command "a" "A" (Pure _) , Command "b" "B" (Pure _) ])
+            (Commands
+               (Just
+                  SrcLoc
+                    { srcLocPackage = "main"
+                    , srcLocModule = "OptEnvConf.APISpec"
+                    , srcLocFile = "test/OptEnvConf/APISpec.hs"
+                    , srcLocStartLine = 298
+                    , srcLocStartCol = 3
+                    , srcLocEndLine = 298
+                    , srcLocEndCol = 11
+                    })
+               [ Command "c" "C" (Pure _) , Command "d" "D" (Pure _) ]))
      ])

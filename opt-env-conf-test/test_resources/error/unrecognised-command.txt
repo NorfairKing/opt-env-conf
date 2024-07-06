@@ -1,3 +1,4 @@
 [31mUnrecognised command: [m[33mthree[m
 [34mavailable commands:[m
 [33mone[m [33mtwo[m
+see [36mtest/OptEnvConf/ErrorSpec.hs:67:7 in main:OptEnvConf.ErrorSpec[m

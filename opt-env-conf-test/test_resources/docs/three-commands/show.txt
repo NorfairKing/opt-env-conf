@@ -24,6 +24,16 @@ WithConfig
                  (Just "Path to the configuration file"))))
         (Check Nothing False _ (Pure _))))
   (Commands
+     (Just
+        SrcLoc
+          { srcLocPackage = "main"
+          , srcLocModule = "OptEnvConf.APISpec"
+          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+          , srcLocStartLine = 239
+          , srcLocStartCol = 5
+          , srcLocEndLine = 239
+          , srcLocEndCol = 13
+          })
      [ Command
          "one"
          "first"
