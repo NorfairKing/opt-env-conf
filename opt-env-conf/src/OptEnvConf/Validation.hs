@@ -8,6 +8,8 @@ module OptEnvConf.Validation where
 
 import Control.Monad.IO.Class
 import Control.Monad.Reader
+import Control.Monad.State
+import Control.Selective (Selective (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 
@@ -20,6 +22,9 @@ instance (Applicative m) => Applicative (ValidationT e m) where
   (ValidationT m1) <*> (ValidationT m2) =
     ValidationT $
       (<*>) <$> m1 <*> m2
+
+instance (Selective m) => Selective (ValidationT e m) where
+  select (ValidationT fe) (ValidationT ff) = ValidationT $ select <$> fe <*> ff
 
 instance (Monad m) => Monad (ValidationT e m) where
   (ValidationT m) >>= f = ValidationT $ do
@@ -34,6 +39,10 @@ instance MonadTrans (ValidationT e) where
 instance (MonadReader env m) => MonadReader env (ValidationT err m) where
   ask = lift ask
   local func = ValidationT . local func . unValidationT
+
+instance (MonadState state m) => MonadState state (ValidationT err m) where
+  get = lift get
+  put = lift . put
 
 instance (MonadIO m) => MonadIO (ValidationT e m) where
   liftIO io = ValidationT $ Success <$> liftIO io
@@ -62,6 +71,16 @@ instance Applicative (Validation e) where
     Success _ -> e1
   Success _ <*> Failure e2 = Failure e2
   Success f <*> Success a = Success (f a)
+
+instance Selective (Validation e) where
+  select (Failure ne1) (Failure ne2) = Failure (ne1 <> ne2)
+  select (Failure ne) (Success _) = Failure ne
+  -- We could chose to skip the failures here if the first argument was a
+  -- Right, but we'd prefer to see as many errors as possible.
+  select (Success _) (Failure ne) = Failure ne
+  select (Success e) (Success f) = Success $ case e of
+    Left a -> f a
+    Right b -> b
 
 instance Monad (Validation e) where
   return = pure

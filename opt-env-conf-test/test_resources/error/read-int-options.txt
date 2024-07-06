@@ -1,3 +1,6 @@
 Failed to read option: 
 [37m--foo[m [34minteger option 1[m 
 Un-Read-able value: "n"
+Failed to read option: 
+[37m--bar[m [34minteger option 2[m 
+Un-Read-able value: "m"

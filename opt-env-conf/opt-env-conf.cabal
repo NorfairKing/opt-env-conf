@@ -39,6 +39,7 @@ library
     , autodocodec-yaml
     , base
     , containers
+    , hashable
     , mtl
     , path
     , path-io

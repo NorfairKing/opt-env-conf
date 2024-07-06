@@ -54,7 +54,10 @@ module OptEnvConf
     subConfig,
     subConfig_,
     subAll,
+
+    -- ** Subparsers
     subSettings,
+    allOrNothing,
 
     -- *** Casing helpers
     toArgCase,
@@ -94,7 +97,7 @@ module OptEnvConf
     makeDoubleSwitch,
 
     -- *** Secrets
-    readTextSecretFile,
+    readSecretTextFile,
 
     -- *** Migration
     strOption,

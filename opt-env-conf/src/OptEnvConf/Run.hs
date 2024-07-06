@@ -25,6 +25,8 @@ import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Traversable
 import Data.Version
 import GHC.Stack (SrcLoc)
@@ -257,26 +259,33 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn p args envVars mConfig = do
-  -- TODO: Try running this lazily. The first success should stop so we don't
-  -- do too much IO.
-  mTup <- runPPLazy (go p) args ppEnv
+runParserOn parser args envVars mConfig = do
+  let ppState =
+        PPState
+          { ppStateArgs = args,
+            ppStateParsedSettings = S.empty
+          }
+  let ppEnv =
+        PPEnv
+          { ppEnvEnv = envVars,
+            ppEnvConf = mConfig
+          }
+  mTup <- runPPLazy (go parser) ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"
-    Just (errOrRes, nexts) -> case errOrRes of
-      Success (a, _) -> pure (Right a)
+    Just ((errOrRes, _), nexts) -> case errOrRes of
+      Success a -> pure (Right a)
       Failure firstErrors ->
         let goNexts ns = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
                 Nothing -> pure (Left firstErrors)
-                Just (eOR, ns') -> case eOR of
-                  Success (a, _) -> pure (Right a)
+                Just ((eOR, _), ns') -> case eOR of
+                  Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
          in goNexts nexts
   where
-    ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     go ::
       Parser a ->
       PP a
@@ -297,6 +306,32 @@ runParserOn p args envVars mConfig = do
           Just a -> do
             as <- go (ParserMany p')
             pure (a : as)
+      ParserAllOrNothing mLoc p' -> do
+        e <- ask
+        s <- get
+        results <- liftIO $ runPP (go p') s e
+        (result, s') <- ppNonDetList results
+        put s'
+        case result of
+          Success a -> pure a
+          Failure errs -> do
+            if not $ all errorIsForgivable errs
+              then ppErrors' errs
+              else do
+                -- Settings available below
+                let settingsSet = parserSettingsSet p'
+                -- Settings that have been parsed
+                parsedSet <- gets ppStateParsedSettings
+                -- Settings that have been parsed below
+                let parsedSettingsSet = settingsSet `S.intersection` parsedSet
+                -- If any settings have been parsed below, and parsing still failed
+                -- (this is the case because we're in the failure branch)
+                -- with only forgivable errors
+                -- (this is the case because we're in the branch where that's been checked)
+                -- then this should be an unforgivable error.
+                if not (null parsedSettingsSet)
+                  then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
+                  else ppErrors' errs
       ParserCheck mLoc forgivable f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
@@ -314,6 +349,18 @@ runParserOn p args envVars mConfig = do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
       ParserSetting mLoc set@Setting {..} -> do
+        let markParsed = do
+              maybe
+                (pure ())
+                ( \loc -> modify' $ \s ->
+                    s
+                      { ppStateParsedSettings =
+                          S.insert
+                            (hashSrcLoc loc)
+                            (ppStateParsedSettings s)
+                      }
+                )
+                mLoc
         let mOptDoc = settingOptDoc set
         mArg <-
           if settingTryArgument
@@ -331,7 +378,9 @@ runParserOn p args envVars mConfig = do
             else pure NotRun
 
         case mArg of
-          Found a -> pure a
+          Found a -> do
+            markParsed
+            pure a
           _ -> do
             -- TODO do this without all the nesting
             mSwitch <- case settingSwitchValue of
@@ -343,7 +392,9 @@ runParserOn p args envVars mConfig = do
                   Just () -> pure $ Found a
 
             case mSwitch of
-              Found a -> pure a
+              Found a -> do
+                markParsed
+                pure a
               _ -> do
                 mOpt <-
                   if settingTryOption
@@ -361,7 +412,9 @@ runParserOn p args envVars mConfig = do
                     else pure NotRun
 
                 case mOpt of
-                  Found a -> pure a
+                  Found a -> do
+                    markParsed
+                    pure a
                   _ -> do
                     let mEnvDoc = settingEnvDoc set
                     mEnv <- case settingEnvVars of
@@ -383,7 +436,9 @@ runParserOn p args envVars mConfig = do
                         pure $ maybe NotFound Found $ listToMaybe results
 
                     case mEnv of
-                      Found a -> pure a
+                      Found a -> do
+                        markParsed
+                        pure a
                       _ -> do
                         let mConfDoc = settingConfDoc set
                         mConf <- case settingConfigVals of
@@ -414,10 +469,12 @@ runParserOn p args envVars mConfig = do
                                       Right a -> pure $ maybe NotFound Found a
 
                         case mConf of
-                          Found a -> pure a
+                          Found a -> do
+                            markParsed
+                            pure a
                           _ ->
                             case settingDefaultValue of
-                              Just (a, _) -> pure a
+                              Just (a, _) -> pure a -- Don't mark as parsed
                               Nothing -> do
                                 let parseResultError e res = case res of
                                       NotRun -> Nothing
@@ -456,44 +513,42 @@ tryReaders rs s = left NE.reverse $ go rs
         Left err -> go' (err <| errs) rl
         Right a -> Right a
 
-type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError (NonDetT IO))) a
+type PP a = ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a
 
 runPP ::
   PP a ->
-  Args ->
+  PPState ->
   PPEnv ->
-  IO [Validation ParseError (a, PPState)]
+  IO [(Validation ParseError a, PPState)]
 runPP p args envVars =
-  runNonDetT (runValidationT (runStateT (runReaderT p envVars) args))
+  runNonDetT (runStateT (runValidationT (runReaderT p envVars)) args)
 
 runPPLazy ::
   PP a ->
-  Args ->
+  PPState ->
   PPEnv ->
   IO
     ( Maybe
-        ( Validation ParseError (a, PPState),
-          NonDetT IO (Validation ParseError (a, PPState))
+        ( (Validation ParseError a, PPState),
+          NonDetT IO (Validation ParseError a, PPState)
         )
     )
 runPPLazy p args envVars =
-  runNonDetTLazy (runValidationT (runStateT (runReaderT p envVars) args))
+  runNonDetTLazy (runStateT (runValidationT (runReaderT p envVars)) args)
 
 tryPP :: PP a -> PP (Maybe a)
 tryPP pp = do
   s <- get
   e <- ask
   results <- liftIO $ runPP pp s e
-  errOrRes <- ppNonDetList results
+  (errOrRes, s') <- ppNonDetList results
+  put s'
   case errOrRes of
-    -- Note that args are not consumed if the alternative failed.
     Failure errs ->
       if all errorIsForgivable errs
         then pure Nothing
         else ppErrors' errs
-    Success (a, s') -> do
-      put s'
-      pure $ Just a
+    Success a -> pure $ Just a
 
 ppNonDet :: NonDetT IO a -> PP a
 ppNonDet = lift . lift . lift
@@ -501,7 +556,10 @@ ppNonDet = lift . lift . lift
 ppNonDetList :: [a] -> PP a
 ppNonDetList = ppNonDet . liftNonDetTList
 
-type PPState = Args
+data PPState = PPState
+  { ppStateArgs :: !Args,
+    ppStateParsedSettings :: !(Set SrcLocHash)
+  }
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
@@ -510,34 +568,34 @@ data PPEnv = PPEnv
 
 ppArg :: PP (Maybe String)
 ppArg = do
-  args <- get
+  args <- gets ppStateArgs
   case Args.consumeArgument args of
     [] -> pure Nothing
     as -> do
-      (a, s) <- ppNonDetList as
-      put s
+      (a, args') <- ppNonDetList as
+      modify' (\s -> s {ppStateArgs = args'})
       pure (Just a)
 
 ppOpt :: [Dashed] -> PP (Maybe String)
 ppOpt ds = do
-  args <- get
+  args <- gets ppStateArgs
   case Args.consumeOption ds args of
     Nothing -> pure Nothing
-    Just (a, s) -> do
-      put s
+    Just (a, args') -> do
+      modify' (\s -> s {ppStateArgs = args'})
       pure (Just a)
 
 ppSwitch :: [Dashed] -> PP (Maybe ())
 ppSwitch ds = do
-  args <- get
+  args <- gets ppStateArgs
   case Args.consumeSwitch ds args of
     Nothing -> pure Nothing
-    Just s -> do
-      put s
+    Just args' -> do
+      modify' (\s -> s {ppStateArgs = args'})
       pure (Just ())
 
 ppErrors' :: NonEmpty ParseError -> PP a
-ppErrors' = lift . lift . ValidationT . pure . Failure
+ppErrors' = lift . ValidationT . lift . pure . Failure
 
 ppErrors :: Maybe SrcLoc -> NonEmpty ParseErrorMessage -> PP a
 ppErrors mLoc = ppErrors' . NE.map (ParseError mLoc)

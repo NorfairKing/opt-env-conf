@@ -536,6 +536,47 @@ spec = do
           (["arg"], Right (Just "arg"))
         ]
 
+      argParseSpecs
+        ( optional
+            ( allOrNothing
+                ( (,)
+                    <$> setting [reader str, option, long "foo"]
+                    <*> optional (setting [reader str, option, long "bar"])
+                )
+            ) ::
+            Parser (Maybe (String, Maybe String))
+        )
+        [ ([], Nothing),
+          (["--foo", "foo"], Just ("foo", Nothing))
+        ]
+      -- Default values should not count as parsed:
+      argParseSpecs
+        ( choice
+            [ allOrNothing $
+                (,)
+                  <$> setting [option, long "foo", reader auto, help "This one will exist", metavar "CHAR", value 'c']
+                  <*> setting [option, long "bar", reader auto, help "This one will not exist", metavar "CHAR"],
+              pure ('a', 'b')
+            ]
+        )
+        [ ([], ('a', 'b')),
+          (["--foo", "'c'", "--bar", "'d'"], ('c', 'd'))
+        ]
+
+      argParseSpecs
+        ( (,)
+            <$> setting [option, long "before", reader auto, help "before", metavar "CHAR"]
+            <*> optional
+              ( allOrNothing $
+                  (,)
+                    <$> setting [option, long "baz", reader auto, help "This one will exist", metavar "CHAR"]
+                    <*> setting [option, long "quux", reader auto, help "This one will not exist", metavar "CHAR"]
+              ) ::
+            Parser (Char, Maybe (Char, Char))
+        )
+        [ (["--before", "'m'"], ('m', Nothing))
+        ]
+
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
 argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
 

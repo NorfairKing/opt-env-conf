@@ -50,7 +50,7 @@ module OptEnvConf.Parser
     enableDisableSwitch,
     yesNoSwitch,
     makeDoubleSwitch,
-    readTextSecretFile,
+    readSecretTextFile,
 
     -- * Parser implementation
     Parser (..),
@@ -63,6 +63,11 @@ module OptEnvConf.Parser
     parserMapSetting,
     parserTraverseSetting,
     commandTraverseSetting,
+
+    -- ** All or nothing implementation
+    parserSettingsSet,
+    SrcLocHash (..),
+    hashSrcLoc,
 
     -- ** Re-exports
     Functor (..),
@@ -80,14 +85,17 @@ import Control.Selective
 import Data.Aeson as JSON
 import qualified Data.Aeson.KeyMap as KM
 import Data.Functor.Identity
+import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
+import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, prettySrcLoc, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
@@ -149,6 +157,7 @@ data Parser a where
   ParserEmpty :: !(Maybe SrcLoc) -> Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
+  ParserAllOrNothing :: !(Maybe SrcLoc) -> !(Parser a) -> Parser a
   -- Map, Check, and IO
   ParserCheck ::
     !(Maybe SrcLoc) ->
@@ -199,6 +208,7 @@ instance Alternative Parser where
           ParserEmpty _ -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
+          ParserAllOrNothing _ p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
           ParserCommands _ cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
@@ -245,6 +255,12 @@ showParserPrec = go
       ParserMany p ->
         showParen (d > 10) $
           showString "Many "
+            . go 11 p
+      ParserAllOrNothing mLoc p ->
+        showParen (d > 10) $
+          showString "AllOrNothing "
+            . showsPrec 11 mLoc
+            . showString " "
             . go 11 p
       ParserCheck mLoc forgivable _ p ->
         showParen (d > 10) $
@@ -371,45 +387,55 @@ buildSetting = completeBuilder . mconcat
 --
 -- This takes care of setting the 'reader' to 'str', setting the 'metavar' to @FILE_PATH@, autocompletion, and parsing the 'FilePath' into a @Path Abs File@.
 filePathSetting ::
+  (HasCallStack) =>
   [Builder FilePath] ->
   Parser (Path Abs File)
 filePathSetting builders =
   mapIO parseAbsFile $
-    setting $
-      [ reader str,
-        metavar "FILE_PATH" -- TODO file completer
-      ]
-        ++ builders
+    withFrozenCallStack $
+      setting $
+        [ reader str,
+          metavar "FILE_PATH" -- TODO file completer
+        ]
+          ++ builders
 
 -- | A setting for @Path Abs dir@.
 --
 -- This takes care of setting the 'reader' to 'str', setting the 'metavar' to @DIRECTORY_PATH@, autocompletion, and parsing the 'FilePath' into a @Path Abs Dir@.
 directoryPathSetting ::
+  (HasCallStack) =>
   [Builder FilePath] ->
   Parser (Path Abs Dir)
 directoryPathSetting builders =
   mapIO parseAbsDir $
-    setting $
-      [ reader str,
-        metavar "DIRECTORY_PATH" -- TODO directory completer
-      ]
-        ++ builders
+    withFrozenCallStack $
+      setting $
+        [ reader str,
+          metavar "DIRECTORY_PATH" -- TODO directory completer
+        ]
+          ++ builders
 
 -- | A 'setting' with 'option', a 'reader' set to 'str', and the 'metavar' set to @STR@.
 --
 -- Note that you can override the 'metavar' with another 'metavar' in the given list of builders.
 --
 -- This function may help with easier migration from @optparse-applicative@.
-strOption :: (IsString string) => [Builder string] -> Parser string
-strOption builders = setting $ option : reader str : metavar "STR" : builders
+strOption :: (HasCallStack) => (IsString string) => [Builder string] -> Parser string
+strOption builders =
+  withFrozenCallStack $
+    setting $
+      option : reader str : metavar "STR" : builders
 
 -- | A 'setting' with 'argument', a 'reader' set to 'str', and the 'metavar' set to @STR@.
 --
 -- Note that you can override the 'metavar' with another 'metavar' in the given list of builders.
 --
 -- This function may help with easier migration from @optparse-applicative@.
-strArgument :: (IsString string) => [Builder string] -> Parser string
-strArgument builders = setting $ argument : reader str : metavar "STR" : builders
+strArgument :: (HasCallStack) => (IsString string) => [Builder string] -> Parser string
+strArgument builders =
+  withFrozenCallStack $
+    setting $
+      argument : reader str : metavar "STR" : builders
 
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
@@ -475,13 +501,28 @@ checkMapIO = ParserCheck mLoc False
 --
 -- If you don't use this function, and only some of the settings below are
 -- defined, this parser will fail and the next alternative will be tried.
--- If you do use this function, this parser will error if at least one, but not
--- all, of the settings below are defined.
+-- If you do use this function, this parser will error unforgivably if at least
+-- one, but not all, of the settings below are defined.
 --
 -- If each setting has a corresponding forgivable error, consider this forgivable.
 -- Consider all other forgivable errors unforgivable
-allOrNothing :: Parser a -> Parser a
-allOrNothing = undefined -- ParserAllOrNothing
+--
+-- For example, the following will parser will fail intsead of succeed when given the arguments below:
+--
+-- > ( choice
+-- >     [ allOrNothing $
+-- >         (,)
+-- >           <$> setting [option, long "foo", reader auto, help "This one will exist", metavar "CHAR"]
+-- >           <*> setting [option, long "bar", reader auto, help "This one will not exist", metavar "CHAR"],
+-- >       pure ('a', 'b')
+-- >     ]
+-- > )
+--
+-- > ["--foo", "'a'"]
+allOrNothing :: (HasCallStack) => Parser a -> Parser a
+allOrNothing = ParserAllOrNothing mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
 checkMapMaybeForgivable :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
@@ -572,7 +613,7 @@ combineConfigObjects = KM.unionWith combineValues
     combineValues v _ = v
 
 -- | Load @config.yaml@ from the given XDG configuration subdirectory
-xdgYamlConfigFile :: FilePath -> Parser FilePath
+xdgYamlConfigFile :: (HasCallStack) => FilePath -> Parser FilePath
 xdgYamlConfigFile subdir =
   mapIO
     ( \mXdgDir -> do
@@ -585,6 +626,7 @@ xdgYamlConfigFile subdir =
         fromAbsFile <$> resolveFile configDir "config.yaml"
     )
     $ optional
+    $ withFrozenCallStack
     $ setting
       [ help "Path to the XDG configuration directory",
         reader str,
@@ -644,6 +686,7 @@ enableDisableSwitch ::
 enableDisableSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
 
 makeDoubleSwitch ::
+  (HasCallStack) =>
   -- | Prefix for 'True' 'long's
   String ->
   -- | Prefix for 'False' 'long's
@@ -656,15 +699,16 @@ makeDoubleSwitch ::
   [Builder Bool] ->
   Parser Bool
 makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
-  choice $
-    catMaybes
-      [ Just parseDummy,
-        Just parseDisableSwitch,
-        Just parseEnableSwitch,
-        parseEnv,
-        parseConfigVal,
-        Just $ pure defaultBool
-      ]
+  withFrozenCallStack $
+    choice $
+      catMaybes
+        [ Just parseDummy,
+          Just parseDisableSwitch,
+          Just parseEnableSwitch,
+          parseEnv,
+          parseConfigVal,
+          Just $ pure defaultBool
+        ]
   where
     s = buildSetting builders
     mLoc = snd <$> listToMaybe (getCallStack callStack)
@@ -765,8 +809,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
 
 -- | Read a text file but strip whitespace so it can be edited with an editor
 -- that messes with line endings.
-readTextSecretFile :: FilePath -> IO Text
-readTextSecretFile = fmap T.strip . T.readFile
+readSecretTextFile :: Path Abs File -> IO Text
+readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 
 -- | Prefix all 'long's and 'short's with a given 'String'.
 {-# ANN subArgs ("NOCOVER" :: String) #-}
@@ -814,11 +858,11 @@ subAll prefix =
     . subEnv_ prefix
     . subConfig_ prefix
 
--- | Use the 'settingsParser' of a given type, but prefixed with a 'subAll'.
+-- | Use the 'settingsParser' of a given type, but prefixed with a 'subAll' and 'allOrNothing'.
 --
--- > subSettings prefix = subAll prefix settingsParser
-subSettings :: (HasParser a) => String -> Parser a
-subSettings prefix = subAll prefix settingsParser
+-- > subSettings prefix = allOrNothing $ subAll prefix settingsParser
+subSettings :: (HasCallStack) => (HasParser a) => String -> Parser a
+subSettings prefix = withFrozenCallStack allOrNothing $ subAll prefix settingsParser
 
 -- | Erase all source locations in a parser.
 --
@@ -835,6 +879,7 @@ parserEraseSrcLocs = go
       ParserEmpty _ -> ParserEmpty Nothing
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
       ParserMany p -> ParserMany (go p)
+      ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
       ParserCommands mLoc cs -> ParserCommands mLoc $ map commandEraseSrcLocs cs
       ParserWithConfig p1 p2 -> ParserWithConfig (go p1) (go p2)
@@ -870,6 +915,7 @@ parserTraverseSetting func = go
       ParserEmpty mLoc -> pure $ ParserEmpty mLoc
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
+      ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
       ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
@@ -885,3 +931,27 @@ commandTraverseSetting ::
 commandTraverseSetting func c = do
   (\p -> c {commandParser = p})
     <$> parserTraverseSetting func (commandParser c)
+
+parserSettingsSet :: Parser a -> Set SrcLocHash
+parserSettingsSet = go
+  where
+    go :: Parser a -> Set SrcLocHash
+    go = \case
+      ParserPure _ -> S.empty
+      ParserAp p1 p2 -> S.union (go p1) (go p2)
+      ParserSelect p1 p2 -> S.union (go p1) (go p2)
+      ParserEmpty _ -> S.empty
+      ParserAlt p1 p2 -> S.union (go p1) (go p2)
+      ParserMany p -> go p
+      ParserAllOrNothing _ p -> go p -- TODO is this right?
+      ParserCheck _ _ _ p -> go p
+      ParserCommands _ cs -> S.unions $ map (go . commandParser) cs
+      ParserWithConfig p1 p2 -> S.union (go p1) (go p2)
+      -- The nothing part shouldn't happen but I don't know when it doesn't
+      ParserSetting mLoc _ -> maybe S.empty (S.singleton . hashSrcLoc) mLoc
+
+newtype SrcLocHash = SrcLocHash Int
+  deriving (Show, Eq, Ord)
+
+hashSrcLoc :: SrcLoc -> SrcLocHash
+hashSrcLoc = SrcLocHash . hash . prettySrcLoc

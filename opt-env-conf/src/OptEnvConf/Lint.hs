@@ -205,8 +205,9 @@ lintParser =
       ParserSelect p1 p2 -> go p1 *> go p2
       ParserEmpty _ -> pure ()
       ParserAlt p1 p2 -> go p1 *> go p2
-      -- TODO lint if we try to read config or env under many/some?
+      -- TODO lint if we don't try to parse anything consuming under many.
       ParserMany p -> go p
+      ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands mLoc ls -> do
         if null ls

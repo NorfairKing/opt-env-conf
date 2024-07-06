@@ -28,6 +28,7 @@ executables:
     source-dirs: app
     dependencies:
     - opt-env-conf
+    - text
 
 tests:
   opt-env-conf-test:

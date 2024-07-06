@@ -133,6 +133,32 @@ spec = do
     (checkEither (const $ Left "example error") (setting [argument, reader str, env "FOO", value "bar"]) :: Parser String)
     []
 
+  parseArgsErrorSpec
+    "all-or-nothing"
+    ( choice
+        [ allOrNothing $
+            (,)
+              <$> setting [option, long "foo", reader auto, help "This one will exist", metavar "CHAR"]
+              <*> setting [option, long "bar", reader auto, help "This one will not exist", metavar "CHAR"],
+          pure ('a', 'b')
+        ]
+    )
+    ["--foo", "'a'"]
+  parseArgsErrorSpec
+    "all-or-nothing-relevant"
+    ( (,)
+        <$> choice
+          [ allOrNothing $
+              (,)
+                <$> setting [option, long "foo", reader auto, help "This one will exist", metavar "CHAR"]
+                <*> setting [option, long "bar", reader auto, help "This one will not exist", metavar "CHAR"],
+            pure ('a', 'b')
+          ]
+        <*> choice [] ::
+        Parser ((Char, Char), Char)
+    )
+    ["--foo", "'a'"]
+
 parseArgsErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseArgsErrorSpec fp p args =
   withFrozenCallStack $
