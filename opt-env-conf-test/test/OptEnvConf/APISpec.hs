@@ -14,20 +14,20 @@ import Text.Show.Pretty as Pretty
 
 spec :: Spec
 spec = do
-  exampleParserSpec "empty" emptyParser
-  exampleParserSpec "args" argsParser
-  exampleParserSpec "optional" optionalParser
-  exampleParserSpec "big-config" bigConfigParser
-  exampleParserSpec "hidden" hiddenParser
-  exampleParserSpec "enable-disable" enableDisableParser
-  exampleParserSpec "yes-no" yesNoParser
-  exampleParserSpec "verbose" verboseParser
-  exampleParserSpec "greet" greetParser
-  exampleParserSpec "three-commands" threeCommandsParser
-  exampleParserSpec "sub-commands" subCommandsParser
+  exampleParserSpec "empty" "empty parser" emptyParser
+  exampleParserSpec "args" "args parser" argsParser
+  exampleParserSpec "optional" "optional argument" optionalParser
+  exampleParserSpec "big-config" "example with a big configuration" bigConfigParser
+  exampleParserSpec "hidden" "example with hidden settings" hiddenParser
+  exampleParserSpec "enable-disable" "enableDisableSwitch example" enableDisableParser
+  exampleParserSpec "yes-no" "yesNoSwitch example" yesNoParser
+  exampleParserSpec "verbose" "verbosity example" verboseParser
+  exampleParserSpec "greet" "hello world example" greetParser
+  exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
+  exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
 
-exampleParserSpec :: (HasCallStack) => FilePath -> Parser a -> Spec
-exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
+exampleParserSpec :: (HasCallStack) => FilePath -> String -> Parser a -> Spec
+exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
   let version = makeVersion [0, 0, 0]
   let parser = internalParser version p
 
@@ -66,7 +66,7 @@ exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
 
   it "documents the help page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/help.txt") $
-      renderHelpPage dir $
+      renderHelpPage dir progDesc $
         parserDocs parser
 
   it "documents the short opt parser in the same way" $
@@ -92,7 +92,7 @@ exampleParserSpec dir p = withFrozenCallStack $ describe dir $ do
   it "documents the man page in the same way" $
     pureGoldenTextFile ("test_resources/docs/" <> dir <> "/man.txt") $
       renderChunksText WithoutColours $
-        renderManPage dir version $
+        renderManPage dir version progDesc $
           parserDocs parser
 
   it "renders the reference documentation in the same way" $

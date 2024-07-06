@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm optional
-.Nd TODO one line about what it does
+.Nd optional argument
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS

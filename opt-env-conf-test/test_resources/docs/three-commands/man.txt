@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm three-commands
-.Nd TODO one line about what it does
+.Nd example with three commands
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS

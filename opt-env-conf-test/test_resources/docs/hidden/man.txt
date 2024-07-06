@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm hidden
-.Nd TODO one line about what it does
+.Nd example with hidden settings
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS

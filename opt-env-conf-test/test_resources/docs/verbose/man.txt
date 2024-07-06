@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm verbose
-.Nd TODO one line about what it does
+.Nd verbosity example
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS

@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm enable-disable
-.Nd TODO one line about what it does
+.Nd enableDisableSwitch example
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS

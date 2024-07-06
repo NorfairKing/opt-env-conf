@@ -48,8 +48,15 @@ import Text.Colour.Capabilities.FromEnv
 -- | Run 'runParser' on your @Settings@' type's 'settingsParser'.
 --
 -- __This is most likely the function you want to be using.__
-runSettingsParser :: (HasParser a) => Version -> IO a
-runSettingsParser version = runParser version settingsParser
+runSettingsParser ::
+  (HasParser a) =>
+  -- | Program version, get this from Paths_your_package_name
+  Version ->
+  -- | Program description
+  String ->
+  IO a
+runSettingsParser version progDesc =
+  runParser version progDesc settingsParser
 
 -- | Run a parser
 --
@@ -66,8 +73,14 @@ runSettingsParser version = runParser version settingsParser
 --     * @--completion@: Render a fish completion script
 --
 -- This gets the arguments and environment variables from the current process.
-runParser :: Version -> Parser a -> IO a
-runParser version p = do
+runParser ::
+  -- | Program version, get this from Paths_your_package_name
+  Version ->
+  -- | Program description
+  String ->
+  Parser a ->
+  IO a
+runParser version progDesc p = do
   allArgs <- getArgs
   let argMap = parseArgs allArgs
   completeEnv <- getEnvironment
@@ -96,7 +109,7 @@ runParser version p = do
           ShowHelp -> do
             progname <- getProgName
             tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderHelpPage progname docs
+            hPutChunksLocaleWith tc stdout $ renderHelpPage progname progDesc docs
             exitSuccess
           ShowVersion -> do
             progname <- getProgName
@@ -106,7 +119,7 @@ runParser version p = do
           RenderMan -> do
             progname <- getProgName
             tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderManPage progname version docs
+            hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
             exitSuccess
           BashCompletionScript progPath -> do
             progname <- getProgName

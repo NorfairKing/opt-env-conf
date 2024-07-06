@@ -281,13 +281,24 @@ renderSetDocWithoutHeader SetDoc {..} =
     ]
 
 helpLines :: Help -> [[Chunk]]
-helpLines h =
-  let ls = T.lines (T.pack h)
-   in map ((: []) . fore blue . chunk) ls
+helpLines = map (map (fore blue)) . stringLines
+
+progDescLines :: String -> [[Chunk]]
+progDescLines = stringLines
+
+stringLines :: String -> [[Chunk]]
+stringLines s =
+  let ls = T.lines (T.pack s)
+   in map (pure . chunk) ls
 
 -- | Render the output of `--render-man-page` for reading with @man@
-renderManPage :: String -> Version -> AnyDocs SetDoc -> [Chunk]
-renderManPage progname version docs =
+renderManPage ::
+  String ->
+  Version ->
+  String ->
+  AnyDocs SetDoc ->
+  [Chunk]
+renderManPage progname version progDesc docs =
   let optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
@@ -303,7 +314,7 @@ renderManPage progname version docs =
               -- Section header
               [".Sh ", "NAME"],
               [".Nm ", progNameChunk progname],
-              [".Nd ", "TODO one line about what it does"],
+              [".Nd ", chunk $ T.pack progDesc],
               [".Sh ", "VERSION"],
               [versionChunk version],
               [".Sh ", "SYNOPSIS"],
@@ -386,11 +397,13 @@ renderVersionPage progname version =
     ]
 
 -- | Render the output of @--help@
-renderHelpPage :: String -> AnyDocs SetDoc -> [Chunk]
-renderHelpPage progname docs =
+renderHelpPage :: String -> String -> AnyDocs SetDoc -> [Chunk]
+renderHelpPage progname progDesc docs =
   unlinesChunks
     [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
       [],
+      unlinesChunks $ progDescLines progDesc,
+      headerChunks "Available settings",
       renderSetDocs docs
     ]
 

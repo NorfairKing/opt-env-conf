@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm big-config
-.Nd TODO one line about what it does
+.Nd example with a big configuration
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS

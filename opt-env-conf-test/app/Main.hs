@@ -8,7 +8,10 @@ import Paths_opt_env_conf_test (version)
 
 main :: IO ()
 main = do
-  s <- runSettingsParser version
+  s <-
+    runSettingsParser
+      version
+      "Example opt-env-conf-based application"
   print (s :: Instructions)
 
 data Instructions = Instructions !Settings !Dispatch

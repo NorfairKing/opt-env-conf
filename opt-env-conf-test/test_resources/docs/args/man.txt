@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm args
-.Nd TODO one line about what it does
+.Nd args parser
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
