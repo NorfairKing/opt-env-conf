@@ -386,17 +386,21 @@ directoryPathSetting builders =
       ]
         ++ builders
 
--- | A 'setting' with 'option' and the 'reader' set to 'str'.
+-- | A 'setting' with 'option', a 'reader' set to 'str', and the 'metavar' set to @STR@.
+--
+-- Note that you can override the 'metavar' with another 'metavar' in the given list of builders.
 --
 -- This function may help with easier migration from @optparse-applicative@.
 strOption :: (IsString string) => [Builder string] -> Parser string
-strOption builders = setting $ option : reader str : builders
+strOption builders = setting $ option : reader str : metavar "STR" : builders
 
--- | A 'setting' with 'argument' and the 'reader' set to 'str'.
+-- | A 'setting' with 'argument', a 'reader' set to 'str', and the 'metavar' set to @STR@.
+--
+-- Note that you can override the 'metavar' with another 'metavar' in the given list of builders.
 --
 -- This function may help with easier migration from @optparse-applicative@.
 strArgument :: (IsString string) => [Builder string] -> Parser string
-strArgument builders = setting $ argument : reader str : builders
+strArgument builders = setting $ argument : reader str : metavar "STR" : builders
 
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)

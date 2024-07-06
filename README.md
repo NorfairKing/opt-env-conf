@@ -60,3 +60,9 @@ Used in production
 | Bash completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
 | Zsh completion                       | 🚧             | ✔️                      | ✖️          | ✖️             |
 | Fish completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
+
+
+## Example
+
+The `opt-env-conf-test/app/Main.hs` file contains a fully worked example.
+This example is part of the build in CI so you can rely on it being up-to-date.
