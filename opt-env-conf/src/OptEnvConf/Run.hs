@@ -62,6 +62,8 @@ runSettingsParser version = runParser version settingsParser
 --     * @--bash-completion-script@: Render a bash completion script
 --     * @--zsh-completion-script@: Render a zsh completion script
 --     * @--fish-completion-script@: Render a fish completion script
+--     * @query-opt-env-conf-completion@: Perform a completion query
+--     * @--completion@: Render a fish completion script
 --
 -- This gets the arguments and environment variables from the current process.
 runParser :: Version -> Parser a -> IO a
@@ -110,8 +112,16 @@ runParser version p = do
             progname <- getProgName
             generateBashCompletionScript progPath progname
             exitSuccess
-          BashCompletionQuery index ws -> do
-            runBashCompletionQuery p' index ws
+          ZshCompletionScript progPath -> do
+            progname <- getProgName
+            generateZshCompletionScript progPath progname
+            exitSuccess
+          FishCompletionScript progPath -> do
+            progname <- getProgName
+            generateFishCompletionScript progPath progname
+            exitSuccess
+          CompletionQuery enriched index ws -> do
+            runCompletionQuery p' enriched index ws
             exitSuccess
           ParsedNormally a -> pure a
 
@@ -122,7 +132,15 @@ data Internal a
   | ShowVersion
   | RenderMan
   | BashCompletionScript (Path Abs File)
-  | BashCompletionQuery !Int ![String]
+  | ZshCompletionScript (Path Abs File)
+  | FishCompletionScript (Path Abs File)
+  | CompletionQuery
+      -- Enriched
+      !Bool
+      -- Index
+      !Int
+      -- Args
+      ![String]
   | ParsedNormally a
 
 internalParser :: Version -> Parser a -> Parser (Internal a)
@@ -156,13 +174,42 @@ internalParser version p =
                 help "Render the bash completion script"
               ]
           ),
+      ZshCompletionScript
+        <$> mapIO
+          parseAbsFile
+          ( setting
+              [ option,
+                reader str,
+                long "zsh-completion-script",
+                hidden,
+                help "Render the zsh completion script"
+              ]
+          ),
+      ZshCompletionScript
+        <$> mapIO
+          parseAbsFile
+          ( setting
+              [ option,
+                reader str,
+                long "fish-completion-script",
+                hidden,
+                help "Render the fish completion script"
+              ]
+          ),
       setting
         [ help "Query completion",
-          switch BashCompletionQuery,
+          switch CompletionQuery,
           -- Long string that no normal user would ever use.
           long "query-opt-env-conf-completion",
           hidden
         ]
+        <*> setting
+          [ switch True,
+            long "completion-enriched",
+            value False,
+            hidden,
+            help "Whether to enable enriched completion"
+          ]
         <*> setting
           [ option,
             reader auto,

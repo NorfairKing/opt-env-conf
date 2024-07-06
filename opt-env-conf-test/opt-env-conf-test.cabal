@@ -11,6 +11,9 @@ license:        OtherLicense
 license-file:   LICENSE.md
 build-type:     Simple
 extra-source-files:
+    test_resources/completion/bash-completion-script.bash
+    test_resources/completion/fish-completion-script.fish
+    test_resources/completion/zsh-completion-script.zsh
     test_resources/docs/args/config-docs.txt
     test_resources/docs/args/config.txt
     test_resources/docs/args/docs.txt
@@ -245,6 +248,7 @@ test-suite opt-env-conf-test
     , mtl
     , opt-env-conf
     , opt-env-conf-test
+    , path
     , pretty-show
     , safe-coloured-text
     , sydtest

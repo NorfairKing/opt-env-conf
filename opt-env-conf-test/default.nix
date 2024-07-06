@@ -1,7 +1,7 @@
 { mkDerivation, aeson, base, containers, genvalidity
 , genvalidity-aeson, genvalidity-containers, genvalidity-sydtest
-, genvalidity-text, lib, mtl, opt-env-conf, pretty-show, QuickCheck
-, safe-coloured-text, sydtest, sydtest-discover, text
+, genvalidity-text, lib, mtl, opt-env-conf, path, pretty-show
+, QuickCheck, safe-coloured-text, sydtest, sydtest-discover, text
 }:
 mkDerivation {
   pname = "opt-env-conf-test";
@@ -16,7 +16,7 @@ mkDerivation {
   executableHaskellDepends = [ base opt-env-conf ];
   testHaskellDepends = [
     aeson base containers genvalidity-aeson genvalidity-sydtest
-    genvalidity-text mtl opt-env-conf pretty-show QuickCheck
+    genvalidity-text mtl opt-env-conf path pretty-show QuickCheck
     safe-coloured-text sydtest text
   ];
   testToolDepends = [ sydtest-discover ];

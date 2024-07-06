@@ -49,6 +49,7 @@ tests:
     - mtl
     - opt-env-conf
     - opt-env-conf-test
+    - path
     - pretty-show
     - safe-coloured-text
     - sydtest

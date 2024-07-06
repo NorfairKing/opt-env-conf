@@ -4,8 +4,14 @@
 
 module OptEnvConf.Completion
   ( generateBashCompletionScript,
-    runBashCompletionQuery,
+    bashCompletionScript,
+    generateZshCompletionScript,
+    zshCompletionScript,
+    generateFishCompletionScript,
+    fishCompletionScript,
+    runCompletionQuery,
     pureCompletionQuery,
+    Completion (..),
   )
 where
 
@@ -45,20 +51,102 @@ bashCompletionScript progPath progname =
           "complete -o filenames -F " ++ functionName ++ " " ++ progname
         ]
 
+generateZshCompletionScript :: Path Abs File -> String -> IO ()
+generateZshCompletionScript progPath progname = putStrLn $ zshCompletionScript progPath progname
+
+-- | Generated zsh shell completion script
+zshCompletionScript :: Path Abs File -> String -> String
+zshCompletionScript progPath progname =
+  unlines
+    [ "#compdef " ++ progname,
+      "",
+      "local request",
+      "local completions",
+      "local word",
+      "local index=$((CURRENT - 1))",
+      "",
+      "request=(--query-opt-env-conf-completion --completion-enriched --completion-index $index)",
+      "for arg in ${words[@]}; do",
+      "  request=(${request[@]} --completion-word $arg)",
+      "done",
+      "",
+      "IFS=$'\\n' completions=($( " ++ fromAbsFile progPath ++ " \"${request[@]}\" ))",
+      "",
+      "for word in $completions; do",
+      "  local -a parts",
+      "",
+      "  # Split the line at a tab if there is one.",
+      "  IFS=$'\\t' parts=($( echo $word ))",
+      "",
+      "  if [[ -n $parts[2] ]]; then",
+      "     if [[ $word[1] == \"-\" ]]; then",
+      "       local desc=(\"$parts[1] ($parts[2])\")",
+      "       compadd -d desc -- $parts[1]",
+      "     else",
+      "       local desc=($(print -f  \"%-019s -- %s\" $parts[1] $parts[2]))",
+      "       compadd -l -d desc -- $parts[1]",
+      "     fi",
+      "  else",
+      "    compadd -f -- $word",
+      "  fi",
+      "done"
+    ]
+
+generateFishCompletionScript :: Path Abs File -> String -> IO ()
+generateFishCompletionScript progPath progname = putStrLn $ fishCompletionScript progPath progname
+
+-- | Generated fish shell completion script
+fishCompletionScript :: Path Abs File -> String -> String
+fishCompletionScript progPath progname =
+  let functionName = progNameToFunctionName progname
+   in unlines
+        [ " function " ++ functionName,
+          "    set -l cl (commandline --tokenize --current-process)",
+          "    # Hack around fish issue #3934",
+          "    set -l cn (commandline --tokenize --cut-at-cursor --current-process)",
+          "    set -l cn (count $cn)",
+          "    set -l tmpline --query-opt-env-conf-completion --completion-enriched --completion-index $cn",
+          "    for arg in $cl",
+          "      set tmpline $tmpline --completion-word $arg",
+          "    end",
+          "    for opt in (" ++ fromAbsFile progPath ++ " $tmpline)",
+          "      if test -d $opt",
+          "        echo -E \"$opt/\"",
+          "      else",
+          "        echo -E \"$opt\"",
+          "      end",
+          "    end",
+          "end",
+          "",
+          "complete --no-files --command " ++ fromAbsFile progPath ++ " --arguments '(" ++ functionName ++ ")'"
+        ]
+
 -- This should be a name that a normal user would never want to define themselves.
 progNameToFunctionName :: String -> String
 progNameToFunctionName progname = "_opt_env_conf_completion_" ++ toShellFunctionCase progname
 
-runBashCompletionQuery ::
+runCompletionQuery ::
   Parser a ->
+  -- | Enriched
+  Bool ->
   -- Where completion is invoked (inbetween arguments)
   Int ->
   -- Provider arguments
   [String] ->
   IO ()
-runBashCompletionQuery parser index ws = do
+runCompletionQuery parser enriched index ws = do
   let completions = pureCompletionQuery parser index ws
-  putStr $ unlines completions
+  if enriched
+    then
+      putStr $
+        unlines $
+          map
+            ( \Completion {..} -> case completionDescription of
+                Nothing -> completionSuggestion
+                Just d -> completionSuggestion <> "\t" <> d
+            )
+            completions
+    else putStr $ unlines $ map completionSuggestion completions
   pure ()
 
 selectArgs :: Int -> [String] -> (Args, Maybe String)
@@ -66,17 +154,25 @@ selectArgs _ix args =
   let selectedArgs = args -- take ix args
    in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
-pureCompletionQuery :: Parser a -> Int -> [String] -> [String]
+data Completion = Completion
+  { -- | Completion
+    completionSuggestion :: String,
+    -- | Description
+    completionDescription :: !(Maybe String)
+  }
+  deriving (Show, Eq)
+
+pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion]
 pureCompletionQuery parser ix args =
   -- TODO use the index properly (?)
   fromMaybe [] $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
-    goCommand :: Command a -> State Args (Maybe [String])
+    goCommand :: Command a -> State Args (Maybe [Completion])
     goCommand = go . commandParser -- TODO complete with the command
     -- Nothing means "this branch was not valid"
     -- Just means "no completions"
-    go :: Parser a -> State Args (Maybe [String])
+    go :: Parser a -> State Args (Maybe [Completion])
     go = \case
       ParserPure _ -> pure $ Just []
       ParserAp p1 p2 -> do
@@ -113,7 +209,15 @@ pureCompletionQuery parser ix args =
             case mCursorArg of
               Nothing -> pure $ Just []
               Just arg -> do
-                pure $ Just $ filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
+                let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
+                let completions =
+                      map
+                        ( \completionSuggestion ->
+                            let completionDescription = settingHelp
+                             in Completion {..}
+                        )
+                        suggestions
+                pure $ Just completions
 
 -- ParserAp p1 p2 -> do
 --   s1s <- go p1 |> go p2
