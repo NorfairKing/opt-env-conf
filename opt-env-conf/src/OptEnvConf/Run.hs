@@ -420,7 +420,7 @@ data ParseResult a
 
 requireReaders :: [Reader a] -> PP (NonEmpty (Reader a))
 requireReaders rs = case NE.nonEmpty rs of
-  Nothing -> error "no readers configured." -- TODO nicer error
+  Nothing -> ppError ParseErrorNoReaders
   Just ne -> pure ne
 
 -- Try the readers in order

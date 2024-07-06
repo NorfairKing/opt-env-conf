@@ -207,6 +207,7 @@ reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
 --     * Parsing options with an '=' sign in the 'long' is not supported.
 --
 -- Multiple 'long's will be tried in order.
+-- Empty 'long's will be ignored.
 long :: String -> Builder a
 long l = Builder $ \s -> case NE.nonEmpty l of
   Nothing -> s
