@@ -13,6 +13,8 @@ module OptEnvConf
 
     -- ** Settings
     setting,
+    filePathSetting,
+    directoryPathSetting,
 
     -- *** Building settings
     help,

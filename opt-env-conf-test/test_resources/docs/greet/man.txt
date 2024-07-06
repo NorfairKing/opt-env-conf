@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-greet (-h|--help) | --version | (--config-file FILE -g|--greeting GREETING SUBJECT -p|--polite)
+greet (-h|--help) | --version | (--config-file FILE_PATH -g|--greeting GREETING SUBJECT -p|--polite)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -16,8 +16,8 @@ greet (-h|--help) | --version | (--config-file FILE -g|--greeting GREETING SUBJE
   switch: --version
 
   Path to the configuration file
-  option: --config-file FILE
-  env: GREET_CONFIG_FILE FILE
+  option: --config-file FILE_PATH
+  env: GREET_CONFIG_FILE FILE_PATH
   
   Greeting to use
   option: -g|--greeting GREETING
@@ -46,9 +46,9 @@ greet (-h|--help) | --version | (--config-file FILE -g|--greeting GREETING SUBJE
   -p|--polite   Whether to be polite              default: False  
 
 .Sh ENVIRONMENT VARIABLES
-  GREET_CONFIG_FILE FILE    Path to the configuration file
-  GREET_GREETING GREETING   Greeting to use               
-  GREET_POLITE ANY          Whether to be polite          
+  GREET_CONFIG_FILE FILE_PATH   Path to the configuration file
+  GREET_GREETING GREETING       Greeting to use               
+  GREET_POLITE ANY              Whether to be polite          
 
 .Sh CONFIGURATION VALUES
   Greeting to use

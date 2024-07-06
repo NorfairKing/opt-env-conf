@@ -1,4 +1,4 @@
-[36mUsage: [m[33mthree-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [35mone[m [33mSTR[m [36m|[m [35mtwo[m [37m--number[m[36m|[m[37m-n[m [33mINT[m [37m--(enable|disable)-enable[m [36m|[m [35mthree[m[36m)[m
+[36mUsage: [m[33mthree-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m [35mone[m [33mSTR[m [36m|[m [35mtwo[m [37m--number[m[36m|[m[37m-n[m [33mINT[m [37m--(enable|disable)-enable[m [36m|[m [35mthree[m[36m)[m
 
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
@@ -7,8 +7,8 @@
   switch: [37m--version[m
 
   [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE[m
-  env: [37mCONFIG_FILE[m [33mFILE[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
   [34mfirst[m
   command: [35mone[m

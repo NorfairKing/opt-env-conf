@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-yes-no (-h|--help) | --version | (--config-file FILE --[no-]example)
+yes-no (-h|--help) | --version | (--config-file FILE_PATH --[no-]example)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -16,8 +16,8 @@ yes-no (-h|--help) | --version | (--config-file FILE --[no-]example)
   switch: --version
 
   Path to the configuration file
-  option: --config-file FILE
-  env: CONFIG_FILE FILE
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
   
   Example of a yes/no switch
   switch: --[no-]example
@@ -34,8 +34,8 @@ yes-no (-h|--help) | --version | (--config-file FILE --[no-]example)
   --[no-]example Example of a yes/no switch        
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE   Path to the configuration file
-  EXAMPLE BOOL       Example of a yes/no switch    
+  CONFIG_FILE FILE_PATH   Path to the configuration file
+  EXAMPLE BOOL            Example of a yes/no switch    
 
 .Sh CONFIGURATION VALUES
   Example of a yes/no switch

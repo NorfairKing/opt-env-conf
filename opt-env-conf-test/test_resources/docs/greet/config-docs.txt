@@ -3,7 +3,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "GREET_CONFIG_FILE" :| []
         , envDocDefault = Nothing
-        , envDocMetavar = Just "FILE"
+        , envDocMetavar = Just "FILE_PATH"
         , envDocHelp = Just "Path to the configuration file"
         }
   , AnyDocsSingle

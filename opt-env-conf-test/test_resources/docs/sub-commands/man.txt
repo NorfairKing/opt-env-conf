@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub a | b c | d)
+sub-commands (-h|--help) | --version | (--config-file FILE_PATH top --name NAME | sub a | b c | d)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -16,8 +16,8 @@ sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub
   switch: --version
 
   Path to the configuration file
-  option: --config-file FILE
-  env: CONFIG_FILE FILE
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
   
   command without subcommands
   command: top
@@ -58,8 +58,8 @@ sub-commands (-h|--help) | --version | (--config-file FILE top --name NAME | sub
       d D
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE   Path to the configuration file
-  NAME NAME          name                          
+  CONFIG_FILE FILE_PATH   Path to the configuration file
+  NAME NAME               name                          
 
 .Sh CONFIGURATION VALUES
   name

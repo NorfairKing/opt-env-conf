@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-three-commands (-h|--help) | --version | (--config-file FILE one STR | two --number|-n INT --(enable|disable)-enable | three)
+three-commands (-h|--help) | --version | (--config-file FILE_PATH one STR | two --number|-n INT --(enable|disable)-enable | three)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -16,8 +16,8 @@ three-commands (-h|--help) | --version | (--config-file FILE one STR | two --num
   switch: --version
 
   Path to the configuration file
-  option: --config-file FILE
-  env: CONFIG_FILE FILE
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
   
   first
   command: one
@@ -58,9 +58,9 @@ three-commands (-h|--help) | --version | (--config-file FILE one STR | two --num
   three third
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE   Path to the configuration file
-  NUMBER INT         number                        
-  ENABLE BOOL        enable extra                  
+  CONFIG_FILE FILE_PATH   Path to the configuration file
+  NUMBER INT              number                        
+  ENABLE BOOL             enable extra                  
 
 .Sh CONFIGURATION VALUES
   number

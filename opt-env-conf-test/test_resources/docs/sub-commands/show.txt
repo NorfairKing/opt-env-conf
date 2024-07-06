@@ -5,7 +5,7 @@ WithConfig
      _
      (Alt
         (Check
-           True
+           False
            _
            (Setting
               Nothing
@@ -18,9 +18,9 @@ WithConfig
                  (Just ("CONFIG_FILE" :| []))
                  Nothing
                  Nothing
-                 (Just "FILE")
+                 (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
-        (Pure _)))
+        (Check False _ (Pure _))))
   (Commands
      [ Command
          "top"

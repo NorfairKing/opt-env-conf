@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-enable-disable (-h|--help) | --version | (--config-file FILE --(enable|disable)-example)
+enable-disable (-h|--help) | --version | (--config-file FILE_PATH --(enable|disable)-example)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -16,8 +16,8 @@ enable-disable (-h|--help) | --version | (--config-file FILE --(enable|disable)-
   switch: --version
 
   Path to the configuration file
-  option: --config-file FILE
-  env: CONFIG_FILE FILE
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
   
   Example of an enable/disable switch
   switch: --(enable|disable)-example
@@ -34,8 +34,8 @@ enable-disable (-h|--help) | --version | (--config-file FILE --(enable|disable)-
   --(enable|disable)-example Example of an enable/disable switch 
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE   Path to the configuration file     
-  EXAMPLE BOOL       Example of an enable/disable switch
+  CONFIG_FILE FILE_PATH   Path to the configuration file     
+  EXAMPLE BOOL            Example of an enable/disable switch
 
 .Sh CONFIGURATION VALUES
   Example of an enable/disable switch

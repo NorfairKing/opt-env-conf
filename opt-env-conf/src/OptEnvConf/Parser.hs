@@ -9,6 +9,8 @@
 module OptEnvConf.Parser
   ( -- * Parser API
     setting,
+    filePathSetting,
+    directoryPathSetting,
     choice,
     mapIO,
     runIO,
@@ -435,31 +437,24 @@ withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
 
 -- | Load a YAML config file and use it for the given parser
-withYamlConfig :: Parser (Maybe FilePath) -> Parser a -> Parser a
-withYamlConfig pathParser = withConfig $ mapIO (fmap join . mapM (resolveFile' >=> readYamlConfigFile)) pathParser
+withYamlConfig :: Parser (Maybe (Path Abs File)) -> Parser a -> Parser a
+withYamlConfig pathParser =
+  withConfig $
+    mapIO (fmap join . mapM readYamlConfigFile) pathParser
 
 -- | Load the Yaml config in the first of the filepaths that points to something that exists.
-withFirstYamlConfig :: Parser [FilePath] -> Parser a -> Parser a
-withFirstYamlConfig parsers = withConfig $ mapIO go parsers
-  where
-    go :: [FilePath] -> IO (Maybe JSON.Object)
-    go = \case
-      [] -> pure Nothing
-      (f : fs) -> do
-        mObject <- resolveFile' f >>= readYamlConfigFile
-        case mObject of
-          Just o -> pure (Just o)
-          Nothing -> go fs
+withFirstYamlConfig :: Parser [Path Abs File] -> Parser a -> Parser a
+withFirstYamlConfig parsers = withConfig $ mapIO readFirstYamlConfigFile parsers
 
 -- | Combine all Yaml config files that exist into a single combined config object.
-withCombinedYamlConfigs :: Parser [FilePath] -> Parser a -> Parser a
+withCombinedYamlConfigs :: Parser [Path Abs File] -> Parser a -> Parser a
 withCombinedYamlConfigs = withCombinedYamlConfigs' combineConfigObjects
 
-withCombinedYamlConfigs' :: (Object -> JSON.Object -> JSON.Object) -> Parser [FilePath] -> Parser a -> Parser a
+withCombinedYamlConfigs' :: (Object -> JSON.Object -> JSON.Object) -> Parser [Path Abs File] -> Parser a -> Parser a
 withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) parsers
   where
-    resolveYamlConfigFile :: Maybe JSON.Object -> FilePath -> IO (Maybe JSON.Object)
-    resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . (resolveFile' >=> readYamlConfigFile)
+    resolveYamlConfigFile :: Maybe JSON.Object -> Path Abs File -> IO (Maybe JSON.Object)
+    resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . readYamlConfigFile
     -- left biased, first one wins
     combineMaybeObjects :: Maybe JSON.Object -> Maybe JSON.Object -> Maybe JSON.Object
     combineMaybeObjects Nothing mo = mo
@@ -498,19 +493,17 @@ xdgYamlConfigFile subdir =
 -- | Load a config file that is reconfigurable with an option and environment
 -- variable but @config.yaml@ in the local working directory by default.
 withLocalYamlConfig :: Parser a -> Parser a
-withLocalYamlConfig = withConfigurableYamlConfig $ pure "config.yaml"
+withLocalYamlConfig = withConfigurableYamlConfig $ mapIO resolveFile' $ pure "config.yaml"
 
-withConfigurableYamlConfig :: Parser FilePath -> Parser a -> Parser a
+withConfigurableYamlConfig :: Parser (Path Abs File) -> Parser a -> Parser a
 withConfigurableYamlConfig p = withYamlConfig $ Just <$> (configuredConfigFile <|> p)
 
-configuredConfigFile :: Parser FilePath
+configuredConfigFile :: Parser (Path Abs File)
 configuredConfigFile =
-  setting
-    [ reader str,
-      option,
+  filePathSetting
+    [ option,
       long "config-file",
       env "CONFIG_FILE",
-      metavar "FILE",
       help "Path to the configuration file"
     ]
 

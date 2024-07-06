@@ -1,1 +1,1 @@
-[33myes-no[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m [37m--[no-]example[m[36m)[m
+[33myes-no[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m [37m--[no-]example[m[36m)[m

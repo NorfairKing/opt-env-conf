@@ -6,7 +6,7 @@ AnyDocsAnd
         , optDocTryOption = True
         , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
         , optDocDefault = Nothing
-        , optDocMetavar = Just "FILE"
+        , optDocMetavar = Just "FILE_PATH"
         , optDocHelp = Just "Path to the configuration file"
         }
   , AnyDocsSingle

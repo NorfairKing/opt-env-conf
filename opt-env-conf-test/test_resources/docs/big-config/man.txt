@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-big-config (-h|--help) | --version | (--config-file FILE)
+big-config (-h|--help) | --version | (--config-file FILE_PATH)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -16,8 +16,8 @@ big-config (-h|--help) | --version | (--config-file FILE)
   switch: --version
 
   Path to the configuration file
-  option: --config-file FILE
-  env: CONFIG_FILE FILE
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
   
   multi-line config codec explanation, the same option twice.
   config:
@@ -33,7 +33,7 @@ big-config (-h|--help) | --version | (--config-file FILE)
   --config-file Path to the configuration file    
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE   Path to the configuration file
+  CONFIG_FILE FILE_PATH   Path to the configuration file
 
 .Sh CONFIGURATION VALUES
   multi-line config codec explanation, the same option twice.

@@ -1,4 +1,4 @@
-[36mUsage: [m[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE[m[36m)[m
+[36mUsage: [m[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m[36m)[m
 
 [36mAll settings[m:
   [34mShow this help text[m
@@ -8,8 +8,8 @@
   switch: [37m--version[m
 
   [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE[m
-  env: [37mCONFIG_FILE[m [33mFILE[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
   [34mmulti-line config codec explanation, the same option twice.[m
   config:
@@ -25,7 +25,7 @@
   [37m--config-file[m [34mPath to the configuration file[m    
 
 [36mEnvironment Variables[m:
-  [37mCONFIG_FILE[m [33mFILE[m   [34mPath to the configuration file[m
+  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m
 
 [36mConfiguration Values[m:
   [34mmulti-line config codec explanation, the same option twice.[m
