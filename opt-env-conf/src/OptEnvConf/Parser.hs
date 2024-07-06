@@ -149,6 +149,7 @@ data Parser a where
   ParserEmpty :: !(Maybe SrcLoc) -> Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
+  ParserAllOrNothing :: !(Parser a) -> Parser a
   -- Map, Check, and IO
   ParserCheck ::
     !(Maybe SrcLoc) ->
@@ -199,6 +200,7 @@ instance Alternative Parser where
           ParserEmpty _ -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
+          ParserAllOrNothing p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
           ParserCommands _ cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
@@ -245,6 +247,10 @@ showParserPrec = go
       ParserMany p ->
         showParen (d > 10) $
           showString "Many "
+            . go 11 p
+      ParserAllOrNothing p ->
+        showParen (d > 10) $
+          showString "AllOrNothing "
             . go 11 p
       ParserCheck mLoc forgivable _ p ->
         showParen (d > 10) $
@@ -481,7 +487,7 @@ checkMapIO = ParserCheck mLoc False
 -- If each setting has a corresponding forgivable error, consider this forgivable.
 -- Consider all other forgivable errors unforgivable
 allOrNothing :: Parser a -> Parser a
-allOrNothing = undefined -- ParserAllOrNothing
+allOrNothing = ParserAllOrNothing
 
 -- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
 checkMapMaybeForgivable :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
@@ -835,6 +841,7 @@ parserEraseSrcLocs = go
       ParserEmpty _ -> ParserEmpty Nothing
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
       ParserMany p -> ParserMany (go p)
+      ParserAllOrNothing p -> ParserAllOrNothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
       ParserCommands mLoc cs -> ParserCommands mLoc $ map commandEraseSrcLocs cs
       ParserWithConfig p1 p2 -> ParserWithConfig (go p1) (go p2)
@@ -870,6 +877,7 @@ parserTraverseSetting func = go
       ParserEmpty mLoc -> pure $ ParserEmpty mLoc
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
+      ParserAllOrNothing p -> ParserAllOrNothing <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
       ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2

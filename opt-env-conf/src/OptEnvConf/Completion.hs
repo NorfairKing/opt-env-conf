@@ -197,6 +197,7 @@ pureCompletionQuery parser ix args =
         case mR of
           Nothing -> pure Nothing
           Just os -> fmap (os ++) <$> go p
+      ParserAllOrNothing p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> do
         -- Don't re-use the state accross commands
