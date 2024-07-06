@@ -2,4 +2,3 @@ Failed to read env var:
 [37mFOO[m [33mMETAVAR[m
 [31mundocumented[m
 Un-Read-able value: "n"
-see [36mtest/OptEnvConf/ErrorSpec.hs:116:13 in main:OptEnvConf.ErrorSpec[m

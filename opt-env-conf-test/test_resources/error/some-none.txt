@@ -1,2 +1,1 @@
 Missing argument: [33mMETAVAR[m [31mundocumented[m 
-see [36mtest/OptEnvConf/ErrorSpec.hs:53:13 in main:OptEnvConf.ErrorSpec[m

@@ -1,3 +1,2 @@
 Check failed: 
 checkMapMaybe failed without a helpful error message
-see [36mtest/OptEnvConf/ErrorSpec.hs:129:6 in main:OptEnvConf.ErrorSpec[m

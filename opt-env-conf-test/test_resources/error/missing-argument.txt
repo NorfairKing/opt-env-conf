@@ -1,2 +1,1 @@
 Missing argument: [33mARGUMENT[m [34mexample argument[m 
-see [36mtest/OptEnvConf/ErrorSpec.hs:21:6 in main:OptEnvConf.ErrorSpec[m
