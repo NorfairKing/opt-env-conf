@@ -66,9 +66,10 @@ runSettingsParser version = runParser version settingsParser
 -- This gets the arguments and environment variables from the current process.
 runParser :: Version -> Parser a -> IO a
 runParser version p = do
-  args <- getArgs
-  let argMap = parseArgs args
-  envVars <- EnvMap.parse <$> getEnvironment
+  allArgs <- getArgs
+  let argMap = parseArgs allArgs
+  completeEnv <- getEnvironment
+  let envVars = EnvMap.parse completeEnv
 
   case lintParser p of
     Just errs -> do
@@ -155,11 +156,17 @@ internalParser version p =
                 help "Render the bash completion script"
               ]
           ),
-      BashCompletionQuery
-        <$> setting
+      setting
+        [ help "Query completion",
+          switch BashCompletionQuery,
+          -- Long string that no normal user would ever use.
+          long "query-opt-env-conf-completion",
+          hidden
+        ]
+        <*> setting
           [ option,
             reader auto,
-            long "bash-completion-index",
+            long "completion-index",
             hidden,
             help "The index between the arguments where completion was invoked."
           ]
@@ -167,7 +174,7 @@ internalParser version p =
           ( setting
               [ option,
                 reader str,
-                long "bash-completion-word",
+                long "completion-word",
                 hidden,
                 help "The words (arguments) that have already been typed"
               ]

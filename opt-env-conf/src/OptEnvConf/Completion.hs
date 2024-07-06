@@ -14,6 +14,7 @@ import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import OptEnvConf.Args as Args
+import OptEnvConf.Casing
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
@@ -24,22 +25,29 @@ generateBashCompletionScript progPath progname = putStrLn $ bashCompletionScript
 -- | Generated bash shell completion script
 bashCompletionScript :: Path Abs File -> String -> String
 bashCompletionScript progPath progname =
-  unlines
-    [ "_" ++ progname ++ "()",
-      "{",
-      "    local CMDLINE",
-      "    local IFS=$'\\n'",
-      "    CMDLINE=(--bash-completion-index $COMP_CWORD)",
-      "",
-      "    for arg in ${COMP_WORDS[@]}; do",
-      "        CMDLINE=(${CMDLINE[@]} --bash-completion-word $arg)",
-      "    done",
-      "",
-      "    COMPREPLY=( $(" ++ fromAbsFile progPath ++ " \"${CMDLINE[@]}\") )",
-      "}",
-      "",
-      "complete -o filenames -F _" ++ progname ++ " " ++ progname
-    ]
+  let functionName = progNameToFunctionName progname
+   in unlines
+        [ functionName ++ "()",
+          "{",
+          "    local CMDLINE",
+          "    local IFS=$'\\n'",
+          "    CMDLINE=(--query-opt-env-conf-completion)",
+          "    CMDLINE+=(--completion-index $COMP_CWORD)",
+          "",
+          "    for arg in ${COMP_WORDS[@]}; do",
+          "        CMDLINE=(${CMDLINE[@]} --completion-word $arg)",
+          "    done",
+          "",
+          "    COMPREPLY=( $(" ++ fromAbsFile progPath ++ " \"${CMDLINE[@]}\") )",
+          "    echo \"${COMPREPLY[@]}\" > hm.log",
+          "}",
+          "",
+          "complete -o filenames -F " ++ functionName ++ " " ++ progname
+        ]
+
+-- This should be a name that a normal user would never want to define themselves.
+progNameToFunctionName :: String -> String
+progNameToFunctionName progname = "_opt_env_conf_completion_" ++ toShellFunctionCase progname
 
 runBashCompletionQuery ::
   Parser a ->
@@ -54,8 +62,8 @@ runBashCompletionQuery parser index ws = do
   pure ()
 
 selectArgs :: Int -> [String] -> (Args, Maybe String)
-selectArgs ix args =
-  let selectedArgs = take ix args
+selectArgs _ix args =
+  let selectedArgs = args -- take ix args
    in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [String]
