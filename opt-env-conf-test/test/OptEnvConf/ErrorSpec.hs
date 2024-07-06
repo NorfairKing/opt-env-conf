@@ -101,6 +101,11 @@ spec = do
         Parser (String, String)
     )
     []
+
+  parseEnvErrorSpec
+    "missing-env"
+    (setting [reader str, env "FOO"] :: Parser String)
+    []
   parseEnvErrorSpec
     "unreadable-var"
     (setting [reader auto, env "FOO"] :: Parser Int)
