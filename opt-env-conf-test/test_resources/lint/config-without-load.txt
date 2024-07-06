@@ -2,4 +2,4 @@
   
   [31mInvalid Setting:[m
   [33mconf[m was called with no way to load configuration.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:104:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:120:7 in main:OptEnvConf.LintSpec[m

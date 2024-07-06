@@ -28,6 +28,22 @@ spec = do
         ]
     )
   goldenLintTest
+    "dash-in-short"
+    ( setting
+        [ help "Dash in a 'short'",
+          switch True,
+          short '-'
+        ]
+    )
+  goldenLintTest
+    "dash-in-long"
+    ( setting
+        [ help "Dash in a 'long'",
+          switch True,
+          long "--switch"
+        ]
+    )
+  goldenLintTest
     "no-reader-for-argument"
     ( setting
         [ argument,

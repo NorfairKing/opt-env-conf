@@ -17,10 +17,12 @@ import Control.Monad
 import Control.Monad.Reader
 import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Stack (SrcLoc, prettySrcLoc)
+import OptEnvConf.Args
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import OptEnvConf.Validation
@@ -34,6 +36,8 @@ data LintError = LintError
 data LintErrorMessage
   = LintErrorUndocumented
   | LintErrorEmptySetting
+  | LintErrorDashInShort
+  | LintErrorDashInLong !(NonEmpty Char)
   | LintErrorNoReaderForArgument
   | LintErrorNoMetavarForArgument
   | LintErrorNoReaderForOption
@@ -82,6 +86,27 @@ renderLintError LintError {..} =
                 ]
               ]
             ]
+        LintErrorDashInShort ->
+          [ [functionChunk "short", " may not contain a '-'."],
+            ["Found ", functionChunk "short", " '-'."]
+          ]
+        LintErrorDashInLong s ->
+          [ [functionChunk "long", " may not start with a '-'."],
+            ["Found ", functionChunk "long", " ", chunk $ T.pack $ show $ NE.toList s, "."],
+            [ "Try ",
+              functionChunk "long",
+              " ",
+              chunk $
+                T.pack $
+                  show $
+                    let go = \case
+                          [] -> []
+                          '-' : cs -> go cs
+                          c : cs -> c : cs
+                     in go $ NE.toList s,
+              " instead."
+            ]
+          ]
         LintErrorNoReaderForArgument ->
           [ [ functionChunk "argument",
               " has no ",
@@ -197,6 +222,13 @@ lintParser =
               ]
           )
           $ validationTFailure LintErrorEmptySetting
+        traverse_
+          ( \case
+              DashedLong cs@('-' :| _) -> validationTFailure $ LintErrorDashInLong cs
+              DashedShort '-' -> validationTFailure LintErrorDashInShort
+              _ -> pure ()
+          )
+          settingDasheds
         when (settingTryArgument && null settingReaders) $
           validationTFailure LintErrorNoReaderForArgument
         when (settingTryArgument && not settingHidden && isNothing settingMetavar) $

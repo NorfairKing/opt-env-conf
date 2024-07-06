@@ -2,8 +2,8 @@
   
   [31mInvalid Setting:[m
   [33menv[m has no [33mreader[m.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:85:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:101:7 in main:OptEnvConf.LintSpec[m
   
   [31mInvalid Setting:[m
   [33menv[m has no [33mmetavar[m.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:85:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:101:7 in main:OptEnvConf.LintSpec[m
