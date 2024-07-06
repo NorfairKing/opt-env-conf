@@ -1,10 +1,12 @@
 WithConfig
   _
   (Check
+     Nothing
      False
      _
      (Alt
         (Check
+           Nothing
            False
            _
            (Setting
@@ -20,12 +22,13 @@ WithConfig
                  Nothing
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
-        (Check False _ (Pure _))))
+        (Check Nothing False _ (Pure _))))
   (Commands
      [ Command
          "one"
          "first"
          (Check
+            Nothing
             True
             _
             (Setting
@@ -46,6 +49,7 @@ WithConfig
          "second"
          (Ap
             (Check
+               Nothing
                True
                _
                (Setting

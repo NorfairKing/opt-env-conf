@@ -290,11 +290,11 @@ runParserOn p args envVars mConfig = do
           Just a -> do
             as <- go (ParserMany p')
             pure (a : as)
-      ParserCheck forgivable f p' -> do
+      ParserCheck mLoc forgivable f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
         case errOrB of
-          Left err -> ppError Nothing $ ParseErrorCheckFailed forgivable err
+          Left err -> ppError mLoc $ ParseErrorCheckFailed forgivable err
           Right b -> pure b
       ParserCommands cs -> do
         mS <- ppArg

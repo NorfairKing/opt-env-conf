@@ -207,7 +207,7 @@ lintParser =
       ParserAlt p1 p2 -> go p1 *> go p2
       -- TODO lint if we try to read config or env under many/some?
       ParserMany p -> go p
-      ParserCheck _ _ p -> go p
+      ParserCheck _ _ _ p -> go p
       ParserCommands ls -> do
         if null ls
           then validationTFailure $ LintError Nothing LintErrorNoCommands

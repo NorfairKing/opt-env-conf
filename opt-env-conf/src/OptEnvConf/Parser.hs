@@ -16,11 +16,14 @@ module OptEnvConf.Parser
     choice,
     mapIO,
     runIO,
-    checkMapMaybe,
-    checkMap,
+    checkEither,
+    checkMaybe,
+    checkMapEither,
     checkMapIO,
-    checkMapForgivable,
+    checkMapMaybe,
+    checkMapEitherForgivable,
     checkMapIOForgivable,
+    checkMapMaybeForgivable,
     allOrNothing,
     commands,
     command,
@@ -58,9 +61,8 @@ module OptEnvConf.Parser
     showParserABit,
     parserEraseSrcLocs,
     parserMapSetting,
-    parserMapSettingParser,
-    parserTraverseSettingParser,
-    commandTraverseSettingParser,
+    parserTraverseSetting,
+    commandTraverseSetting,
 
     -- ** Re-exports
     Functor (..),
@@ -149,6 +151,7 @@ data Parser a where
   -- TODO: ParserAllOrNothing :: !(Parser a) -> Parser a
   -- Map, Check, and IO
   ParserCheck ::
+    !(Maybe SrcLoc) ->
     -- | Forgivable
     !Bool ->
     !(a -> IO (Either String b)) ->
@@ -169,11 +172,11 @@ instance Functor Parser where
     ParserSelect pe pf -> ParserSelect (fmap (fmap f) pe) (fmap (fmap f) pf)
     ParserEmpty -> ParserEmpty
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
-    ParserCheck forgivable g p -> ParserCheck forgivable (fmap (fmap f) . g) p
+    ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
     ParserCommands cs -> ParserCommands $ map (fmap f) cs
     ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
     -- TODO: make setting a functor and fmap here
-    p -> ParserCheck True (pure . Right . f) p
+    p -> ParserCheck Nothing True (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -196,7 +199,7 @@ instance Alternative Parser where
           ParserEmpty -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
-          ParserCheck _ _ p -> isEmpty p
+          ParserCheck _ _ _ p -> isEmpty p
           ParserCommands cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
@@ -241,9 +244,11 @@ showParserPrec = go
         showParen (d > 10) $
           showString "Many "
             . go 11 p
-      ParserCheck forgivable _ p ->
+      ParserCheck mLoc forgivable _ p ->
         showParen (d > 10) $
           showString "Check "
+            . showsPrec 11 mLoc
+            . showString " "
             . showsPrec 11 forgivable
             . showString " _ "
             . go 11 p
@@ -259,10 +264,10 @@ showParserPrec = go
             . go 11 p1
             . showString " "
             . go 11 p2
-      ParserSetting srcLoc p ->
+      ParserSetting mLoc p ->
         showParen (d > 10) $
           showString "Setting "
-            . showsPrec 11 srcLoc
+            . showsPrec 11 mLoc
             . showString " "
             . showSettingABit p
 
@@ -427,25 +432,38 @@ mapIO func = checkMapIO $ fmap Right . func
 runIO :: IO a -> Parser a
 runIO func = mapIO (\() -> func) $ pure ()
 
--- | Like 'checkMap' but without a helpful error message.
+-- | Like 'checkMapMaybe' but without changing the type
+checkMaybe :: (HasCallStack) => (a -> Maybe a) -> Parser a -> Parser a
+checkMaybe func p =
+  withFrozenCallStack $
+    checkMapMaybe func p
+
+-- | Like 'checkMapEither' but without a helpful error message.
 --
--- Prefer 'checkMap'.
--- TODO add a SRCLoc here
-checkMapMaybe :: (a -> Maybe b) -> Parser a -> Parser b
-checkMapMaybe func =
-  checkMap
-    ( \a -> case func a of
-        Nothing -> Left "checkMapMaybe failed without a helpful error message"
-        Just b -> Right b
-    )
+-- Prefer 'checkMapEither'.
+checkMapMaybe :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
+checkMapMaybe func p =
+  withFrozenCallStack $
+    checkMapEither
+      ( \a -> case func a of
+          Nothing -> Left "checkMapMaybe failed without a helpful error message"
+          Just b -> Right b
+      )
+      p
+
+-- | Like 'checkMapEither' but without changing the type
+checkEither :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
+checkEither func p = withFrozenCallStack $ checkMapEither func p
 
 -- | Check a 'Parser' after the fact, purely.
-checkMap :: (a -> Either String b) -> Parser a -> Parser b
-checkMap func = checkMapIO (pure . func)
+checkMapEither :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
+checkMapEither func p = withFrozenCallStack $ checkMapIO (pure . func) p
 
 -- | Check a 'Parser' after the fact, allowing IO.
-checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheck False
+checkMapIO :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
+checkMapIO = ParserCheck mLoc False
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Parse either all or none of the parser below.
 --
@@ -459,14 +477,27 @@ checkMapIO = ParserCheck False
 allOrNothing :: Parser a -> Parser a
 allOrNothing = undefined -- ParserAllOrNothing
 
--- | Like 'checkMap', but allow trying the other side of any alternative if the result is Nothing.
-checkMapForgivable :: (a -> Either String b) -> Parser a -> Parser b
-checkMapForgivable func = checkMapIOForgivable (pure . func)
+-- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
+checkMapMaybeForgivable :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
+checkMapMaybeForgivable func p =
+  withFrozenCallStack $
+    checkMapEitherForgivable
+      ( \a -> case func a of
+          Nothing -> Left "checkMapMaybeForgivable failed without a helpful error message"
+          Just b -> Right b
+      )
+      p
+
+-- | Like 'checkMapEither', but allow trying the other side of any alternative if the result is Nothing.
+checkMapEitherForgivable :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
+checkMapEitherForgivable func p = withFrozenCallStack $ checkMapIOForgivable (pure . func) p
 
 -- | Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
 -- TODO add a SRCLoc here
-checkMapIOForgivable :: (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIOForgivable = ParserCheck True
+checkMapIOForgivable :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
+checkMapIOForgivable = ParserCheck mLoc True
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Declare multiple commands
 --
@@ -778,32 +809,43 @@ subAll prefix =
 subSettings :: (HasParser a) => String -> Parser a
 subSettings prefix = subAll prefix settingsParser
 
--- | Map every setting in a parser
-{-# ANN parserMapSetting ("NOCOVER" :: String) #-}
-parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
-parserMapSetting func = parserMapSettingParser $ \mLoc s -> (mLoc, func s)
-
 -- | Erase all source locations in a parser.
 --
 -- This may be useful when golden-testing the shown parser.
 {-# ANN parserEraseSrcLocs ("NOCOVER" :: String) #-}
 parserEraseSrcLocs :: Parser a -> Parser a
-parserEraseSrcLocs = parserMapSettingParser (\_ set -> (Nothing, set))
+parserEraseSrcLocs = go
+  where
+    go :: forall q. Parser q -> Parser q
+    go = \case
+      ParserPure a -> ParserPure a
+      ParserAp p1 p2 -> ParserAp (go p1) (go p2)
+      ParserSelect p1 p2 -> ParserSelect (go p1) (go p2)
+      ParserEmpty -> ParserEmpty
+      ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
+      ParserMany p -> ParserMany (go p)
+      ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
+      ParserCommands cs -> ParserCommands $ map commandEraseSrcLocs cs
+      ParserWithConfig p1 p2 -> ParserWithConfig (go p1) (go p2)
+      ParserSetting _ s -> ParserSetting Nothing s
+
+commandEraseSrcLocs :: Command a -> Command a
+commandEraseSrcLocs c = c {commandParser = parserEraseSrcLocs (commandParser c)}
+
+-- | Map all 'Setting' in a 'Parser'.
+{-# ANN parserMapSetting ("NOCOVER" :: String) #-}
+parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
+parserMapSetting func = runIdentity . parserTraverseSetting (Identity . func)
 
 -- | Traverse all 'Setting's in a 'Parser'.
-{-# ANN parserMapSettingParser ("NOCOVER" :: String) #-}
-parserMapSettingParser :: (forall a. Maybe SrcLoc -> Setting a -> (Maybe SrcLoc, Setting a)) -> Parser s -> Parser s
-parserMapSettingParser func = runIdentity . parserTraverseSettingParser (\mLoc set -> Identity $ func mLoc set)
-
--- | Traverse all 'Setting's and their 'SrcLoc' in a 'Parser'.
-{-# ANN parserTraverseSettingParser ("NOCOVER" :: String) #-}
-parserTraverseSettingParser ::
+{-# ANN parserTraverseSetting ("NOCOVER" :: String) #-}
+parserTraverseSetting ::
   forall f s.
   (Applicative f) =>
-  (forall a. Maybe SrcLoc -> Setting a -> f (Maybe SrcLoc, Setting a)) ->
+  (forall a. Setting a -> f (Setting a)) ->
   Parser s ->
   f (Parser s)
-parserTraverseSettingParser func = go
+parserTraverseSetting func = go
   where
     go :: forall q. Parser q -> f (Parser q)
     go = \case
@@ -813,18 +855,18 @@ parserTraverseSettingParser func = go
       ParserEmpty -> pure ParserEmpty
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
-      ParserCheck forgivable f p -> ParserCheck forgivable f <$> go p
-      ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSettingParser func) cs
+      ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
+      ParserCommands cs -> ParserCommands <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
-      ParserSetting mLoc s -> uncurry ParserSetting <$> func mLoc s
+      ParserSetting mLoc s -> ParserSetting mLoc <$> func s
 
-{-# ANN commandTraverseSettingParser ("NOCOVER" :: String) #-}
-commandTraverseSettingParser ::
+{-# ANN commandTraverseSetting ("NOCOVER" :: String) #-}
+commandTraverseSetting ::
   forall f s.
   (Applicative f) =>
-  (forall a. Maybe SrcLoc -> Setting a -> f (Maybe SrcLoc, Setting a)) ->
+  (forall a. Setting a -> f (Setting a)) ->
   Command s ->
   f (Command s)
-commandTraverseSettingParser func c = do
+commandTraverseSetting func c = do
   (\p -> c {commandParser = p})
-    <$> parserTraverseSettingParser func (commandParser c)
+    <$> parserTraverseSetting func (commandParser c)

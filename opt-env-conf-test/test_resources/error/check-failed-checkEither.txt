@@ -1,0 +1,3 @@
+Check failed: 
+example error
+see [36mtest/OptEnvConf/ErrorSpec.hs:128:6 in main:OptEnvConf.ErrorSpec[m

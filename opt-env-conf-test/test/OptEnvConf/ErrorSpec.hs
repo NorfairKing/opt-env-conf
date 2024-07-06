@@ -119,6 +119,15 @@ spec = do
     )
     [("FOO", "n"), ("BAR", "m")]
 
+  parseArgsErrorSpec
+    "check-failed-checkMaybe"
+    (checkMaybe (const Nothing) (setting [argument, reader str, env "FOO", value "bar"]) :: Parser String)
+    []
+  parseArgsErrorSpec
+    "check-failed-checkEither"
+    (checkEither (const $ Left "example error") (setting [argument, reader str, env "FOO", value "bar"]) :: Parser String)
+    []
+
 parseArgsErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseArgsErrorSpec fp p args =
   withFrozenCallStack $

@@ -63,10 +63,14 @@ module OptEnvConf
 
     -- ** Helper functions
     someNonEmpty,
-    checkMap,
+    checkEither,
+    checkMaybe,
+    checkMapEither,
     checkMapIO,
-    checkMapForgivable,
+    checkMapMaybe,
+    checkMapEitherForgivable,
     checkMapIOForgivable,
+    checkMapMaybeForgivable,
     checkMapMaybe,
     mapIO,
     choice,
