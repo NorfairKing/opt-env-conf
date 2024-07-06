@@ -29,6 +29,7 @@ Used in production
     - [ ] `--help`
         - [x] Global `--help` page
         - [ ] Per-command `--help` page
+    - [x] Generated `--version` command
     - [x] Generated manpage
 - [ ] Completion
     - [ ] Bash completion
@@ -53,6 +54,8 @@ Used in production
 | Coloured global `--help` page        | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
 | Generated per-command `--help` page  | 🚧             | ✔️                      | ✖️          | ✖️             |                                        
 | Coloured per-command `--help` page   | 🚧             | ✖️                      | ✖️          | ✖️             |                                        
+| Generated `--version` command        | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
+| Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
 | Helpful parse errors                 | ✔️              | ✔️                      | ✔️          | ✔️             |                                        
 | Coloured parse errors                | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
 | Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
@@ -64,5 +67,6 @@ Used in production
 
 ## Example
 
-The `opt-env-conf-test/app/Main.hs` file contains a fully worked example.
+The [example application](./opt-env-conf-test/app/Main.hs) contains a fully worked example.
+
 This example is part of the build in CI so you can rely on it being up-to-date.

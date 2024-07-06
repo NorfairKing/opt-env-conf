@@ -70,7 +70,6 @@ runSettingsParser version progDesc =
 --     * @--zsh-completion-script@: Render a zsh completion script
 --     * @--fish-completion-script@: Render a fish completion script
 --     * @query-opt-env-conf-completion@: Perform a completion query
---     * @--completion@: Render a fish completion script
 --
 -- This gets the arguments and environment variables from the current process.
 runParser ::
