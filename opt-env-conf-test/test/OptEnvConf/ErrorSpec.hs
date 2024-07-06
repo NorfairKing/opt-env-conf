@@ -143,7 +143,7 @@ spec = do
           pure ('a', 'b')
         ]
     )
-    []
+    ["--foo", "'a'"]
 
 parseArgsErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseArgsErrorSpec fp p args =

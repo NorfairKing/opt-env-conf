@@ -494,6 +494,19 @@ checkMapIO = ParserCheck mLoc False
 --
 -- If each setting has a corresponding forgivable error, consider this forgivable.
 -- Consider all other forgivable errors unforgivable
+--
+-- For example, the following will parser will fail intsead of succeed when given the arguments below:
+--
+-- > ( choice
+-- >     [ allOrNothing $
+-- >         (,)
+-- >           <$> setting [option, long "foo", reader auto, help "This one will exist", metavar "CHAR"]
+-- >           <*> setting [option, long "bar", reader auto, help "This one will not exist", metavar "CHAR"],
+-- >       pure ('a', 'b')
+-- >     ]
+-- > )
+--
+-- > ["--foo", "'a'"]
 allOrNothing :: Parser a -> Parser a
 allOrNothing = ParserAllOrNothing
 

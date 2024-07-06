@@ -54,7 +54,10 @@ module OptEnvConf
     subConfig,
     subConfig_,
     subAll,
+
+    -- ** Subparsers
     subSettings,
+    allOrNothing,
 
     -- *** Casing helpers
     toArgCase,
