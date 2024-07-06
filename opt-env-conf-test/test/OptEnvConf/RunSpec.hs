@@ -580,10 +580,10 @@ shouldFail ::
   Args ->
   EnvMap ->
   Maybe JSON.Object ->
-  (NonEmpty ParseError -> Bool) ->
+  (NonEmpty ParseErrorMessage -> Bool) ->
   IO ()
 shouldFail p args e mConf isExpected = do
   errOrRes <- runParserOn p args e mConf
   case errOrRes of
-    Left errs -> errs `shouldSatisfy` isExpected
+    Left errs -> NE.map parseErrorMessage errs `shouldSatisfy` isExpected
     Right actual -> expectationFailure $ show actual

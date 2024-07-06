@@ -1,1 +1,2 @@
 Missing option: [37m--foo[m [34mexample option[m 
+see [36mtest/OptEnvConf/ErrorSpec.hs:25:6 in main:OptEnvConf.ErrorSpec[m

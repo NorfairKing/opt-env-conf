@@ -1,3 +1,4 @@
 Missing env var: 
 [37mFOO[m [33mMETAVAR[m
 [31mundocumented[m
+see [36mtest/OptEnvConf/ErrorSpec.hs:99:13 in main:OptEnvConf.ErrorSpec[m

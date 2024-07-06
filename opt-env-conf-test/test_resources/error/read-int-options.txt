@@ -1,3 +1,4 @@
 Failed to read option: 
 [37m--foo[m [34minteger option 1[m 
 Un-Read-able value: "n"
+see [36mtest/OptEnvConf/ErrorSpec.hs:46:13 in main:OptEnvConf.ErrorSpec[m
