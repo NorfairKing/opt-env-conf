@@ -119,6 +119,20 @@ spec = do
     )
     [("FOO", "n"), ("BAR", "m")]
 
+  parseArgsErrorSpec
+    "empty-choice"
+    (choice [] :: Parser String)
+    []
+
+  parseArgsErrorSpec
+    "check-failed-checkMaybe"
+    (checkMaybe (const Nothing) (setting [argument, reader str, env "FOO", value "bar"]) :: Parser String)
+    []
+  parseArgsErrorSpec
+    "check-failed-checkEither"
+    (checkEither (const $ Left "example error") (setting [argument, reader str, env "FOO", value "bar"]) :: Parser String)
+    []
+
 parseArgsErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseArgsErrorSpec fp p args =
   withFrozenCallStack $
@@ -128,7 +142,7 @@ parseArgsErrorSpec fp p args =
             errOrResult <- runParserOn p (parseArgs args) EnvMap.empty Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
-              Left errs -> pure $ renderErrors errs
+              Left errs -> pure $ renderErrors $ eraseErrorSrcLocs errs
 
 parseEnvErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [(String, String)] -> Spec
 parseEnvErrorSpec fp p e =
@@ -139,7 +153,7 @@ parseEnvErrorSpec fp p e =
             errOrResult <- runParserOn p emptyArgs (EnvMap.parse e) Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
-              Left errs -> pure $ renderErrors errs
+              Left errs -> pure $ renderErrors $ eraseErrorSrcLocs errs
 
 goldenChunksFile :: FilePath -> IO [Chunk] -> GoldenTest Text
 goldenChunksFile fp cs =

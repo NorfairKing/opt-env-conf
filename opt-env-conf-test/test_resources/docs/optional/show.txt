@@ -1,5 +1,6 @@
 Alt
   (Check
+     Nothing
      True
      _
      (Setting

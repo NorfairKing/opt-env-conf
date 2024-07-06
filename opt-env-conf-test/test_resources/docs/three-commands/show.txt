@@ -1,10 +1,12 @@
 WithConfig
   _
   (Check
+     Nothing
      False
      _
      (Alt
         (Check
+           Nothing
            False
            _
            (Setting
@@ -20,12 +22,23 @@ WithConfig
                  Nothing
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
-        (Check False _ (Pure _))))
+        (Check Nothing False _ (Pure _))))
   (Commands
+     (Just
+        SrcLoc
+          { srcLocPackage = "main"
+          , srcLocModule = "OptEnvConf.APISpec"
+          , srcLocFile = "test/OptEnvConf/APISpec.hs"
+          , srcLocStartLine = 239
+          , srcLocStartCol = 5
+          , srcLocEndLine = 239
+          , srcLocEndCol = 13
+          })
      [ Command
          "one"
          "first"
          (Check
+            Nothing
             True
             _
             (Setting
@@ -46,6 +59,7 @@ WithConfig
          "second"
          (Ap
             (Check
+               Nothing
                True
                _
                (Setting

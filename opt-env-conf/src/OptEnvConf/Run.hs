@@ -1,6 +1,7 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Run
@@ -26,6 +27,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Traversable
 import Data.Version
+import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
 import OptEnvConf.Completion
 import OptEnvConf.Doc
@@ -81,7 +83,12 @@ runParser ::
   IO a
 runParser version progDesc p = do
   allArgs <- getArgs
-  let argMap = parseArgs allArgs
+  let argMap' = parseArgs allArgs
+  let mArgMap = consumeSwitch ["--debug-optparse"] argMap'
+  let (debugMode, argMap) = case mArgMap of
+        Nothing -> (False, argMap')
+        Just am -> (True, am)
+
   completeEnv <- getEnvironment
   let envVars = EnvMap.parse completeEnv
 
@@ -102,7 +109,8 @@ runParser version progDesc p = do
       case errOrResult of
         Left errs -> do
           tc <- getTerminalCapabilitiesFromHandle stderr
-          hPutChunksLocaleWith tc stderr $ renderErrors errs
+          let f = if debugMode then id else eraseErrorSrcLocs
+          hPutChunksLocaleWith tc stderr $ renderErrors $ f errs
           exitFailure
         Right i -> case i of
           ShowHelp -> do
@@ -153,7 +161,7 @@ data Internal a
       !Int
       -- Args
       ![String]
-  | ParsedNormally a
+  | ParsedNormally !a
 
 internalParser :: Version -> Parser a -> Parser (Internal a)
 internalParser version p =
@@ -275,7 +283,7 @@ runParserOn p args envVars mConfig = do
     go = \case
       ParserPure a -> pure a
       ParserAp ff fa -> go ff <*> go fa
-      ParserEmpty -> ppError ParseErrorEmpty
+      ParserEmpty mLoc -> ppError mLoc ParseErrorEmpty
       ParserSelect fe ff -> select (go fe) (go ff)
       ParserAlt p1 p2 -> do
         eor <- tryPP (go p1)
@@ -289,23 +297,23 @@ runParserOn p args envVars mConfig = do
           Just a -> do
             as <- go (ParserMany p')
             pure (a : as)
-      ParserCheck forgivable f p' -> do
+      ParserCheck mLoc forgivable f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
         case errOrB of
-          Left err -> ppError $ ParseErrorCheckFailed forgivable err
+          Left err -> ppError mLoc $ ParseErrorCheckFailed forgivable err
           Right b -> pure b
-      ParserCommands cs -> do
+      ParserCommands mLoc cs -> do
         mS <- ppArg
         case mS of
-          Nothing -> ppError $ ParseErrorMissingCommand $ map commandArg cs
+          Nothing -> ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
           Just s -> case find ((== s) . commandArg) cs of
-            Nothing -> ppError $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+            Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
             Just c -> go $ commandParser c
       ParserWithConfig pc pa -> do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
-      ParserSetting _ set@Setting {..} -> do
+      ParserSetting mLoc set@Setting {..} -> do
         let mOptDoc = settingOptDoc set
         mArg <-
           if settingTryArgument
@@ -318,7 +326,7 @@ runParserOn p args envVars mConfig = do
                 Nothing -> pure NotFound
                 Just argStr -> do
                   case tryReaders rs argStr of
-                    Left errs -> ppError $ ParseErrorArgumentRead mOptDoc errs
+                    Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
                     Right a -> pure $ Found a
             else pure NotRun
 
@@ -348,7 +356,7 @@ runParserOn p args envVars mConfig = do
                         Nothing -> pure NotFound
                         Just optionStr -> do
                           case tryReaders rs optionStr of
-                            Left err -> ppError $ ParseErrorOptionRead mOptDoc err
+                            Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
                             Right a -> pure $ Found a
                     else pure NotRun
 
@@ -370,7 +378,7 @@ runParserOn p args envVars mConfig = do
                         -- result.
                         results <- for founds $ \varStr ->
                           case tryReaders rs varStr of
-                            Left errs -> ppError $ ParseErrorEnvRead mEnvDoc errs
+                            Left errs -> ppError mLoc $ ParseErrorEnvRead mEnvDoc errs
                             Right a -> pure a
                         pure $ maybe NotFound Found $ listToMaybe results
 
@@ -398,11 +406,11 @@ runParserOn p args envVars mConfig = do
                                           Nothing -> pure Nothing
                                           Just o' -> jsonParser o' neRest
                                 case JSON.parseEither (jsonParser obj) ne of
-                                  Left err -> ppError $ ParseErrorConfigRead mConfDoc err
+                                  Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
                                   Right mV -> case mV of
                                     Nothing -> pure NotFound
                                     Just v -> case JSON.parseEither (parseJSONVia c) v of
-                                      Left err -> ppError $ ParseErrorConfigRead mConfDoc err
+                                      Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
                                       Right a -> pure $ maybe NotFound Found a
 
                         case mConf of
@@ -415,7 +423,7 @@ runParserOn p args envVars mConfig = do
                                       NotRun -> Nothing
                                       NotFound -> Just e
                                       Found _ -> Nothing -- Should not happen.
-                                maybe (ppError ParseErrorEmptySetting) ppErrors $
+                                maybe (ppError mLoc ParseErrorEmptySetting) (ppErrors mLoc) $
                                   NE.nonEmpty $
                                     catMaybes
                                       [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
@@ -432,7 +440,7 @@ data ParseResult a
 
 requireReaders :: [Reader a] -> PP (NonEmpty (Reader a))
 requireReaders rs = case NE.nonEmpty rs of
-  Nothing -> ppError ParseErrorNoReaders
+  Nothing -> ppError Nothing ParseErrorNoReaders
   Just ne -> pure ne
 
 -- Try the readers in order
@@ -482,7 +490,7 @@ tryPP pp = do
     Failure errs ->
       if all errorIsForgivable errs
         then pure Nothing
-        else ppErrors errs
+        else ppErrors' errs
     Success (a, s') -> do
       put s'
       pure $ Just a
@@ -528,8 +536,11 @@ ppSwitch ds = do
       put s
       pure (Just ())
 
-ppErrors :: NonEmpty ParseError -> PP a
-ppErrors = lift . lift . ValidationT . pure . Failure
+ppErrors' :: NonEmpty ParseError -> PP a
+ppErrors' = lift . lift . ValidationT . pure . Failure
 
-ppError :: ParseError -> PP a
-ppError = ppErrors . NE.singleton
+ppErrors :: Maybe SrcLoc -> NonEmpty ParseErrorMessage -> PP a
+ppErrors mLoc = ppErrors' . NE.map (ParseError mLoc)
+
+ppError :: Maybe SrcLoc -> ParseErrorMessage -> PP a
+ppError mLoc = ppErrors mLoc . NE.singleton

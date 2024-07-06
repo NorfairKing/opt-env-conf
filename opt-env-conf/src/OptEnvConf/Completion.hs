@@ -191,14 +191,14 @@ pureCompletionQuery parser ix args =
           Just [] -> go p2
           Just ss -> pure $ Just ss
           Nothing -> pure $ Just []
-      ParserEmpty -> pure Nothing
+      ParserEmpty _ -> pure Nothing
       ParserMany p -> do
         mR <- go p
         case mR of
           Nothing -> pure Nothing
           Just os -> fmap (os ++) <$> go p
-      ParserCheck _ _ p -> go p
-      ParserCommands cs -> do
+      ParserCheck _ _ _ p -> go p
+      ParserCommands _ cs -> do
         -- Don't re-use the state accross commands
         Just . concat . catMaybes <$> mapM goCommand cs
       ParserWithConfig _ p -> go p
