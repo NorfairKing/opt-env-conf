@@ -11,6 +11,8 @@ module OptEnvConf.Parser
     setting,
     filePathSetting,
     directoryPathSetting,
+    strOption,
+    strArgument,
     choice,
     mapIO,
     runIO,
@@ -78,6 +80,7 @@ import Data.Functor.Identity
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -365,6 +368,14 @@ directoryPathSetting builders =
         metavar "DIRECTORY_PATH" -- TODO directory completer
       ]
         ++ builders
+
+-- For easier migration from optparse-applicative
+strOption :: (IsString string) => [Builder string] -> Parser string
+strOption builders = setting $ option : reader str : builders
+
+-- For easier migration from optparse-applicative
+strArgument :: (IsString string) => [Builder string] -> Parser string
+strArgument builders = setting $ argument : reader str : builders
 
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
