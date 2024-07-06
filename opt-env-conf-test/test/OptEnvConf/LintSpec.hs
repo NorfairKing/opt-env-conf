@@ -123,6 +123,17 @@ spec = do
         ] ::
         Parser String
     )
+  goldenLintTest
+    "unreadable-example"
+    ( setting
+        [ help "Example value isn't readable",
+          argument,
+          reader auto,
+          example "NaN",
+          metavar "INT"
+        ] ::
+        Parser Int
+    )
 
 goldenLintTest :: (HasCallStack) => FilePath -> Parser a -> Spec
 goldenLintTest fp parser = withFrozenCallStack $

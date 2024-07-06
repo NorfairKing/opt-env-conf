@@ -15,6 +15,7 @@ where
 
 import Control.Monad
 import Control.Monad.Reader
+import Data.Either
 import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -24,6 +25,7 @@ import qualified Data.Text as T
 import GHC.Stack (SrcLoc, prettySrcLoc)
 import OptEnvConf.Args
 import OptEnvConf.Parser
+import qualified OptEnvConf.Reader as OptEnvConf
 import OptEnvConf.Setting
 import OptEnvConf.Validation
 import Text.Colour
@@ -47,6 +49,7 @@ data LintErrorMessage
   | LintErrorNoReaderForEnvVar
   | LintErrorNoMetavarForEnvVar
   | LintErrorNoCommands
+  | LintErrorUnreadableExample !String
   | LintErrorConfigWithoutLoad
 
 renderLintErrors :: NonEmpty LintError -> [Chunk]
@@ -172,6 +175,10 @@ renderLintError LintError {..} =
               " was called with an empty list."
             ]
           ]
+        LintErrorUnreadableExample e ->
+          [ [functionChunk "example", " was called with an example that none of the ", functionChunk "reader", "s succeed in reading."],
+            ["Example: ", chunk $ T.pack e]
+          ]
         LintErrorConfigWithoutLoad ->
           [ [ functionChunk "conf",
               " was called with no way to load configuration."
@@ -222,13 +229,10 @@ lintParser =
               ]
           )
           $ validationTFailure LintErrorEmptySetting
-        traverse_
-          ( \case
-              DashedLong cs@('-' :| _) -> validationTFailure $ LintErrorDashInLong cs
-              DashedShort '-' -> validationTFailure LintErrorDashInShort
-              _ -> pure ()
-          )
-          settingDasheds
+        for_ settingDasheds $ \case
+          DashedLong cs@('-' :| _) -> validationTFailure $ LintErrorDashInLong cs
+          DashedShort '-' -> validationTFailure LintErrorDashInShort
+          _ -> pure ()
         when (settingTryArgument && null settingReaders) $
           validationTFailure LintErrorNoReaderForArgument
         when (settingTryArgument && not settingHidden && isNothing settingMetavar) $
@@ -245,6 +249,10 @@ lintParser =
           validationTFailure LintErrorNoReaderForEnvVar
         when (isJust settingEnvVars && not settingHidden && isNothing settingMetavar) $
           validationTFailure LintErrorNoMetavarForEnvVar
+        for_ settingExamples $ \e ->
+          when (not $ any (\r -> isRight $ OptEnvConf.runReader r e) settingReaders) $
+            validationTFailure $
+              LintErrorUnreadableExample e
         hasConfig <- ask
         when (isJust settingConfigVals && not hasConfig) $
           validationTFailure LintErrorConfigWithoutLoad
