@@ -120,6 +120,11 @@ spec = do
     [("FOO", "n"), ("BAR", "m")]
 
   parseArgsErrorSpec
+    "empty-choice"
+    (choice [] :: Parser String)
+    []
+
+  parseArgsErrorSpec
     "check-failed-checkMaybe"
     (checkMaybe (const Nothing) (setting [argument, reader str, env "FOO", value "bar"]) :: Parser String)
     []

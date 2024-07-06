@@ -276,7 +276,7 @@ runParserOn p args envVars mConfig = do
     go = \case
       ParserPure a -> pure a
       ParserAp ff fa -> go ff <*> go fa
-      ParserEmpty -> ppError Nothing ParseErrorEmpty
+      ParserEmpty mLoc -> ppError mLoc ParseErrorEmpty
       ParserSelect fe ff -> select (go fe) (go ff)
       ParserAlt p1 p2 -> do
         eor <- tryPP (go p1)

@@ -145,7 +145,7 @@ data Parser a where
   -- Selective
   ParserSelect :: !(Parser (Either a b)) -> !(Parser (a -> b)) -> Parser b
   -- Alternative
-  ParserEmpty :: Parser a
+  ParserEmpty :: !(Maybe SrcLoc) -> Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
   -- TODO: ParserAllOrNothing :: !(Parser a) -> Parser a
@@ -170,7 +170,7 @@ instance Functor Parser where
     ParserPure a -> ParserPure (f a)
     ParserAp pf pa -> ParserAp (fmap (fmap f) pf) pa
     ParserSelect pe pf -> ParserSelect (fmap (fmap f) pe) (fmap (fmap f) pf)
-    ParserEmpty -> ParserEmpty
+    ParserEmpty mLoc -> ParserEmpty mLoc
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
     ParserCommands cs -> ParserCommands $ map (fmap f) cs
@@ -189,14 +189,14 @@ instance Selective Parser where
   select = ParserSelect
 
 instance Alternative Parser where
-  empty = ParserEmpty
+  empty = ParserEmpty Nothing
   (<|>) p1 p2 =
     let isEmpty :: Parser a -> Bool
         isEmpty = \case
           ParserPure _ -> False
           ParserAp pf pa -> isEmpty pf && isEmpty pa
           ParserSelect pe pf -> isEmpty pe && isEmpty pf
-          ParserEmpty -> True
+          ParserEmpty _ -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
           ParserCheck _ _ _ p -> isEmpty p
@@ -204,7 +204,7 @@ instance Alternative Parser where
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
-          (True, True) -> ParserEmpty
+          (True, True) -> ParserEmpty Nothing
           (True, False) -> p2
           (False, True) -> p1
           (False, False) -> ParserAlt p1 p2
@@ -233,7 +233,9 @@ showParserPrec = go
             . go 11 pe
             . showString " "
             . go 11 pf
-      ParserEmpty -> showString "Empty"
+      ParserEmpty mLoc ->
+        showString "Empty "
+          . showsPrec 11 mLoc
       ParserAlt p1 p2 ->
         showParen (d > 10) $
           showString "Alt "
@@ -412,11 +414,13 @@ someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty p = (:|) <$> p <*> many p
 
 -- | Try a list of parsers in order
-choice :: [Parser a] -> Parser a
+choice :: (HasCallStack) => [Parser a] -> Parser a
 choice = \case
-  [] -> ParserEmpty
+  [] -> ParserEmpty mLoc
   [c] -> c
   (c : cs) -> c <|> choice cs
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Apply a computation to the result of a parser
 --
@@ -821,7 +825,7 @@ parserEraseSrcLocs = go
       ParserPure a -> ParserPure a
       ParserAp p1 p2 -> ParserAp (go p1) (go p2)
       ParserSelect p1 p2 -> ParserSelect (go p1) (go p2)
-      ParserEmpty -> ParserEmpty
+      ParserEmpty _ -> ParserEmpty Nothing
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
       ParserMany p -> ParserMany (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
@@ -852,7 +856,7 @@ parserTraverseSetting func = go
       ParserPure a -> pure $ ParserPure a
       ParserAp p1 p2 -> ParserAp <$> go p1 <*> go p2
       ParserSelect p1 p2 -> ParserSelect <$> go p1 <*> go p2
-      ParserEmpty -> pure ParserEmpty
+      ParserEmpty mLoc -> pure $ ParserEmpty mLoc
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p

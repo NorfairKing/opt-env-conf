@@ -191,7 +191,7 @@ pureCompletionQuery parser ix args =
           Just [] -> go p2
           Just ss -> pure $ Just ss
           Nothing -> pure $ Just []
-      ParserEmpty -> pure Nothing
+      ParserEmpty _ -> pure Nothing
       ParserMany p -> do
         mR <- go p
         case mR of

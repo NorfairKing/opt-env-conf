@@ -203,7 +203,7 @@ lintParser =
       ParserPure _ -> pure ()
       ParserAp p1 p2 -> go p1 *> go p2
       ParserSelect p1 p2 -> go p1 *> go p2
-      ParserEmpty -> pure ()
+      ParserEmpty _ -> pure ()
       ParserAlt p1 p2 -> go p1 *> go p2
       -- TODO lint if we try to read config or env under many/some?
       ParserMany p -> go p
