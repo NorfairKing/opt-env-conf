@@ -6,9 +6,12 @@ module OptEnvConf.Error where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.Set (Set)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import GHC.Stack (SrcLoc, prettySrcLoc)
 import OptEnvConf.Doc
+import OptEnvConf.Parser (SrcLocHash, hashSrcLoc)
 import Text.Colour
 
 data ParseError = ParseError
@@ -33,6 +36,7 @@ data ParseErrorMessage
   | ParseErrorConfigRead !(Maybe ConfDoc) !String
   | ParseErrorMissingCommand ![String]
   | ParseErrorUnrecognisedCommand !String ![String]
+  | ParseErrorAllOrNothing
   deriving (Show)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
@@ -56,6 +60,7 @@ errorMessageIsForgivable = \case
   ParseErrorConfigRead _ _ -> False
   ParseErrorMissingCommand cs -> not $ null cs
   ParseErrorUnrecognisedCommand _ _ -> False
+  ParseErrorAllOrNothing -> False
 
 eraseErrorSrcLocs :: (Functor f) => f ParseError -> f ParseError
 eraseErrorSrcLocs = fmap eraseErrorSrcLoc
@@ -117,6 +122,12 @@ renderError ParseError {..} =
           [ [fore red "Unrecognised command: ", fore yellow $ chunk (T.pack c)],
             [fore blue "available commands:"],
             unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs
+          ]
+        ParseErrorAllOrNothing ->
+          [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing parser have been defined."]
           ],
       maybe [] (pure . ("see " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) parseErrorSrcLoc
     ]
+
+errorSrcLocSet :: (Foldable f) => f ParseError -> Set SrcLocHash
+errorSrcLocSet = foldl (\s e -> maybe s ((`S.insert` s) . hashSrcLoc) (parseErrorSrcLoc e)) S.empty

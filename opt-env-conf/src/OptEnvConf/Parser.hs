@@ -64,6 +64,11 @@ module OptEnvConf.Parser
     parserTraverseSetting,
     commandTraverseSetting,
 
+    -- ** All or nothing implementation
+    parserSettingsSet,
+    SrcLocHash (..),
+    hashSrcLoc,
+
     -- ** Re-exports
     Functor (..),
     Applicative (..),
@@ -80,14 +85,17 @@ import Control.Selective
 import Data.Aeson as JSON
 import qualified Data.Aeson.KeyMap as KM
 import Data.Functor.Identity
+import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
+import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, prettySrcLoc, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
@@ -481,8 +489,8 @@ checkMapIO = ParserCheck mLoc False
 --
 -- If you don't use this function, and only some of the settings below are
 -- defined, this parser will fail and the next alternative will be tried.
--- If you do use this function, this parser will error if at least one, but not
--- all, of the settings below are defined.
+-- If you do use this function, this parser will error unforgivably if at least
+-- one, but not all, of the settings below are defined.
 --
 -- If each setting has a corresponding forgivable error, consider this forgivable.
 -- Consider all other forgivable errors unforgivable
@@ -820,11 +828,11 @@ subAll prefix =
     . subEnv_ prefix
     . subConfig_ prefix
 
--- | Use the 'settingsParser' of a given type, but prefixed with a 'subAll'.
+-- | Use the 'settingsParser' of a given type, but prefixed with a 'subAll' and 'allOrNothing'.
 --
--- > subSettings prefix = subAll prefix settingsParser
+-- > subSettings prefix = allOrNothing $ subAll prefix settingsParser
 subSettings :: (HasParser a) => String -> Parser a
-subSettings prefix = subAll prefix settingsParser
+subSettings prefix = allOrNothing $ subAll prefix settingsParser
 
 -- | Erase all source locations in a parser.
 --
@@ -893,3 +901,27 @@ commandTraverseSetting ::
 commandTraverseSetting func c = do
   (\p -> c {commandParser = p})
     <$> parserTraverseSetting func (commandParser c)
+
+parserSettingsSet :: Parser a -> Set SrcLocHash
+parserSettingsSet = go
+  where
+    go :: Parser a -> Set SrcLocHash
+    go = \case
+      ParserPure _ -> S.empty
+      ParserAp p1 p2 -> S.union (go p1) (go p2)
+      ParserSelect p1 p2 -> S.union (go p1) (go p2)
+      ParserEmpty _ -> S.empty
+      ParserAlt p1 p2 -> S.union (go p1) (go p2)
+      ParserMany p -> go p
+      ParserAllOrNothing p -> go p -- TODO is this right?
+      ParserCheck _ _ _ p -> go p
+      ParserCommands _ cs -> S.unions $ map (go . commandParser) cs
+      ParserWithConfig p1 p2 -> S.union (go p1) (go p2)
+      -- The nothing part shouldn't happen but I don't know when it doesn't
+      ParserSetting mLoc _ -> maybe S.empty (S.singleton . hashSrcLoc) mLoc
+
+newtype SrcLocHash = SrcLocHash Int
+  deriving (Show, Eq, Ord)
+
+hashSrcLoc :: SrcLoc -> SrcLocHash
+hashSrcLoc = SrcLocHash . hash . prettySrcLoc

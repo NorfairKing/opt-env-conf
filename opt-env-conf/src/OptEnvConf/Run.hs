@@ -298,7 +298,23 @@ runParserOn p args envVars mConfig = do
             as <- go (ParserMany p')
             pure (a : as)
       ParserAllOrNothing p' -> do
-        go p' -- TODO
+        e <- ask
+        s <- get
+        results <- liftIO $ runPP (go p') s e
+        result <- ppNonDetList results
+        case result of
+          Success (a, s') -> do
+            put s'
+            pure a
+          Failure errs -> do
+            if not $ all errorIsForgivable errs
+              then ppErrors' errs
+              else do
+                let settingsSet = parserSettingsSet p
+                let errorsSet = errorSrcLocSet errs
+                if settingsSet == errorsSet
+                  then ppErrors' errs
+                  else ppErrors' $ errs <> (ParseError Nothing ParseErrorAllOrNothing :| [])
       ParserCheck mLoc forgivable f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
