@@ -4,10 +4,10 @@
 
 module OptEnvConf
   ( -- * Running parsers
-    runParser,
-    Parser,
-    HasParser (..),
     runSettingsParser,
+    HasParser (..),
+    Parser,
+    runParser,
 
     -- * Building parsers
 
@@ -80,16 +80,34 @@ module OptEnvConf
     xdgYamlConfigFile,
     withLocalYamlConfig,
     withConfigurableYamlConfig,
+    withoutConfig,
 
-    -- ** Common use
+    -- ** Common settings
+
+    -- *** Switches
     enableDisableSwitch,
     yesNoSwitch,
     makeDoubleSwitch,
+
+    -- *** Secrets
     readTextSecretFile,
 
+    -- *** Migration
+    strOption,
+    strArgument,
+
     -- ** Readers
+
+    -- *** Common readers
     str,
     auto,
+    exists,
+
+    -- *** Constructing your own reader
+    maybeReader,
+    eitherReader,
+
+    -- *** Comma-separated readers
     commaSeparatedList,
     commaSeparated,
     commaSeparatedSet,

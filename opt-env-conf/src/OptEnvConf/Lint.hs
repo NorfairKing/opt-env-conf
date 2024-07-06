@@ -6,6 +6,7 @@
 
 module OptEnvConf.Lint
   ( LintError (..),
+    LintErrorMessage (..),
     renderLintErrors,
     renderLintError,
     lintParser,

@@ -3,7 +3,41 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module OptEnvConf.Setting where
+module OptEnvConf.Setting
+  ( Setting (..),
+
+    -- * Builders
+    help,
+    metavar,
+    argument,
+    option,
+    switch,
+    reader,
+    str,
+    auto,
+    long,
+    short,
+    env,
+    conf,
+    confWith,
+    confWith',
+    name,
+    value,
+    valueWithShown,
+    example,
+    shownExample,
+    hidden,
+    Builder (..),
+
+    -- * Internal
+    showSettingABit,
+    completeBuilder,
+    emptySetting,
+    DecodingCodec (..),
+    Metavar,
+    Help,
+  )
+where
 
 import Autodocodec
 import Data.List.NonEmpty (NonEmpty (..), (<|))
@@ -35,13 +69,8 @@ data Setting a = Setting
     -- options.
     settingTryOption :: !Bool,
     -- | Which env vars can be read.
-    --
-    -- Requires at least one Reader.
     settingEnvVars :: !(Maybe (NonEmpty String)),
     -- | Which and how to parse config values
-    --
-    -- TODO we could actually have value codecs with void as the first argument.
-    -- consider doing that.
     settingConfigVals :: !(Maybe (NonEmpty (NonEmpty String, DecodingCodec a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: !(Maybe (a, String)),
@@ -56,6 +85,7 @@ data Setting a = Setting
 
 data DecodingCodec a = forall void. DecodingCodec (ValueCodec void (Maybe a))
 
+-- | A 'mempty' 'Setting' to build up a setting from.
 emptySetting :: Setting a
 emptySetting =
   Setting
@@ -73,6 +103,7 @@ emptySetting =
       settingDefaultValue = Nothing
     }
 
+-- | Show a 'Setting' as much as possible, for debugging
 showSettingABit :: Setting a -> ShowS
 showSettingABit Setting {..} =
   showParen True $
@@ -112,6 +143,7 @@ showMaybeWith :: (a -> ShowS) -> Maybe a -> ShowS
 showMaybeWith _ Nothing = showString "Nothing"
 showMaybeWith func (Just a) = showParen True $ showString "Just " . func a
 
+-- | Builder for a 'Setting'
 newtype Builder a = Builder {unBuilder :: Setting a -> Setting a}
 
 instance Semigroup (Builder f) where
@@ -121,20 +153,27 @@ instance Monoid (Builder f) where
   mempty = Builder id
   mappend = (<>)
 
+-- | Complete a 'Builder' into a 'Setting'
 completeBuilder :: Builder a -> Setting a
 completeBuilder b = unBuilder b emptySetting
 
 -- | Document a setting
+--
+-- Multiple 'help's concatenate help on new lines.
 help :: String -> Builder a
 help s = Builder $ \op -> op {settingHelp = Just $ maybe s (s <>) (settingHelp op)}
 
 -- | Document an 'option' or 'env' var.
+--
+-- Multiple 'metavar's override eachother.
 metavar :: String -> Builder a
 metavar mv = Builder $ \s -> s {settingMetavar = Just mv}
 
 -- | Try to parse an argument.
 --
 -- You'll also need to add a 'reader'.
+--
+-- Multiple 'argument's are redundant.
 argument :: Builder a
 argument = Builder $ \s -> s {settingTryArgument = True}
 
@@ -142,12 +181,16 @@ argument = Builder $ \s -> s {settingTryArgument = True}
 --
 -- You'll also need to add a 'reader', at least one 'long' or 'short', and a
 -- 'metavar'.
+--
+-- Multiple 'option's are redundant.
 option :: Builder a
 option = Builder $ \s -> s {settingTryOption = True}
 
 -- | Try to parse a switch, activate the given value when succesful
 --
 -- You'll also need to add at least one 'long' or 'short'.
+--
+-- Multiple 'switch's override eachother.
 switch :: a -> Builder a
 switch v = Builder $ \s -> s {settingSwitchValue = Just v}
 
@@ -162,6 +205,8 @@ reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
 -- Notes:
 --     * Parsing options with an empty name in the 'long' is not supported.
 --     * Parsing options with an '=' sign in the 'long' is not supported.
+--
+-- Multiple 'long's will be tried in order.
 long :: String -> Builder a
 long l = Builder $ \s -> case NE.nonEmpty l of
   Nothing -> s
@@ -173,20 +218,28 @@ long l = Builder $ \s -> case NE.nonEmpty l of
 --
 -- Notes:
 --     * Parsing options with @short '-'@ is not supported.
+--
+-- Multiple 'short's will be tried in order.
 short :: Char -> Builder a
 short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 
 -- | Try to parse an environment variable.
 --
 -- You'll also need to add a 'reader' and a 'metavar'.
+--
+-- Multiple 'env's will be tried in order.
 env :: String -> Builder a
 env v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
 
 -- | Try to parse a configuration value at the given key.
+--
+-- Multiple 'conf's will be tried in order.
 conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
 
 -- | Short-hand function for 'option', 'long', 'env', and 'conf' at the same time.
+--
+-- Multiple 'name's will be tried in order.
 name :: (HasCodec a) => String -> Builder a
 name s =
   mconcat
@@ -208,6 +261,8 @@ confWith' k c =
 
 -- | Set the default value
 --
+-- Multiple 'value's override eachother.
+--
 -- API Note: @default@ is not a valid identifier in Haskell.
 -- I'd also have preferred @default@ instead.
 value :: (Show a) => a -> Builder a
@@ -217,17 +272,22 @@ value a = valueWithShown a (show a)
 valueWithShown :: a -> String -> Builder a
 valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown)}
 
--- | Provide an example value for documentation
+-- | Provide an example value for documentation.
 --
--- Use the show function in the setting
--- Lint when the show function is absent
--- re-use the show function for 'value'
-example :: (Show a) => a -> Builder a
-example = shownExample . show
+-- The example is provided as a literal string.
+--
+-- If you use 'reader' 'auto', you'll want to use 'shownExample' instead.
+example :: String -> Builder a
+example s = Builder $ \set -> set {settingExamples = s : settingExamples set}
 
-shownExample :: String -> Builder a
-shownExample s = Builder $ \set -> set {settingExamples = s : settingExamples set}
+-- | Use 'Show' to show an 'example'.
+--
+-- This only makes sense if you use 'reader' 'auto'.
+shownExample :: (Show a) => a -> Builder a
+shownExample = example . show
 
 -- | Don't show this setting in documentation
+--
+-- Multiple 'hidden's are redundant.
 hidden :: Builder a
 hidden = Builder $ \s -> s {settingHidden = True}

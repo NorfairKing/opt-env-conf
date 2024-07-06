@@ -42,6 +42,7 @@ module OptEnvConf.Parser
     xdgYamlConfigFile,
     withLocalYamlConfig,
     withConfigurableYamlConfig,
+    withoutConfig,
     configuredConfigFile,
     enableDisableSwitch,
     yesNoSwitch,
@@ -119,7 +120,10 @@ showCommandABit Command {..} =
 --     * A way to document it in various ways
 --     * A way to run it to perform shell completion
 --
--- Much of the way you build parsers happens via its type
+-- The basic building block of a 'Parser' is a 'setting'.
+-- 'setting's represent individual settings that you can then compose into larger parsers.
+--
+-- Much of the way you compose parsers happens via its type
 -- class instances.
 -- In particular:
 --
@@ -263,6 +267,9 @@ showParserPrec = go
             . showSettingABit p
 
 -- | A class of types that have a canonical settings parser.
+--
+-- There are no laws.
+-- The closest rule to a law is that a user of an instance should not be surprised by its behaviour.
 class HasParser a where
   settingsParser :: Parser a
 
@@ -351,7 +358,12 @@ setting = ParserSetting mLoc . buildSetting
 buildSetting :: [Builder a] -> Setting a
 buildSetting = completeBuilder . mconcat
 
-filePathSetting :: [Builder FilePath] -> Parser (Path Abs File)
+-- | A setting for @Path Abs File@.
+--
+-- This takes care of setting the 'reader' to 'str', setting the 'metavar' to @FILE_PATH@, autocompletion, and parsing the 'FilePath' into a @Path Abs File@.
+filePathSetting ::
+  [Builder FilePath] ->
+  Parser (Path Abs File)
 filePathSetting builders =
   mapIO parseAbsFile $
     setting $
@@ -360,7 +372,12 @@ filePathSetting builders =
       ]
         ++ builders
 
-directoryPathSetting :: [Builder FilePath] -> Parser (Path Abs Dir)
+-- | A setting for @Path Abs dir@.
+--
+-- This takes care of setting the 'reader' to 'str', setting the 'metavar' to @DIRECTORY_PATH@, autocompletion, and parsing the 'FilePath' into a @Path Abs Dir@.
+directoryPathSetting ::
+  [Builder FilePath] ->
+  Parser (Path Abs Dir)
 directoryPathSetting builders =
   mapIO parseAbsDir $
     setting $
@@ -369,11 +386,15 @@ directoryPathSetting builders =
       ]
         ++ builders
 
--- For easier migration from optparse-applicative
+-- | A 'setting' with 'option' and the 'reader' set to 'str'.
+--
+-- This function may help with easier migration from @optparse-applicative@.
 strOption :: (IsString string) => [Builder string] -> Parser string
 strOption builders = setting $ option : reader str : builders
 
--- For easier migration from optparse-applicative
+-- | A 'setting' with 'argument' and the 'reader' set to 'str'.
+--
+-- This function may help with easier migration from @optparse-applicative@.
 strArgument :: (IsString string) => [Builder string] -> Parser string
 strArgument builders = setting $ argument : reader str : builders
 
@@ -414,38 +435,63 @@ checkMapMaybe func =
         Just b -> Right b
     )
 
+-- | Check a 'Parser' after the fact, purely.
 checkMap :: (a -> Either String b) -> Parser a -> Parser b
 checkMap func = checkMapIO (pure . func)
 
--- TODO add a SRCLoc here
+-- | Check a 'Parser' after the fact, allowing IO.
 checkMapIO :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIO = ParserCheck False
 
+-- | Parse either all or none of the parser below.
+--
+-- If you don't use this function, and only some of the settings below are
+-- defined, this parser will fail and the next alternative will be tried.
+-- If you do use this function, this parser will error if at least one, but not
+-- all, of the settings below are defined.
+--
 -- If each setting has a corresponding forgivable error, consider this forgivable.
 -- Consider all other forgivable errors unforgivable
 allOrNothing :: Parser a -> Parser a
 allOrNothing = undefined -- ParserAllOrNothing
 
--- Like 'checkMap', but allow trying the other side of any alternative if the result is Nothing.
+-- | Like 'checkMap', but allow trying the other side of any alternative if the result is Nothing.
 checkMapForgivable :: (a -> Either String b) -> Parser a -> Parser b
 checkMapForgivable func = checkMapIOForgivable (pure . func)
 
--- Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
+-- | Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
 -- TODO add a SRCLoc here
 checkMapIOForgivable :: (a -> IO (Either String b)) -> Parser a -> Parser b
 checkMapIOForgivable = ParserCheck True
 
 -- | Declare multiple commands
+--
+-- Use 'command' to define a 'Command'.
 commands :: [Command a] -> Parser a
 commands = ParserCommands
 
 -- | Declare a single command with a name, documentation and parser
-command :: String -> String -> Parser a -> Command a
+command ::
+  -- | Name
+  String ->
+  -- | Documentation
+  String ->
+  -- | Parser
+  Parser a ->
+  Command a
 command = Command
 
 -- | Load a configuration value and use it for the given parser
 withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
 withConfig = ParserWithConfig
+
+-- | Don't load any configuration, but still shut up lint errors about 'conf'
+-- being used without defining any way to load configuration.
+--
+-- This may be useful if you use a library's 'Parser' that uses 'conf' but do
+-- not want to parse any configuration.
+withoutConfig :: Parser a -> Parser a
+withoutConfig = withConfig (pure Nothing)
 
 -- | Load a YAML config file and use it for the given parser
 withYamlConfig :: Parser (Maybe (Path Abs File)) -> Parser a -> Parser a
@@ -455,14 +501,14 @@ withYamlConfig pathParser =
 
 -- | Load the Yaml config in the first of the filepaths that points to something that exists.
 withFirstYamlConfig :: Parser [Path Abs File] -> Parser a -> Parser a
-withFirstYamlConfig parsers = withConfig $ mapIO readFirstYamlConfigFile parsers
+withFirstYamlConfig parsers = withConfig $ mapIO readFirstYamlConfigFile $ (:) <$> configuredConfigFile <*> parsers
 
 -- | Combine all Yaml config files that exist into a single combined config object.
 withCombinedYamlConfigs :: Parser [Path Abs File] -> Parser a -> Parser a
 withCombinedYamlConfigs = withCombinedYamlConfigs' combineConfigObjects
 
 withCombinedYamlConfigs' :: (Object -> JSON.Object -> JSON.Object) -> Parser [Path Abs File] -> Parser a -> Parser a
-withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) parsers
+withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) $ (:) <$> configuredConfigFile <*> parsers
   where
     resolveYamlConfigFile :: Maybe JSON.Object -> Path Abs File -> IO (Maybe JSON.Object)
     resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . readYamlConfigFile
@@ -506,9 +552,14 @@ xdgYamlConfigFile subdir =
 withLocalYamlConfig :: Parser a -> Parser a
 withLocalYamlConfig = withConfigurableYamlConfig $ mapIO resolveFile' $ pure "config.yaml"
 
+-- | Use the given 'Parser' for deciding which configuration file to load, but
+-- only if 'configuredConfigFile' fails to define it first.
 withConfigurableYamlConfig :: Parser (Path Abs File) -> Parser a -> Parser a
 withConfigurableYamlConfig p = withYamlConfig $ Just <$> (configuredConfigFile <|> p)
 
+-- | A standard parser for defining which configuration file to load.
+--
+-- This has no default value so you will have to combine it somehow.
 configuredConfigFile :: Parser (Path Abs File)
 configuredConfigFile =
   filePathSetting
@@ -520,25 +571,42 @@ configuredConfigFile =
 
 -- | Define a setting for a 'Bool' with a given default value.
 --
--- If you pass in `long` values, it will have `--foobar` and `--no-foobar` switches.
--- If you pass in `env` values, it will read an environment variable too.
--- If you pass in `conf` values, it will read a configuration value too.
-yesNoSwitch :: (HasCallStack) => Bool -> [Builder Bool] -> Parser Bool
+-- If you pass in `long` values, it will have @--foobar@ and @--no-foobar@ switches.
+-- If you pass in `env` values, it will read those environment variables too.
+-- If you pass in `conf` values, it will read those configuration values too.
+yesNoSwitch ::
+  (HasCallStack) =>
+  -- | Default value
+  Bool ->
+  -- | Builders
+  [Builder Bool] ->
+  Parser Bool
 yesNoSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "" "no-" "[no-]" defaultBool builders
 
 -- | Define a setting for a 'Bool' with a given default value.
 --
--- If you pass in `long` values, it will have `--enable-foobar` and `--disable-foobar` switches.
--- If you pass in `env` values, it will read an environment variable too.
--- If you pass in `conf` values, it will read a configuration value too.
-enableDisableSwitch :: (HasCallStack) => Bool -> [Builder Bool] -> Parser Bool
+-- If you pass in `long` values, it will have @--enable-foobar@ and @--disable-foobar@ switches.
+-- If you pass in `env` values, it will read those environment variables too.
+-- If you pass in `conf` values, it will read those configuration values too.
+enableDisableSwitch ::
+  (HasCallStack) =>
+  -- | Default value
+  Bool ->
+  -- | Builders
+  [Builder Bool] ->
+  Parser Bool
 enableDisableSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
 
 makeDoubleSwitch ::
+  -- | Prefix for 'True' 'long's
   String ->
+  -- | Prefix for 'False' 'long's
   String ->
+  -- | Prefix for the documented 'long's
   String ->
+  -- | Default nvnalue
   Bool ->
+  -- | Builders
   [Builder Bool] ->
   Parser Bool
 makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
@@ -654,28 +722,31 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
 readTextSecretFile :: FilePath -> IO Text
 readTextSecretFile = fmap T.strip . T.readFile
 
+-- | Prefix all 'long's and 'short's with a given 'String'.
 {-# ANN subArgs ("NOCOVER" :: String) #-}
 subArgs :: String -> Parser a -> Parser a
 subArgs prefix = parserMapSetting $ \s ->
   s {settingDasheds = map (prefixDashed prefix) (settingDasheds s)}
 
--- | Helper function for calling 'subArgs' with 'toArgCase' and a '-' appended.
+-- | Helper function for calling 'subArgs' with 'toArgCase' and a @'-'@ appended.
 --
 -- > subArgs_ s = subArgs (toArgCase s <> "-")
 subArgs_ :: String -> Parser a -> Parser a
 subArgs_ s = subArgs (toArgCase s <> "-")
 
+-- | Prefix all 'env's with a given 'String'.
 {-# ANN subEnv ("NOCOVER" :: String) #-}
 subEnv :: String -> Parser a -> Parser a
 subEnv prefix = parserMapSetting $ \s ->
   s {settingEnvVars = NE.map (prefix <>) <$> settingEnvVars s}
 
--- | Helper function for calling 'subEnv' with 'toEnvCase' and a '_' appended.
+-- | Helper function for calling 'subEnv' with 'toEnvCase' and a @'_'@ appended.
 --
 -- > subEnv_ s = subEnv (toEnvCase s <> "_")
 subEnv_ :: String -> Parser a -> Parser a
 subEnv_ s = subEnv (toEnvCase s <> "_")
 
+-- | Prefix all 'conf's with a given 'String'.
 {-# ANN subConfig ("NOCOVER" :: String) #-}
 subConfig :: String -> Parser a -> Parser a
 subConfig prefix = parserMapSetting $ \s ->
@@ -697,21 +768,30 @@ subAll prefix =
     . subEnv_ prefix
     . subConfig_ prefix
 
+-- | Use the 'settingsParser' of a given type, but prefixed with a 'subAll'.
+--
+-- > subSettings prefix = subAll prefix settingsParser
 subSettings :: (HasParser a) => String -> Parser a
 subSettings prefix = subAll prefix settingsParser
 
+-- | Map every setting in a parser
 {-# ANN parserMapSetting ("NOCOVER" :: String) #-}
 parserMapSetting :: (forall a. Setting a -> Setting a) -> Parser s -> Parser s
 parserMapSetting func = parserMapSettingParser $ \mLoc s -> (mLoc, func s)
 
+-- | Erase all source locations in a parser.
+--
+-- This may be useful when golden-testing the shown parser.
 {-# ANN parserEraseSrcLocs ("NOCOVER" :: String) #-}
 parserEraseSrcLocs :: Parser a -> Parser a
 parserEraseSrcLocs = parserMapSettingParser (\_ set -> (Nothing, set))
 
+-- | Traverse all 'Setting's in a 'Parser'.
 {-# ANN parserMapSettingParser ("NOCOVER" :: String) #-}
 parserMapSettingParser :: (forall a. Maybe SrcLoc -> Setting a -> (Maybe SrcLoc, Setting a)) -> Parser s -> Parser s
 parserMapSettingParser func = runIdentity . parserTraverseSettingParser (\mLoc set -> Identity $ func mLoc set)
 
+-- | Traverse all 'Setting's and their 'SrcLoc' in a 'Parser'.
 {-# ANN parserTraverseSettingParser ("NOCOVER" :: String) #-}
 parserTraverseSettingParser ::
   forall f s.

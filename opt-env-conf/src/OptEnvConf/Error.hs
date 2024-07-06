@@ -26,7 +26,7 @@ data ParseError
   | ParseErrorUnrecognisedCommand !String ![String]
   deriving (Show)
 
--- Whether the other side of an 'Alt' should be tried if we find this error.
+-- | Whether the other side of an 'Alt' should be tried if we find this error.
 errorIsForgivable :: ParseError -> Bool
 errorIsForgivable = \case
   ParseErrorEmpty -> True

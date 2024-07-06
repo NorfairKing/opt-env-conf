@@ -46,6 +46,8 @@ import Text.Colour
 import Text.Colour.Capabilities.FromEnv
 
 -- | Run 'runParser' on your @Settings@' type's 'settingsParser'.
+--
+-- __This is most likely the function you want to be using.__
 runSettingsParser :: (HasParser a) => Version -> IO a
 runSettingsParser version = runParser version settingsParser
 
@@ -53,7 +55,7 @@ runSettingsParser version = runParser version settingsParser
 --
 -- This function with exit on:
 --
---     * Parse failure
+--     * Parse failure: show a nice error message.
 --     * @-h|--help@: Show help text
 --     * @--version@: Show version information
 --     * @--render-man-page@: Render a man page

@@ -5,7 +5,29 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module OptEnvConf.Reader where
+module OptEnvConf.Reader
+  ( Reader (..),
+
+    -- * Common readers
+    str,
+    auto,
+    exists,
+
+    -- * Constructing your own reader
+    maybeReader,
+    eitherReader,
+
+    -- * Comma-separated readers
+    commaSeparated,
+    commaSeparatedList,
+    commaSeparatedSet,
+
+    -- * Internal
+    runReader,
+    renderCommaSeparated,
+    parseCommaSeparated,
+  )
+where
 
 import Control.Monad.Reader (MonadReader (..))
 import Data.List (intercalate)
@@ -14,7 +36,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.String
-import Text.Read
+import Text.Read (readMaybe)
 
 newtype Reader a = Reader {unReader :: String -> Either String a}
   deriving (Functor)
@@ -40,6 +62,11 @@ instance MonadReader String Reader where
 runReader :: Reader a -> String -> Either String a
 runReader = unReader
 
+-- | Read a string as-is.
+--
+-- __This is the reader you will want to use for reading a 'String'.__
+--
+-- This is different from 'auto' for strings because 'Read' wants to parse quotes when parsing Strings.
 str :: (IsString s) => Reader s
 str = Reader $ Right . fromString
 
@@ -52,26 +79,45 @@ auto = Reader $ \s -> case readMaybe s of
   Just a -> Right a
 
 -- | Always return True
+--
+-- > exists = Reader $ const $ pure True
 exists :: Reader Bool
-exists = maybeReader $ const $ Just True
+exists = Reader $ const $ pure True
 
+-- | Turn a 'Maybe' parsing function into a 'Reader'
 maybeReader :: (String -> Maybe a) -> Reader a
 maybeReader func = Reader $ \s -> case func s of
   Nothing -> Left $ "Unparsable value: " <> show s
   Just a -> Right a
 
+-- | Turn an 'Either' parsing function into a 'Reader'
+--
+-- API note: This is a forward-compatible alias for 'Reader'.
 eitherReader :: (String -> Either String a) -> Reader a
 eitherReader = Reader
 
+-- | Like 'commaSeparated' but uses a set type.
+--
+-- Note that this will never parse the empty list, so prefer 'commaSeparated'
+-- if you want a more accurately typed function.
+--
+-- Note also that this function throws away any ordering information and
+-- ignores any duplicate values.
 commaSeparatedSet :: (Ord a) => Reader a -> Reader (Set a)
 commaSeparatedSet func = S.fromList <$> commaSeparatedList func
 
+-- | Like 'commaSeparated' but uses a list type.
+--
+-- Note that this will never parse the empty list, so prefer 'commaSeparated'
+-- if you want a more accurately typed function.
 commaSeparatedList :: Reader a -> Reader [a]
 commaSeparatedList func = NE.toList <$> commaSeparated func
 
+-- | Turn a reader into one that parses comma separated values with that reader.
 commaSeparated :: Reader a -> Reader (NonEmpty a)
 commaSeparated (Reader func) = Reader $ mapM func . parseCommaSeparated
 
+-- | Separate by commas and escape commas in values
 renderCommaSeparated :: NonEmpty String -> String
 renderCommaSeparated = intercalate "," . map escape . NE.toList
   where
@@ -80,6 +126,7 @@ renderCommaSeparated = intercalate "," . map escape . NE.toList
       '\\' -> "\\\\"
       c -> [c]
 
+-- | Parse comma separated string, ignore escaped commas
 parseCommaSeparated :: String -> NonEmpty String
 parseCommaSeparated = go ""
   where
