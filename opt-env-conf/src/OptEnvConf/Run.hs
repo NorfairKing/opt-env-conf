@@ -82,6 +82,7 @@ runParser ::
   IO a
 runParser version progDesc p = do
   allArgs <- getArgs
+  let debugMode = "--debug-optparse" `elem` allArgs
   let argMap = parseArgs allArgs
   completeEnv <- getEnvironment
   let envVars = EnvMap.parse completeEnv
@@ -92,7 +93,8 @@ runParser version progDesc p = do
       hPutChunksLocaleWith tc stderr $ renderLintErrors errs
       exitFailure
     Nothing -> do
-      let p' = internalParser version p
+      let f = if debugMode then id else parserEraseSrcLocs
+      let p' = f $ internalParser version p
       let docs = parserDocs p'
       errOrResult <-
         runParserOn
@@ -154,7 +156,7 @@ data Internal a
       !Int
       -- Args
       ![String]
-  | ParsedNormally a
+  | ParsedNormally !a
 
 internalParser :: Version -> Parser a -> Parser (Internal a)
 internalParser version p =
