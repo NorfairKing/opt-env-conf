@@ -2,8 +2,8 @@
 
 ## Status
 
-Ready to try out.
-Not used in production yet.
+Ready to try out,
+Used in production
 
 ## Goals
 

@@ -346,6 +346,24 @@ setting = ParserSetting mLoc . buildSetting
 buildSetting :: [Builder a] -> Setting a
 buildSetting = completeBuilder . mconcat
 
+filePathSetting :: [Builder FilePath] -> Parser (Path Abs File)
+filePathSetting builders =
+  mapIO parseAbsFile $
+    setting $
+      [ reader str,
+        metavar "FILE_PATH" -- TODO file completer
+      ]
+        ++ builders
+
+directoryPathSetting :: [Builder FilePath] -> Parser (Path Abs Dir)
+directoryPathSetting builders =
+  mapIO parseAbsDir $
+    setting $
+      [ reader str,
+        metavar "DIRECTORY_PATH" -- TODO directory completer
+      ]
+        ++ builders
+
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty p = (:|) <$> p <*> many p
