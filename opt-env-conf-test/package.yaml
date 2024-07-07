@@ -3,6 +3,7 @@ version: '0.0.0.0'
 copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
 license: OtherLicense
 license-file: LICENSE.md
+synopsis: A testing companion package for opt-env-conf
   
 extra-source-files:
 - test_resources/**/*

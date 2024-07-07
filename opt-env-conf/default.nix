@@ -14,5 +14,6 @@ mkDerivation {
     safe-coloured-text-layout safe-coloured-text-terminfo selective
     text validity validity-containers
   ];
+  description = "Settings parsing for Haskell: command-line arguments, environment variables, and configuration values";
   license = lib.licenses.lgpl3Only;
 }

@@ -6,6 +6,7 @@ cabal-version: 1.12
 
 name:           opt-env-conf-test
 version:        0.0.0.0
+synopsis:       A testing companion package for opt-env-conf
 copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        OtherLicense
 license-file:   LICENSE.md

@@ -6,6 +6,7 @@ cabal-version: 1.12
 
 name:           opt-env-conf
 version:        0.0.0.0
+synopsis:       Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.
 copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        LGPL-3
 license-file:   LICENSE

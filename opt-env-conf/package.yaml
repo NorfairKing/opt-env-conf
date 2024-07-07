@@ -3,6 +3,7 @@ version: '0.0.0.0'
 copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
 license: LGPL-3
 license-file: LICENSE
+synopsis: 'Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.'
   
 dependencies:
 - base
