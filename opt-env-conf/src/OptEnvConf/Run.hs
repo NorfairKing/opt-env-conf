@@ -474,9 +474,7 @@ runParserOn p args envVars mConfig = do
                             pure a
                           _ ->
                             case settingDefaultValue of
-                              Just (a, _) -> do
-                                markParsed
-                                pure a
+                              Just (a, _) -> pure a -- Don't mark as parsed
                               Nothing -> do
                                 let parseResultError e res = case res of
                                       NotRun -> Nothing

@@ -549,6 +549,19 @@ spec = do
         [ ([], Nothing),
           (["--foo", "foo"], Just ("foo", Nothing))
         ]
+      -- Default values should not count as parsed:
+      argParseSpecs
+        ( choice
+            [ allOrNothing $
+                (,)
+                  <$> setting [option, long "foo", reader auto, help "This one will exist", metavar "CHAR", value 'c']
+                  <*> setting [option, long "bar", reader auto, help "This one will not exist", metavar "CHAR"],
+              pure ('a', 'b')
+            ]
+        )
+        [ ([], ('a', 'b')),
+          (["--foo", "'c'", "--bar", "'d'"], ('c', 'd'))
+        ]
 
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
 argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
