@@ -258,9 +258,8 @@ runParserOn ::
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig = do
-  -- TODO: Try running this lazily. The first success should stop so we don't
-  -- do too much IO.
-  mTup <- runPPLazy (go p) args ppEnv
+  let ppState = PPState {ppStateArgs = args}
+  mTup <- runPPLazy (go p) ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"
     Just (errOrRes, nexts) -> case errOrRes of
@@ -480,7 +479,7 @@ type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError (NonDetT IO)))
 
 runPP ::
   PP a ->
-  Args ->
+  PPState ->
   PPEnv ->
   IO [Validation ParseError (a, PPState)]
 runPP p args envVars =
@@ -488,7 +487,7 @@ runPP p args envVars =
 
 runPPLazy ::
   PP a ->
-  Args ->
+  PPState ->
   PPEnv ->
   IO
     ( Maybe
@@ -521,7 +520,9 @@ ppNonDet = lift . lift . lift
 ppNonDetList :: [a] -> PP a
 ppNonDetList = ppNonDet . liftNonDetTList
 
-type PPState = Args
+data PPState = PPState
+  { ppStateArgs :: !Args
+  }
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
@@ -530,30 +531,30 @@ data PPEnv = PPEnv
 
 ppArg :: PP (Maybe String)
 ppArg = do
-  args <- get
+  args <- gets ppStateArgs
   case Args.consumeArgument args of
     [] -> pure Nothing
     as -> do
-      (a, s) <- ppNonDetList as
-      put s
+      (a, args') <- ppNonDetList as
+      modify' (\s -> s {ppStateArgs = args'})
       pure (Just a)
 
 ppOpt :: [Dashed] -> PP (Maybe String)
 ppOpt ds = do
-  args <- get
+  args <- gets ppStateArgs
   case Args.consumeOption ds args of
     Nothing -> pure Nothing
-    Just (a, s) -> do
-      put s
+    Just (a, args') -> do
+      modify' (\s -> s {ppStateArgs = args'})
       pure (Just a)
 
 ppSwitch :: [Dashed] -> PP (Maybe ())
 ppSwitch ds = do
-  args <- get
+  args <- gets ppStateArgs
   case Args.consumeSwitch ds args of
     Nothing -> pure Nothing
-    Just s -> do
-      put s
+    Just args' -> do
+      modify' (\s -> s {ppStateArgs = args'})
       pure (Just ())
 
 ppErrors' :: NonEmpty ParseError -> PP a
