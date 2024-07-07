@@ -273,16 +273,16 @@ runParserOn p args envVars mConfig = do
   mTup <- runPPLazy (go p) ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"
-    Just (errOrRes, nexts) -> case errOrRes of
-      Success (a, _) -> pure (Right a)
+    Just ((errOrRes, _), nexts) -> case errOrRes of
+      Success a -> pure (Right a)
       Failure firstErrors ->
         let goNexts ns = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
                 Nothing -> pure (Left firstErrors)
-                Just (eOR, ns') -> case eOR of
-                  Success (a, _) -> pure (Right a)
+                Just ((eOR, _), ns') -> case eOR of
+                  Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
          in goNexts nexts
   where
@@ -310,11 +310,10 @@ runParserOn p args envVars mConfig = do
         e <- ask
         s <- get
         results <- liftIO $ runPP (go p') s e
-        result <- ppNonDetList results
+        (result, s') <- ppNonDetList results
+        put s'
         case result of
-          Success (a, s') -> do
-            put s'
-            pure a
+          Success a -> pure a
           Failure errs -> do
             if not $ all errorIsForgivable errs
               then ppErrors' errs
@@ -520,15 +519,15 @@ tryReaders rs s = left NE.reverse $ go rs
         Left err -> go' (err <| errs) rl
         Right a -> Right a
 
-type PP a = ReaderT PPEnv (StateT PPState (ValidationT ParseError (NonDetT IO))) a
+type PP a = ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a
 
 runPP ::
   PP a ->
   PPState ->
   PPEnv ->
-  IO [Validation ParseError (a, PPState)]
+  IO [(Validation ParseError a, PPState)]
 runPP p args envVars =
-  runNonDetT (runValidationT (runStateT (runReaderT p envVars) args))
+  runNonDetT (runStateT (runValidationT (runReaderT p envVars)) args)
 
 runPPLazy ::
   PP a ->
@@ -536,28 +535,26 @@ runPPLazy ::
   PPEnv ->
   IO
     ( Maybe
-        ( Validation ParseError (a, PPState),
-          NonDetT IO (Validation ParseError (a, PPState))
+        ( (Validation ParseError a, PPState),
+          NonDetT IO (Validation ParseError a, PPState)
         )
     )
 runPPLazy p args envVars =
-  runNonDetTLazy (runValidationT (runStateT (runReaderT p envVars) args))
+  runNonDetTLazy (runStateT (runValidationT (runReaderT p envVars)) args)
 
 tryPP :: PP a -> PP (Maybe a)
 tryPP pp = do
   s <- get
   e <- ask
   results <- liftIO $ runPP pp s e
-  errOrRes <- ppNonDetList results
+  (errOrRes, s') <- ppNonDetList results
+  put s'
   case errOrRes of
-    -- Note that args are not consumed if the alternative failed.
     Failure errs ->
       if all errorIsForgivable errs
         then pure Nothing
         else ppErrors' errs
-    Success (a, s') -> do
-      put s'
-      pure $ Just a
+    Success a -> pure $ Just a
 
 ppNonDet :: NonDetT IO a -> PP a
 ppNonDet = lift . lift . lift
@@ -604,7 +601,7 @@ ppSwitch ds = do
       pure (Just ())
 
 ppErrors' :: NonEmpty ParseError -> PP a
-ppErrors' = lift . lift . ValidationT . pure . Failure
+ppErrors' = lift . ValidationT . lift . pure . Failure
 
 ppErrors :: Maybe SrcLoc -> NonEmpty ParseErrorMessage -> PP a
 ppErrors mLoc = ppErrors' . NE.map (ParseError mLoc)
