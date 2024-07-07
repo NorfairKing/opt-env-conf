@@ -97,7 +97,7 @@ module OptEnvConf
     makeDoubleSwitch,
 
     -- *** Secrets
-    readTextSecretFile,
+    readSecretTextFile,
 
     -- *** Migration
     strOption,

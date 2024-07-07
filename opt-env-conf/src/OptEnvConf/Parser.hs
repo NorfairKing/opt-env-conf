@@ -50,7 +50,7 @@ module OptEnvConf.Parser
     enableDisableSwitch,
     yesNoSwitch,
     makeDoubleSwitch,
-    readTextSecretFile,
+    readSecretTextFile,
 
     -- * Parser implementation
     Parser (..),
@@ -157,7 +157,7 @@ data Parser a where
   ParserEmpty :: !(Maybe SrcLoc) -> Parser a
   ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
   ParserMany :: !(Parser a) -> Parser [a]
-  ParserAllOrNothing :: !(Parser a) -> Parser a
+  ParserAllOrNothing :: !(Maybe SrcLoc) -> !(Parser a) -> Parser a
   -- Map, Check, and IO
   ParserCheck ::
     !(Maybe SrcLoc) ->
@@ -208,7 +208,7 @@ instance Alternative Parser where
           ParserEmpty _ -> True
           ParserAlt _ _ -> False
           ParserMany _ -> False
-          ParserAllOrNothing p -> isEmpty p
+          ParserAllOrNothing _ p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
           ParserCommands _ cs -> null cs
           ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
@@ -256,9 +256,11 @@ showParserPrec = go
         showParen (d > 10) $
           showString "Many "
             . go 11 p
-      ParserAllOrNothing p ->
+      ParserAllOrNothing mLoc p ->
         showParen (d > 10) $
           showString "AllOrNothing "
+            . showsPrec 11 mLoc
+            . showString " "
             . go 11 p
       ParserCheck mLoc forgivable _ p ->
         showParen (d > 10) $
@@ -507,8 +509,10 @@ checkMapIO = ParserCheck mLoc False
 -- > )
 --
 -- > ["--foo", "'a'"]
-allOrNothing :: Parser a -> Parser a
-allOrNothing = ParserAllOrNothing
+allOrNothing :: (HasCallStack) => Parser a -> Parser a
+allOrNothing = ParserAllOrNothing mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
 checkMapMaybeForgivable :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
@@ -792,8 +796,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
 
 -- | Read a text file but strip whitespace so it can be edited with an editor
 -- that messes with line endings.
-readTextSecretFile :: FilePath -> IO Text
-readTextSecretFile = fmap T.strip . T.readFile
+readSecretTextFile :: Path Abs File -> IO Text
+readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 
 -- | Prefix all 'long's and 'short's with a given 'String'.
 {-# ANN subArgs ("NOCOVER" :: String) #-}
@@ -844,8 +848,8 @@ subAll prefix =
 -- | Use the 'settingsParser' of a given type, but prefixed with a 'subAll' and 'allOrNothing'.
 --
 -- > subSettings prefix = allOrNothing $ subAll prefix settingsParser
-subSettings :: (HasParser a) => String -> Parser a
-subSettings prefix = allOrNothing $ subAll prefix settingsParser
+subSettings :: (HasCallStack) => (HasParser a) => String -> Parser a
+subSettings prefix = withFrozenCallStack allOrNothing $ subAll prefix settingsParser
 
 -- | Erase all source locations in a parser.
 --
@@ -862,7 +866,7 @@ parserEraseSrcLocs = go
       ParserEmpty _ -> ParserEmpty Nothing
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
       ParserMany p -> ParserMany (go p)
-      ParserAllOrNothing p -> ParserAllOrNothing (go p)
+      ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
       ParserCommands mLoc cs -> ParserCommands mLoc $ map commandEraseSrcLocs cs
       ParserWithConfig p1 p2 -> ParserWithConfig (go p1) (go p2)
@@ -898,7 +902,7 @@ parserTraverseSetting func = go
       ParserEmpty mLoc -> pure $ ParserEmpty mLoc
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
-      ParserAllOrNothing p -> ParserAllOrNothing <$> go p
+      ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
       ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
@@ -926,7 +930,7 @@ parserSettingsSet = go
       ParserEmpty _ -> S.empty
       ParserAlt p1 p2 -> S.union (go p1) (go p2)
       ParserMany p -> go p
-      ParserAllOrNothing p -> go p -- TODO is this right?
+      ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> S.unions $ map (go . commandParser) cs
       ParserWithConfig p1 p2 -> S.union (go p1) (go p2)

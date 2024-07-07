@@ -124,7 +124,7 @@ renderError ParseError {..} =
             unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs
           ]
         ParseErrorAllOrNothing ->
-          [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing parser have been defined."]
+          [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing (or subSettings) parser have been defined."]
           ],
       maybe [] (pure . ("see " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) parseErrorSrcLoc
     ]

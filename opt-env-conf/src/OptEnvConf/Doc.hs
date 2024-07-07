@@ -188,7 +188,7 @@ parserDocs = simplifyAnyDocs . go
       ParserEmpty _ -> AnyDocsOr []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
       ParserMany p -> go p -- TODO: is this right?
-      ParserAllOrNothing p -> go p
+      ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> AnyDocsCommands $ map goCommand cs
       ParserWithConfig p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?

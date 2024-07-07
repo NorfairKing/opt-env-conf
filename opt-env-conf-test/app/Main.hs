@@ -3,6 +3,7 @@
 
 module Main where
 
+import Data.Text (Text)
 import OptEnvConf
 import Paths_opt_env_conf_test (version)
 
@@ -61,7 +62,8 @@ instance HasParser Dispatch where
       ]
 
 data Settings = Settings
-  { settingLogLevel :: String
+  { settingLogLevel :: String,
+    settingPaymentSettings :: Maybe PaymentSettings
   }
   deriving (Show)
 
@@ -75,4 +77,38 @@ instance HasParser Settings where
           name "log-level",
           value "DEBUG"
         ]
+    settingPaymentSettings <- optional $ subSettings "payment"
     pure Settings {..}
+
+data PaymentSettings = PaymentSettings
+  { paymentSetPublicKey :: String,
+    paymentSetSecretKey :: Text,
+    paymentSetCurrency :: Maybe String
+  }
+  deriving (Show)
+
+instance HasParser PaymentSettings where
+  settingsParser = do
+    paymentSetPublicKey <-
+      setting
+        [ help "Public key",
+          reader str,
+          name "public-key",
+          metavar "PUBLIC_KEY"
+        ]
+    paymentSetSecretKey <-
+      mapIO readSecretTextFile $
+        filePathSetting
+          [ help "Secret key",
+            name "secret-key",
+            metavar "SECRET_KEY_FILE"
+          ]
+    paymentSetCurrency <-
+      optional $
+        setting
+          [ help "Currency",
+            reader str,
+            name "currency",
+            metavar "CURRENCY"
+          ]
+    pure PaymentSettings {..}

@@ -536,6 +536,19 @@ spec = do
           (["arg"], Right (Just "arg"))
         ]
 
+      argParseSpecs
+        ( optional
+            ( allOrNothing
+                ( (,)
+                    <$> setting [reader str, argument]
+                    <*> optional (setting [reader str, argument])
+                )
+            ) ::
+            Parser (Maybe (String, Maybe String))
+        )
+        [ ([], Nothing)
+        ]
+
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
 argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
 

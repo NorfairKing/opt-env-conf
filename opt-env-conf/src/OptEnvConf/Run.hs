@@ -297,7 +297,7 @@ runParserOn p args envVars mConfig = do
           Just a -> do
             as <- go (ParserMany p')
             pure (a : as)
-      ParserAllOrNothing p' -> do
+      ParserAllOrNothing mLoc p' -> do
         e <- ask
         s <- get
         results <- liftIO $ runPP (go p') s e
@@ -312,9 +312,11 @@ runParserOn p args envVars mConfig = do
               else do
                 let settingsSet = parserSettingsSet p
                 let errorsSet = errorSrcLocSet errs
+                liftIO $ print settingsSet
+                liftIO $ print errorsSet
                 if settingsSet == errorsSet
                   then ppErrors' errs
-                  else ppErrors' $ errs <> (ParseError Nothing ParseErrorAllOrNothing :| [])
+                  else ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
       ParserCheck mLoc forgivable f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
