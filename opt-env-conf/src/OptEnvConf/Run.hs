@@ -25,6 +25,8 @@ import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Traversable
 import Data.Version
 import GHC.Stack (SrcLoc)
@@ -258,7 +260,16 @@ runParserOn ::
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
 runParserOn p args envVars mConfig = do
-  let ppState = PPState {ppStateArgs = args}
+  let ppState =
+        PPState
+          { ppStateArgs = args,
+            ppStateParsedSettings = S.empty
+          }
+  let ppEnv =
+        PPEnv
+          { ppEnvEnv = envVars,
+            ppEnvConf = mConfig
+          }
   mTup <- runPPLazy (go p) ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"
@@ -275,7 +286,6 @@ runParserOn p args envVars mConfig = do
                   Failure _ -> goNexts ns'
          in goNexts nexts
   where
-    ppEnv = PPEnv {ppEnvEnv = envVars, ppEnvConf = mConfig}
     go ::
       Parser a ->
       PP a
@@ -521,7 +531,8 @@ ppNonDetList :: [a] -> PP a
 ppNonDetList = ppNonDet . liftNonDetTList
 
 data PPState = PPState
-  { ppStateArgs :: !Args
+  { ppStateArgs :: !Args,
+    ppStateParsedSettings :: !(Set SrcLocHash)
   }
 
 data PPEnv = PPEnv
