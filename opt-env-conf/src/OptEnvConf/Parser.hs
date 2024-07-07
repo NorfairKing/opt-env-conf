@@ -391,7 +391,7 @@ filePathSetting ::
   [Builder FilePath] ->
   Parser (Path Abs File)
 filePathSetting builders =
-  mapIO parseAbsFile $
+  mapIO resolveFile' $
     withFrozenCallStack $
       setting $
         [ reader str,
@@ -407,7 +407,7 @@ directoryPathSetting ::
   [Builder FilePath] ->
   Parser (Path Abs Dir)
 directoryPathSetting builders =
-  mapIO parseAbsDir $
+  mapIO resolveDir' $
     withFrozenCallStack $
       setting $
         [ reader str,
