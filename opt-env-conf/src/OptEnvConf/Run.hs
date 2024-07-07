@@ -319,13 +319,23 @@ runParserOn p args envVars mConfig = do
             if not $ all errorIsForgivable errs
               then ppErrors' errs
               else do
+                -- Settings available below
                 let settingsSet = parserSettingsSet p
-                let errorsSet = errorSrcLocSet errs
                 liftIO $ print settingsSet
-                liftIO $ print errorsSet
-                if settingsSet == errorsSet
-                  then ppErrors' errs
-                  else ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
+                -- Settings that have been parsed
+                parsedSet <- gets ppStateParsedSettings
+                liftIO $ print parsedSet
+                -- Settings that have been parsed below
+                let parsedSettingsSet = settingsSet `S.intersection` parsedSet
+                liftIO $ print parsedSettingsSet
+                -- If any settings have been parsed below, and parsing still failed
+                -- (this is the case because we're in the failure branch)
+                -- with only forgivable errors
+                -- (this is the case because we're in the branch where that's been checked)
+                -- then this should be an unforgivable error.
+                if not (null parsedSettingsSet)
+                  then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
+                  else ppErrors' errs
       ParserCheck mLoc forgivable f p' -> do
         a <- go p'
         errOrB <- liftIO $ f a
@@ -343,6 +353,19 @@ runParserOn p args envVars mConfig = do
         mNewConfig <- go pc
         local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
       ParserSetting mLoc set@Setting {..} -> do
+        let markParsed = do
+              liftIO $ print $ "Marking as parsed: " <> show mLoc
+              maybe
+                (pure ())
+                ( \loc -> modify' $ \s ->
+                    s
+                      { ppStateParsedSettings =
+                          S.insert
+                            (hashSrcLoc loc)
+                            (ppStateParsedSettings s)
+                      }
+                )
+                mLoc
         let mOptDoc = settingOptDoc set
         mArg <-
           if settingTryArgument
@@ -360,7 +383,9 @@ runParserOn p args envVars mConfig = do
             else pure NotRun
 
         case mArg of
-          Found a -> pure a
+          Found a -> do
+            markParsed
+            pure a
           _ -> do
             -- TODO do this without all the nesting
             mSwitch <- case settingSwitchValue of
@@ -372,7 +397,9 @@ runParserOn p args envVars mConfig = do
                   Just () -> pure $ Found a
 
             case mSwitch of
-              Found a -> pure a
+              Found a -> do
+                markParsed
+                pure a
               _ -> do
                 mOpt <-
                   if settingTryOption
@@ -390,7 +417,9 @@ runParserOn p args envVars mConfig = do
                     else pure NotRun
 
                 case mOpt of
-                  Found a -> pure a
+                  Found a -> do
+                    markParsed
+                    pure a
                   _ -> do
                     let mEnvDoc = settingEnvDoc set
                     mEnv <- case settingEnvVars of
@@ -412,7 +441,9 @@ runParserOn p args envVars mConfig = do
                         pure $ maybe NotFound Found $ listToMaybe results
 
                     case mEnv of
-                      Found a -> pure a
+                      Found a -> do
+                        markParsed
+                        pure a
                       _ -> do
                         let mConfDoc = settingConfDoc set
                         mConf <- case settingConfigVals of
@@ -443,10 +474,14 @@ runParserOn p args envVars mConfig = do
                                       Right a -> pure $ maybe NotFound Found a
 
                         case mConf of
-                          Found a -> pure a
+                          Found a -> do
+                            markParsed
+                            pure a
                           _ ->
                             case settingDefaultValue of
-                              Just (a, _) -> pure a
+                              Just (a, _) -> do
+                                markParsed
+                                pure a
                               Nothing -> do
                                 let parseResultError e res = case res of
                                       NotRun -> Nothing

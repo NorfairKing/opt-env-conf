@@ -387,45 +387,55 @@ buildSetting = completeBuilder . mconcat
 --
 -- This takes care of setting the 'reader' to 'str', setting the 'metavar' to @FILE_PATH@, autocompletion, and parsing the 'FilePath' into a @Path Abs File@.
 filePathSetting ::
+  (HasCallStack) =>
   [Builder FilePath] ->
   Parser (Path Abs File)
 filePathSetting builders =
   mapIO parseAbsFile $
-    setting $
-      [ reader str,
-        metavar "FILE_PATH" -- TODO file completer
-      ]
-        ++ builders
+    withFrozenCallStack $
+      setting $
+        [ reader str,
+          metavar "FILE_PATH" -- TODO file completer
+        ]
+          ++ builders
 
 -- | A setting for @Path Abs dir@.
 --
 -- This takes care of setting the 'reader' to 'str', setting the 'metavar' to @DIRECTORY_PATH@, autocompletion, and parsing the 'FilePath' into a @Path Abs Dir@.
 directoryPathSetting ::
+  (HasCallStack) =>
   [Builder FilePath] ->
   Parser (Path Abs Dir)
 directoryPathSetting builders =
   mapIO parseAbsDir $
-    setting $
-      [ reader str,
-        metavar "DIRECTORY_PATH" -- TODO directory completer
-      ]
-        ++ builders
+    withFrozenCallStack $
+      setting $
+        [ reader str,
+          metavar "DIRECTORY_PATH" -- TODO directory completer
+        ]
+          ++ builders
 
 -- | A 'setting' with 'option', a 'reader' set to 'str', and the 'metavar' set to @STR@.
 --
 -- Note that you can override the 'metavar' with another 'metavar' in the given list of builders.
 --
 -- This function may help with easier migration from @optparse-applicative@.
-strOption :: (IsString string) => [Builder string] -> Parser string
-strOption builders = setting $ option : reader str : metavar "STR" : builders
+strOption :: (HasCallStack) => (IsString string) => [Builder string] -> Parser string
+strOption builders =
+  withFrozenCallStack $
+    setting $
+      option : reader str : metavar "STR" : builders
 
 -- | A 'setting' with 'argument', a 'reader' set to 'str', and the 'metavar' set to @STR@.
 --
 -- Note that you can override the 'metavar' with another 'metavar' in the given list of builders.
 --
 -- This function may help with easier migration from @optparse-applicative@.
-strArgument :: (IsString string) => [Builder string] -> Parser string
-strArgument builders = setting $ argument : reader str : metavar "STR" : builders
+strArgument :: (HasCallStack) => (IsString string) => [Builder string] -> Parser string
+strArgument builders =
+  withFrozenCallStack $
+    setting $
+      argument : reader str : metavar "STR" : builders
 
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
@@ -603,7 +613,7 @@ combineConfigObjects = KM.unionWith combineValues
     combineValues v _ = v
 
 -- | Load @config.yaml@ from the given XDG configuration subdirectory
-xdgYamlConfigFile :: FilePath -> Parser FilePath
+xdgYamlConfigFile :: (HasCallStack) => FilePath -> Parser FilePath
 xdgYamlConfigFile subdir =
   mapIO
     ( \mXdgDir -> do
@@ -616,6 +626,7 @@ xdgYamlConfigFile subdir =
         fromAbsFile <$> resolveFile configDir "config.yaml"
     )
     $ optional
+    $ withFrozenCallStack
     $ setting
       [ help "Path to the XDG configuration directory",
         reader str,
@@ -675,6 +686,7 @@ enableDisableSwitch ::
 enableDisableSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
 
 makeDoubleSwitch ::
+  (HasCallStack) =>
   -- | Prefix for 'True' 'long's
   String ->
   -- | Prefix for 'False' 'long's
@@ -687,15 +699,16 @@ makeDoubleSwitch ::
   [Builder Bool] ->
   Parser Bool
 makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
-  choice $
-    catMaybes
-      [ Just parseDummy,
-        Just parseDisableSwitch,
-        Just parseEnableSwitch,
-        parseEnv,
-        parseConfigVal,
-        Just $ pure defaultBool
-      ]
+  withFrozenCallStack $
+    choice $
+      catMaybes
+        [ Just parseDummy,
+          Just parseDisableSwitch,
+          Just parseEnableSwitch,
+          parseEnv,
+          parseConfigVal,
+          Just $ pure defaultBool
+        ]
   where
     s = buildSetting builders
     mLoc = snd <$> listToMaybe (getCallStack callStack)

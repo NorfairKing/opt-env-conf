@@ -540,13 +540,14 @@ spec = do
         ( optional
             ( allOrNothing
                 ( (,)
-                    <$> setting [reader str, argument]
-                    <*> optional (setting [reader str, argument])
+                    <$> setting [reader str, option, long "foo"]
+                    <*> optional (setting [reader str, option, long "bar"])
                 )
             ) ::
             Parser (Maybe (String, Maybe String))
         )
-        [ ([], Nothing)
+        [ ([], Nothing),
+          (["--foo", "foo"], Just ("foo", Nothing))
         ]
 
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
