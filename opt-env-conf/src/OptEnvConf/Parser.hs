@@ -588,14 +588,14 @@ withYamlConfig pathParser =
 
 -- | Load the Yaml config in the first of the filepaths that points to something that exists.
 withFirstYamlConfig :: Parser [Path Abs File] -> Parser a -> Parser a
-withFirstYamlConfig parsers = withConfig $ mapIO readFirstYamlConfigFile $ (:) <$> configuredConfigFile <*> parsers
+withFirstYamlConfig parsers = withConfig $ mapIO readFirstYamlConfigFile $ (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
 
 -- | Combine all Yaml config files that exist into a single combined config object.
 withCombinedYamlConfigs :: Parser [Path Abs File] -> Parser a -> Parser a
 withCombinedYamlConfigs = withCombinedYamlConfigs' combineConfigObjects
 
 withCombinedYamlConfigs' :: (Object -> JSON.Object -> JSON.Object) -> Parser [Path Abs File] -> Parser a -> Parser a
-withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) $ (:) <$> configuredConfigFile <*> parsers
+withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) $ (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
   where
     resolveYamlConfigFile :: Maybe JSON.Object -> Path Abs File -> IO (Maybe JSON.Object)
     resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . readYamlConfigFile
