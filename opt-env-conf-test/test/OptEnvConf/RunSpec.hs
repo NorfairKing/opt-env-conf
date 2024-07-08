@@ -154,6 +154,22 @@ spec = do
                   let expected = val :: Text
                   shouldParse p args e (Just c1) expected
 
+    describe "withFirstYamlConfig" $ do
+      it "can parse without any arguments" $
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \val -> do
+              let p = withFirstYamlConfig (pure []) (pure val) :: Parser String
+              shouldParse p args e Nothing val
+
+    describe "withCombinedYamlConfig" $ do
+      it "can parse without any arguments" $ do
+        forAllValid $ \args ->
+          forAllValid $ \e ->
+            forAllValid $ \val -> do
+              let p = withCombinedYamlConfigs (pure []) (pure val) :: Parser String
+              shouldParse p args e Nothing val
+
     describe "subArgs" $ do
       it "can prefix a switch parser" $
         forAllValid $ \a' ->
