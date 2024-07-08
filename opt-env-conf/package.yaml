@@ -4,9 +4,12 @@ copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
 license: LGPL-3
 license-file: LICENSE
 synopsis: 'Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.'
-  
+ 
+extra-source-files:
+- CHANGELOG.md
+
 dependencies:
-- base
+- base <5
 
 library:
   source-dirs: src/

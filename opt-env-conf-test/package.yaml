@@ -6,10 +6,11 @@ license-file: LICENSE.md
 synopsis: A testing companion package for opt-env-conf
   
 extra-source-files:
+- CHANGELOG.md
 - test_resources/**/*
 
 dependencies:
-- base
+- base <5
 
 
 library:

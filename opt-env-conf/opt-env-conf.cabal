@@ -11,6 +11,8 @@ copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        LGPL-3
 license-file:   LICENSE
 build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
 
 library
   exposed-modules:
@@ -38,7 +40,7 @@ library
     , autodocodec >=0.2.3.0
     , autodocodec-schema
     , autodocodec-yaml
-    , base
+    , base <5
     , containers
     , hashable
     , mtl
