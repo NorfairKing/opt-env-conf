@@ -7,6 +7,10 @@ cabal-version: 1.12
 name:           opt-env-conf-test
 version:        0.0.0.0
 synopsis:       A testing companion package for opt-env-conf
+homepage:       https://github.com/NorfairKing/opt-env-conf#readme
+bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
+author:         Tom Sydney Kerckhove
+maintainer:     syd@cs-syd.eu
 copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        OtherLicense
 license-file:   LICENSE.md
@@ -197,6 +201,10 @@ extra-source-files:
     test_resources/lint/null-setting.txt
     test_resources/lint/only-default.txt
     test_resources/lint/unreadable-example.txt
+
+source-repository head
+  type: git
+  location: https://github.com/NorfairKing/opt-env-conf
 
 library
   exposed-modules:

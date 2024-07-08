@@ -20,6 +20,7 @@ mkDerivation {
     safe-coloured-text sydtest text
   ];
   testToolDepends = [ sydtest-discover ];
+  homepage = "https://github.com/NorfairKing/opt-env-conf#readme";
   description = "A testing companion package for opt-env-conf";
   license = "unknown";
   mainProgram = "opt-env-conf-example";

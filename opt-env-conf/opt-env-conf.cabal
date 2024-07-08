@@ -7,12 +7,20 @@ cabal-version: 1.12
 name:           opt-env-conf
 version:        0.0.0.0
 synopsis:       Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.
+homepage:       https://github.com/NorfairKing/opt-env-conf#readme
+bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
+author:         Tom Sydney Kerckhove
+maintainer:     syd@cs-syd.eu
 copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
 license:        LGPL-3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/NorfairKing/opt-env-conf
 
 library
   exposed-modules:

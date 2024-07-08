@@ -14,6 +14,7 @@ mkDerivation {
     safe-coloured-text-layout safe-coloured-text-terminfo selective
     text validity validity-containers
   ];
+  homepage = "https://github.com/NorfairKing/opt-env-conf#readme";
   description = "Settings parsing for Haskell: command-line arguments, environment variables, and configuration values";
   license = lib.licenses.lgpl3Only;
 }

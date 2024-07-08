@@ -1,9 +1,12 @@
 name: opt-env-conf
 version: '0.0.0.0'
+github: "NorfairKing/opt-env-conf"
 copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
 license: LGPL-3
 license-file: LICENSE
 synopsis: 'Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.'
+author: "Tom Sydney Kerckhove"
+maintainer: "syd@cs-syd.eu"
  
 extra-source-files:
 - CHANGELOG.md
