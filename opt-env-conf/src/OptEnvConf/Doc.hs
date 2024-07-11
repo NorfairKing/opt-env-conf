@@ -475,25 +475,23 @@ setDocOptDoc SetDoc {..} = do
 
 -- | Render short-form documentation of options
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go True
   where
-    go :: AnyDocs OptDoc -> [Chunk]
-    go = \case
+    go :: Bool -> AnyDocs OptDoc -> [Chunk]
+    go isTopLevel = \case
       AnyDocsCommands cs ->
-        unwordsChunks $
-          intersperse [orChunk] $
-            map
+        unwordsChunks $ (if isTopLevel then ["\n  "] else [fore cyan "("]) : intersperse [if isTopLevel then orChunkNewline else orChunk] (map
               ( \CommandDoc {..} ->
                   if nullDocs commandDocs
                     then [commandChunk commandDocArgument]
                     else
                       commandChunk commandDocArgument
                         : " "
-                        : go commandDocs
+                        : go False commandDocs
               )
-              cs
-      AnyDocsAnd ds -> unwordsChunks $ map go ds
-      AnyDocsOr ds -> renderOrChunks (map go ds)
+              cs) <> ([[fore cyan ")"] | not isTopLevel])
+      AnyDocsAnd ds -> unwordsChunks $ map (go isTopLevel) ds
+      AnyDocsOr ds -> renderOrChunks (map (go isTopLevel) ds)
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks $
           concat
@@ -523,6 +521,9 @@ renderOrChunks os =
 
 orChunk :: Chunk
 orChunk = fore cyan "|"
+
+orChunkNewline :: Chunk
+orChunkNewline = fore cyan "\n |"
 
 -- | Render long-form documentation of options
 renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]

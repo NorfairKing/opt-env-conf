@@ -1,1 +1,3 @@
-[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m [35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m 
+   [35mtop[m [37m--name[m [33mNAME[m [36m
+ |[m [35msub[m [36m([m [35ma[m [36m|[m [35mb[m [36m)[m [36m([m [35mc[m [36m|[m [35md[m [36m)[m[36m)[m
