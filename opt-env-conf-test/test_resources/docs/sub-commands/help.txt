@@ -1,4 +1,6 @@
-[36mUsage: [m[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m [35mtop[m [37m--name[m [33mNAME[m [36m|[m [35msub[m [35ma[m [36m|[m [35mb[m [35mc[m [36m|[m [35md[m[36m)[m
+[36mUsage: [m[33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m
+ |[m [37m--version[m [36m
+ |[m [36m([m[37m--config-file[m [33mFILE_PATH[m COMMAND[36m)[m
 
 example with subcommands
 
@@ -13,29 +15,8 @@ example with subcommands
   option: [37m--config-file[m [33mFILE_PATH[m
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
-  [34mcommand without subcommands[m
-  command: [35mtop[m
-    [34mname[m
-    option: [37m--name[m [33mNAME[m
-    env: [37mNAME[m [33mNAME[m
-    config:
-      [37mname[m: # [32mor null[m
-        [33m<string>[m
-    
-  
-  [34mcommand with subcommands[m
-  command: [35msub[m
-    [34mA[m
-    command: [35ma[m
-    
-    [34mB[m
-    command: [35mb[m
-    
-    [34mC[m
-    command: [35mc[m
-    
-    [34mD[m
-    command: [35md[m
-    
-  
+
+[36mAvailable commands[m:
+  [35mtop[m   [34mcommand without subcommands[m
+  [35msub[m   [34mcommand with subcommands[m   
 

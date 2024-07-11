@@ -305,6 +305,7 @@ renderManPage progname version progDesc docs =
   let optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
+      commandDocs = docsToCommandDocs docs
    in unlinesChunks $
         -- See https://man.openbsd.org/mdoc#MACRO_OVERVIEW
         concat
@@ -325,6 +326,12 @@ renderManPage progname version progDesc docs =
               [".Sh ", "SETTINGS"],
               renderSetDocs docs
             ],
+            concat
+             [ [ [".Sh ", "COMMANDS"],
+                 renderCommandDocs docs
+               ]
+               | not (null commandDocs)
+             ],
             concat
               [ [ [".Sh ", "OPTIONS"],
                   renderLongOptDocs optDocs
@@ -351,6 +358,7 @@ renderReferenceDocumentation progname docs =
   let optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
+      commandDocs = docsToCommandDocs docs
    in unlinesChunks $
         concat
           [ [ usageChunk : renderShortOptDocs progname optDocs,
@@ -358,6 +366,12 @@ renderReferenceDocumentation progname docs =
               headerChunks "All settings",
               renderSetDocs docs
             ],
+            concat
+              [ [ headerChunks "All commands",
+                  renderCommandDocs docs
+                ]
+                | not (null commandDocs)
+              ],
             concat
               [ [ headerChunks "Options",
                   renderLongOptDocs optDocs
@@ -402,13 +416,21 @@ renderVersionPage progname version =
 -- | Render the output of @--help@
 renderHelpPage :: String -> String -> AnyDocs SetDoc -> [Chunk]
 renderHelpPage progname progDesc docs =
-  unlinesChunks
-    [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
-      [],
-      unlinesChunks $ progDescLines progDesc,
-      headerChunks "Available settings",
-      renderSetDocs docs
-    ]
+  unlinesChunks $
+    concat
+      [ [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
+          [],
+          unlinesChunks $ progDescLines progDesc,
+          headerChunks "Available settings",
+          renderSetDocs docs
+        ],
+        concat
+          [ [ headerChunks "Available commands",
+              renderCommandDocsShort docs
+            ]
+            | not (null (docsToCommandDocs docs))
+          ]
+      ]
 
 renderCommandHelpPage :: String -> [String] -> CommandDoc SetDoc -> [Chunk]
 renderCommandHelpPage progname commandPath CommandDoc {..} =
@@ -419,18 +441,10 @@ renderSetDocs = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsCommands _ -> [] -- todo: this empty list causes the double newline between settings and commands
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> goOr ds
       AnyDocsSingle d -> indent (renderSetDoc d)
-
-    goCommand :: CommandDoc SetDoc -> [[Chunk]]
-    goCommand CommandDoc {..} =
-      indent $
-        [helpChunk commandDocHelp]
-          : ["command: ", commandChunk commandDocArgument]
-          : go commandDocs
-          ++ [[]]
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: [AnyDocs SetDoc] -> [[Chunk]]
@@ -461,6 +475,72 @@ renderSetDocs = unlinesChunks . go
           else ([], AnyDocsSingle d : ds)
       ds -> ([], ds)
 
+renderCommandDocs :: AnyDocs SetDoc -> [Chunk]
+renderCommandDocs = unlinesChunks . go True
+  where
+    go :: Bool -> AnyDocs SetDoc -> [[Chunk]]
+    go isTopLevel = \case
+      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsAnd ds -> concatMap (go isTopLevel) ds
+      AnyDocsOr ds -> goOr isTopLevel ds
+      AnyDocsSingle d | isTopLevel -> []
+                      | otherwise  -> indent (renderSetDoc d)
+
+    goCommand :: CommandDoc SetDoc -> [[Chunk]]
+    goCommand CommandDoc {..} =
+      indent $
+        [helpChunk commandDocHelp]
+          : ["command: ", commandChunk commandDocArgument]
+          : go False commandDocs
+          ++ [[]]
+
+    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
+    goOr :: Bool -> [AnyDocs SetDoc] -> [[Chunk]]
+    goOr isTopLevel = \case
+      [] -> []
+      [d] -> go isTopLevel d
+      (AnyDocsSingle d : ds) ->
+        case setDocHelp d of
+          Nothing -> go isTopLevel (AnyDocsSingle d) ++ goOr isTopLevel ds
+          Just h ->
+            let (sds, rest) = goSameHelp h ds
+             in concat
+                  [ concat
+                      [ concat
+                          [ indent $ renderSetDocHeader (Just h),
+                            indent $ concatMap renderSetDocWithoutHeader $ d : sds,
+                            [[]]
+                          ]
+                        | not isTopLevel
+                      ],
+                    goOr isTopLevel rest
+                  ]
+      (d : ds) -> go isTopLevel d ++ goOr isTopLevel ds
+    goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
+    goSameHelp h = \case
+      [] -> ([], [])
+      (AnyDocsSingle d : ds) ->
+        if setDocHelp d == Just h
+          then
+            let (sds, rest) = goSameHelp h ds
+            in (d : sds, rest)
+          else ([], AnyDocsSingle d : ds)
+      ds -> ([], ds)
+
+renderCommandDocsShort :: AnyDocs SetDoc -> [Chunk]
+renderCommandDocsShort = layoutAsTable .  go
+  where
+    go :: AnyDocs SetDoc -> [[[Chunk]]]
+    go = \case
+      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle _ -> []
+
+    goCommand :: CommandDoc SetDoc -> [[[Chunk]]]
+    goCommand CommandDoc {..} =
+      [indent $ [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]]
+
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
 
@@ -481,25 +561,13 @@ setDocOptDoc SetDoc {..} = do
 
 -- | Render short-form documentation of options
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go 0
   where
-    go :: AnyDocs OptDoc -> [Chunk]
-    go = \case
-      AnyDocsCommands cs ->
-        unwordsChunks $
-          intersperse [orChunk] $
-            map
-              ( \CommandDoc {..} ->
-                  if nullDocs commandDocs
-                    then [commandChunk commandDocArgument]
-                    else
-                      commandChunk commandDocArgument
-                        : " "
-                        : go commandDocs
-              )
-              cs
-      AnyDocsAnd ds -> unwordsChunks $ map go ds
-      AnyDocsOr ds -> renderOrChunks (map go ds)
+    go :: Int -> AnyDocs OptDoc -> [Chunk]
+    go nestingLevel = \case
+      AnyDocsCommands _ -> ["COMMAND"]
+      AnyDocsAnd ds -> unwordsChunks $ map (go (nestingLevel + 1)) ds
+      AnyDocsOr ds -> renderOrChunks $ map (go (nestingLevel + 1)) ds
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks $
           concat
@@ -520,15 +588,15 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
 renderOrChunks :: [[Chunk]] -> [Chunk]
 renderOrChunks os =
   unwordsChunks $
-    intersperse [orChunk] $
+    intersperse [orChunkNewline] $
       map parenthesise os
   where
     parenthesise :: [Chunk] -> [Chunk]
     parenthesise [c] = [c]
     parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
 
-orChunk :: Chunk
-orChunk = fore cyan "|"
+orChunkNewline :: Chunk
+orChunkNewline = fore cyan "\n |"
 
 -- | Render long-form documentation of options
 renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]
@@ -626,6 +694,13 @@ setDocConfDoc SetDoc {..} = do
 
 settingConfDoc :: Setting a -> Maybe ConfDoc
 settingConfDoc = settingSetDoc >=> setDocConfDoc
+
+docsToCommandDocs :: AnyDocs SetDoc -> [CommandDoc SetDoc]
+docsToCommandDocs = \case
+  AnyDocsCommands cs -> cs
+  AnyDocsAnd ds -> concatMap docsToCommandDocs ds
+  AnyDocsOr ds -> concatMap docsToCommandDocs ds
+  AnyDocsSingle _ -> []
 
 -- | Render documentation of configuration values
 renderConfDocs :: AnyDocs ConfDoc -> [Chunk]

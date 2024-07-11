@@ -165,5 +165,5 @@ WithConfig
                                  Nothing
                                  (Just "enable extra")))
                            (Pure _)))))))
-     , Command "three" "third" (Pure _)
+     , Command "three-very-long-command-name" "third" (Pure _)
      ])

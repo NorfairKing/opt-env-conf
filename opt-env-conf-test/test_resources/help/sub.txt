@@ -1,12 +1,10 @@
-[36mUsage: [m[33mexample sub[m [35mfoo[m [36m|[m [35mbar[m
+[36mUsage: [m[33mexample sub[m COMMAND
 
 command with subcommand
 
 [36mAvailable settings[m:
-  [34mfoo explanation[m
-  command: [35mfoo[m
-  
-  [34mbar explanation[m
-  command: [35mbar[m
-  
+
+[36mAvailable commands[m:
+  [35mfoo[m   [34mfoo explanation[m
+  [35mbar[m   [34mbar explanation[m
 

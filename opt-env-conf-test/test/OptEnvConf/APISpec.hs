@@ -285,7 +285,7 @@ threeCommandsParser =
               [ help "enable extra",
                 name "enable"
               ],
-        command "three" "third" (pure Three)
+        command "three-very-long-command-name" "third" (pure Three)
       ]
 
 data SubCommands

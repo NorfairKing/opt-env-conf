@@ -1,4 +1,4 @@
-[36mUsage: [m[33mexample[m [37m--config-file[m [33mFILE_PATH[m [37m--port[m [33mPORT[m [37m--log-level[m [33mLOG_LEVEL[m [37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [37m--payment-currency[m [33mCURRENCY[m [35mread[m [36m|[m [35mcreate[m [33mSTR[m [36m|[m [35msub[m
+[36mUsage: [m[33mexample[m [37m--config-file[m [33mFILE_PATH[m [37m--port[m [33mPORT[m [37m--log-level[m [33mLOG_LEVEL[m [37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [37m--payment-currency[m [33mCURRENCY[m COMMAND
 
 example program description
 
@@ -42,22 +42,9 @@ example program description
     [37mpayment.currency[m: # [32mor null[m
       [33m<string>[m
   
-  [34mread command explanation[m
-  command: [35mread[m
-  
-  [34mcreate command explanation[m
-  command: [35mcreate[m
-    [34mThe item to create[m
-    argument: [33mSTR[m
-    
-  
-  [34mcommand with subcommand[m
-  command: [35msub[m
-    [34mfoo explanation[m
-    command: [35mfoo[m
-    
-    [34mbar explanation[m
-    command: [35mbar[m
-    
-  
+
+[36mAvailable commands[m:
+  [35mread[m     [34mread command explanation[m  
+  [35mcreate[m   [34mcreate command explanation[m
+  [35msub[m      [34mcommand with subcommand[m   
 

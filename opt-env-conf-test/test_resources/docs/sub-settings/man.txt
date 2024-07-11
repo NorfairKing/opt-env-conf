@@ -7,7 +7,9 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-sub-settings (-h|--help) | --version | (--config-file FILE_PATH --foo-bar-quux STR)
+sub-settings (-h|--help) 
+ | --version 
+ | (--config-file FILE_PATH --foo-bar-quux STR)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
