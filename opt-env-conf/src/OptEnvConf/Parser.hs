@@ -613,7 +613,7 @@ combineConfigObjects = KM.unionWith combineValues
     combineValues v _ = v
 
 -- | Load @config.yaml@ from the given XDG configuration subdirectory
-xdgYamlConfigFile :: (HasCallStack) => FilePath -> Parser FilePath
+xdgYamlConfigFile :: (HasCallStack) => FilePath -> Parser (Path Abs File)
 xdgYamlConfigFile subdir =
   mapIO
     ( \mXdgDir -> do
@@ -623,7 +623,7 @@ xdgYamlConfigFile subdir =
             home <- getHomeDir
             resolveDir home ".config"
         configDir <- resolveDir xdgDir subdir
-        fromAbsFile <$> resolveFile configDir "config.yaml"
+        resolveFile configDir "config.yaml"
     )
     $ optional
     $ withFrozenCallStack
