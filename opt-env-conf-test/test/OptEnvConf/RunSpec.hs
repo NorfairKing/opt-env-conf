@@ -499,6 +499,38 @@ spec = do
           (["-ffoo"], "foo")
         ]
 
+      -- Optional Argument and optional switch
+      argParseSpecs
+        ( (,)
+            <$> optional (setting [reader str, argument])
+            <*> setting [switch True, short 'w', long "watch", value False] ::
+            Parser (Maybe String, Bool)
+        )
+        [ (["foo", "-w"], (Just "foo", True)),
+          (["-w", "foo"], (Just "foo", True)),
+          (["foo", "--watch"], (Just "foo", True)),
+          (["--watch", "foo"], (Just "foo", True)),
+          (["foo"], (Just "foo", False)),
+          (["--bar"], (Just "--bar", False)),
+          (["-w"], (Nothing, True)),
+          (["--watch"], (Nothing, True))
+        ]
+      argParseSpecs
+        ( (,)
+            <$> setting [switch True, short 'w', long "watch", value False]
+            <*> optional (setting [reader str, argument]) ::
+            Parser (Bool, Maybe String)
+        )
+        [ (["foo", "-w"], (True, Just "foo")),
+          (["-w", "foo"], (True, Just "foo")),
+          (["foo", "--watch"], (True, Just "foo")),
+          (["--watch", "foo"], (True, Just "foo")),
+          (["foo"], (False, Just "foo")),
+          (["--bar"], (False, Just "--bar")),
+          (["-w"], (False, Nothing)),
+          (["--watch"], (False, Nothing))
+        ]
+
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
         [ ([], True),
