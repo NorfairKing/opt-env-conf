@@ -43,11 +43,7 @@ spec = do
 
   describe "consumeArgument" $ do
     it "does not consume anything if there is nothing to consume" $
-      consumeArgument [] `shouldBe` []
-    it "consumes any argument if there is only one" $
-      forAllValid $ \a ->
-        consumeArgument [Live a]
-          `shouldBe` [(renderArg a, [])]
+      consumeArgument [] `shouldBe` [(Nothing, emptyArgs)]
 
   describe "consumeOption" $ do
     it "fails to consume if there are no dasheds" $

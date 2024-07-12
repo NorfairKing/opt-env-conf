@@ -270,7 +270,13 @@ runParserOn parser args envVars mConfig = do
           { ppEnvEnv = envVars,
             ppEnvConf = mConfig
           }
-  mTup <- runPPLazy (go parser) ppState ppEnv
+  let go' = do
+        result <- go parser
+        leftovers <- gets ppStateArgs
+        if null (argsLeftovers leftovers)
+          then pure result
+          else ppError Nothing ParseErrorUnrecognised --
+  mTup <- runPPLazy go' ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"
     Just ((errOrRes, _), nexts) -> case errOrRes of
@@ -569,12 +575,10 @@ data PPEnv = PPEnv
 ppArg :: PP (Maybe String)
 ppArg = do
   args <- gets ppStateArgs
-  case Args.consumeArgument args of
-    [] -> pure Nothing
-    as -> do
-      (a, args') <- ppNonDetList as
-      modify' (\s -> s {ppStateArgs = args'})
-      pure (Just a)
+  let consumePossibilities = Args.consumeArgument args
+  (mA, args') <- ppNonDetList consumePossibilities
+  modify' (\s -> s {ppStateArgs = args'})
+  pure mA
 
 ppOpt :: [Dashed] -> PP (Maybe String)
 ppOpt ds = do
