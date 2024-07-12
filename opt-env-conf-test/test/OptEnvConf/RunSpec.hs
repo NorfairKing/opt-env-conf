@@ -99,7 +99,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = emptyArgs {unArgs = map (Live . ArgPlain) ls}
+              let args = parseArgs ls
               let p = many $ setting [reader str, argument]
               let expected = ls
               shouldParse p args e mConf expected
@@ -108,7 +108,7 @@ spec = do
       it "fails to parse zero args" $
         forAllValid $ \e ->
           forAllValid $ \mConf -> do
-            let args = emptyArgs {unArgs = []}
+            let args = emptyArgs
             let p = some $ setting [reader str, argument] :: Parser [String]
             shouldFail p args e mConf $ \case
               ParseErrorMissingArgument _ :| [] -> True
@@ -118,7 +118,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = emptyArgs {unArgs = map (Live . ArgPlain) (NE.toList ls)}
+              let args = parseArgs (NE.toList ls)
               let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args e mConf expected
@@ -234,12 +234,10 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
               let args =
-                    emptyArgs
-                      { unArgs =
-                          [ Live (Args.renderDashedArg (DashedLong l)),
-                            Live (ArgPlain r)
-                          ]
-                      }
+                    parseArgs
+                      [ Args.renderDashed (DashedLong l),
+                        r
+                      ]
               let p = setting [reader str, option, long $ NE.toList l]
               let expected = r
               shouldParse p args e mConf expected
@@ -248,17 +246,7 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
-              let args =
-                    emptyArgs
-                      { unArgs =
-                          concatMap
-                            ( \v ->
-                                [ Live (Args.renderDashedArg (DashedLong l)),
-                                  Live (ArgPlain v)
-                                ]
-                            )
-                            rs
-                      }
+              let args = parseArgs $ concatMap (\v -> [Args.renderDashed (DashedLong l), v]) rs
               let p = many $ setting [reader str, option, long $ NE.toList l]
               let expected = rs :: [String]
               shouldParse p args e mConf expected
