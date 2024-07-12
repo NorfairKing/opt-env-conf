@@ -43,11 +43,77 @@ spec = do
 
   describe "consumeArgument" $ do
     it "does not consume anything if there is nothing to consume" $
-      consumeArgument [] `shouldBe` []
-    it "consumes any argument if there is only one" $
-      forAllValid $ \a ->
-        consumeArgument [Live a]
-          `shouldBe` [(renderArg a, [])]
+      consumeArgument [] `shouldBe` [(Nothing, emptyArgs)]
+    it "consumes a plain argument when there is one" $
+      forAllValid $ \s ->
+        consumeArgument [Live (ArgPlain s)] `shouldBe` [(Just s, Args [Dead] [])]
+    it "consumes a bare double-dash if it's the last argument" $
+      forAllValid $ \befores ->
+        consumeArgument (Args befores [Live ArgBareDoubleDash]) `shouldBe` [(Just "--", Args (befores ++ [Dead]) [])]
+    it "consumes any argument after a double-dash as an argument" $
+      forAllValid $ \befores ->
+        forAllValid $ \bareArg ->
+          forAllValid $ \rest ->
+            consumeArgument (Args befores (Live ArgBareDoubleDash : Live bareArg : rest))
+              `shouldBe` [(Just (renderArg bareArg), Args befores (Live ArgBareDoubleDash : Dead : rest))]
+    it "skips dead arguments" $
+      forAllValid $ \befores ->
+        forAllValid $ \afters ->
+          consumeArgument (Args befores (Dead : afters)) `shouldBe` consumeArgument (Args (befores ++ [Dead]) afters)
+
+    it "tries to consume dashed argument followed by a dead argument" $
+      forAllValid $ \befores ->
+        forAllValid $ \isLong ->
+          forAllValid $ \cs ->
+            let d = ArgDashed isLong cs
+                args = Args befores [Live d, Dead]
+             in consumeArgument args
+                  `shouldBe` [ (Nothing, Args (befores ++ [Live d, Dead]) []),
+                               (Just (renderArg d), Args (befores ++ [Dead]) [Dead])
+                             ]
+
+    it "tries to consume dashed argument followed by a live argument" $
+      forAllValid $ \befores ->
+        forAllValid $ \isLong ->
+          forAllValid $ \cs ->
+            forAll (genValid `suchThat` (/= ArgBareDoubleDash)) $ \arg ->
+              let d = ArgDashed isLong cs
+                  args = Args befores [Live d, Live arg]
+               in context (ppShow args) $
+                    consumeArgument args
+                      `shouldBe` [ (Nothing, Args (befores ++ [Live d, Live arg]) []),
+                                   -- Consuming the value (dashed is a switch) is
+                                   -- more likely than consuming the dashed as an
+                                   -- argument
+                                   (Just (renderArg arg), Args (befores ++ [Live d, Dead]) []),
+                                   (Just (renderArg d), Args (befores ++ [Dead]) [Live arg])
+                                 ]
+    it "tries to ignore this value that looks like an option value" $
+      consumeArgument ["-p1", "--port", "2"]
+        `shouldBe` [ (Nothing, Args ["-p1", "--port", "2"] []),
+                     (Just "2", Args ["-p1", "--port", Dead] []),
+                     (Just "--port", Args ["-p1", Dead] ["2"]),
+                     (Just "-p1", Args [Dead] ["--port", "2"])
+                   ]
+
+  describe "consumeSwitch" $ do
+    it "fails to consume if there are no dasheds" $
+      forAllValid $ \as ->
+        consumeSwitch [] as `shouldBe` Nothing
+    it "fails to consume if there are no arguments" $
+      forAllValid $ \ds ->
+        consumeSwitch ds [] `shouldBe` Nothing
+
+    it "does not consume a mismatched switch" $
+      consumeSwitch ["--foo"] ["--bar"] `shouldBe` Nothing
+    it "consumes a short switch if there are no other args" $
+      consumeSwitch ["-v"] ["-v"] `shouldBe` Just [Dead]
+    it "consumes a long switch if there are no other args" $
+      consumeSwitch ["--verbose"] ["--verbose"] `shouldBe` Just [Dead]
+    it "consumes a switch at the front first" $
+      consumeSwitch ["-a", "-b"] ["-a", "-b"] `shouldBe` Just [Dead, "-b"]
+    it "consumes a folded switch at the front first" $
+      consumeSwitch ["-a", "-b"] ["-ab"] `shouldBe` Just ["-b"]
 
   describe "consumeOption" $ do
     it "fails to consume if there are no dasheds" $
@@ -70,22 +136,13 @@ spec = do
       consumeOption ["--file"] ["--file=foo.txt"] `shouldBe` Just ("foo.txt", [Dead])
     it "consumes a short option in shorthand notation" $
       consumeOption ["-f"] ["-ffoo.txt"] `shouldBe` Just ("foo.txt", [Dead])
-
-  describe "consumeSwitch" $ do
-    it "fails to consume if there are no dasheds" $
-      forAllValid $ \as ->
-        consumeSwitch [] as `shouldBe` Nothing
-    it "fails to consume if there are no arguments" $
-      forAllValid $ \ds ->
-        consumeSwitch ds [] `shouldBe` Nothing
-
-    it "does not consume a mismatched switch" $
-      consumeSwitch ["--foo"] ["--bar"] `shouldBe` Nothing
-    it "consumes a short switch if there are no other args" $
-      consumeSwitch ["-v"] ["-v"] `shouldBe` Just [Dead]
-    it "consumes a long switch if there are no other args" $
-      consumeSwitch ["--verbose"] ["--verbose"] `shouldBe` Just [Dead]
-    it "consumes a switch at the front first" $
-      consumeSwitch ["-a", "-b"] ["-a", "-b"] `shouldBe` Just [Dead, "-b"]
-    it "consumes a folded switch at the front first" $
-      consumeSwitch ["-a", "-b"] ["-ab"] `shouldBe` Just ["-b"]
+    it "consumes a short option before a long option" $
+      consumeOption
+        ["-p", "--port"]
+        ["-p1", "--port", "2"]
+        `shouldBe` Just ("1", [Dead, "--port", "2"])
+    it "consumes a short option before a long option" $
+      consumeOption
+        ["-p", "--port"]
+        [Dead, "--port", "2"]
+        `shouldBe` Just ("2", [Dead, Dead])

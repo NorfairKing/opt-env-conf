@@ -1,11 +1,13 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module OptEnvConf.Args
   ( -- * Public API
     Args (..),
     emptyArgs,
+    argsLeftovers,
     parseArgs,
     consumeArgument,
     consumeOption,
@@ -91,9 +93,10 @@ renderArg = \case
 -- 'consumeArgument', 'consumeOption' and 'consumeSwitch'.
 --
 -- In order to implement folded short dashed options, we need to use tombstones
--- for consumed arguments.
-newtype Args = Args
-  { unArgs :: [Tomb Arg]
+-- for consumed argumentsn
+data Args = Args
+  { argsBefore :: [Tomb Arg],
+    argsAfter :: [Tomb Arg]
   }
   deriving (Show, Eq, Generic)
 
@@ -101,63 +104,106 @@ instance Validity Args
 
 instance IsList Args where
   type Item Args = Tomb Arg
-  fromList = Args
-  toList = unArgs
+  fromList l = Args {argsBefore = [], argsAfter = l}
+  toList = rebuildArgs
 
 -- | Empty list of arguments
 emptyArgs :: Args
-emptyArgs = Args []
+emptyArgs = parseArgs []
 
--- | Create 'Args' with all-live arguments.
+rebuildArgs :: Args -> [Tomb Arg]
+rebuildArgs Args {..} = argsBefore ++ argsAfter
+
+argsLeftovers :: Args -> Maybe (NonEmpty String)
+argsLeftovers =
+  NE.nonEmpty
+    . mapMaybe
+      ( \case
+          Live a -> Just (renderArg a)
+          Dead -> Nothing
+      )
+    . rebuildArgs
+
+-- | Create 'Args' with all-live arguments and cursor at the start.
 parseArgs :: [String] -> Args
-parseArgs args = Args $ map (Live . parseArg) args
+parseArgs args = Args {argsBefore = [], argsAfter = map (Live . parseArg) args}
 
 -- | Consume a single positional argument.
 --
 -- The result are all possible results
-consumeArgument :: Args -> [(String, Args)]
-consumeArgument am = do
-  (s, opts') <- go $ unArgs am
-  pure (s, am {unArgs = opts'})
-  where
-    go :: [Tomb Arg] -> [(String, [Tomb Arg])]
-    go = \case
-      -- Nothing to consume
-      [] -> []
-      -- If the last argument is dead, don't consume it.
-      [Dead] -> []
-      -- Every arg could be the argument we consume.
-      [Live o] -> [(renderArg o, [])]
-      -- Skip dead args
-      (Dead : rest) -> map (second (Dead :)) (go rest)
-      -- Anything after a "--" should be considered an argument and we can stop looking after that
-      -- TODO: This means that we can never consume '--' as a bare argument
-      -- unless it's the last arg. Is that intentional?
-      (Live ArgBareDoubleDash : rest) -> map (second (Live ArgBareDoubleDash :)) (goBare rest)
-      -- A bare dash could be an argument and we can stop looking after that
-      (Live ArgBareDash : rest) -> [(renderArg ArgBareDash, Dead : rest)]
-      -- A plain argument could definitely be an argument and we can stop looking after that
-      (Live (ArgPlain a) : rest) -> [(a, Dead : rest)]
-      -- Any argument after a dashed argument could be an option value so we
-      -- should also keep looking after that.
-      (Live o1@(ArgDashed {}) : Live o2 : rest) ->
-        -- TODO put this option at the back so it's considered last ?
-        (renderArg o1, Dead : Live o2 : rest)
-          : (renderArg o2, Live o1 : Dead : rest)
-          : map (second ((Live o1 :) . (Live o2 :))) (go rest)
-      -- Any argument with a dead one after it can only be a switch or an argument
-      (Live o1@(ArgDashed {}) : Dead : rest) ->
-        -- TODO put this option at the back so it's considered last ?
-        (renderArg o1, Dead : rest)
-          : map (second (Live o1 :)) (go rest)
-    goBare :: [Tomb Arg] -> [(String, [Tomb Arg])]
-    goBare = \case
-      [] -> []
-      -- Skip dead arguments
-      (Dead : rest) -> map (second (Dead :)) (goBare rest)
-      -- Consume a live argument.
-      -- No need to tombstone it because anything after -- can only be an argument.
-      (Live o : rest) -> [(renderArg o, rest)]
+consumeArgument :: Args -> [(Maybe String, Args)]
+consumeArgument as = do
+  case argsAfter as of
+    [] -> [(Nothing, as)]
+    (firstArg : afters) ->
+      let befores = argsBefore as
+          consumed = Args (befores ++ [Dead]) afters
+       in case firstArg of
+            -- Skip any dead argument
+            Dead -> consumeArgument consumed
+            Live a -> case a of
+              -- Plain argument: that's the only option, consume it.
+              ArgPlain plain -> [(Just plain, consumed)]
+              -- A single dash is always an argument
+              ArgBareDash -> [(Just "-", consumed)]
+              -- Bare double-dash
+              ArgBareDoubleDash -> case afters of
+                -- If it's the last argument, consume it as an argument
+                [] -> [(Just "--", consumed)]
+                -- If there's only a dead argument after the double dash, that
+                -- means we've been parsing bare args and are now done.
+                -- We can stop consuming but get rid of the tombstone as well.
+                -- Otherwise there will be a leftover unconsumed '--' after all parsing is done.
+                [Dead] -> [(Nothing, Args befores [])]
+                -- If it's not the last argument, anything after here is an argument.
+                -- In order to not have to maintain whether the cursor is after
+                -- a bare double dash already, we keep the cursor here and just
+                -- pop the args as they come.
+                _ ->
+                  let go = \case
+                        [] -> Nothing
+                        (Dead : rest) -> go rest
+                        (Live a' : rest) -> Just (a', rest)
+                   in case go afters of
+                        Nothing -> [(Nothing, as)]
+                        Just (firstLive, rest) ->
+                          -- We need to leave the dead argument there so that
+                          -- we don't consume the double-dash as an argument
+                          -- after consuming all the arguments after it as bare
+                          -- arguments.
+                          [ ( Just $ renderArg firstLive,
+                              Args befores (Live ArgBareDoubleDash : Dead : rest)
+                            )
+                          ]
+              ArgDashed {} ->
+                -- Dead after dashed, two options, in order that they should be considered:
+                --   * The dashed is a switch (don't consume an arg)
+                --   * The dashed is an argument
+                -- TODO we need to continue looking too
+                let switchCase =
+                      consumeArgument (Args (befores ++ [firstArg]) afters)
+                        ++ [ (Just (renderArg a), consumed)
+                           ]
+                 in case afters of
+                      -- Last argument is is dashed, that's the same as being followed by a dead argument
+                      [] -> switchCase
+                      (Dead : _) -> switchCase
+                      (Live a' : rest) ->
+                        -- Live after dashed, three options, in order that they should be considered:
+                        --   * The dashed is an option and the live is the value
+                        --   * The dashed is a switch and the live is an argument
+                        --   * The dashed is an argument
+                        ( case a' of
+                            ArgDashed {} ->
+                              consumeArgument (Args (befores ++ [Live a]) afters)
+                                ++ [ (Just (renderArg a), consumed)
+                                   ]
+                            _ ->
+                              consumeArgument (Args (befores ++ [Live a, Live a']) rest)
+                                ++ [ (Just (renderArg a'), Args (befores ++ [Live a, Dead]) rest),
+                                     (Just (renderArg a), consumed)
+                                   ]
+                        )
 
 -- | Consume an option.
 --
@@ -169,9 +215,14 @@ consumeArgument am = do
 --     * @["--foo=foo"]@
 --     * @["-ffoo"]@
 consumeOption :: [Dashed] -> Args -> Maybe (String, Args)
-consumeOption dasheds am = do
-  (mS, opts') <- go $ unArgs am
-  pure (mS, am {unArgs = opts'})
+consumeOption dasheds as = do
+  case go (argsBefore as) of
+    Just (val, newBefores) -> Just (val, as {argsBefore = newBefores})
+    Nothing ->
+      -- TODO option value on the border
+      case go (argsAfter as) of
+        Just (val, newAfters) -> Just (val, as {argsAfter = newAfters})
+        Nothing -> Nothing
   where
     go :: [Tomb Arg] -> Maybe (String, [Tomb Arg])
     go = \case
@@ -182,6 +233,7 @@ consumeOption dasheds am = do
       (Live k : rest) ->
         case k of
           -- We can either consume it as-is, or as a shorthand option.
+          ArgBareDoubleDash -> Nothing
           ArgDashed isLong cs ->
             case consumeDashedShorthandOption dasheds isLong cs of
               Just v -> Just (v, Dead : rest)
@@ -264,15 +316,19 @@ unsnocNE = go []
 --     * @["--foo"]@
 --     * @["-df"]@
 consumeSwitch :: [Dashed] -> Args -> Maybe Args
-consumeSwitch dasheds am = do
-  opts' <- go $ unArgs am
-  pure $ am {unArgs = opts'}
+consumeSwitch dasheds as = do
+  case go (argsBefore as) of
+    Just newBefores -> Just $ as {argsBefore = newBefores}
+    Nothing -> case go (argsAfter as) of
+      Just newAfters -> Just $ as {argsAfter = newAfters}
+      Nothing -> Nothing
   where
     go :: [Tomb Arg] -> Maybe [Tomb Arg]
     go = \case
       [] -> Nothing
       (Dead : rest) -> (Dead :) <$> go rest
       (Live o : rest) -> case o of
+        ArgBareDoubleDash -> Nothing
         ArgDashed isLong cs -> case consumeDashedSwitch dasheds isLong cs of
           Nothing -> (Live o :) <$> go rest
           Just Nothing -> Just $ Dead : rest

@@ -11,6 +11,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Tuple (swap)
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Args as Args
@@ -28,49 +29,44 @@ spec = do
   describe "runParser" $ do
     describe "pure" $ do
       it "can parse a pure value from anything" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \expected ->
-                shouldParse (pure expected) args e mConf (expected :: Int)
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \expected ->
+              shouldParse (pure expected) Args.emptyArgs e mConf (expected :: Int)
 
     describe "fmap" $ do
       it "can parse a mapped value from anything" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let expected = succ i
-                shouldParse (fmap succ $ pure i) args e mConf (expected :: Int)
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let expected = succ i
+              shouldParse (fmap succ $ pure i) Args.emptyArgs e mConf (expected :: Int)
 
     describe "<*>" $ do
       it "can parse two values with ap" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = (,) <$> pure (succ i) <*> pure i
-                let expected = (succ i, i :: Int)
-                shouldParse p args e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let p = (,) <$> pure (succ i) <*> pure i
+              let expected = (succ i, i :: Int)
+              shouldParse p Args.emptyArgs e mConf expected
 
     describe "Select" $ do
       it "can use the second parser with select" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = select (pure (Left i :: Either Int Int)) (pure succ)
-                let expected = succ i
-                shouldParse p args e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let p = select (pure (Left i :: Either Int Int)) (pure succ)
+              let expected = succ i
+              shouldParse p Args.emptyArgs e mConf expected
 
       it "can avoid the second parser with select" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = select (pure (Right i :: Either Int Int)) (pure succ)
-                let expected = i
-                shouldParse p args e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let p = select (pure (Right i :: Either Int Int)) (pure succ)
+              let expected = i
+              shouldParse p Args.emptyArgs e mConf expected
 
     describe "Empty" $ do
       it "can fail to parse an empty value" $
@@ -84,29 +80,27 @@ spec = do
 
     describe "Alt" $ do
       it "can parse a Left value with Alt" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = (Left <$> pure i) <|> (Right <$> pure (succ i))
-                let expected = Left (i :: Int)
-                shouldParse p args e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let p = (Left <$> pure i) <|> (Right <$> pure (succ i))
+              let expected = Left (i :: Int)
+              shouldParse p Args.emptyArgs e mConf expected
 
       it "can parse a Right value with Alt" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = empty `ParserAlt` (Right <$> pure i)
-                let expected = Right (i :: Int) :: Either Int Int
-                shouldParse p args e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let p = empty `ParserAlt` (Right <$> pure i)
+              let expected = Right (i :: Int) :: Either Int Int
+              shouldParse p Args.emptyArgs e mConf expected
 
     describe "Many" $ do
       it "can pass many args" $
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = emptyArgs {unArgs = map (Live . ArgPlain) ls}
+              let args = parseArgs ls
               let p = many $ setting [reader str, argument]
               let expected = ls
               shouldParse p args e mConf expected
@@ -115,7 +109,7 @@ spec = do
       it "fails to parse zero args" $
         forAllValid $ \e ->
           forAllValid $ \mConf -> do
-            let args = emptyArgs {unArgs = []}
+            let args = emptyArgs
             let p = some $ setting [reader str, argument] :: Parser [String]
             shouldFail p args e mConf $ \case
               ParseErrorMissingArgument _ :| [] -> True
@@ -125,121 +119,113 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \ls -> do
-              let args = emptyArgs {unArgs = map (Live . ArgPlain) (NE.toList ls)}
+              let args = parseArgs (NE.toList ls)
               let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args e mConf expected
 
     describe "MapIO" $ do
       it "can run an IO action on the result of a parser" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = mapIO (pure . succ) (pure (i :: Int))
-                let expected = succ i
-                shouldParse p args e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \i -> do
+              let p = mapIO (pure . succ) (pure (i :: Int))
+              let expected = succ i
+              shouldParse p Args.emptyArgs e mConf expected
 
     describe "WithConfig" $ do
       it "can replace the config object" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \c1 ->
-              forAllValid $ \c2' ->
-                forAllValid $ \(key, val) -> do
-                  let c2 = KeyMap.insert key (toJSON val) c2'
-                  let p =
-                        withConfig (pure (Just c2)) $
-                          setting [conf (Key.toString key)]
-                  let expected = val :: Text
-                  shouldParse p args e (Just c1) expected
+        forAllValid $ \e ->
+          forAllValid $ \c1 ->
+            forAllValid $ \c2' ->
+              forAllValid $ \(key, val) -> do
+                let c2 = KeyMap.insert key (toJSON val) c2'
+                let p =
+                      withConfig (pure (Just c2)) $
+                        setting [conf (Key.toString key)]
+                let expected = val :: Text
+                shouldParse p Args.emptyArgs e (Just c1) expected
 
     describe "withFirstYamlConfig" $ do
       it "can parse without any arguments" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \val -> do
-              let p = withFirstYamlConfig (pure []) (pure val) :: Parser String
-              shouldParse p args e Nothing val
+        forAllValid $ \e ->
+          forAllValid $ \val -> do
+            let p = withFirstYamlConfig (pure []) (pure val) :: Parser String
+            shouldParse p Args.emptyArgs e Nothing val
 
     describe "withCombinedYamlConfig" $ do
       it "can parse without any arguments" $ do
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \val -> do
-              let p = withCombinedYamlConfigs (pure []) (pure val) :: Parser String
-              shouldParse p args e Nothing val
+        forAllValid $ \e ->
+          forAllValid $ \val -> do
+            let p = withCombinedYamlConfigs (pure []) (pure val) :: Parser String
+            shouldParse p Args.emptyArgs e Nothing val
 
     describe "subArgs" $ do
       it "can prefix a switch parser" $
-        forAllValid $ \a' ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \prefix ->
-                forAllValid $ \(key, val) -> do
-                  let prefixedKey = Args.prefixDashed prefix (DashedLong key)
-                  let a = a' {unArgs = Live (Args.renderDashedArg prefixedKey) : unArgs a'}
-                  let p =
-                        subArgs prefix $
-                          setting
-                            [ reader str,
-                              switch val,
-                              long (NE.toList key)
-                            ]
-                  let expected = val :: String
-                  shouldParse p a e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \prefix ->
+              forAllValid $ \(key, val) -> do
+                let prefixedKey = Args.prefixDashed prefix (DashedLong key)
+                let a = Args.parseArgs [Args.renderDashed prefixedKey]
+                let p =
+                      subArgs prefix $
+                        setting
+                          [ reader str,
+                            switch val,
+                            long (NE.toList key)
+                          ]
+                let expected = val :: String
+                shouldParse p a e mConf expected
 
       it "can prefix an option parser" $
-        forAllValid $ \a' ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \prefix ->
-                forAllValid $ \(key, val) -> do
-                  let prefixedKey = Args.prefixDashed prefix (DashedLong key)
-                  let a = a' {unArgs = Live (Args.renderDashedArg prefixedKey) : Live (ArgPlain val) : unArgs a'}
-                  let p =
-                        subArgs prefix $
-                          setting
-                            [ reader str,
-                              option,
-                              long (NE.toList key)
-                            ]
-                  let expected = val
-                  shouldParse p a e mConf expected
+        forAllValid $ \e ->
+          forAllValid $ \mConf ->
+            forAllValid $ \prefix ->
+              forAllValid $ \(key, val) -> do
+                let prefixedKey = Args.prefixDashed prefix (DashedLong key)
+                let a = parseArgs [renderDashed prefixedKey, val]
+                let p =
+                      subArgs prefix $
+                        setting
+                          [ reader str,
+                            option,
+                            long (NE.toList key)
+                          ]
+                let expected = val
+                shouldParse p a e mConf expected
 
     describe "subEnv" $ do
       it "can prefix an env var parser" $
-        forAllValid $ \args ->
-          forAllValid $ \e' ->
-            forAllValid $ \mConf ->
-              forAllValid $ \prefix ->
-                forAllValid $ \(key, val) -> do
-                  let prefixedKey = prefix <> key
-                  let e = EnvMap.insert prefixedKey val e'
-                  let p = subEnv prefix $ setting [reader str, env key]
-                  let expected = val
-                  shouldParse p args e mConf expected
+        forAllValid $ \e' ->
+          forAllValid $ \mConf ->
+            forAllValid $ \prefix ->
+              forAllValid $ \(key, val) -> do
+                let prefixedKey = prefix <> key
+                let e = EnvMap.insert prefixedKey val e'
+                let p = subEnv prefix $ setting [reader str, env key]
+                let expected = val
+                shouldParse p Args.emptyArgs e mConf expected
 
     describe "subConfig" $ do
       it "can prefix a conf val parser" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \c' ->
-              forAllValid $ \prefix ->
-                forAllValid $ \(key, val) -> do
-                  let c = KeyMap.insert prefix (toJSON (KeyMap.singleton key (toJSON val))) c'
-                  let p =
-                        subConfig (Key.toString prefix) $
-                          setting [conf (Key.toString key)]
-                  let expected = val :: Text
-                  shouldParse p args e (Just c) expected
+        forAllValid $ \e ->
+          forAllValid $ \c' ->
+            forAllValid $ \prefix ->
+              forAllValid $ \(key, val) -> do
+                let c = KeyMap.insert prefix (toJSON (KeyMap.singleton key (toJSON val))) c'
+                let p =
+                      subConfig (Key.toString prefix) $
+                        setting [conf (Key.toString key)]
+                let expected = val :: Text
+                shouldParse p Args.emptyArgs e (Just c) expected
 
     describe "Setting" $ do
       it "can parse a single arg" $
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \arg -> do
-              let args = emptyArgs {unArgs = [Live (ArgPlain arg)]}
+              let args = Args.parseArgs [arg]
               let p = setting [reader str, argument]
               let expected = arg
               shouldParse p args e mConf expected
@@ -249,12 +235,10 @@ spec = do
           forAllValid $ \mConf ->
             forAllValid $ \(l, r) -> do
               let args =
-                    emptyArgs
-                      { unArgs =
-                          [ Live (Args.renderDashedArg (DashedLong l)),
-                            Live (ArgPlain r)
-                          ]
-                      }
+                    parseArgs
+                      [ Args.renderDashed (DashedLong l),
+                        r
+                      ]
               let p = setting [reader str, option, long $ NE.toList l]
               let expected = r
               shouldParse p args e mConf expected
@@ -263,51 +247,38 @@ spec = do
         forAllValid $ \e ->
           forAllValid $ \mConf ->
             forAllValid $ \(l, rs) -> do
-              let args =
-                    emptyArgs
-                      { unArgs =
-                          concatMap
-                            ( \v ->
-                                [ Live (Args.renderDashedArg (DashedLong l)),
-                                  Live (ArgPlain v)
-                                ]
-                            )
-                            rs
-                      }
+              let args = parseArgs $ concatMap (\v -> [Args.renderDashed (DashedLong l), v]) rs
               let p = many $ setting [reader str, option, long $ NE.toList l]
               let expected = rs :: [String]
               shouldParse p args e mConf expected
 
       it "can parse a single env var" $
-        forAllValid $ \args ->
-          forAllValid $ \e' ->
-            forAllValid $ \mConf ->
-              forAllValid $ \(key, val) -> do
-                let e = EnvMap.insert key val e'
-                let p = setting [reader str, env key]
-                let expected = val
-                shouldParse p args e mConf expected
+        forAllValid $ \e' ->
+          forAllValid $ \mConf ->
+            forAllValid $ \(key, val) -> do
+              let e = EnvMap.insert key val e'
+              let p = setting [reader str, env key]
+              let expected = val
+              shouldParse p Args.emptyArgs e mConf expected
 
       it "can parse a single config value" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \c' ->
-              forAllValid $ \(key, val) -> do
-                let c = KeyMap.insert key (toJSON val) c'
-                let p = setting [conf (Key.toString key)]
-                let expected = val :: Text
-                shouldParse p args e (Just c) expected
+        forAllValid $ \e ->
+          forAllValid $ \c' ->
+            forAllValid $ \(key, val) -> do
+              let c = KeyMap.insert key (toJSON val) c'
+              let p = setting [conf (Key.toString key)]
+              let expected = val :: Text
+              shouldParse p Args.emptyArgs e (Just c) expected
 
       it "parses Null as the default value" $
-        forAllValid $ \args ->
-          forAllValid $ \e ->
-            forAllValid $ \c' ->
-              forAllValid $ \key -> do
-                let c = KeyMap.insert key JSON.Null c'
-                let defaultVal = "hi"
-                let p = setting [conf (Key.toString key), value defaultVal]
-                let expected = defaultVal
-                shouldParse p args e (Just c) expected
+        forAllValid $ \e ->
+          forAllValid $ \c' ->
+            forAllValid $ \key -> do
+              let c = KeyMap.insert key JSON.Null c'
+              let defaultVal = "hi"
+              let p = setting [conf (Key.toString key), value defaultVal]
+              let expected = defaultVal
+              shouldParse p Args.emptyArgs e (Just c) expected
 
     describe "Unit tests" $ do
       argParseSpec
@@ -330,6 +301,12 @@ spec = do
         ["-f", "bar", "--foo", "quux"]
         (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
+
+      argParseSpec
+        ["--", "all", "-bare", "--arguments"]
+        (many $ setting [reader str, argument])
+        -- No double-dash!
+        ["all", "-bare", "--arguments"]
 
       -- Switch before argument
       argParseSpec
@@ -498,6 +475,101 @@ spec = do
         [ (["-f", "foo"], "foo"),
           (["-ffoo"], "foo")
         ]
+
+      -- Optional Argument and optional switch
+      let optionalArgOptionalSwitchExamples =
+            [ (["foo", "-w"], (Just "foo", True)),
+              (["-w", "foo"], (Just "foo", True)),
+              (["foo", "--watch"], (Just "foo", True)),
+              (["--watch", "foo"], (Just "foo", True)),
+              (["foo"], (Just "foo", False)),
+              (["--bar"], (Just "--bar", False)),
+              (["-w"], (Nothing, True)),
+              (["--watch"], (Nothing, True))
+            ]
+      argParseSpecs
+        ( (,)
+            <$> optional (setting [reader str, argument])
+            <*> setting [switch True, short 'w', long "watch", value False] ::
+            Parser (Maybe String, Bool)
+        )
+        optionalArgOptionalSwitchExamples
+      argParseSpecs
+        ( swap
+            <$> ( (,)
+                    <$> setting [switch True, short 'w', long "watch", value False]
+                    <*> optional (setting [reader str, argument])
+                ) ::
+            Parser (Maybe String, Bool)
+        )
+        optionalArgOptionalSwitchExamples
+
+      let verbosityArgsExamples =
+            [ ([], ([], 0)),
+              (["-vvv"], ([], 3)),
+              (["--"], (["--"], 0)),
+              (["-v", "--"], (["--"], 1)),
+              (["-vv", "--"], (["--"], 2)),
+              (["--", "-v"], (["-v"], 0)),
+              (["a", "-v", "b", "-v"], (["a", "b"], 2)),
+              (["a", "--verbose", "-v", "b", "-v"], (["a", "b"], 3)),
+              (["a", "--verbose", "-v", "-v", "b", "-v"], (["a", "b"], 4)),
+              (["a", "--verbose", "-v", "-v", "b", "-v", "c"], (["a", "b", "c"], 4)),
+              (["a", "--verbose", "-v", "-vv", "b", "-v", "c"], (["a", "b", "c"], 5)),
+              (["a", "--verbose", "-v", "-vv", "-v", "b", "-v", "c"], (["a", "b", "c"], 6))
+            ]
+      argParseSpecs
+        ( (,)
+            <$> many (setting [reader str, argument])
+            <*> (length <$> many (setting [switch (), short 'v', long "verbose"])) ::
+            Parser ([String], Int)
+        )
+        verbosityArgsExamples
+      argParseSpecs
+        ( swap
+            <$> ( (,)
+                    <$> (length <$> many (setting [switch (), short 'v', long "verbose"]))
+                    <*> many (setting [reader str, argument])
+                ) ::
+            Parser ([String], Int)
+        )
+        verbosityArgsExamples
+
+      let optionsArgsExamples =
+            [ ([], ([], [])),
+              (["-p1"], ([], [1])),
+              (["-p1", "--port", "2"], ([], [1, 2])),
+              (["-p", "1", "-p", "2", "-p", "3"], ([], [1, 2, 3])),
+              (["--port=2"], ([], [2])),
+              (["--port=2", "-p3"], ([], [2, 3])),
+              (["--port", "3"], ([], [3])),
+              (["foo", "-p4"], (["foo"], [4])),
+              (["bar", "--port=5"], (["bar"], [5])),
+              (["quux", "--port", "6"], (["quux"], [6])),
+              (["-p7", "foo"], (["foo"], [7])),
+              (["--port=8", "bar"], (["bar"], [8])),
+              (["--port", "9", "quux"], (["quux"], [9])),
+              (["--", "-p1"], (["-p1"], [])),
+              (["--", "-p", "2"], (["-p", "2"], [])),
+              (["--", "--port=3"], (["--port=3"], [])),
+              (["--", "--port", "4"], (["--port", "4"], []))
+            ]
+      argParseSpecs
+        ( (,)
+            <$> many (setting [reader str, argument])
+            <*> many (setting [reader auto, option, short 'p', long "port"]) ::
+            Parser ([String], [Int])
+        )
+        optionsArgsExamples
+      argParseSpecs
+        ( swap
+            <$> ( (,)
+                    <$> many (setting [reader auto, option, short 'p', long "port"])
+                    <*> many (setting [reader str, argument])
+                ) ::
+            Parser ([String], [Int])
+        )
+        optionsArgsExamples
 
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
