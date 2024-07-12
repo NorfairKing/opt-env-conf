@@ -109,13 +109,14 @@ instance IsList Args where
 emptyArgs :: Args
 emptyArgs = Args []
 
-argsLeftovers :: Args -> [String]
+argsLeftovers :: Args -> Maybe (NonEmpty String)
 argsLeftovers =
-  mapMaybe
-    ( \case
-        Live a -> Just (renderArg a)
-        Dead -> Nothing
-    )
+  NE.nonEmpty
+    . mapMaybe
+      ( \case
+          Live a -> Just (renderArg a)
+          Dead -> Nothing
+      )
     . unArgs
 
 -- | Create 'Args' with all-live arguments.

@@ -272,10 +272,10 @@ runParserOn parser args envVars mConfig = do
           }
   let go' = do
         result <- go parser
-        leftovers <- gets ppStateArgs
-        if null (argsLeftovers leftovers)
-          then pure result
-          else ppError Nothing ParseErrorUnrecognised --
+        leftoverArgs <- gets ppStateArgs
+        case argsLeftovers leftoverArgs of
+          Nothing -> pure result
+          Just leftovers -> ppError Nothing $ ParseErrorUnrecognised leftovers
   mTup <- runPPLazy go' ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"

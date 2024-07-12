@@ -159,6 +159,29 @@ spec = do
     )
     ["--foo", "'a'"]
 
+  parseArgsErrorSpec
+    "unrecognised-arg"
+    (pure 'a')
+    ["arg"]
+  parseArgsErrorSpec
+    "unrecognised-option"
+    (pure 'b')
+    ["--foo", "bar"]
+  parseArgsErrorSpec
+    "unrecognised-switch"
+    (pure 'c')
+    ["--foo"]
+
+  parseArgsErrorSpec
+    "typo-option"
+    (optional $ setting [help "often misspelt as baz", reader str, option, long "bar"] :: Parser (Maybe String))
+    ["--baz", "arg"]
+
+  parseArgsErrorSpec
+    "typo-switch"
+    (optional $ setting [help "often misspelt as baz", switch True, long "bar"] :: Parser (Maybe Bool))
+    ["--baz"]
+
 parseArgsErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [String] -> Spec
 parseArgsErrorSpec fp p args =
   withFrozenCallStack $

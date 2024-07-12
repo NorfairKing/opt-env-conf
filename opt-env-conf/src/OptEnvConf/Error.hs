@@ -37,7 +37,7 @@ data ParseErrorMessage
   | ParseErrorMissingCommand ![String]
   | ParseErrorUnrecognisedCommand !String ![String]
   | ParseErrorAllOrNothing
-  | ParseErrorUnrecognised
+  | ParseErrorUnrecognised !(NonEmpty String)
   deriving (Show)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
@@ -62,7 +62,7 @@ errorMessageIsForgivable = \case
   ParseErrorMissingCommand cs -> not $ null cs
   ParseErrorUnrecognisedCommand _ _ -> False
   ParseErrorAllOrNothing -> False
-  ParseErrorUnrecognised -> False
+  ParseErrorUnrecognised _ -> False
 
 eraseErrorSrcLocs :: (Functor f) => f ParseError -> f ParseError
 eraseErrorSrcLocs = fmap eraseErrorSrcLoc
@@ -128,7 +128,8 @@ renderError ParseError {..} =
         ParseErrorAllOrNothing ->
           [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing (or subSettings) parser have been defined."]
           ]
-        ParseErrorUnrecognised -> [["TODO"]],
+        ParseErrorUnrecognised leftovers ->
+          ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
       maybe [] (pure . ("see " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) parseErrorSrcLoc
     ]
 
