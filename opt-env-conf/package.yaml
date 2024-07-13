@@ -18,7 +18,7 @@ library:
   - aeson
   - autodocodec >= 0.2.3.0
   - autodocodec-schema
-  - autodocodec-yaml
+  - autodocodec-yaml >= 0.3.0.0
   - containers
   - hashable
   - mtl
