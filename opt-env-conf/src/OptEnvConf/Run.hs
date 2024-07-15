@@ -130,6 +130,21 @@ runParser version progDesc p = do
             tc <- getTerminalCapabilitiesFromHandle stdout
             hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
             exitSuccess
+          CheckSettings -> do
+            let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
+                  Nothing -> error "If you see this there is a bug in opt-env-conf."
+                  Just am -> am
+            errOrSets <- runParserOn p argMap'' envVars Nothing
+            case errOrSets of
+              Left errs -> do
+                tc <- getTerminalCapabilitiesFromHandle stderr
+                -- Don't erase rcs locs because they'll probably be useful anyway.
+                hPutChunksLocaleWith tc stderr $ renderErrors errs
+                exitFailure
+              Right _ -> do
+                tc <- getTerminalCapabilitiesFromHandle stdout
+                hPutChunksLocaleWith tc stdout ["Settings parsed successfully."]
+                exitSuccess
           BashCompletionScript progPath -> do
             progname <- getProgName
             generateBashCompletionScript progPath progname
@@ -153,6 +168,7 @@ data Internal a
   = ShowHelp
   | ShowVersion
   | RenderMan
+  | CheckSettings
   | BashCompletionScript (Path Abs File)
   | ZshCompletionScript (Path Abs File)
   | FishCompletionScript (Path Abs File)
@@ -164,6 +180,11 @@ data Internal a
       -- Args
       ![String]
   | ParsedNormally !a
+
+settingsCheckSwitch :: NonEmpty Char
+settingsCheckSwitch =
+  -- Pretty long so it probably doesn't collide.
+  'r' :| "un-settings-check"
 
 internalParser :: Version -> Parser a -> Parser (Internal a)
 internalParser version p =
@@ -184,6 +205,12 @@ internalParser version p =
           long "render-man-page",
           hidden,
           help "Show this help text"
+        ],
+      setting
+        [ switch CheckSettings,
+          long $ NE.toList settingsCheckSwitch,
+          hidden,
+          help "Run the parser and exit if parsing succeeded."
         ],
       BashCompletionScript
         <$> mapIO

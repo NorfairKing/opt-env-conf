@@ -1,4 +1,10 @@
-{ lib, haskell, symlinkJoin, gzip, ... }:
+{ lib
+, haskell
+, symlinkJoin
+, gzip
+, runCommand
+, ...
+}:
 with lib;
 with haskell.lib;
 self: super:
@@ -43,6 +49,24 @@ let
   installManpagesAndCompletions = exeNames: drv:
     installManpages exeNames (installCompletions exeNames drv);
 
+  mkSettingsCheck = name: exe: args: env: runCommand name env ''
+    ${exe} --run-settings-check ${concatStringsSep " " args} > $out
+  '';
+
+  # Note to reader: If you find code while debugging a build failure, please
+  # contribute a more accurate version of this function:
+  addSettingsCheckToService = service: service // {
+    documentation =
+      let
+        check = mkSettingsCheck
+          (service.name or "settings-check")
+          (last (init (splitString "\n" service.script)))
+          (service.scriptArgs or [ ]) # TODO is this right?
+          (service.environment or { });
+      in
+      (service.documentation or [ ]) ++ [ "${check}" ];
+  };
+
   opt-env-conf = overrideCabal (optEnvConfPkg "opt-env-conf") (old: {
     passthru = {
       inherit
@@ -50,7 +74,9 @@ let
         installManpages
         installCompletion
         installCompletions
-        installManpagesAndCompletions;
+        installManpagesAndCompletions
+        mkSettingsCheck
+        addSettingsCheckToService;
     } // (old.passthru or { });
   });
 

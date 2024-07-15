@@ -35,34 +35,36 @@ Used in production
     - [ ] Bash completion
     - [ ] Zsh completion
     - [ ] Fish completion
+- [x] Static settings check
 
 ## Comparison to similar projects
 
 |                                      | `opt-env-conf` | `optparse-applicative` | `envparse` | `autodocodec` |
 |--------------------------------------|----------------|------------------------|------------|---------------|
-| Applicative parsing                  | ✔️              | ✔️                      | ✔️          | ✔️             |                                        
-| Parsing arguments                    | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing long options                 | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing short options                | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing short-hand short options     | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing short-hand long options      | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing long switches                | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing short switches               | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Parsing environment variables        | ✔️              | ✖️                      | ✔️          | ✖️             |                                        
-| Parsing configuration values         | ✔️              | ✖️                      | ✖️          | ✔️             |                                        
-| Generated global `--help` page       | ✔️              | ✔️                      | ✖️          | ✖️             |                                        
-| Coloured global `--help` page        | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
-| Generated per-command `--help` page  | 🚧             | ✔️                      | ✖️          | ✖️             |                                        
-| Coloured per-command `--help` page   | 🚧             | ✖️                      | ✖️          | ✖️             |                                        
-| Generated `--version` command        | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
-| Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
-| Helpful parse errors                 | ✔️              | ✔️                      | ✔️          | ✔️             |                                        
-| Coloured parse errors                | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
-| Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |                                        
+| Applicative parsing                  | ✔️              | ✔️                      | ✔️          | ✔️             |
+| Parsing arguments                    | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing long options                 | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing short options                | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing short-hand short options     | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing short-hand long options      | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing long switches                | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing short switches               | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Parsing environment variables        | ✔️              | ✖️                      | ✔️          | ✖️             |
+| Parsing configuration values         | ✔️              | ✖️                      | ✖️          | ✔️             |
+| Generated global `--help` page       | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Coloured global `--help` page        | ✔️              | ✖️                      | ✖️          | ✖️             |
+| Generated per-command `--help` page  | 🚧             | ✔️                      | ✖️          | ✖️             |
+| Coloured per-command `--help` page   | 🚧             | ✖️                      | ✖️          | ✖️             |
+| Generated `--version` command        | ✔️              | ✖️                      | ✖️          | ✖️             |
+| Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |
+| Helpful parse errors                 | ✔️              | ✔️                      | ✔️          | ✔️             |
+| Coloured parse errors                | ✔️              | ✖️                      | ✖️          | ✖️             |
+| Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |
 | Typo suggestions                     | 🚧             | ✖️                      | ✖️          | ✖️             |
 | Bash completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
 | Zsh completion                       | 🚧             | ✔️                      | ✖️          | ✖️             |
 | Fish completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
+| Static settings check                | ✔️              | ✖️                      | ✖️          | ✖️             |
 
 
 ## Example
