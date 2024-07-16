@@ -188,95 +188,100 @@ settingsCheckSwitch =
 
 internalParser :: Version -> Parser a -> Parser (Internal a)
 internalParser version p =
-  choice
-    [ setting
-        [ switch ShowHelp,
-          short 'h',
-          long "help",
-          help "Show this help text"
-        ],
-      setting
-        [ switch ShowVersion,
-          long "version",
-          help $ "Output version information: " <> showVersion version
-        ],
-      setting
-        [ switch RenderMan,
-          long "render-man-page",
-          hidden,
-          help "Show this help text"
-        ],
-      setting
-        [ switch CheckSettings,
-          long $ NE.toList settingsCheckSwitch,
-          hidden,
-          help "Run the parser and exit if parsing succeeded."
-        ],
-      BashCompletionScript
-        <$> mapIO
-          parseAbsFile
-          ( setting
-              [ option,
-                reader str,
-                long "bash-completion-script",
+  let allowLeftovers :: Parser a -> Parser a
+      allowLeftovers p' = fst <$> ((,) <$> p' <*> many (setting [reader str, argument, hidden] :: Parser String))
+   in choice
+        [ allowLeftovers $
+            setting
+              [ switch ShowHelp,
+                short 'h',
+                long "help",
+                help "Show this help text"
+              ],
+          allowLeftovers $
+            setting
+              [ switch ShowVersion,
+                long "version",
+                help $ "Output version information: " <> showVersion version
+              ],
+          setting
+            [ switch RenderMan,
+              long "render-man-page",
+              hidden,
+              help "Show this help text"
+            ],
+          allowLeftovers $
+            setting
+              [ switch CheckSettings,
+                long $ NE.toList settingsCheckSwitch,
                 hidden,
-                help "Render the bash completion script"
-              ]
-          ),
-      ZshCompletionScript
-        <$> mapIO
-          parseAbsFile
-          ( setting
-              [ option,
-                reader str,
-                long "zsh-completion-script",
+                help "Run the parser and exit if parsing succeeded."
+              ],
+          BashCompletionScript
+            <$> mapIO
+              parseAbsFile
+              ( setting
+                  [ option,
+                    reader str,
+                    long "bash-completion-script",
+                    hidden,
+                    help "Render the bash completion script"
+                  ]
+              ),
+          ZshCompletionScript
+            <$> mapIO
+              parseAbsFile
+              ( setting
+                  [ option,
+                    reader str,
+                    long "zsh-completion-script",
+                    hidden,
+                    help "Render the zsh completion script"
+                  ]
+              ),
+          ZshCompletionScript
+            <$> mapIO
+              parseAbsFile
+              ( setting
+                  [ option,
+                    reader str,
+                    long "fish-completion-script",
+                    hidden,
+                    help "Render the fish completion script"
+                  ]
+              ),
+          setting
+            [ help "Query completion",
+              switch CompletionQuery,
+              -- Long string that no normal user would ever use.
+              long "query-opt-env-conf-completion",
+              hidden
+            ]
+            <*> setting
+              [ switch True,
+                long "completion-enriched",
+                value False,
                 hidden,
-                help "Render the zsh completion script"
+                help "Whether to enable enriched completion"
               ]
-          ),
-      ZshCompletionScript
-        <$> mapIO
-          parseAbsFile
-          ( setting
+            <*> setting
               [ option,
-                reader str,
-                long "fish-completion-script",
+                reader auto,
+                long "completion-index",
                 hidden,
-                help "Render the fish completion script"
+                help "The index between the arguments where completion was invoked."
               ]
-          ),
-      setting
-        [ help "Query completion",
-          switch CompletionQuery,
-          -- Long string that no normal user would ever use.
-          long "query-opt-env-conf-completion",
-          hidden
+            <*> many
+              ( setting
+                  [ option,
+                    reader str,
+                    long "completion-word",
+                    hidden,
+                    help "The words (arguments) that have already been typed"
+                  ]
+              ),
+          ParsedNormally <$> p
         ]
-        <*> setting
-          [ switch True,
-            long "completion-enriched",
-            value False,
-            hidden,
-            help "Whether to enable enriched completion"
-          ]
-        <*> setting
-          [ option,
-            reader auto,
-            long "completion-index",
-            hidden,
-            help "The index between the arguments where completion was invoked."
-          ]
-        <*> many
-          ( setting
-              [ option,
-                reader str,
-                long "completion-word",
-                hidden,
-                help "The words (arguments) that have already been typed"
-              ]
-          ),
-      ParsedNormally <$> p
-    ]
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.

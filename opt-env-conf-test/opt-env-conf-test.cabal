@@ -259,6 +259,7 @@ test-suite opt-env-conf-test
       OptEnvConf.NonDetSpec
       OptEnvConf.ReaderSpec
       OptEnvConf.RunSpec
+      OptEnvConf.ToplevelSpec
       Paths_opt_env_conf_test
   hs-source-dirs:
       test/

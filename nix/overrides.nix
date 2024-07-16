@@ -66,7 +66,8 @@ let
       in
       (service.documentation or [ ]) ++ [ "${check}" ];
   };
-
+  # For home-manager:
+  addSettingsCheckToUserService = service: service // { };
   opt-env-conf = overrideCabal (optEnvConfPkg "opt-env-conf") (old: {
     passthru = {
       inherit
@@ -76,7 +77,8 @@ let
         installCompletions
         installManpagesAndCompletions
         mkSettingsCheck
-        addSettingsCheckToService;
+        addSettingsCheckToService
+        addSettingsCheckToUserService;
     } // (old.passthru or { });
   });
 

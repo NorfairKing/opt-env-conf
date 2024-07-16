@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] -- 2024-07-16
+
+### Changed
+
+* Fixed that the settings check could not be run with arguments.
+
 ## [0.1.0.0] - 2024-07-16
 
 ### Changed
