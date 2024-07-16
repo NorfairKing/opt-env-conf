@@ -181,9 +181,9 @@ consumeArgument as = do
                 --   * The dashed is an argument
                 -- TODO we need to continue looking too
                 let switchCase =
-                      [ (Nothing, as),
-                        (Just (renderArg a), consumed)
-                      ]
+                      consumeArgument (Args (befores ++ [firstArg]) afters)
+                        ++ [ (Just (renderArg a), consumed)
+                           ]
                  in case afters of
                       -- Last argument is is dashed, that's the same as being followed by a dead argument
                       [] -> switchCase
@@ -194,10 +194,10 @@ consumeArgument as = do
                         --   * The dashed is an option and the live is the value
                         --   * The dashed is a switch and the live is an argument
                         --   * The dashed is an argument
-                        [ (Nothing, as),
-                          (Just (renderArg a'), Args (befores ++ [Live a, Dead]) rest),
-                          (Just (renderArg a), consumed)
-                        ]
+                        [(Nothing, as)] -- TODO keep looking
+                          ++ [ (Just (renderArg a'), Args (befores ++ [Live a, Dead]) rest),
+                               (Just (renderArg a), consumed)
+                             ]
 
 -- | Consume an option.
 --

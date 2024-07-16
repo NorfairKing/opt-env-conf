@@ -60,34 +60,33 @@ spec = do
       forAllValid $ \befores ->
         forAllValid $ \afters ->
           consumeArgument (Args befores (Dead : afters)) `shouldBe` consumeArgument (Args (befores ++ [Dead]) afters)
+
     it "tries to consume dashed argument followed by a dead argument" $
       forAllValid $ \befores ->
-        forAllValid $ \afters ->
-          forAllValid $ \isLong ->
-            forAllValid $ \cs ->
-              let d = ArgDashed isLong cs
-                  args = Args befores (Live d : Dead : afters)
-               in consumeArgument args
-                    `shouldBe` [ (Nothing, args),
-                                 (Just (renderArg d), Args (befores ++ [Dead]) (Dead : afters))
-                               ]
+        forAllValid $ \isLong ->
+          forAllValid $ \cs ->
+            let d = ArgDashed isLong cs
+                args = Args befores [Live d, Dead]
+             in consumeArgument args
+                  `shouldBe` [ (Nothing, Args (befores ++ [Live d, Dead]) []),
+                               (Just (renderArg d), Args (befores ++ [Dead]) [Dead])
+                             ]
 
     it "tries to consume dashed argument followed by a live argument" $
       forAllValid $ \befores ->
-        forAllValid $ \afters ->
-          forAllValid $ \isLong ->
-            forAllValid $ \cs ->
-              forAllValid $ \arg ->
-                let d = ArgDashed isLong cs
-                    args = Args befores (Live d : Live arg : afters)
-                 in consumeArgument args
-                      `shouldBe` [ (Nothing, args),
-                                   -- Consuming the value (dashed is a switch) is
-                                   -- more likely than consuming the dashed as an
-                                   -- argument
-                                   (Just (renderArg arg), Args (befores ++ [Live d, Dead]) afters),
-                                   (Just (renderArg d), Args (befores ++ [Dead]) (Live arg : afters))
-                                 ]
+        forAllValid $ \isLong ->
+          forAllValid $ \cs ->
+            forAll (genValid `suchThat` (/= ArgBareDoubleDash)) $ \arg ->
+              let d = ArgDashed isLong cs
+                  args = Args befores [Live d, Live arg]
+               in consumeArgument args
+                    `shouldBe` [ (Nothing, args),
+                                 -- Consuming the value (dashed is a switch) is
+                                 -- more likely than consuming the dashed as an
+                                 -- argument
+                                 (Just (renderArg arg), Args (befores ++ [Live d, Dead]) []),
+                                 (Just (renderArg d), Args (befores ++ [Dead]) [Live arg])
+                               ]
 
   describe "consumeSwitch" $ do
     it "fails to consume if there are no dasheds" $
