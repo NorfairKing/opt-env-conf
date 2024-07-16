@@ -11,6 +11,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Tuple (swap)
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Args as Args
@@ -476,54 +477,63 @@ spec = do
         ]
 
       -- Optional Argument and optional switch
+      let optionalArgOptionalSwitchExamples =
+            [ (["foo", "-w"], (Just "foo", True)),
+              (["-w", "foo"], (Just "foo", True)),
+              (["foo", "--watch"], (Just "foo", True)),
+              (["--watch", "foo"], (Just "foo", True)),
+              (["foo"], (Just "foo", False)),
+              (["--bar"], (Just "--bar", False)),
+              (["-w"], (Nothing, True)),
+              (["--watch"], (Nothing, True))
+            ]
       argParseSpecs
         ( (,)
             <$> optional (setting [reader str, argument])
             <*> setting [switch True, short 'w', long "watch", value False] ::
             Parser (Maybe String, Bool)
         )
-        [ (["foo", "-w"], (Just "foo", True)),
-          (["-w", "foo"], (Just "foo", True)),
-          (["foo", "--watch"], (Just "foo", True)),
-          (["--watch", "foo"], (Just "foo", True)),
-          (["foo"], (Just "foo", False)),
-          (["--bar"], (Just "--bar", False)),
-          (["-w"], (Nothing, True)),
-          (["--watch"], (Nothing, True))
-        ]
+        optionalArgOptionalSwitchExamples
       argParseSpecs
-        ( (,)
-            <$> setting [switch True, short 'w', long "watch", value False]
-            <*> optional (setting [reader str, argument]) ::
-            Parser (Bool, Maybe String)
+        ( swap
+            <$> ( (,)
+                    <$> setting [switch True, short 'w', long "watch", value False]
+                    <*> optional (setting [reader str, argument])
+                ) ::
+            Parser (Maybe String, Bool)
         )
-        [ (["foo", "-w"], (True, Just "foo")),
-          (["-w", "foo"], (True, Just "foo")),
-          (["foo", "--watch"], (True, Just "foo")),
-          (["--watch", "foo"], (True, Just "foo")),
-          (["foo"], (False, Just "foo")),
-          (["--bar"], (False, Just "--bar")),
-          (["-w"], (True, Nothing)),
-          (["--watch"], (True, Nothing))
-        ]
+        optionalArgOptionalSwitchExamples
 
+      let verbosityArgsExamples =
+            [ ([], ([], 0)),
+              (["-vvv"], ([], 3)),
+              (["--"], (["--"], 0)),
+              (["-v", "--"], (["--"], 1)),
+              (["-vv", "--"], (["--"], 2)),
+              (["--", "-v"], (["-v"], 0)),
+              (["a", "-v", "b", "-v"], (["a", "b"], 2)),
+              (["a", "--verbose", "-v", "b", "-v"], (["a", "b"], 3)),
+              (["a", "--verbose", "-v", "-v", "b", "-v"], (["a", "b"], 4)),
+              (["a", "--verbose", "-v", "-v", "b", "-v", "c"], (["a", "b", "c"], 4)),
+              (["a", "--verbose", "-v", "-vv", "b", "-v", "c"], (["a", "b", "c"], 5)),
+              (["a", "--verbose", "-v", "-vv", "-v", "b", "-v", "c"], (["a", "b", "c"], 6))
+            ]
       argParseSpecs
         ( (,)
             <$> many (setting [reader str, argument])
             <*> (length <$> many (setting [switch (), short 'v', long "verbose"])) ::
             Parser ([String], Int)
         )
-        [ ([], ([], 0)),
-          (["-vvv"], ([], 3)),
-          (["--"], (["--"], 0)),
-          (["-v", "--"], (["--"], 1)),
-          (["-vv", "--"], (["--"], 2)),
-          (["--", "-v"], (["-v"], 0)),
-          (["a", "-v", "b", "-v"], (["a", "b"], 2)),
-          (["a", "--verbose", "-v", "b", "-v"], (["a", "b"], 3)),
-          (["a", "--verbose", "-v", "-v", "b", "-v"], (["a", "b"], 4)),
-          (["a", "--verbose", "-v", "-v", "b", "-v", "c"], (["a", "b", "c"], 4))
-        ]
+        verbosityArgsExamples
+      argParseSpecs
+        ( swap
+            <$> ( (,)
+                    <$> (length <$> many (setting [switch (), short 'v', long "verbose"]))
+                    <*> many (setting [reader str, argument])
+                ) ::
+            Parser ([String], Int)
+        )
+        verbosityArgsExamples
 
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
