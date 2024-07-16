@@ -226,6 +226,7 @@ consumeOption dasheds as = do
       (Live k : rest) ->
         case k of
           -- We can either consume it as-is, or as a shorthand option.
+          ArgBareDoubleDash -> Nothing
           ArgDashed isLong cs ->
             case consumeDashedShorthandOption dasheds isLong cs of
               Just v -> Just (v, Dead : rest)

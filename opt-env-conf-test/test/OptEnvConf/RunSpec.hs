@@ -535,6 +535,41 @@ spec = do
         )
         verbosityArgsExamples
 
+      let optionsArgsExamples =
+            [ ([], ([], [])),
+              (["-p1"], ([], [1])),
+              (["-p1", "--port", "2"], ([], [1, 2])),
+              (["--port=2"], ([], [2])),
+              (["--port=2", "-p3"], ([], [2, 3])),
+              (["--port", "3"], ([], [3])),
+              (["foo", "-p4"], (["foo"], [4])),
+              (["bar", "--port=5"], (["bar"], [5])),
+              (["quux", "--port", "6"], (["quux"], [6])),
+              (["-p7", "foo"], (["foo"], [7])),
+              (["--port=8", "bar"], (["bar"], [8])),
+              (["--port", "9", "quux"], (["quux"], [9])),
+              (["--", "-p1"], (["-p1"], [])),
+              (["--", "-p", "2"], (["-p", "2"], [])),
+              (["--", "--port=3"], (["--port=3"], [])),
+              (["--", "--port", "4"], (["--port", "4"], []))
+            ]
+      argParseSpecs
+        ( (,)
+            <$> many (setting [reader str, argument])
+            <*> many (setting [reader auto, option, short 'p', long "port"]) ::
+            Parser ([String], [Int])
+        )
+        optionsArgsExamples
+      argParseSpecs
+        ( swap
+            <$> ( (,)
+                    <$> many (setting [reader auto, option, short 'p', long "port"])
+                    <*> many (setting [reader str, argument])
+                ) ::
+            Parser ([String], [Int])
+        )
+        optionsArgsExamples
+
       argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
         [ ([], True),
