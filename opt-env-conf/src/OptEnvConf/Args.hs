@@ -93,7 +93,7 @@ renderArg = \case
 -- 'consumeArgument', 'consumeOption' and 'consumeSwitch'.
 --
 -- In order to implement folded short dashed options, we need to use tombstones
--- for consumed arguments.
+-- for consumed argumentsn
 data Args = Args
   { argsBefore :: [Tomb Arg],
     argsAfter :: [Tomb Arg]
@@ -131,8 +131,6 @@ parseArgs args = Args {argsBefore = [], argsAfter = map (Live . parseArg) args}
 -- | Consume a single positional argument.
 --
 -- The result are all possible results
---
--- TODO refactor this to [(Maybe (String, Args)]
 consumeArgument :: Args -> [(Maybe String, Args)]
 consumeArgument as = do
   case argsAfter as of
@@ -152,6 +150,11 @@ consumeArgument as = do
               ArgBareDoubleDash -> case afters of
                 -- If it's the last argument, consume it as an argument
                 [] -> [(Just "--", consumed)]
+                -- If there's only a dead argument after the double dash, that
+                -- means we've been parsing bare args and are now done.
+                -- We can stop consuming but get rid of the tombstone as well.
+                -- Otherwise there will be a leftover unconsumed '--' after all parsing is done.
+                [Dead] -> [(Nothing, Args befores [])]
                 -- If it's not the last argument, anything after here is an argument.
                 -- In order to not have to maintain whether the cursor is after
                 -- a bare double dash already, we keep the cursor here and just
@@ -206,33 +209,36 @@ consumeArgument as = do
 --     * @["--foo=foo"]@
 --     * @["-ffoo"]@
 consumeOption :: [Dashed] -> Args -> Maybe (String, Args)
-consumeOption dasheds am = do
-  undefined
-
---   (mS, opts') <- go $ unArgs am
---   pure (mS, am {unArgs = opts'})
---   where
---     go :: [Tomb Arg] -> Maybe (String, [Tomb Arg])
---     go = \case
---       [] -> Nothing
---       -- Skip dead args
---       (Dead : rest) -> second (Dead :) <$> go rest
---       -- If we find a live key, try to consume it.
---       (Live k : rest) ->
---         case k of
---           -- We can either consume it as-is, or as a shorthand option.
---           ArgDashed isLong cs ->
---             case consumeDashedShorthandOption dasheds isLong cs of
---               Just v -> Just (v, Dead : rest)
---               Nothing ->
---                 case rest of
---                   (Live v : rest') ->
---                     case consumeDashedOption dasheds isLong cs of
---                       Nothing -> second (Live k :) <$> go rest
---                       Just Nothing -> Just (renderArg v, Dead : rest')
---                       Just (Just cs') -> Just (renderArg v, Live (ArgDashed isLong cs') : Dead : rest')
---                   _ -> second (Live k :) <$> go rest
---           _ -> second (Live k :) <$> go rest
+consumeOption dasheds as = do
+  case go (argsBefore as) of
+    Just (val, newBefores) -> Just (val, as {argsBefore = newBefores})
+    Nothing ->
+      -- TODO option value on the border
+      case go (argsAfter as) of
+        Just (val, newAfters) -> Just (val, as {argsAfter = newAfters})
+        Nothing -> Nothing
+  where
+    go :: [Tomb Arg] -> Maybe (String, [Tomb Arg])
+    go = \case
+      [] -> Nothing
+      -- Skip dead args
+      (Dead : rest) -> second (Dead :) <$> go rest
+      -- If we find a live key, try to consume it.
+      (Live k : rest) ->
+        case k of
+          -- We can either consume it as-is, or as a shorthand option.
+          ArgDashed isLong cs ->
+            case consumeDashedShorthandOption dasheds isLong cs of
+              Just v -> Just (v, Dead : rest)
+              Nothing ->
+                case rest of
+                  (Live v : rest') ->
+                    case consumeDashedOption dasheds isLong cs of
+                      Nothing -> second (Live k :) <$> go rest
+                      Just Nothing -> Just (renderArg v, Dead : rest')
+                      Just (Just cs') -> Just (renderArg v, Live (ArgDashed isLong cs') : Dead : rest')
+                  _ -> second (Live k :) <$> go rest
+          _ -> second (Live k :) <$> go rest
 
 consumeDashedShorthandOption ::
   [Dashed] ->
@@ -303,27 +309,27 @@ unsnocNE = go []
 --     * @["--foo"]@
 --     * @["-df"]@
 consumeSwitch :: [Dashed] -> Args -> Maybe Args
-consumeSwitch dasheds am = do
-  undefined
-
--- do
---   opts' <- go $ unArgs am
---   pure $ am {unArgs = opts'}
---   where
---     go :: [Tomb Arg] -> Maybe [Tomb Arg]
---     go = \case
---       [] -> Nothing
---       (Dead : rest) -> (Dead :) <$> go rest
---       (Live o : rest) -> case o of
---         ArgDashed isLong cs -> case consumeDashedSwitch dasheds isLong cs of
---           Nothing -> (Live o :) <$> go rest
---           Just Nothing -> Just $ Dead : rest
---           Just (Just (cs', needTombstone)) ->
---             let rest' = if needTombstone then Dead : rest else rest
---              in Just $ Live (ArgDashed isLong cs') : rest'
---         _ -> do
---           os <- go rest
---           pure $ Live o : os
+consumeSwitch dasheds as = do
+  case go (argsBefore as) of
+    Just newBefores -> Just $ as {argsBefore = newBefores}
+    Nothing -> case go (argsAfter as) of
+      Just newAfters -> Just $ as {argsAfter = newAfters}
+      Nothing -> Nothing
+  where
+    go :: [Tomb Arg] -> Maybe [Tomb Arg]
+    go = \case
+      [] -> Nothing
+      (Dead : rest) -> (Dead :) <$> go rest
+      (Live o : rest) -> case o of
+        ArgDashed isLong cs -> case consumeDashedSwitch dasheds isLong cs of
+          Nothing -> (Live o :) <$> go rest
+          Just Nothing -> Just $ Dead : rest
+          Just (Just (cs', needTombstone)) ->
+            let rest' = if needTombstone then Dead : rest else rest
+             in Just $ Live (ArgDashed isLong cs') : rest'
+        _ -> do
+          os <- go rest
+          pure $ Live o : os
 
 -- Can consume anywhere in a folded dashed, return True if it was the last
 -- character because then we need a tombstone.

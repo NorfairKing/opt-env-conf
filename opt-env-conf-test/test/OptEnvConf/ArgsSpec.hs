@@ -89,6 +89,25 @@ spec = do
                                    (Just (renderArg d), Args (befores ++ [Dead]) (Live arg : afters))
                                  ]
 
+  describe "consumeSwitch" $ do
+    it "fails to consume if there are no dasheds" $
+      forAllValid $ \as ->
+        consumeSwitch [] as `shouldBe` Nothing
+    it "fails to consume if there are no arguments" $
+      forAllValid $ \ds ->
+        consumeSwitch ds [] `shouldBe` Nothing
+
+    it "does not consume a mismatched switch" $
+      consumeSwitch ["--foo"] ["--bar"] `shouldBe` Nothing
+    it "consumes a short switch if there are no other args" $
+      consumeSwitch ["-v"] ["-v"] `shouldBe` Just [Dead]
+    it "consumes a long switch if there are no other args" $
+      consumeSwitch ["--verbose"] ["--verbose"] `shouldBe` Just [Dead]
+    it "consumes a switch at the front first" $
+      consumeSwitch ["-a", "-b"] ["-a", "-b"] `shouldBe` Just [Dead, "-b"]
+    it "consumes a folded switch at the front first" $
+      consumeSwitch ["-a", "-b"] ["-ab"] `shouldBe` Just ["-b"]
+
   describe "consumeOption" $ do
     it "fails to consume if there are no dasheds" $
       forAllValid $ \as ->
@@ -110,22 +129,3 @@ spec = do
       consumeOption ["--file"] ["--file=foo.txt"] `shouldBe` Just ("foo.txt", [Dead])
     it "consumes a short option in shorthand notation" $
       consumeOption ["-f"] ["-ffoo.txt"] `shouldBe` Just ("foo.txt", [Dead])
-
-  describe "consumeSwitch" $ do
-    it "fails to consume if there are no dasheds" $
-      forAllValid $ \as ->
-        consumeSwitch [] as `shouldBe` Nothing
-    it "fails to consume if there are no arguments" $
-      forAllValid $ \ds ->
-        consumeSwitch ds [] `shouldBe` Nothing
-
-    it "does not consume a mismatched switch" $
-      consumeSwitch ["--foo"] ["--bar"] `shouldBe` Nothing
-    it "consumes a short switch if there are no other args" $
-      consumeSwitch ["-v"] ["-v"] `shouldBe` Just [Dead]
-    it "consumes a long switch if there are no other args" $
-      consumeSwitch ["--verbose"] ["--verbose"] `shouldBe` Just [Dead]
-    it "consumes a switch at the front first" $
-      consumeSwitch ["-a", "-b"] ["-a", "-b"] `shouldBe` Just [Dead, "-b"]
-    it "consumes a folded switch at the front first" $
-      consumeSwitch ["-a", "-b"] ["-ab"] `shouldBe` Just ["-b"]
