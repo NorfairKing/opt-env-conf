@@ -508,6 +508,24 @@ spec = do
         ]
 
       argParseSpecs
+        ( (,)
+            <$> many (setting [reader str, argument])
+            <*> (length <$> many (setting [switch (), short 'v', long "verbose"])) ::
+            Parser ([String], Int)
+        )
+        [ ([], ([], 0)),
+          (["-vvv"], ([], 3)),
+          (["--"], (["--"], 0)),
+          (["-v", "--"], (["--"], 1)),
+          (["-vv", "--"], (["--"], 2)),
+          (["--", "-v"], (["-v"], 0)),
+          (["a", "-v", "b", "-v"], (["a", "b"], 2)),
+          (["a", "--verbose", "-v", "b", "-v"], (["a", "b"], 3)),
+          (["a", "--verbose", "-v", "-v", "b", "-v"], (["a", "b"], 4)),
+          (["a", "--verbose", "-v", "-v", "b", "-v", "c"], (["a", "b", "c"], 4))
+        ]
+
+      argParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", conf "example"])
         [ ([], True),
           (["--enable-example"], True),
