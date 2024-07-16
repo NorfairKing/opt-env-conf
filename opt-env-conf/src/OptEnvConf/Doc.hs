@@ -475,23 +475,16 @@ setDocOptDoc SetDoc {..} = do
 
 -- | Render short-form documentation of options
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go True
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go 0
   where
-    go :: Bool -> AnyDocs OptDoc -> [Chunk]
-    go isTopLevel = \case
+    go :: Int -> AnyDocs OptDoc -> [Chunk]
+    go nestingLevel = \case
       AnyDocsCommands cs ->
-        unwordsChunks $ (if isTopLevel then ["\n  "] else [fore cyan "("]) : intersperse [if isTopLevel then orChunkNewline else orChunk] (map
-              ( \CommandDoc {..} ->
-                  if nullDocs commandDocs
-                    then [commandChunk commandDocArgument]
-                    else
-                      commandChunk commandDocArgument
-                        : " "
-                        : go False commandDocs
-              )
-              cs) <> ([[fore cyan ")"] | not isTopLevel])
-      AnyDocsAnd ds -> unwordsChunks $ map (go isTopLevel) ds
-      AnyDocsOr ds -> renderOrChunks (map (go isTopLevel) ds)
+        unwordsChunks $ ["\n    "] : intersperse [orChunkNewlineIndent nestingLevel] (map
+              ( \CommandDoc {..} -> [commandChunk commandDocArgument] )
+              cs)
+      AnyDocsAnd ds -> unwordsChunks $ map (go (nestingLevel + 1)) ds
+      AnyDocsOr ds -> renderOrChunks $ map (go (nestingLevel + 1)) ds
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks $
           concat
@@ -512,18 +505,18 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
 renderOrChunks :: [[Chunk]] -> [Chunk]
 renderOrChunks os =
   unwordsChunks $
-    intersperse [orChunk] $
+    intersperse [orChunkNewline] $
       map parenthesise os
   where
     parenthesise :: [Chunk] -> [Chunk]
     parenthesise [c] = [c]
     parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
 
-orChunk :: Chunk
-orChunk = fore cyan "|"
-
 orChunkNewline :: Chunk
 orChunkNewline = fore cyan "\n |"
+
+orChunkNewlineIndent :: Int -> Chunk
+orChunkNewlineIndent indentationLevel = fore cyan $ chunk $ "\n " <>  T.replicate indentationLevel " "  <> "|"
 
 -- | Render long-form documentation of options
 renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]

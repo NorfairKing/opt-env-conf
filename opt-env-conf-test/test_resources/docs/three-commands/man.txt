@@ -7,10 +7,12 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-three-commands (-h|--help) | --version | (--config-file FILE_PATH 
-   one STR 
- | two --number|-n INT --(enable|disable)-enable 
- | three)
+three-commands (-h|--help) 
+ | --version 
+ | (--config-file FILE_PATH 
+     one 
+   | two 
+   | three)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
