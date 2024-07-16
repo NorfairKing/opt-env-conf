@@ -301,6 +301,12 @@ spec = do
         (many $ setting [reader str, option, short 'f', long "foo"])
         ["bar", "quux"]
 
+      argParseSpec
+        ["--", "all", "-bare", "--arguments"]
+        (many $ setting [reader str, argument])
+        -- No double-dash!
+        ["all", "-bare", "--arguments"]
+
       -- Switch before argument
       argParseSpec
         ["--foo", "bar"]
