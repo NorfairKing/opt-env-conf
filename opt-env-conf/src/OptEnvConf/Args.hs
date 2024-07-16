@@ -320,6 +320,7 @@ consumeSwitch dasheds as = do
       [] -> Nothing
       (Dead : rest) -> (Dead :) <$> go rest
       (Live o : rest) -> case o of
+        ArgBareDoubleDash -> Nothing
         ArgDashed isLong cs -> case consumeDashedSwitch dasheds isLong cs of
           Nothing -> (Live o :) <$> go rest
           Just Nothing -> Just $ Dead : rest
