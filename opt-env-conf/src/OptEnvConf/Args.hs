@@ -193,10 +193,17 @@ consumeArgument as = do
                         --   * The dashed is an option and the live is the value
                         --   * The dashed is a switch and the live is an argument
                         --   * The dashed is an argument
-                        consumeArgument (Args (befores ++ [Live a, Live a']) rest)
-                          ++ [ (Just (renderArg a'), Args (befores ++ [Live a, Dead]) rest),
-                               (Just (renderArg a), consumed)
-                             ]
+                        ( case a' of
+                            ArgDashed {} ->
+                              consumeArgument (Args (befores ++ [Live a]) afters)
+                                ++ [ (Just (renderArg a), consumed)
+                                   ]
+                            _ ->
+                              consumeArgument (Args (befores ++ [Live a, Live a']) rest)
+                                ++ [ (Just (renderArg a'), Args (befores ++ [Live a, Dead]) rest),
+                                     (Just (renderArg a), consumed)
+                                   ]
+                        )
 
 -- | Consume an option.
 --

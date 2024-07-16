@@ -88,6 +88,13 @@ spec = do
                                    (Just (renderArg arg), Args (befores ++ [Live d, Dead]) []),
                                    (Just (renderArg d), Args (befores ++ [Dead]) [Live arg])
                                  ]
+    it "tries to ignore this value that looks like an option value" $
+      consumeArgument ["-p1", "--port", "2"]
+        `shouldBe` [ (Nothing, Args ["-p1", "--port", "2"] []),
+                     (Just "2", Args ["-p1", "--port", Dead] []),
+                     (Just "--port", Args ["-p1", Dead] ["2"]),
+                     (Just "-p1", Args [Dead] ["--port", "2"])
+                   ]
 
   describe "consumeSwitch" $ do
     it "fails to consume if there are no dasheds" $
@@ -129,3 +136,13 @@ spec = do
       consumeOption ["--file"] ["--file=foo.txt"] `shouldBe` Just ("foo.txt", [Dead])
     it "consumes a short option in shorthand notation" $
       consumeOption ["-f"] ["-ffoo.txt"] `shouldBe` Just ("foo.txt", [Dead])
+    it "consumes a short option before a long option" $
+      consumeOption
+        ["-p", "--port"]
+        ["-p1", "--port", "2"]
+        `shouldBe` Just ("1", [Dead, "--port", "2"])
+    it "consumes a short option before a long option" $
+      consumeOption
+        ["-p", "--port"]
+        [Dead, "--port", "2"]
+        `shouldBe` Just ("2", [Dead, Dead])
