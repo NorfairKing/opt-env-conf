@@ -189,12 +189,11 @@ consumeArgument as = do
                       [] -> switchCase
                       (Dead : _) -> switchCase
                       (Live a' : rest) ->
-                        -- TODO we need to continue looking too
                         -- Live after dashed, three options, in order that they should be considered:
                         --   * The dashed is an option and the live is the value
                         --   * The dashed is a switch and the live is an argument
                         --   * The dashed is an argument
-                        [(Nothing, as)] -- TODO keep looking
+                        consumeArgument (Args (befores ++ [Live a, Live a']) rest)
                           ++ [ (Just (renderArg a'), Args (befores ++ [Live a, Dead]) rest),
                                (Just (renderArg a), consumed)
                              ]

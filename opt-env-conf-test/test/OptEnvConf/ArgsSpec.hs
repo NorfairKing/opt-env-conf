@@ -79,14 +79,15 @@ spec = do
             forAll (genValid `suchThat` (/= ArgBareDoubleDash)) $ \arg ->
               let d = ArgDashed isLong cs
                   args = Args befores [Live d, Live arg]
-               in consumeArgument args
-                    `shouldBe` [ (Nothing, args),
-                                 -- Consuming the value (dashed is a switch) is
-                                 -- more likely than consuming the dashed as an
-                                 -- argument
-                                 (Just (renderArg arg), Args (befores ++ [Live d, Dead]) []),
-                                 (Just (renderArg d), Args (befores ++ [Dead]) [Live arg])
-                               ]
+               in context (ppShow args) $
+                    consumeArgument args
+                      `shouldBe` [ (Nothing, Args (befores ++ [Live d, Live arg]) []),
+                                   -- Consuming the value (dashed is a switch) is
+                                   -- more likely than consuming the dashed as an
+                                   -- argument
+                                   (Just (renderArg arg), Args (befores ++ [Live d, Dead]) []),
+                                   (Just (renderArg d), Args (befores ++ [Dead]) [Live arg])
+                                 ]
 
   describe "consumeSwitch" $ do
     it "fails to consume if there are no dasheds" $
