@@ -135,15 +135,15 @@ consumeArgument :: Args -> [(Maybe String, Args)]
 consumeArgument as = do
   case argsAfter as of
     [] -> [(Nothing, as)]
-    (a : afters) ->
+    (firstArg : afters) ->
       let befores = argsBefore as
           consumed = Args (befores ++ [Dead]) afters
-       in case a of
+       in case firstArg of
             -- Skip any dead argument
             Dead -> consumeArgument consumed
             Live a -> case a of
               -- Plain argument: that's the only option, consume it.
-              ArgPlain a -> [(Just a, consumed)]
+              ArgPlain plain -> [(Just plain, consumed)]
               -- A single dash is always an argument
               ArgBareDash -> [(Just "-", consumed)]
               -- Bare double-dash
@@ -163,7 +163,7 @@ consumeArgument as = do
                   let go = \case
                         [] -> Nothing
                         (Dead : rest) -> go rest
-                        (Live a : rest) -> Just (a, rest)
+                        (Live a' : rest) -> Just (a', rest)
                    in case go afters of
                         Nothing -> [(Nothing, as)]
                         Just (firstLive, rest) ->
@@ -175,7 +175,7 @@ consumeArgument as = do
                               Args befores (Live ArgBareDoubleDash : Dead : rest)
                             )
                           ]
-              a@(ArgDashed {}) ->
+              ArgDashed {} ->
                 -- Dead after dashed, two options, in order that they should be considered:
                 --   * The dashed is a switch (don't consume an arg)
                 --   * The dashed is an argument
@@ -187,7 +187,7 @@ consumeArgument as = do
                  in case afters of
                       -- Last argument is is dashed, that's the same as being followed by a dead argument
                       [] -> switchCase
-                      (Dead : rest) -> switchCase
+                      (Dead : _) -> switchCase
                       (Live a' : rest) ->
                         -- TODO we need to continue looking too
                         -- Live after dashed, three options, in order that they should be considered:
