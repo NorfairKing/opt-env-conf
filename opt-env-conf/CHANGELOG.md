@@ -5,6 +5,8 @@
 ### Changed
 
 * Fixed that the settings check could not be run with arguments.
+* Added a lint to check that `long` isn't used without `option` or `switch`.
+* Added a lint to check that `many` cannot be used with a parser that can succeed without consuming anything.
 
 ## [0.1.0.0] - 2024-07-16
 

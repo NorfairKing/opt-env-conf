@@ -52,6 +52,7 @@ data LintErrorMessage
   | LintErrorNoCommands
   | LintErrorUnreadableExample !String
   | LintErrorConfigWithoutLoad
+  | LintErrorManyInfinite
 
 renderLintErrors :: NonEmpty LintError -> [Chunk]
 renderLintErrors =
@@ -195,6 +196,12 @@ renderLintError LintError {..} =
           [ [ functionChunk "conf",
               " was called with no way to load configuration."
             ]
+          ]
+        LintErrorManyInfinite ->
+          [ [ functionChunk "many",
+              " was called with a parser that may succeed without consuming anything."
+            ],
+            ["This is not allowed because the parser would run infinitely."]
           ],
       maybe [] (pure . ("Defined at: " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) lintErrorSrcLoc
     ]
@@ -210,22 +217,41 @@ lintParser =
     . runValidationT
     . go
   where
-    go :: Parser a -> ValidationT LintError (Reader Bool) ()
+    -- Returns whether 'many' is allowed.
+    -- 'many' is allowed only when every parse below consumes something.
+    go :: Parser a -> ValidationT LintError (Reader Bool) Bool
     go = \case
-      ParserPure _ -> pure ()
-      ParserAp p1 p2 -> go p1 *> go p2
-      ParserSelect p1 p2 -> go p1 *> go p2
-      ParserEmpty _ -> pure ()
-      ParserAlt p1 p2 -> go p1 *> go p2
-      -- TODO lint if we don't try to parse anything consuming under many.
-      ParserMany p -> go p
+      ParserPure _ -> pure False
+      ParserAp p1 p2 -> do
+        c1 <- go p1
+        c2 <- go p2
+        pure (c1 || c2)
+      ParserSelect p1 p2 -> do
+        c1 <- go p1
+        c2 <- go p2
+        pure (c1 || c2) -- TODO: is this right?
+      ParserEmpty _ -> pure True
+      ParserAlt p1 p2 -> do
+        c1 <- go p1
+        c2 <- go p2
+        pure (c1 && c2) -- TODO: is this right?
+        -- TODO lint if we don't try to parse anything consuming under many.
+      ParserMany p -> do
+        c <- go p
+        when (not c) $
+          mapValidationTFailure (LintError Nothing) $
+            validationTFailure LintErrorManyInfinite
+        pure c
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands mLoc ls -> do
         if null ls
           then validationTFailure $ LintError mLoc LintErrorNoCommands
-          else traverse_ (go . commandParser) ls
-      ParserWithConfig p1 p2 -> go p1 *> local (const True) (go p2)
+          else and <$> traverse (go . commandParser) ls -- TODO is this right?
+      ParserWithConfig p1 p2 -> do
+        c1 <- go p1
+        c2 <- local (const True) (go p2)
+        pure $ c1 || c2
       ParserSetting mLoc Setting {..} -> mapValidationTFailure (LintError mLoc) $ do
         case settingHelp of
           Nothing ->
@@ -271,3 +297,11 @@ lintParser =
         hasConfig <- ask
         when (isJust settingConfigVals && not hasConfig) $
           validationTFailure LintErrorConfigWithoutLoad
+        pure $
+          -- 'many' is only allowed if something is being consumed and it's
+          -- impossible for nothing to be consumed.
+          and
+            [ settingTryArgument || settingTryOption || isJust settingSwitchValue,
+              null settingEnvVars,
+              null settingConfigVals
+            ]

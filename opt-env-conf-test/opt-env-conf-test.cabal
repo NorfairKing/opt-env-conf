@@ -197,6 +197,8 @@ extra-source-files:
     test_resources/lint/dash-in-long.txt
     test_resources/lint/dash-in-short.txt
     test_resources/lint/empty-setting.txt
+    test_resources/lint/many-conf.txt
+    test_resources/lint/many-env.txt
     test_resources/lint/no-commands.txt
     test_resources/lint/no-dashed-for-option.txt
     test_resources/lint/no-dashed-for-switch.txt

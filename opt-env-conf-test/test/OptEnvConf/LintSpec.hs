@@ -145,6 +145,27 @@ spec = do
         ] ::
         Parser Int
     )
+  goldenLintTest
+    "many-env"
+    ( many $
+        setting
+          [ help "many with setting that always succeeds",
+            reader auto,
+            env "EXAMPLE",
+            metavar "INT"
+          ] ::
+        Parser [Int]
+    )
+  goldenLintTest
+    "many-conf"
+    ( withLocalYamlConfig $
+        many $
+          setting
+            [ help "many with setting that always succeeds",
+              conf "example"
+            ] ::
+        Parser [Int]
+    )
 
 goldenLintTest :: (HasCallStack) => FilePath -> Parser a -> Spec
 goldenLintTest fp parser = withFrozenCallStack $
