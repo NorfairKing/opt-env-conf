@@ -3,4 +3,4 @@
   [31mInvalid Setting:[m
   [33mexample[m was called with an example that none of the [33mreader[ms succeed in reading.
   Example: NaN
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:128:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:139:7 in main:OptEnvConf.LintSpec[m

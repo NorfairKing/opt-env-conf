@@ -46,6 +46,7 @@ data LintErrorMessage
   | LintErrorNoDashedForOption
   | LintErrorNoMetavarForOption
   | LintErrorNoDashedForSwitch
+  | LintErrorNoOptionOrSwitchForDashed
   | LintErrorNoReaderForEnvVar
   | LintErrorNoMetavarForEnvVar
   | LintErrorNoCommands
@@ -156,6 +157,17 @@ renderLintError LintError {..} =
               "."
             ]
           ]
+        LintErrorNoOptionOrSwitchForDashed ->
+          [ [ functionChunk "long",
+              " or ",
+              functionChunk "short",
+              " has no ",
+              functionChunk "option",
+              " or ",
+              functionChunk "switch",
+              "."
+            ]
+          ]
         LintErrorNoReaderForEnvVar ->
           [ [ functionChunk "env",
               " has no ",
@@ -246,6 +258,8 @@ lintParser =
           validationTFailure LintErrorNoMetavarForOption
         when (isJust settingSwitchValue && null settingDasheds) $
           validationTFailure LintErrorNoDashedForSwitch
+        when (not settingTryOption && isNothing settingSwitchValue && not (null settingDasheds)) $
+          validationTFailure LintErrorNoOptionOrSwitchForDashed
         when (isJust settingEnvVars && null settingReaders) $
           validationTFailure LintErrorNoReaderForEnvVar
         when (isJust settingEnvVars && not settingHidden && isNothing settingMetavar) $

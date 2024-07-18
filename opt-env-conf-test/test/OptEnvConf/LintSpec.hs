@@ -80,6 +80,17 @@ spec = do
         Parser String
     )
   goldenLintTest
+    "no-option-or-switch-for-dashed"
+    ( setting
+        [ reader str,
+          argument,
+          long "hi",
+          metavar "STR",
+          help "Example"
+        ] ::
+        Parser String
+    )
+  goldenLintTest
     "no-metavar-for-option"
     ( setting
         [ reader str,

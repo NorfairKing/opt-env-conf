@@ -1,0 +1,5 @@
+[31mSetting parser is invalid:[m
+  
+  [31mInvalid Setting:[m
+  [33mlong[m or [33mshort[m has no [33moption[m or [33mswitch[m.
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:84:7 in main:OptEnvConf.LintSpec[m

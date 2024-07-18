@@ -2,4 +2,4 @@
   
   [31mInvalid Setting:[m
   [33menv[m has no [33mmetavar[m.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:108:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:119:7 in main:OptEnvConf.LintSpec[m
