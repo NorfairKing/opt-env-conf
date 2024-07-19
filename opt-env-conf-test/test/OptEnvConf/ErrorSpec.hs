@@ -201,7 +201,7 @@ parseArgsErrorSpec fp p args =
     it (unwords ["renders the", fp, "error the same as before"]) $
       let path = "test_resources/error/" <> fp <> ".txt"
        in goldenChunksFile path $ do
-            errOrResult <- runParserOn p (parseArgs args) EnvMap.empty Nothing
+            errOrResult <- runParserOn False p (parseArgs args) EnvMap.empty Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
               Left errs -> pure $ renderErrors $ eraseErrorSrcLocs errs
@@ -212,7 +212,7 @@ parseEnvErrorSpec fp p e =
     it (unwords ["renders the", fp, "error the same as before"]) $
       let path = "test_resources/error/" <> fp <> ".txt"
        in goldenChunksFile path $ do
-            errOrResult <- runParserOn p emptyArgs (EnvMap.parse e) Nothing
+            errOrResult <- runParserOn False p emptyArgs (EnvMap.parse e) Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
               Left errs -> pure $ renderErrors $ eraseErrorSrcLocs errs

@@ -105,6 +105,7 @@ runParser version progDesc p = do
       let docs = parserDocs p'
       errOrResult <-
         runParserOn
+          debugMode
           p'
           argMap
           envVars
@@ -135,7 +136,7 @@ runParser version progDesc p = do
             let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
                   Nothing -> error "If you see this there is a bug in opt-env-conf."
                   Just am -> am
-            errOrSets <- runParserOn p argMap'' envVars Nothing
+            errOrSets <- runParserOn True p argMap'' envVars Nothing
             case errOrSets of
               Left errs -> do
                 tc <- getTerminalCapabilitiesFromHandle stderr
@@ -287,12 +288,14 @@ internalParser version p =
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
 runParserOn ::
+  -- DebugMode
+  Bool ->
   Parser a ->
   Args ->
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn parser args envVars mConfig = do
+runParserOn debugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
@@ -302,7 +305,7 @@ runParserOn parser args envVars mConfig = do
         PPEnv
           { ppEnvEnv = envVars,
             ppEnvConf = mConfig,
-            ppEnvDebug = True,
+            ppEnvDebug = debugMode,
             ppEnvIndent = 0
           }
   let go' = do
@@ -662,6 +665,9 @@ debug s = do
   debugMode <- asks ppEnvDebug
   when debugMode $ do
     i <- asks ppEnvIndent
+    -- Debug mode needs to involve an impure print because parsers can run IO
+    -- actions and we need to see their output interleaved with the debug
+    -- output
     liftIO $
       putStrLn $
         replicate (i * 2) ' ' ++ s
