@@ -32,16 +32,22 @@ sub-commands (-h|--help)
       name: # or null
         <string>
     
+  
   command with subcommands
   command: sub
     A
     command: a
+    
     B
     command: b
+    
     C
     command: c
+    
     D
     command: d
+    
+  
 
 .Sh OPTIONS
   -h|--help Show this help text 

@@ -486,6 +486,7 @@ renderCommandDocs = unlinesChunks . go True
         [helpChunk commandDocHelp]
           : ["command: ", commandChunk commandDocArgument]
           : go False commandDocs
+          ++ [[]]
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: Bool -> [AnyDocs SetDoc] -> [[Chunk]]

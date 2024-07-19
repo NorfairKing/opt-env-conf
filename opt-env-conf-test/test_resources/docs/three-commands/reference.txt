@@ -20,6 +20,7 @@
     [34margument[m
     argument: [33mSTR[m
     
+  
   [34msecond[m
   command: [35mtwo[m
     [34mnumber[m
@@ -36,8 +37,10 @@
       [37menable[m: # [32mor null[m
         [33m<boolean>[m
   
+  
   [34mthird[m
   command: [35mthree-very-long-command-name[m
+  
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

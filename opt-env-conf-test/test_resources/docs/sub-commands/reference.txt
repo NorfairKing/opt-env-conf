@@ -24,16 +24,22 @@
       [37mname[m: # [32mor null[m
         [33m<string>[m
     
+  
   [34mcommand with subcommands[m
   command: [35msub[m
     [34mA[m
     command: [35ma[m
+    
     [34mB[m
     command: [35mb[m
+    
     [34mC[m
     command: [35mc[m
+    
     [34mD[m
     command: [35md[m
+    
+  
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

@@ -28,6 +28,7 @@ three-commands (-h|--help)
     argument
     argument: STR
     
+  
   second
   command: two
     number
@@ -44,8 +45,10 @@ three-commands (-h|--help)
       enable: # or null
         <boolean>
   
+  
   third
   command: three-very-long-command-name
+  
 
 .Sh OPTIONS
   -h|--help Show this help text 
