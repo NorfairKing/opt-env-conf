@@ -21,9 +21,6 @@ verbose (-h|--help)
   switch: -v
   
 
-.Sh COMMANDS
-no commands available
-
 .Sh OPTIONS
   -h|--help Show this help text                                 
   --version Output version information: 0.0.0                   

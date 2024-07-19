@@ -11,6 +11,3 @@ empty parser
   switch: [37m--version[m
   
 
-[36mAvailable commands[m:
-no commands available
-

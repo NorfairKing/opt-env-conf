@@ -303,6 +303,7 @@ renderManPage progname version progDesc docs =
   let optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
+      commandDocs = docsToCommandDocs docs
    in unlinesChunks $
         -- See https://man.openbsd.org/mdoc#MACRO_OVERVIEW
         concat
@@ -321,10 +322,14 @@ renderManPage progname version progDesc docs =
               [".Sh ", "SYNOPSIS"],
               renderShortOptDocs progname optDocs,
               [".Sh ", "SETTINGS"],
-              renderSetDocs docs,
-              [".Sh ", "COMMANDS"],
-              renderCommandDocs docs
+              renderSetDocs docs
             ],
+            concat
+             [ [ [".Sh ", "COMMANDS"],
+                 renderCommandDocs docs
+               ]
+               | not (null commandDocs)
+             ],
             concat
               [ [ [".Sh ", "OPTIONS"],
                   renderLongOptDocs optDocs
@@ -351,15 +356,20 @@ renderReferenceDocumentation progname docs =
   let optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
+      commandDocs = docsToCommandDocs docs
    in unlinesChunks $
         concat
           [ [ usageChunk : renderShortOptDocs progname optDocs,
               [],
               headerChunks "All settings",
-              renderSetDocs docs,
-              headerChunks "All commands",
-              renderCommandDocs docs
+              renderSetDocs docs
             ],
+            concat
+              [ [ headerChunks "All commands",
+                  renderCommandDocs docs
+                ]
+                | not (null commandDocs)
+              ],
             concat
               [ [ headerChunks "Options",
                   renderLongOptDocs optDocs
@@ -404,15 +414,21 @@ renderVersionPage progname version =
 -- | Render the output of @--help@
 renderHelpPage :: String -> String -> AnyDocs SetDoc -> [Chunk]
 renderHelpPage progname progDesc docs =
-  unlinesChunks
-    [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
-      [],
-      unlinesChunks $ progDescLines progDesc,
-      headerChunks "Available settings",
-      renderSetDocs docs,
-      headerChunks "Available commands",
-      renderCommandDocs docs
-    ]
+  unlinesChunks $
+    concat
+      [ [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
+          [],
+          unlinesChunks $ progDescLines progDesc,
+          headerChunks "Available settings",
+          renderSetDocs docs
+        ],
+        concat
+          [ [ headerChunks "Available commands",
+              renderCommandDocs docs
+            ]
+            | not (null (docsToCommandDocs docs))
+          ]
+      ]
 
 renderSetDocs :: AnyDocs SetDoc -> [Chunk]
 renderSetDocs = unlinesChunks . go
@@ -454,7 +470,7 @@ renderSetDocs = unlinesChunks . go
       ds -> ([], ds)
 
 renderCommandDocs :: AnyDocs SetDoc -> [Chunk]
-renderCommandDocs = unlinesChunks . (\cs -> if null cs then [["no commands available"]] else cs) . go
+renderCommandDocs = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
@@ -634,6 +650,13 @@ setDocConfDoc SetDoc {..} = do
 
 settingConfDoc :: Setting a -> Maybe ConfDoc
 settingConfDoc = settingSetDoc >=> setDocConfDoc
+
+docsToCommandDocs :: AnyDocs SetDoc -> [CommandDoc SetDoc]
+docsToCommandDocs = \case
+  AnyDocsCommands cs -> cs
+  AnyDocsAnd ds -> concatMap docsToCommandDocs ds
+  AnyDocsOr ds -> concatMap docsToCommandDocs ds
+  AnyDocsSingle _ -> []
 
 -- | Render documentation of configuration values
 renderConfDocs :: AnyDocs ConfDoc -> [Chunk]

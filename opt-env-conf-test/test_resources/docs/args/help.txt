@@ -15,6 +15,3 @@ args parser
   argument: [33mARGUMENT[m
   
 
-[36mAvailable commands[m:
-no commands available
-
