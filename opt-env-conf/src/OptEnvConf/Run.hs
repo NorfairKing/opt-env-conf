@@ -113,8 +113,7 @@ runParser version progDesc p = do
       case errOrResult of
         Left errs -> do
           tc <- getTerminalCapabilitiesFromHandle stderr
-          let f = if debugMode then id else eraseErrorSrcLocs
-          hPutChunksLocaleWith tc stderr $ renderErrors $ f errs
+          hPutChunksLocaleWith tc stderr $ renderErrors errs
           exitFailure
         Right i -> case i of
           ShowHelp -> do
@@ -140,7 +139,6 @@ runParser version progDesc p = do
             case errOrSets of
               Left errs -> do
                 tc <- getTerminalCapabilitiesFromHandle stderr
-                -- Don't erase rcs locs because they'll probably be useful anyway.
                 hPutChunksLocaleWith tc stderr $ renderErrors errs
                 exitFailure
               Right _ -> do
@@ -324,7 +322,7 @@ runParserOn debugMode parser args envVars mConfig = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
-                Nothing -> pure (Left firstErrors)
+                Nothing -> pure $ Left $ (if debugMode then id else eraseErrorSrcLocs) firstErrors
                 Just ((eOR, _), ns') -> case eOR of
                   Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
