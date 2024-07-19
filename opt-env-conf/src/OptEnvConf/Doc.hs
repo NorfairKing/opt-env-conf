@@ -478,7 +478,7 @@ renderCommandDocs = unlinesChunks . go
         let maxLength = maximum $ length . commandDocArgument <$> cs
          in concatMap (goCommand maxLength) cs
       AnyDocsAnd ds -> concatMap go ds
-      AnyDocsOr ds -> goOr ds
+      AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle _ -> []
 
     goCommand :: Int -> CommandDoc SetDoc -> [[Chunk]]
@@ -489,13 +489,6 @@ renderCommandDocs = unlinesChunks . go
           else [commandChunk commandDocArgument] : [[chunk (T.replicate maxLength' " "), helpChunk commandDocHelp]]
       where
         maxLength' = minimum [25, maximum [10, maxLength]]
-
-    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
-    goOr :: [AnyDocs SetDoc] -> [[Chunk]]
-    goOr = \case
-      [] -> []
-      [d] -> go d
-      (d : ds) -> go d ++ goOr ds
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
