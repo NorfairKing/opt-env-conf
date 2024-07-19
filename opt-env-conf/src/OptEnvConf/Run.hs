@@ -39,6 +39,7 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Lint
+import OptEnvConf.Nix
 import OptEnvConf.NonDet
 import OptEnvConf.Output
 import OptEnvConf.Parser
@@ -137,6 +138,9 @@ runParser version progDesc p = do
             tc <- getTerminalCapabilitiesFromHandle stdout
             hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
             exitSuccess
+          RenderNixosOptions -> do
+            putStrLn $ T.unpack $ renderParserNixOSOptions p'
+            exitSuccess
           CheckSettings -> do
             let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
                   Nothing -> error "If you see this there is a bug in opt-env-conf."
@@ -174,6 +178,7 @@ data Internal a
   = ShowHelp
   | ShowVersion
   | RenderMan
+  | RenderNixosOptions
   | CheckSettings
   | BashCompletionScript (Path Abs File)
   | ZshCompletionScript (Path Abs File)
@@ -214,7 +219,13 @@ internalParser version p =
             [ switch RenderMan,
               long "render-man-page",
               hidden,
-              help "Show this help text"
+              help "Render a manpage"
+            ],
+          setting
+            [ switch RenderNixosOptions,
+              long "render-nixos-options",
+              hidden,
+              help "Render nixos options"
             ],
           allowLeftovers $
             setting

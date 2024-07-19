@@ -1,0 +1,37 @@
+[36mUsage: [m[33msub-settings[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m [37m--foo-bar-quux[m [33mSTR[m[36m)[m
+
+[36mAll settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
+  
+  [34mExample with sub-settings[m
+  option: [37m--foo-bar-quux[m [33mSTR[m
+  env: [37mFOO_BAR_QUUX[m [33mSTR[m
+  config:
+    [37mfoo.bar.quux[m: # [32mor null[m
+      [33m<string>[m
+  
+
+[36mOptions[m:
+  [37m-h[m[36m|[m[37m--help[m      [34mShow this help text[m               
+  [37m--version[m      [34mOutput version information: 0.0.0[m 
+  [37m--config-file[m  [34mPath to the configuration file[m    
+  [37m--foo-bar-quux[m [34mExample with sub-settings[m         
+
+[36mEnvironment Variables[m:
+  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m
+  [37mFOO_BAR_QUUX[m [33mSTR[m        [34mExample with sub-settings[m     
+
+[36mConfiguration Values[m:
+  [34mExample with sub-settings[m
+  [37mfoo.bar.quux[m:
+    # [32mor null[m
+    [33m<string>[m
+

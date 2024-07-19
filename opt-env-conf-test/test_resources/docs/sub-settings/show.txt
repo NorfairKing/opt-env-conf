@@ -1,0 +1,49 @@
+WithConfig
+  _
+  Nothing
+  (Check
+     Nothing
+     False
+     _
+     (Alt
+        (Check
+           Nothing
+           False
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('c' :| "onfig-file") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just ("CONFIG_FILE" :| []))
+                 Nothing
+                 Nothing
+                 (Just "FILE_PATH")
+                 (Just "Path to the configuration file"))))
+        (Check Nothing False _ (Pure _))))
+  (Setting
+     Nothing
+     (Setting
+        [ DashedLong ('f' :| "oo-bar-quux") ]
+        [ _ ]
+        False
+        Nothing
+        True
+        (Just ("FOO_BAR_QUUX" :| []))
+        (Just
+           [ ( "foo" :| [ "bar" , "quux" ]
+             , BimapCodec
+                 _
+                 _
+                 (EitherCodec
+                    PossiblyJointUnion
+                    NullCodec
+                    (BimapCodec _ _ (StringCodec Nothing)))
+             )
+           ])
+        Nothing
+        (Just "STR")
+        (Just "Example with sub-settings")))

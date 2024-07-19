@@ -1,0 +1,45 @@
+.Dd $Mdocdate$
+.Dt sub-settings 1
+.Os
+.Sh NAME
+.Nm sub-settings
+.Nd example with a sub settings
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+sub-settings (-h|--help) | --version | (--config-file FILE_PATH --foo-bar-quux STR)
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  Path to the configuration file
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
+  
+  Example with sub-settings
+  option: --foo-bar-quux STR
+  env: FOO_BAR_QUUX STR
+  config:
+    foo.bar.quux: # or null
+      <string>
+  
+
+.Sh OPTIONS
+  -h|--help      Show this help text               
+  --version      Output version information: 0.0.0 
+  --config-file  Path to the configuration file    
+  --foo-bar-quux Example with sub-settings         
+
+.Sh ENVIRONMENT VARIABLES
+  CONFIG_FILE FILE_PATH   Path to the configuration file
+  FOO_BAR_QUUX STR        Example with sub-settings     
+
+.Sh CONFIGURATION VALUES
+  Example with sub-settings
+  foo.bar.quux:
+    # or null
+    <string>
+

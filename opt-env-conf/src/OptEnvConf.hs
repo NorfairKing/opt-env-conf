@@ -120,11 +120,12 @@ module OptEnvConf
     commaSeparatedSet,
 
     -- * Re-exports, just in case
+    module OptEnvConf.Casing,
     module OptEnvConf.Doc,
+    module OptEnvConf.Nix,
     module OptEnvConf.Parser,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,
-    module OptEnvConf.Casing,
     module OptEnvConf.Setting,
     module Control.Applicative,
   )
@@ -133,6 +134,7 @@ where
 import Control.Applicative
 import OptEnvConf.Casing
 import OptEnvConf.Doc
+import OptEnvConf.Nix
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Run

@@ -18,6 +18,7 @@ spec = do
   exampleParserSpec "args" "args parser" argsParser
   exampleParserSpec "optional" "optional argument" optionalParser
   exampleParserSpec "big-config" "example with a big configuration" bigConfigParser
+  exampleParserSpec "sub-settings" "example with a sub settings" subSettingsParser
   exampleParserSpec "hidden" "example with hidden settings" hiddenParser
   exampleParserSpec "enable-disable" "enableDisableSwitch example" enableDisableParser
   exampleParserSpec "yes-no" "yesNoSwitch example" yesNoParser
@@ -100,6 +101,10 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
       renderReferenceDocumentation dir $
         parserDocs parser
 
+  it "renders the NixOS option the same way" $
+    pureGoldenTextFile ("test_resources/docs/" <> dir <> "/nixos-options.nix") $
+      renderParserNixOSOptions parser
+
 pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
 pureGoldenChunksFile fp cs =
   pureGoldenTextFile fp $ renderChunksText With24BitColours cs
@@ -151,6 +156,18 @@ bigConfigParser =
         [ conf "big",
           help "multi-line config codec explanation, the same option twice."
         ]
+
+subSettingsParser :: Parser String
+subSettingsParser =
+  withLocalYamlConfig $
+    subAll "foo" $
+      subAll "bar" $
+        setting
+          [ reader str,
+            name "quux",
+            help "Example with sub-settings",
+            metavar "STR"
+          ]
 
 data Args = Args [String]
 

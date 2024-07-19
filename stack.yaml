@@ -3,6 +3,10 @@ packages:
 - opt-env-conf
 - opt-env-conf-test
 
+- /home/syd/src/autodocodec/autodocodec
+- /home/syd/src/autodocodec/autodocodec-nix
+- /home/syd/src/autodocodec/autodocodec-yaml
+- /home/syd/src/autodocodec/autodocodec-schema
 ghc-options:
   "$locals": -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Widentities -Wredundant-constraints -Wcpp-undef -O0 -Wunused-packages
 
@@ -13,12 +17,12 @@ extra-deps:
   - safe-coloured-text
   - safe-coloured-text-layout
   - safe-coloured-text-gen
-- github: NorfairKing/autodocodec
-  commit: 36779707f38ec3aeb0a591ff8043a63717c96ea2
-  subdirs:
-    - autodocodec
-    - autodocodec-yaml
-    - autodocodec-schema
+    # - github: NorfairKing/autodocodec
+    #   commit: 36779707f38ec3aeb0a591ff8043a63717c96ea2
+    #   subdirs:
+    #     - autodocodec
+    #     - autodocodec-yaml
+    #     - autodocodec-schema
 
 system-ghc: true
 nix:

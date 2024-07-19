@@ -20,6 +20,7 @@ library:
   dependencies:
   - aeson
   - autodocodec >= 0.2.3.0
+  - autodocodec-nix
   - autodocodec-schema
   - autodocodec-yaml
   - containers

@@ -104,7 +104,10 @@
               hpack.enable = true;
               ormolu.enable = true;
               nixpkgs-fmt.enable = true;
-              nixpkgs-fmt.excludes = [ ".*/default.nix" ];
+              nixpkgs-fmt.excludes = [
+                ".*/default.nix"
+                ".*/nixos-options.nix"
+              ];
               cabal2nix.enable = true;
             };
           };

@@ -9,6 +9,7 @@ module OptEnvConf.Test
     goldenSettingsReferenceDocumentationSpec,
     goldenParserReferenceDocumentationSpec,
     pureGoldenReferenceDocumentation,
+    module OptEnvConf,
   )
 where
 
