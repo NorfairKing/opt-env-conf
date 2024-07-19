@@ -14,11 +14,12 @@ extra-deps:
   - safe-coloured-text-layout
   - safe-coloured-text-gen
 - github: NorfairKing/autodocodec
-  commit: 36779707f38ec3aeb0a591ff8043a63717c96ea2
+  commit: f2c0551cdb3f9829b97f76b927d0c83833f9ef7f
   subdirs:
     - autodocodec
     - autodocodec-yaml
     - autodocodec-schema
+    - autodocodec-nix
 
 system-ghc: true
 nix:

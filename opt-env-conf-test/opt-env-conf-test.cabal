@@ -27,6 +27,7 @@ extra-source-files:
     test_resources/docs/args/env.txt
     test_resources/docs/args/help.txt
     test_resources/docs/args/man.txt
+    test_resources/docs/args/nix-options.nix
     test_resources/docs/args/opt-docs.txt
     test_resources/docs/args/opt-long.txt
     test_resources/docs/args/opt-short.txt
@@ -40,6 +41,7 @@ extra-source-files:
     test_resources/docs/big-config/env.txt
     test_resources/docs/big-config/help.txt
     test_resources/docs/big-config/man.txt
+    test_resources/docs/big-config/nix-options.nix
     test_resources/docs/big-config/opt-docs.txt
     test_resources/docs/big-config/opt-long.txt
     test_resources/docs/big-config/opt-short.txt
@@ -53,6 +55,7 @@ extra-source-files:
     test_resources/docs/empty/env.txt
     test_resources/docs/empty/help.txt
     test_resources/docs/empty/man.txt
+    test_resources/docs/empty/nix-options.nix
     test_resources/docs/empty/opt-docs.txt
     test_resources/docs/empty/opt-long.txt
     test_resources/docs/empty/opt-short.txt
@@ -66,6 +69,7 @@ extra-source-files:
     test_resources/docs/enable-disable/env.txt
     test_resources/docs/enable-disable/help.txt
     test_resources/docs/enable-disable/man.txt
+    test_resources/docs/enable-disable/nix-options.nix
     test_resources/docs/enable-disable/opt-docs.txt
     test_resources/docs/enable-disable/opt-long.txt
     test_resources/docs/enable-disable/opt-short.txt
@@ -79,6 +83,7 @@ extra-source-files:
     test_resources/docs/greet/env.txt
     test_resources/docs/greet/help.txt
     test_resources/docs/greet/man.txt
+    test_resources/docs/greet/nix-options.nix
     test_resources/docs/greet/opt-docs.txt
     test_resources/docs/greet/opt-long.txt
     test_resources/docs/greet/opt-short.txt
@@ -92,6 +97,7 @@ extra-source-files:
     test_resources/docs/hidden/env.txt
     test_resources/docs/hidden/help.txt
     test_resources/docs/hidden/man.txt
+    test_resources/docs/hidden/nix-options.nix
     test_resources/docs/hidden/opt-docs.txt
     test_resources/docs/hidden/opt-long.txt
     test_resources/docs/hidden/opt-short.txt
@@ -105,6 +111,7 @@ extra-source-files:
     test_resources/docs/optional/env.txt
     test_resources/docs/optional/help.txt
     test_resources/docs/optional/man.txt
+    test_resources/docs/optional/nix-options.nix
     test_resources/docs/optional/opt-docs.txt
     test_resources/docs/optional/opt-long.txt
     test_resources/docs/optional/opt-short.txt
@@ -118,12 +125,27 @@ extra-source-files:
     test_resources/docs/sub-commands/env.txt
     test_resources/docs/sub-commands/help.txt
     test_resources/docs/sub-commands/man.txt
+    test_resources/docs/sub-commands/nix-options.nix
     test_resources/docs/sub-commands/opt-docs.txt
     test_resources/docs/sub-commands/opt-long.txt
     test_resources/docs/sub-commands/opt-short.txt
     test_resources/docs/sub-commands/reference.txt
     test_resources/docs/sub-commands/show.txt
     test_resources/docs/sub-commands/version.txt
+    test_resources/docs/sub-settings/config-docs.txt
+    test_resources/docs/sub-settings/config.txt
+    test_resources/docs/sub-settings/docs.txt
+    test_resources/docs/sub-settings/env-docs.txt
+    test_resources/docs/sub-settings/env.txt
+    test_resources/docs/sub-settings/help.txt
+    test_resources/docs/sub-settings/man.txt
+    test_resources/docs/sub-settings/nix-options.nix
+    test_resources/docs/sub-settings/opt-docs.txt
+    test_resources/docs/sub-settings/opt-long.txt
+    test_resources/docs/sub-settings/opt-short.txt
+    test_resources/docs/sub-settings/reference.txt
+    test_resources/docs/sub-settings/show.txt
+    test_resources/docs/sub-settings/version.txt
     test_resources/docs/three-commands/config-docs.txt
     test_resources/docs/three-commands/config.txt
     test_resources/docs/three-commands/docs.txt
@@ -131,6 +153,7 @@ extra-source-files:
     test_resources/docs/three-commands/env.txt
     test_resources/docs/three-commands/help.txt
     test_resources/docs/three-commands/man.txt
+    test_resources/docs/three-commands/nix-options.nix
     test_resources/docs/three-commands/opt-docs.txt
     test_resources/docs/three-commands/opt-long.txt
     test_resources/docs/three-commands/opt-short.txt
@@ -144,6 +167,7 @@ extra-source-files:
     test_resources/docs/verbose/env.txt
     test_resources/docs/verbose/help.txt
     test_resources/docs/verbose/man.txt
+    test_resources/docs/verbose/nix-options.nix
     test_resources/docs/verbose/opt-docs.txt
     test_resources/docs/verbose/opt-long.txt
     test_resources/docs/verbose/opt-short.txt
@@ -157,6 +181,7 @@ extra-source-files:
     test_resources/docs/yes-no/env.txt
     test_resources/docs/yes-no/help.txt
     test_resources/docs/yes-no/man.txt
+    test_resources/docs/yes-no/nix-options.nix
     test_resources/docs/yes-no/opt-docs.txt
     test_resources/docs/yes-no/opt-long.txt
     test_resources/docs/yes-no/opt-short.txt
@@ -272,6 +297,7 @@ test-suite opt-env-conf-test
   build-depends:
       QuickCheck
     , aeson
+    , autodocodec
     , base <5
     , containers
     , genvalidity-aeson

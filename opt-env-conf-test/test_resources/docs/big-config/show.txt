@@ -24,42 +24,48 @@ WithConfig
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
         (Check Nothing False _ (Pure _))))
-  (Check
+  (Setting
      Nothing
-     True
-     _
      (Setting
+        []
+        []
+        False
         Nothing
-        (Setting
-           []
-           []
-           False
-           Nothing
-           False
-           Nothing
-           (Just
-              [ ( "big" :| []
-                , BimapCodec
-                    _
-                    _
-                    (EitherCodec
-                       PossiblyJointUnion
-                       NullCodec
-                       (MapCodec
-                          (MapCodec
-                             (BimapCodec
-                                _
-                                _
-                                (NumberCodec
-                                   Nothing
-                                   (Just
-                                      NumberBounds
-                                        { numberBoundsLower = -9.223372036854775808e18
-                                        , numberBoundsUpper = 9.223372036854775807e18
-                                        }))))))
-                )
-              ])
-           Nothing
-           Nothing
-           (Just
-              "multi-line config codec explanation, the same option twice."))))
+        False
+        Nothing
+        (Just
+           (ConfigValSetting
+              ("big" :| [])
+              BimapCodec
+              _
+              _
+              (EitherCodec
+                 PossiblyJointUnion
+                 NullCodec
+                 (ObjectOfCodec
+                    (Just "BigConfig")
+                    (ApCodec
+                       (BimapCodec
+                          _
+                          _
+                          (RequiredKeyCodec
+                             "map"
+                             Nothing
+                             (MapCodec
+                                (MapCodec
+                                   (BimapCodec
+                                      _
+                                      _
+                                      (NumberCodec
+                                         Nothing
+                                         (Just
+                                            NumberBounds
+                                              { numberBoundsLower = -9.223372036854775808e18
+                                              , numberBoundsUpper = 9.223372036854775807e18
+                                              })))))))
+                       (BimapCodec
+                          _ _ (OptionalKeyCodec "sub" Nothing (StringCodec Nothing)))))) :|
+              []))
+        Nothing
+        Nothing
+        (Just "big configuration object")))

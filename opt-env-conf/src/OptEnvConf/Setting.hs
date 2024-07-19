@@ -1,10 +1,12 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Setting
   ( Setting (..),
+    ConfigValSetting (..),
 
     -- * Builders
     help,
@@ -33,9 +35,9 @@ module OptEnvConf.Setting
     showSettingABit,
     completeBuilder,
     emptySetting,
-    DecodingCodec (..),
     Metavar,
     Help,
+    prefixConfigValSetting,
   )
 where
 
@@ -71,7 +73,7 @@ data Setting a = Setting
     -- | Which env vars can be read.
     settingEnvVars :: !(Maybe (NonEmpty String)),
     -- | Which and how to parse config values
-    settingConfigVals :: !(Maybe (NonEmpty (NonEmpty String, DecodingCodec a))),
+    settingConfigVals :: !(Maybe (NonEmpty (ConfigValSetting a))),
     -- | Default value, if none of the above find the setting.
     settingDefaultValue :: !(Maybe (a, String)),
     -- | Example values
@@ -83,7 +85,14 @@ data Setting a = Setting
     settingHelp :: !(Maybe String)
   }
 
-data DecodingCodec a = forall void. DecodingCodec (ValueCodec void (Maybe a))
+data ConfigValSetting a = forall void.
+  ConfigValSetting
+  { configValSettingPath :: !(NonEmpty String),
+    configValSettingCodec :: !(ValueCodec void (Maybe a))
+  }
+
+prefixConfigValSetting :: String -> ConfigValSetting a -> ConfigValSetting a
+prefixConfigValSetting prefix c = c {configValSettingPath = prefix NE.<| configValSettingPath c}
 
 -- | A 'mempty' 'Setting' to build up a setting from.
 emptySetting :: Setting a
@@ -120,18 +129,7 @@ showSettingABit Setting {..} =
       . showString " "
       . showsPrec 11 settingEnvVars
       . showString " "
-      . showMaybeWith
-        ( showListWith
-            ( \(k, DecodingCodec c) ->
-                showString "("
-                  . shows k
-                  . showString ", "
-                  . showString (showCodecABit c)
-                  . showString ")"
-            )
-            . NE.toList
-        )
-        settingConfigVals
+      . showMaybeWith (showNonEmptyWith showConfigValSettingABit) settingConfigVals
       . showString " "
       . showMaybeWith (\_ -> showString "_") settingDefaultValue
       . showString " "
@@ -139,9 +137,23 @@ showSettingABit Setting {..} =
       . showString " "
       . showsPrec 11 settingHelp
 
+showConfigValSettingABit :: ConfigValSetting a -> ShowS
+showConfigValSettingABit ConfigValSetting {..} =
+  showString "ConfigValSetting "
+    . showsPrec 11 configValSettingPath
+    . showString " "
+    . showString (showCodecABit configValSettingCodec)
+
 showMaybeWith :: (a -> ShowS) -> Maybe a -> ShowS
 showMaybeWith _ Nothing = showString "Nothing"
 showMaybeWith func (Just a) = showParen True $ showString "Just " . func a
+
+showNonEmptyWith :: (a -> ShowS) -> NonEmpty a -> ShowS
+showNonEmptyWith func (a :| as) =
+  showParen True $
+    func a
+      . showString " :| "
+      . showListWith func as
 
 -- | Builder for a 'Setting'
 newtype Builder a = Builder {unBuilder :: Setting a -> Setting a}
@@ -257,7 +269,7 @@ confWith k c = confWith' k (maybeCodec c)
 -- | Like 'confWith' but allows interpreting 'Null' as a value other than "Not found".
 confWith' :: String -> ValueCodec void (Maybe a) -> Builder a
 confWith' k c =
-  let t = (k :| [], DecodingCodec c)
+  let t = ConfigValSetting {configValSettingPath = k :| [], configValSettingCodec = c}
    in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
 
 -- | Set the default value

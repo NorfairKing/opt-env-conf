@@ -1,4 +1,4 @@
-{ mkDerivation, aeson, base, containers, genvalidity
+{ mkDerivation, aeson, autodocodec, base, containers, genvalidity
 , genvalidity-aeson, genvalidity-containers, genvalidity-sydtest
 , genvalidity-text, lib, mtl, opt-env-conf, path, pretty-show
 , QuickCheck, safe-coloured-text, sydtest, sydtest-discover, text
@@ -15,9 +15,9 @@ mkDerivation {
   ];
   executableHaskellDepends = [ base opt-env-conf text ];
   testHaskellDepends = [
-    aeson base containers genvalidity-aeson genvalidity-sydtest
-    genvalidity-text mtl opt-env-conf path pretty-show QuickCheck
-    safe-coloured-text sydtest text
+    aeson autodocodec base containers genvalidity-aeson
+    genvalidity-sydtest genvalidity-text mtl opt-env-conf path
+    pretty-show QuickCheck safe-coloured-text sydtest text
   ];
   testToolDepends = [ sydtest-discover ];
   homepage = "https://github.com/NorfairKing/opt-env-conf#readme";

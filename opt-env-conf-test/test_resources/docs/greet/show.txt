@@ -40,16 +40,16 @@ WithConfig
                  True
                  (Just ("GREET_GREETING" :| []))
                  (Just
-                    [ ( "greeting" :| []
-                      , BimapCodec
-                          _
-                          _
-                          (EitherCodec
-                             PossiblyJointUnion
-                             NullCodec
-                             (BimapCodec _ _ (StringCodec Nothing)))
-                      )
-                    ])
+                    (ConfigValSetting
+                       ("greeting" :| [])
+                       BimapCodec
+                       _
+                       _
+                       (EitherCodec
+                          PossiblyJointUnion
+                          NullCodec
+                          (BimapCodec _ _ (StringCodec Nothing))) :|
+                       []))
                  (Just _)
                  (Just "GREETING")
                  (Just "Greeting to use"))))
@@ -76,11 +76,13 @@ WithConfig
            False
            (Just ("GREET_POLITE" :| []))
            (Just
-              [ ( "polite" :| []
-                , BimapCodec
-                    _ _ (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing))
-                )
-              ])
+              (ConfigValSetting
+                 ("polite" :| [])
+                 BimapCodec
+                 _
+                 _
+                 (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                 []))
            (Just _)
            (Just "ANY")
            (Just "Whether to be polite"))))

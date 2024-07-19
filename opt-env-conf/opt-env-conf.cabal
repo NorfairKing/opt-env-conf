@@ -32,6 +32,7 @@ library
       OptEnvConf.EnvMap
       OptEnvConf.Error
       OptEnvConf.Lint
+      OptEnvConf.Nix
       OptEnvConf.NonDet
       OptEnvConf.Output
       OptEnvConf.Parser
@@ -47,6 +48,7 @@ library
   build-depends:
       aeson
     , autodocodec >=0.2.3.0
+    , autodocodec-nix
     , autodocodec-schema
     , autodocodec-yaml
     , base <5

@@ -64,25 +64,25 @@ WithConfig
                      True
                      (Just ("NUMBER" :| []))
                      (Just
-                        [ ( "number" :| []
-                          , BimapCodec
-                              _
-                              _
-                              (EitherCodec
-                                 PossiblyJointUnion
-                                 NullCodec
-                                 (BimapCodec
-                                    _
-                                    _
-                                    (NumberCodec
-                                       Nothing
-                                       (Just
-                                          NumberBounds
-                                            { numberBoundsLower = -9.223372036854775808e18
-                                            , numberBoundsUpper = 9.223372036854775807e18
-                                            }))))
-                          )
-                        ])
+                        (ConfigValSetting
+                           ("number" :| [])
+                           BimapCodec
+                           _
+                           _
+                           (EitherCodec
+                              PossiblyJointUnion
+                              NullCodec
+                              (BimapCodec
+                                 _
+                                 _
+                                 (NumberCodec
+                                    Nothing
+                                    (Just
+                                       NumberBounds
+                                         { numberBoundsLower = -9.223372036854775808e18
+                                         , numberBoundsUpper = 9.223372036854775807e18
+                                         })))) :|
+                           []))
                      Nothing
                      (Just "INT")
                      (Just "number"))))
@@ -153,14 +153,14 @@ WithConfig
                                  False
                                  Nothing
                                  (Just
-                                    [ ( "enable" :| []
-                                      , BimapCodec
-                                          _
-                                          _
-                                          (EitherCodec
-                                             PossiblyJointUnion NullCodec (BoolCodec Nothing))
-                                      )
-                                    ])
+                                    (ConfigValSetting
+                                       ("enable" :| [])
+                                       BimapCodec
+                                       _
+                                       _
+                                       (EitherCodec
+                                          PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                                       []))
                                  Nothing
                                  Nothing
                                  (Just "enable extra")))

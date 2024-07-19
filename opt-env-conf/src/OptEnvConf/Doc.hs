@@ -38,7 +38,6 @@ where
 
 import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
-import Control.Arrow
 import Control.Monad
 import Data.List (intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
@@ -208,7 +207,12 @@ settingSetDoc Setting {..} = do
   let setDocTrySwitch = isJust settingSwitchValue
   let setDocTryOption = settingTryOption
   let setDocEnvVars = settingEnvVars
-  let setDocConfKeys = NE.map (second (\(DecodingCodec c) -> jsonSchemaVia c)) <$> settingConfigVals
+  let setDocConfKeys =
+        NE.map
+          ( \ConfigValSetting {..} ->
+              (configValSettingPath, jsonSchemaVia configValSettingCodec)
+          )
+          <$> settingConfigVals
   let setDocDefault = snd <$> settingDefaultValue
   let setDocMetavar = settingMetavar
   let setDocHelp = settingHelp

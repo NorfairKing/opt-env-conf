@@ -1,0 +1,16 @@
+AnyDocsAnd
+  [ AnyDocsSingle
+      EnvDoc
+        { envDocVars = "CONFIG_FILE" :| []
+        , envDocDefault = Nothing
+        , envDocMetavar = Just "FILE_PATH"
+        , envDocHelp = Just "Path to the configuration file"
+        }
+  , AnyDocsSingle
+      EnvDoc
+        { envDocVars = "FOO_BAR_QUUX" :| []
+        , envDocDefault = Nothing
+        , envDocMetavar = Just "STR"
+        , envDocHelp = Just "Example with sub-settings"
+        }
+  ]

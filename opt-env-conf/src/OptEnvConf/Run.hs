@@ -39,6 +39,7 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Lint
+import OptEnvConf.Nix
 import OptEnvConf.NonDet
 import OptEnvConf.Output
 import OptEnvConf.Parser
@@ -137,6 +138,9 @@ runParser version progDesc p = do
             tc <- getTerminalCapabilitiesFromHandle stdout
             hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
             exitSuccess
+          RenderNixosOptions -> do
+            putStrLn $ T.unpack $ renderParserNixOptions p'
+            exitSuccess
           CheckSettings -> do
             let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
                   Nothing -> error "If you see this there is a bug in opt-env-conf."
@@ -174,6 +178,7 @@ data Internal a
   = ShowHelp
   | ShowVersion
   | RenderMan
+  | RenderNixosOptions
   | CheckSettings
   | BashCompletionScript (Path Abs File)
   | ZshCompletionScript (Path Abs File)
@@ -214,7 +219,13 @@ internalParser version p =
             [ switch RenderMan,
               long "render-man-page",
               hidden,
-              help "Show this help text"
+              help "Render a manpage"
+            ],
+          setting
+            [ switch RenderNixosOptions,
+              long "render-nixos-options",
+              hidden,
+              help "Render nixos options"
             ],
           allowLeftovers $
             setting
@@ -572,7 +583,7 @@ runParserOn debugMode parser args envVars mConfig = do
                           let mConfDoc = settingConfDoc set
                           mConf <- case settingConfigVals of
                             Nothing -> pure NotRun
-                            Just ((ne, DecodingCodec c) :| _) -> do
+                            Just (ConfigValSetting {..} :| _) -> do
                               -- TODO try parsing with the others
                               mObj <- asks ppEnvConf
                               case mObj of
@@ -591,22 +602,22 @@ runParserOn debugMode parser args envVars mConfig = do
                                           case mO' of
                                             Nothing -> pure Nothing
                                             Just o' -> jsonParser o' neRest
-                                  case JSON.parseEither (jsonParser obj) ne of
+                                  case JSON.parseEither (jsonParser obj) configValSettingPath of
                                     Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
                                     Right mV -> case mV of
                                       Nothing -> do
                                         debug
                                           [ "could not set based on config value, not configured: ",
-                                            chunk $ T.pack $ show $ NE.toList ne
+                                            chunk $ T.pack $ show $ NE.toList configValSettingPath
                                           ]
                                         pure NotFound
-                                      Just v -> case JSON.parseEither (parseJSONVia c) v of
+                                      Just v -> case JSON.parseEither (parseJSONVia configValSettingCodec) v of
                                         Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
                                         Right mA -> case mA of
                                           Nothing -> do
                                             debug
                                               [ "could not set based on config value, configured to nothing: ",
-                                                chunk $ T.pack $ show $ NE.toList ne
+                                                chunk $ T.pack $ show $ NE.toList configValSettingPath
                                               ]
                                             pure NotFound
                                           Just a -> do

@@ -11,7 +11,7 @@
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
     validity.url = "github:NorfairKing/validity";
     validity.flake = false;
-    autodocodec.url = "github:NorfairKing/autodocodec/opt-env-conf";
+    autodocodec.url = "github:NorfairKing/autodocodec";
     autodocodec.flake = false;
     safe-coloured-text.url = "github:NorfairKing/safe-coloured-text";
     safe-coloured-text.flake = false;
@@ -104,7 +104,10 @@
               hpack.enable = true;
               ormolu.enable = true;
               nixpkgs-fmt.enable = true;
-              nixpkgs-fmt.excludes = [ ".*/default.nix" ];
+              nixpkgs-fmt.excludes = [
+                ".*/default.nix"
+                ".*/nix-options.nix"
+              ];
               cabal2nix.enable = true;
             };
           };

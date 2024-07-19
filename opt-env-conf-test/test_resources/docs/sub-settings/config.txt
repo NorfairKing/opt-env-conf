@@ -1,0 +1,4 @@
+  [34mExample with sub-settings[m
+  [37mfoo.bar.quux[m:
+    # [32mor null[m
+    [33m<string>[m

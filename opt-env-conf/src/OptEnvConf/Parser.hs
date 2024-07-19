@@ -79,14 +79,13 @@ where
 
 import Autodocodec.Yaml
 import Control.Applicative
-import Control.Arrow (first)
 import Control.Monad
 import Control.Selective
 import Data.Aeson as JSON
 import qualified Data.Aeson.KeyMap as KM
 import Data.Functor.Identity
 import Data.Hashable
-import Data.List.NonEmpty (NonEmpty (..), (<|))
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
@@ -886,7 +885,7 @@ subEnv_ s = subEnv (toEnvCase s <> "_")
 {-# ANN subConfig ("NOCOVER" :: String) #-}
 subConfig :: String -> Parser a -> Parser a
 subConfig prefix = parserMapSetting $ \s ->
-  s {settingConfigVals = NE.map (first (prefix <|)) <$> settingConfigVals s}
+  s {settingConfigVals = NE.map (prefixConfigValSetting prefix) <$> settingConfigVals s}
 
 -- | Helper function for calling 'subConfig' with 'toConfigCase'.
 --

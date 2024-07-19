@@ -19,12 +19,16 @@ big-config (-h|--help) | --version | (--config-file FILE_PATH)
   option: --config-file FILE_PATH
   env: CONFIG_FILE FILE_PATH
   
-  multi-line config codec explanation, the same option twice.
+  big configuration object
   config:
     big: # or null
-      <key>: 
+      # BigConfig
+      map: # required
         <key>: 
-          <number> # 64 bit signed integer
+          <key>: 
+            <number> # 64 bit signed integer
+      sub: # optional
+        <string>
   
 
 .Sh OPTIONS
@@ -36,10 +40,14 @@ big-config (-h|--help) | --version | (--config-file FILE_PATH)
   CONFIG_FILE FILE_PATH   Path to the configuration file
 
 .Sh CONFIGURATION VALUES
-  multi-line config codec explanation, the same option twice.
+  big configuration object
   big:
     # or null
-    <key>: 
+    # BigConfig
+    map: # required
       <key>: 
-        <number> # 64 bit signed integer
+        <key>: 
+          <number> # 64 bit signed integer
+    sub: # optional
+      <string>
 

@@ -23,20 +23,29 @@ AnyDocsAnd
               (( "big" :| []
                , AnyOfSchema
                    (NullSchema :|
-                      [ MapSchema
-                          (MapSchema
-                             (NumberSchema
-                                (Just
-                                   NumberBounds
-                                     { numberBoundsLower = -9.223372036854775808e18
-                                     , numberBoundsUpper = 9.223372036854775807e18
-                                     })))
+                      [ CommentSchema
+                          "BigConfig"
+                          (ObjectSchema
+                             (ObjectAllOfSchema
+                                (ObjectKeySchema
+                                   "map"
+                                   Required
+                                   (MapSchema
+                                      (MapSchema
+                                         (NumberSchema
+                                            (Just
+                                               NumberBounds
+                                                 { numberBoundsLower = -9.223372036854775808e18
+                                                 , numberBoundsUpper = 9.223372036854775807e18
+                                                 }))))
+                                   Nothing :|
+                                   [ ObjectKeySchema "sub" (Optional Nothing) StringSchema Nothing
+                                   ])))
                       ])
                ) :|
                  [])
         , setDocDefault = Nothing
         , setDocMetavar = Nothing
-        , setDocHelp =
-            Just "multi-line config codec explanation, the same option twice."
+        , setDocHelp = Just "big configuration object"
         }
   ]

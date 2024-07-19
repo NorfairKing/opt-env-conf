@@ -9,6 +9,10 @@ module OptEnvConf.Test
     goldenSettingsReferenceDocumentationSpec,
     goldenParserReferenceDocumentationSpec,
     pureGoldenReferenceDocumentation,
+    goldenSettingsNixOptionsSpec,
+    goldenParserNixOptionsSpec,
+    pureGoldenNixOptions,
+    module OptEnvConf,
   )
 where
 
@@ -50,3 +54,16 @@ pureGoldenReferenceDocumentation path progname parser =
     renderChunksText With24BitColours $
       renderReferenceDocumentation progname $
         parserDocs parser
+
+goldenSettingsNixOptionsSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> Spec
+goldenSettingsNixOptionsSpec path = withFrozenCallStack $ goldenParserNixOptionsSpec (settingsParser @a) path
+
+goldenParserNixOptionsSpec :: (HasCallStack) => Parser a -> FilePath -> Spec
+goldenParserNixOptionsSpec parser path = withFrozenCallStack $ do
+  specify "produces the same reference documentation as before" $
+    pureGoldenNixOptions path parser
+
+pureGoldenNixOptions :: FilePath -> Parser a -> GoldenTest Text
+pureGoldenNixOptions path parser =
+  pureGoldenTextFile path $
+    renderParserNixOptions parser

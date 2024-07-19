@@ -43,16 +43,16 @@ WithConfig
                   True
                   (Just ("NAME" :| []))
                   (Just
-                     [ ( "name" :| []
-                       , BimapCodec
-                           _
-                           _
-                           (EitherCodec
-                              PossiblyJointUnion
-                              NullCodec
-                              (BimapCodec _ _ (StringCodec Nothing)))
-                       )
-                     ])
+                     (ConfigValSetting
+                        ("name" :| [])
+                        BimapCodec
+                        _
+                        _
+                        (EitherCodec
+                           PossiblyJointUnion
+                           NullCodec
+                           (BimapCodec _ _ (StringCodec Nothing))) :|
+                        []))
                   Nothing
                   (Just "NAME")
                   (Just "name"))))

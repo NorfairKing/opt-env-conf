@@ -13,11 +13,15 @@ example with a big configuration
   option: [37m--config-file[m [33mFILE_PATH[m
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
-  [34mmulti-line config codec explanation, the same option twice.[m
+  [34mbig configuration object[m
   config:
     [37mbig[m: # [32mor null[m
-      [37m<key>[m: 
+      # BigConfig
+      [37mmap[m: # [31mrequired[m
         [37m<key>[m: 
-          [33m<number>[m # [32m64 bit signed integer[m
+          [37m<key>[m: 
+            [33m<number>[m # [32m64 bit signed integer[m
+      [37msub[m: # [34moptional[m
+        [33m<string>[m
   
 

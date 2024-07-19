@@ -1,7 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module OptEnvConf.APISpec (spec) where
 
+import Autodocodec
 import Data.Map (Map)
 import Data.Text (Text)
 import Data.Version
@@ -18,6 +20,7 @@ spec = do
   exampleParserSpec "args" "args parser" argsParser
   exampleParserSpec "optional" "optional argument" optionalParser
   exampleParserSpec "big-config" "example with a big configuration" bigConfigParser
+  exampleParserSpec "sub-settings" "example with a sub settings" subSettingsParser
   exampleParserSpec "hidden" "example with hidden settings" hiddenParser
   exampleParserSpec "enable-disable" "enableDisableSwitch example" enableDisableParser
   exampleParserSpec "yes-no" "yesNoSwitch example" yesNoParser
@@ -100,6 +103,10 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
       renderReferenceDocumentation dir $
         parserDocs parser
 
+  it "renders the Nix options the same way" $
+    pureGoldenTextFile ("test_resources/docs/" <> dir <> "/nix-options.nix") $
+      renderParserNixOptions parser
+
 pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
 pureGoldenChunksFile fp cs =
   pureGoldenTextFile fp $ renderChunksText With24BitColours cs
@@ -141,16 +148,37 @@ greetParser =
             help "Whether to be polite"
           ]
 
-data BigConfig = BigConfig (Map String (Map String Int))
+data BigConfig = BigConfig
+  { bigConfigMap :: Map String (Map String Int),
+    bigConfigSubObject :: Maybe Text
+  }
+
+instance HasCodec BigConfig where
+  codec =
+    object "BigConfig" $
+      BigConfig
+        <$> requiredField' "map" .= bigConfigMap
+        <*> optionalField' "sub" .= bigConfigSubObject
 
 bigConfigParser :: Parser BigConfig
 bigConfigParser =
   withLocalYamlConfig $
-    BigConfig
-      <$> setting
-        [ conf "big",
-          help "multi-line config codec explanation, the same option twice."
-        ]
+    setting
+      [ conf "big",
+        help "big configuration object"
+      ]
+
+subSettingsParser :: Parser String
+subSettingsParser =
+  withLocalYamlConfig $
+    subAll "foo" $
+      subAll "bar" $
+        setting
+          [ reader str,
+            name "quux",
+            help "Example with sub-settings",
+            metavar "STR"
+          ]
 
 data Args = Args [String]
 

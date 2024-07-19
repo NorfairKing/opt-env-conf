@@ -1,0 +1,10 @@
+AnyDocsSingle
+  ConfDoc
+    { confDocKeys =
+        ( "foo" :| [ "bar" , "quux" ]
+        , AnyOfSchema (NullSchema :| [ StringSchema ])
+        ) :|
+          []
+    , confDocDefault = Nothing
+    , confDocHelp = Just "Example with sub-settings"
+    }
