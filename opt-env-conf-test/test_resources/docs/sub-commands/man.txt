@@ -23,8 +23,30 @@ sub-commands (-h|--help)
   
 
 .Sh COMMANDS
-  top       command without subcommands
-  sub       command with subcommands
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  command without subcommands
+  command: top
+  
+  command with subcommands
+  command: sub
+    A
+    command: a
+    
+    B
+    command: b
+    
+    C
+    command: c
+    
+    D
+    command: d
+    
+  
 
 .Sh OPTIONS
   -h|--help Show this help text 

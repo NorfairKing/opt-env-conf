@@ -424,7 +424,7 @@ renderHelpPage progname progDesc docs =
         ],
         concat
           [ [ headerChunks "Available commands",
-              renderCommandDocs docs
+              renderCommandDocsShort docs
             ]
             | not (null (docsToCommandDocs docs))
           ]
@@ -469,8 +469,55 @@ renderSetDocs = unlinesChunks . go
           else ([], AnyDocsSingle d : ds)
       ds -> ([], ds)
 
+-- todo: don't print top level settings here
 renderCommandDocs :: AnyDocs SetDoc -> [Chunk]
 renderCommandDocs = unlinesChunks . go
+  where
+    go :: AnyDocs SetDoc -> [[Chunk]]
+    go = \case
+      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> goOr ds
+      AnyDocsSingle _ -> []
+
+    goCommand :: CommandDoc SetDoc -> [[Chunk]]
+    goCommand CommandDoc {..} =
+      indent $
+        [helpChunk commandDocHelp]
+          : ["command: ", commandChunk commandDocArgument]
+          : go commandDocs
+          ++ [[]]
+
+    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
+    goOr :: [AnyDocs SetDoc] -> [[Chunk]]
+    goOr = \case
+      [] -> []
+      [d] -> go d
+      (AnyDocsSingle d : ds) ->
+        case setDocHelp d of
+          Nothing -> go (AnyDocsSingle d) ++ goOr ds
+          Just h ->
+            let (sds, rest) = goSameHelp h ds
+            in concat
+                  [ indent $ renderSetDocHeader (Just h),
+                    indent $ concatMap renderSetDocWithoutHeader $ d : sds,
+                    [[]],
+                    goOr rest
+                  ]
+      (d : ds) -> go d ++ goOr ds
+    goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
+    goSameHelp h = \case
+      [] -> ([], [])
+      (AnyDocsSingle d : ds) ->
+        if setDocHelp d == Just h
+          then
+            let (sds, rest) = goSameHelp h ds
+            in (d : sds, rest)
+          else ([], AnyDocsSingle d : ds)
+      ds -> ([], ds)
+
+renderCommandDocsShort :: AnyDocs SetDoc -> [Chunk]
+renderCommandDocsShort = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case

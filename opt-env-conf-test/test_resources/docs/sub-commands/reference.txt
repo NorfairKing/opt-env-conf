@@ -15,8 +15,30 @@
   
 
 [36mAll commands[m:
-  [35mtop[m       [34mcommand without subcommands[m
-  [35msub[m       [34mcommand with subcommands[m
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mcommand without subcommands[m
+  command: [35mtop[m
+  
+  [34mcommand with subcommands[m
+  command: [35msub[m
+    [34mA[m
+    command: [35ma[m
+    
+    [34mB[m
+    command: [35mb[m
+    
+    [34mC[m
+    command: [35mc[m
+    
+    [34mD[m
+    command: [35md[m
+    
+  
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

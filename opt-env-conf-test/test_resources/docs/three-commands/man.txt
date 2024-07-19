@@ -23,10 +23,28 @@ three-commands (-h|--help)
   
 
 .Sh COMMANDS
-  one                      first
-  two                      second
-  three-very-long-command-name
-                           third
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  first
+  command: one
+  
+  second
+  command: two
+    enable extra
+    switch: --(enable|disable)-enable
+    env: ENABLE BOOL
+    config:
+      enable: # or null
+        <boolean>
+  
+  
+  third
+  command: three-very-long-command-name
+  
 
 .Sh OPTIONS
   -h|--help Show this help text 
