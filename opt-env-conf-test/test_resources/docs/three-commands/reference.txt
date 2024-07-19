@@ -15,9 +15,9 @@
   
 
 [36mAll commands[m:
-  [35mone[m		[34mfirst[m
-  [35mtwo[m		[34msecond[m
-  [35mthree[m		[34mthird[m
+  [35mone[m       [34mfirst[m
+  [35mtwo[m       [34msecond[m
+  [35mthree[m     [34mthird[m
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

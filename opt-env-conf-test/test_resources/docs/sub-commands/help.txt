@@ -17,6 +17,6 @@ example with subcommands
   
 
 [36mAvailable commands[m:
-  [35mtop[m		[34mcommand without subcommands[m
-  [35msub[m		[34mcommand with subcommands[m
+  [35mtop[m       [34mcommand without subcommands[m
+  [35msub[m       [34mcommand with subcommands[m
 

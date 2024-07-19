@@ -23,9 +23,9 @@ three-commands (-h|--help)
   
 
 .Sh COMMANDS
-  one		first
-  two		second
-  three		third
+  one       first
+  two       second
+  three     third
 
 .Sh OPTIONS
   -h|--help Show this help text 

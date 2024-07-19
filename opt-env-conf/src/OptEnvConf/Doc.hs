@@ -458,14 +458,21 @@ renderCommandDocs = unlinesChunks . (\cs -> if null cs then [["no commands avail
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsCommands cs ->
+        let maxLength = maximum $ length . commandDocArgument <$> cs
+         in concatMap (goCommand maxLength) cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> goOr ds
       AnyDocsSingle _ -> []
 
-    goCommand :: CommandDoc SetDoc -> [[Chunk]]
-    goCommand CommandDoc {..} =
-      indent $ [commandChunk commandDocArgument, "\t\t", helpChunk commandDocHelp] : []
+    goCommand :: Int -> CommandDoc SetDoc -> [[Chunk]]
+    goCommand maxLength CommandDoc {..} =
+      indent $
+        if length commandDocArgument <= maxLength' - 1
+          then [commandChunk commandDocArgument, chunk (T.replicate (maxLength' - length commandDocArgument) " "), helpChunk commandDocHelp] : []
+          else [commandChunk commandDocArgument] : [[chunk (T.replicate maxLength' " "), helpChunk commandDocHelp]]
+      where
+        maxLength' = minimum [25, maximum [10, maxLength]]
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: [AnyDocs SetDoc] -> [[Chunk]]

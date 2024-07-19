@@ -23,8 +23,8 @@ sub-commands (-h|--help)
   
 
 .Sh COMMANDS
-  top		command without subcommands
-  sub		command with subcommands
+  top       command without subcommands
+  sub       command with subcommands
 
 .Sh OPTIONS
   -h|--help Show this help text 

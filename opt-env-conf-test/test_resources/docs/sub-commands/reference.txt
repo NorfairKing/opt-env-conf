@@ -15,8 +15,8 @@
   
 
 [36mAll commands[m:
-  [35mtop[m		[34mcommand without subcommands[m
-  [35msub[m		[34mcommand with subcommands[m
+  [35mtop[m       [34mcommand without subcommands[m
+  [35msub[m       [34mcommand with subcommands[m
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
