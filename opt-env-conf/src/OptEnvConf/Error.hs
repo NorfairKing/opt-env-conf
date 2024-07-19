@@ -9,8 +9,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Text as T
-import GHC.Stack (SrcLoc, prettySrcLoc)
+import GHC.Stack (SrcLoc)
 import OptEnvConf.Doc
+import OptEnvConf.Output
 import OptEnvConf.Parser (SrcLocHash, hashSrcLoc)
 import Text.Colour
 
@@ -130,7 +131,7 @@ renderError ParseError {..} =
           ]
         ParseErrorUnrecognised leftovers ->
           ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
-      maybe [] (pure . ("see " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) parseErrorSrcLoc
+      maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
     ]
 
 errorSrcLocSet :: (Foldable f) => f ParseError -> Set SrcLocHash

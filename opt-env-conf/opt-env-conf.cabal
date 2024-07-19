@@ -33,6 +33,7 @@ library
       OptEnvConf.Error
       OptEnvConf.Lint
       OptEnvConf.NonDet
+      OptEnvConf.Output
       OptEnvConf.Parser
       OptEnvConf.Reader
       OptEnvConf.Run

@@ -50,7 +50,7 @@ let
     installManpages exeNames (installCompletions exeNames drv);
 
   mkSettingsCheck = name: exe: args: env: runCommand name env ''
-    ${exe} --run-settings-check ${concatStringsSep " " args} > $out
+    ${exe} --run-settings-check ${concatStringsSep " " args} > $out 2>&1
   '';
 
   # Note to reader: If you find code while debugging a build failure, please
