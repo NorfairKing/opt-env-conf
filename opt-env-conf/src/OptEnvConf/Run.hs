@@ -315,7 +315,7 @@ runParserOn debugMode parser args envVars mConfig = do
   let go' = do
         result <- go parser
         leftoverArgs <- gets ppStateArgs
-        case argsLeftovers leftoverArgs of
+        case recogniseLeftovers leftoverArgs of
           Nothing -> pure result
           Just leftovers -> ppError Nothing $ ParseErrorUnrecognised leftovers
   mTup <- runPPLazy go' ppState ppEnv

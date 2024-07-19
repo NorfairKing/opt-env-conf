@@ -7,11 +7,11 @@ module OptEnvConf.Args
   ( -- * Public API
     Args (..),
     emptyArgs,
-    argsLeftovers,
     parseArgs,
     consumeArgument,
     consumeOption,
     consumeSwitch,
+    recogniseLeftovers,
 
     -- ** Internals
     Tomb (..),
@@ -113,16 +113,6 @@ emptyArgs = parseArgs []
 
 rebuildArgs :: Args -> [Tomb Arg]
 rebuildArgs Args {..} = argsBefore ++ argsAfter
-
-argsLeftovers :: Args -> Maybe (NonEmpty String)
-argsLeftovers =
-  NE.nonEmpty
-    . mapMaybe
-      ( \case
-          Live a -> Just (renderArg a)
-          Dead -> Nothing
-      )
-    . rebuildArgs
 
 -- | Create 'Args' with all-live arguments and cursor at the start.
 parseArgs :: [String] -> Args
@@ -370,6 +360,21 @@ consumeChar cs = go
                 (c :| [], True)
                 (first (c NE.<|))
                 new
+
+recogniseLeftovers :: Args -> Maybe (NonEmpty String)
+recogniseLeftovers Args {..} = NE.nonEmpty $ live argsBefore ++ live (modDoubleDash argsAfter)
+  where
+    -- If arguments were parsed after a double dash, don't consider the double
+    -- dash leftover.
+    modDoubleDash = \case
+      Live ArgBareDoubleDash : Dead : rest -> rest
+      a -> a
+    live =
+      mapMaybe
+        ( \case
+            Live a -> Just (renderArg a)
+            Dead -> Nothing
+        )
 
 data Dashed
   = DashedShort !Char
