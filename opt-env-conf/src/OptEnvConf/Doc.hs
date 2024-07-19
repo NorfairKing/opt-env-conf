@@ -40,15 +40,14 @@ import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
 import Control.Arrow
 import Control.Monad
-import Data.List (intercalate, intersperse)
+import Data.List (intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Version
 import OptEnvConf.Args (Dashed (..))
-import qualified OptEnvConf.Args as Args
+import OptEnvConf.Output
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Text.Colour
@@ -286,11 +285,6 @@ helpLines = map (map (fore blue)) . stringLines
 
 progDescLines :: String -> [[Chunk]]
 progDescLines = stringLines
-
-stringLines :: String -> [[Chunk]]
-stringLines s =
-  let ls = T.lines (T.pack s)
-   in map (pure . chunk) ls
 
 -- | Render the output of `--render-man-page` for reading with @man@
 renderManPage ::
@@ -644,54 +638,3 @@ renderConfDoc ConfDoc {..} =
               [confValChunk key, ":"] : indent ls
       )
       (NE.toList confDocKeys)
-
-progNameChunk :: String -> Chunk
-progNameChunk = fore yellow . chunk . T.pack
-
-versionChunk :: Version -> Chunk
-versionChunk = chunk . T.pack . showVersion
-
-usageChunk :: Chunk
-usageChunk = fore cyan "Usage: "
-
-commandChunk :: String -> Chunk
-commandChunk = fore magenta . chunk . T.pack
-
-mMetavarChunk :: Maybe Metavar -> Chunk
-mMetavarChunk = metavarChunk . fromMaybe "METAVAR"
-
-metavarChunk :: Metavar -> Chunk
-metavarChunk = fore yellow . chunk . T.pack
-
-dashedChunks :: [Dashed] -> Maybe [Chunk]
-dashedChunks = fmap dashedChunksNE . NE.nonEmpty
-
-dashedChunksNE :: NonEmpty Dashed -> [Chunk]
-dashedChunksNE = intersperse (fore cyan "|") . map dashedChunk . NE.toList
-
-dashedChunk :: Dashed -> Chunk
-dashedChunk = fore white . chunk . T.pack . Args.renderDashed
-
-envVarChunksNE :: NonEmpty String -> [Chunk]
-envVarChunksNE = intersperse (fore cyan "|") . map envVarChunk . NE.toList
-
-envVarChunk :: String -> Chunk
-envVarChunk = fore white . chunk . T.pack
-
-confValChunk :: NonEmpty String -> Chunk
-confValChunk = fore white . chunk . T.pack . intercalate "." . NE.toList
-
-defaultValueChunks :: String -> [Chunk]
-defaultValueChunks val = ["default: ", fore yellow $ chunk $ T.pack val]
-
-mHelpChunk :: Maybe Help -> Chunk
-mHelpChunk = maybe (fore red "undocumented") helpChunk
-
-helpChunk :: Help -> Chunk
-helpChunk = fore blue . chunk . T.pack
-
-headerChunks :: Text -> [Chunk]
-headerChunks t = [fore cyan (chunk t), ":"]
-
-indent :: [[Chunk]] -> [[Chunk]]
-indent = map ("  " :)

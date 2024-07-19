@@ -354,6 +354,26 @@ spec = do
         (setting [reader str, option, long "foo"])
         "-dfu"
 
+      -- Arguments can be parsed as-is
+      argParseSpec
+        ["delete"]
+        ( commands
+            [ command "add" "add" (pure "hi"),
+              command "delete" "delete" (pure "ho")
+            ]
+        )
+        ("ho" :: String)
+
+      -- A command can have an argument
+      argParseSpec
+        ["add", "hi"]
+        ( commands
+            [ command "add" "add" $ setting [argument, reader str],
+              command "other" "other" (pure "ho")
+            ]
+        )
+        "hi"
+
       -- Here an argument has a value that looks like a command name but
       -- should still be treated as an argument.
       argParseSpec
@@ -665,6 +685,18 @@ spec = do
         [ (["--before", "'m'"], ('m', Nothing))
         ]
 
+      -- Failing after consuming args leaves the args unconsumed
+      argParseSpecs
+        ( choice
+            [ (++)
+                <$> many (setting [reader str, argument])
+                <*> setting [switch ["ho"], long "--switch"],
+              many $ setting [reader str, argument]
+            ]
+        )
+        [ (["args", "here"], ["args", "here"])
+        ]
+
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
 argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParseSpec args p result) table
 
@@ -672,7 +704,7 @@ argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a ->
 argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses", show args, "as", show expected]) $ do
     let argMap = parseArgs args
-    errOrRes <- runParserOn p argMap EnvMap.empty Nothing
+    errOrRes <- runParserOn Nothing p argMap EnvMap.empty Nothing
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -684,7 +716,7 @@ envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser
 envParseSpec envVars p expected = withFrozenCallStack $ do
   it (unwords ["parses", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
-    errOrRes <- runParserOn p emptyArgs envMap Nothing
+    errOrRes <- runParserOn Nothing p emptyArgs envMap Nothing
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -698,7 +730,7 @@ shouldParse ::
   a ->
   IO ()
 shouldParse p args e mConf expected = do
-  errOrRes <- runParserOn p args e mConf
+  errOrRes <- runParserOn Nothing p args e mConf
   context (showParserABit p) $ case errOrRes of
     Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected
@@ -712,7 +744,7 @@ shouldFail ::
   (NonEmpty ParseErrorMessage -> Bool) ->
   IO ()
 shouldFail p args e mConf isExpected = do
-  errOrRes <- runParserOn p args e mConf
+  errOrRes <- runParserOn Nothing p args e mConf
   case errOrRes of
     Left errs -> NE.map parseErrorMessage errs `shouldSatisfy` isExpected
     Right actual -> expectationFailure $ show actual

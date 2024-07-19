@@ -14,6 +14,7 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
+import Control.Monad
 import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
 import Data.Aeson (parseJSON, (.:?))
@@ -27,6 +28,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Data.Traversable
 import Data.Version
 import GHC.Stack (SrcLoc)
@@ -38,6 +40,7 @@ import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Lint
 import OptEnvConf.NonDet
+import OptEnvConf.Output
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Setting
@@ -102,8 +105,13 @@ runParser version progDesc p = do
     Nothing -> do
       let p' = internalParser version p
       let docs = parserDocs p'
+      mDebugMode <-
+        if debugMode
+          then Just <$> getTerminalCapabilitiesFromHandle stderr
+          else pure Nothing
       errOrResult <-
         runParserOn
+          mDebugMode
           p'
           argMap
           envVars
@@ -111,8 +119,7 @@ runParser version progDesc p = do
       case errOrResult of
         Left errs -> do
           tc <- getTerminalCapabilitiesFromHandle stderr
-          let f = if debugMode then id else eraseErrorSrcLocs
-          hPutChunksLocaleWith tc stderr $ renderErrors $ f errs
+          hPutChunksLocaleWith tc stderr $ renderErrors errs
           exitFailure
         Right i -> case i of
           ShowHelp -> do
@@ -134,12 +141,11 @@ runParser version progDesc p = do
             let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
                   Nothing -> error "If you see this there is a bug in opt-env-conf."
                   Just am -> am
-            errOrSets <- runParserOn p argMap'' envVars Nothing
+            stderrTc <- getTerminalCapabilitiesFromHandle stderr
+            errOrSets <- runParserOn (Just stderrTc) p argMap'' envVars Nothing
             case errOrSets of
               Left errs -> do
-                tc <- getTerminalCapabilitiesFromHandle stderr
-                -- Don't erase rcs locs because they'll probably be useful anyway.
-                hPutChunksLocaleWith tc stderr $ renderErrors errs
+                hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
                 exitFailure
               Right _ -> do
                 tc <- getTerminalCapabilitiesFromHandle stdout
@@ -286,12 +292,14 @@ internalParser version p =
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
 runParserOn ::
+  -- DebugMode
+  Maybe TerminalCapabilities ->
   Parser a ->
   Args ->
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn parser args envVars mConfig = do
+runParserOn debugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
@@ -300,12 +308,14 @@ runParserOn parser args envVars mConfig = do
   let ppEnv =
         PPEnv
           { ppEnvEnv = envVars,
-            ppEnvConf = mConfig
+            ppEnvConf = mConfig,
+            ppEnvDebug = debugMode,
+            ppEnvIndent = 0
           }
   let go' = do
         result <- go parser
         leftoverArgs <- gets ppStateArgs
-        case argsLeftovers leftoverArgs of
+        case recogniseLeftovers leftoverArgs of
           Nothing -> pure result
           Just leftovers -> ppError Nothing $ ParseErrorUnrecognised leftovers
   mTup <- runPPLazy go' ppState ppEnv
@@ -318,7 +328,7 @@ runParserOn parser args envVars mConfig = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
-                Nothing -> pure (Left firstErrors)
+                Nothing -> pure $ Left $ (if isJust debugMode then id else eraseErrorSrcLocs) firstErrors
                 Just ((eOR, _), ns') -> case eOR of
                   Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
@@ -328,205 +338,308 @@ runParserOn parser args envVars mConfig = do
       Parser a ->
       PP a
     go = \case
-      ParserPure a -> pure a
-      ParserAp ff fa -> go ff <*> go fa
-      ParserEmpty mLoc -> ppError mLoc ParseErrorEmpty
-      ParserSelect fe ff -> select (go fe) (go ff)
+      ParserPure a -> do
+        debug [syntaxChunk "pure value"]
+        pure a
+      ParserAp ff fa -> do
+        debug [syntaxChunk "Ap"]
+        ppIndent $ go ff <*> go fa
+      ParserEmpty mLoc -> do
+        debug [syntaxChunk "Empty", ": ", mSrcLocChunk mLoc]
+        ppError mLoc ParseErrorEmpty
+      ParserSelect fe ff -> do
+        debug [syntaxChunk "Select"]
+        ppIndent $ select (go fe) (go ff)
       ParserAlt p1 p2 -> do
-        eor <- tryPP (go p1)
-        case eor of
-          Just a -> pure a
-          Nothing -> go p2
+        debug [syntaxChunk "Alt"]
+        ppIndent $ do
+          debug ["Trying left side."]
+          eor <- ppIndent $ tryPP (go p1)
+          case eor of
+            Just a -> do
+              debug ["Left side succeeded."]
+              pure a
+            Nothing -> do
+              debug ["Left side failed, trying right side."]
+              ppIndent $ go p2
       ParserMany p' -> do
-        eor <- tryPP $ go p'
-        case eor of
-          Nothing -> pure []
-          Just a -> do
-            as <- go (ParserMany p')
-            pure (a : as)
+        debug [syntaxChunk "Many"]
+        ppIndent $ do
+          eor <- tryPP $ go p'
+          case eor of
+            Nothing -> pure []
+            Just a -> do
+              as <- go (ParserMany p')
+              pure (a : as)
       ParserAllOrNothing mLoc p' -> do
-        e <- ask
-        s <- get
-        results <- liftIO $ runPP (go p') s e
-        (result, s') <- ppNonDetList results
-        put s'
-        case result of
-          Success a -> pure a
-          Failure errs -> do
-            if not $ all errorIsForgivable errs
-              then ppErrors' errs
-              else do
-                -- Settings available below
-                let settingsSet = parserSettingsSet p'
-                -- Settings that have been parsed
-                parsedSet <- gets ppStateParsedSettings
-                -- Settings that have been parsed below
-                let parsedSettingsSet = settingsSet `S.intersection` parsedSet
-                -- If any settings have been parsed below, and parsing still failed
-                -- (this is the case because we're in the failure branch)
-                -- with only forgivable errors
-                -- (this is the case because we're in the branch where that's been checked)
-                -- then this should be an unforgivable error.
-                if not (null parsedSettingsSet)
-                  then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
-                  else ppErrors' errs
+        debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          e <- ask
+          s <- get
+          results <- liftIO $ runPP (go p') s e
+          (result, s') <- ppNonDetList results
+          put s'
+          case result of
+            Success a -> pure a
+            Failure errs -> do
+              if not $ all errorIsForgivable errs
+                then ppErrors' errs
+                else do
+                  -- Settings available below
+                  let settingsSet = parserSettingsSet p'
+                  -- Settings that have been parsed
+                  parsedSet <- gets ppStateParsedSettings
+                  -- Settings that have been parsed below
+                  let parsedSettingsSet = settingsSet `S.intersection` parsedSet
+                  -- If any settings have been parsed below, and parsing still failed
+                  -- (this is the case because we're in the failure branch)
+                  -- with only forgivable errors
+                  -- (this is the case because we're in the branch where that's been checked)
+                  -- then this should be an unforgivable error.
+                  if not (null parsedSettingsSet)
+                    then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
+                    else ppErrors' errs
       ParserCheck mLoc forgivable f p' -> do
-        a <- go p'
-        errOrB <- liftIO $ f a
-        case errOrB of
-          Left err -> ppError mLoc $ ParseErrorCheckFailed forgivable err
-          Right b -> pure b
+        debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          debug ["parser"]
+          a <- ppIndent $ go p'
+          debug ["check"]
+          ppIndent $ do
+            errOrB <- liftIO $ f a
+            case errOrB of
+              Left err -> do
+                debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
+                ppError mLoc $ ParseErrorCheckFailed forgivable err
+              Right b -> do
+                debug ["succeeded"]
+                pure b
       ParserCommands mLoc cs -> do
-        mS <- ppArg
-        case mS of
-          Nothing -> ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
-          Just s -> case find ((== s) . commandArg) cs of
-            Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
-            Just c -> go $ commandParser c
+        debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          mS <- ppArg
+          case mS of
+            Nothing -> do
+              debug ["No argument found for choosing a command."]
+              ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
+            Just s -> do
+              case find ((== s) . commandArg) cs of
+                Nothing -> do
+                  debug ["Argument found, but no matching command: ", chunk $ T.pack $ show s]
+                  ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+                Just c -> do
+                  debug ["Set command to ", commandChunk (commandArg c)]
+                  go $ commandParser c
       ParserWithConfig pc pa -> do
-        mNewConfig <- go pc
-        local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
+        debug [syntaxChunk "WithConfig"]
+        ppIndent $ do
+          debug ["loading config"]
+          mNewConfig <- ppIndent $ go pc
+          debug ["with loaded config"]
+          ppIndent $
+            local (\e -> e {ppEnvConf = mNewConfig}) $
+              go pa
       ParserSetting mLoc set@Setting {..} -> do
-        let markParsed = do
-              maybe
-                (pure ())
-                ( \loc -> modify' $ \s ->
-                    s
-                      { ppStateParsedSettings =
-                          S.insert
-                            (hashSrcLoc loc)
-                            (ppStateParsedSettings s)
-                      }
-                )
-                mLoc
-        let mOptDoc = settingOptDoc set
-        mArg <-
-          if settingTryArgument
-            then do
-              -- Require readers before finding the argument so the parser
-              -- always fails if it's missing a reader.
-              rs <- requireReaders settingReaders
-              mS <- ppArg
-              case mS of
-                Nothing -> pure NotFound
-                Just argStr -> do
-                  case tryReaders rs argStr of
-                    Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
-                    Right a -> pure $ Found a
-            else pure NotRun
-
-        case mArg of
-          Found a -> do
-            markParsed
-            pure a
-          _ -> do
-            -- TODO do this without all the nesting
-            mSwitch <- case settingSwitchValue of
-              Nothing -> pure NotRun
-              Just a -> do
-                mS <- ppSwitch settingDasheds
+        debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          let markParsed = do
+                maybe
+                  (pure ())
+                  ( \loc -> modify' $ \s ->
+                      s
+                        { ppStateParsedSettings =
+                            S.insert
+                              (hashSrcLoc loc)
+                              (ppStateParsedSettings s)
+                        }
+                  )
+                  mLoc
+          let mOptDoc = settingOptDoc set
+          mArg <-
+            if settingTryArgument
+              then do
+                -- Require readers before finding the argument so the parser
+                -- always fails if it's missing a reader.
+                rs <- requireReaders settingReaders
+                mS <- ppArg
                 case mS of
-                  Nothing -> pure NotFound
-                  Just () -> pure $ Found a
+                  Nothing -> do
+                    debug ["could not set based on argument: no argument"]
+                    pure NotFound
+                  Just argStr -> do
+                    case tryReaders rs argStr of
+                      Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
+                      Right a -> do
+                        debug
+                          [ "set based on argument: ",
+                            chunk $ T.pack $ show argStr
+                          ]
+                        pure $ Found a
+              else pure NotRun
 
-            case mSwitch of
-              Found a -> do
-                markParsed
-                pure a
-              _ -> do
-                mOpt <-
-                  if settingTryOption
-                    then do
-                      -- Require readers before finding the option so the parser
-                      -- always fails if it's missing a reader.
-                      rs <- requireReaders settingReaders
-                      mS <- ppOpt settingDasheds
-                      case mS of
-                        Nothing -> pure NotFound
-                        Just optionStr -> do
-                          case tryReaders rs optionStr of
-                            Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
-                            Right a -> pure $ Found a
-                    else pure NotRun
+          case mArg of
+            Found a -> do
+              markParsed
+              pure a
+            _ -> do
+              -- TODO do this without all the nesting
+              mSwitch <- case settingSwitchValue of
+                Nothing -> pure NotRun
+                Just a -> do
+                  mS <- ppSwitch settingDasheds
+                  case mS of
+                    Nothing -> do
+                      debug
+                        [ "could not set based on switch, no switch: ",
+                          chunk $ T.pack $ show $ map renderDashed settingDasheds
+                        ]
+                      pure NotFound
+                    Just () -> do
+                      debug ["set based on switch."]
+                      pure $ Found a
 
-                case mOpt of
-                  Found a -> do
-                    markParsed
-                    pure a
-                  _ -> do
-                    let mEnvDoc = settingEnvDoc set
-                    mEnv <- case settingEnvVars of
-                      Nothing -> pure NotRun
-                      Just ne -> do
-                        -- Require readers before finding the env vars so the parser
+              case mSwitch of
+                Found a -> do
+                  markParsed
+                  pure a
+                _ -> do
+                  mOpt <-
+                    if settingTryOption
+                      then do
+                        -- Require readers before finding the option so the parser
                         -- always fails if it's missing a reader.
                         rs <- requireReaders settingReaders
-                        es <- asks ppEnvEnv
-                        let founds = mapMaybe (`EnvMap.lookup` es) (NE.toList ne)
-                        -- Run the parser on all specified env vars before
-                        -- returning the first because we want to fail if any
-                        -- of them fail, even if they wouldn't be the parse
-                        -- result.
-                        results <- for founds $ \varStr ->
-                          case tryReaders rs varStr of
-                            Left errs -> ppError mLoc $ ParseErrorEnvRead mEnvDoc errs
-                            Right a -> pure a
-                        pure $ maybe NotFound Found $ listToMaybe results
+                        mS <- ppOpt settingDasheds
+                        case mS of
+                          Nothing -> do
+                            debug
+                              [ "could not set based on options, no option: ",
+                                chunk $ T.pack $ show $ map renderDashed settingDasheds
+                              ]
+                            pure NotFound
+                          Just optionStr -> do
+                            case tryReaders rs optionStr of
+                              Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
+                              Right a -> do
+                                debug
+                                  [ "set based on option: ",
+                                    chunk $ T.pack $ show optionStr
+                                  ]
+                                pure $ Found a
+                      else pure NotRun
 
-                    case mEnv of
-                      Found a -> do
-                        markParsed
-                        pure a
-                      _ -> do
-                        let mConfDoc = settingConfDoc set
-                        mConf <- case settingConfigVals of
-                          Nothing -> pure NotRun
-                          Just ((ne, DecodingCodec c) :| _) -> do
-                            -- TODO try parsing with the others
-                            mObj <- asks ppEnvConf
-                            case mObj of
-                              Nothing -> pure NotFound
-                              Just obj -> do
-                                let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
-                                    jsonParser o (k :| rest) = case NE.nonEmpty rest of
+                  case mOpt of
+                    Found a -> do
+                      markParsed
+                      pure a
+                    _ -> do
+                      let mEnvDoc = settingEnvDoc set
+                      mEnv <- case settingEnvVars of
+                        Nothing -> pure NotRun
+                        Just ne -> do
+                          -- Require readers before finding the env vars so the parser
+                          -- always fails if it's missing a reader.
+                          rs <- requireReaders settingReaders
+                          es <- asks ppEnvEnv
+                          let founds = mapMaybe (`EnvMap.lookup` es) (NE.toList ne)
+                          -- Run the parser on all specified env vars before
+                          -- returning the first because we want to fail if any
+                          -- of them fail, even if they wouldn't be the parse
+                          -- result.
+                          results <- for founds $ \varStr ->
+                            case tryReaders rs varStr of
+                              Left errs -> ppError mLoc $ ParseErrorEnvRead mEnvDoc errs
+                              Right a -> do
+                                debug
+                                  [ "set based on env: ",
+                                    chunk $ T.pack $ show varStr
+                                  ]
+                                pure a
+                          case listToMaybe results of
+                            Nothing -> do
+                              debug
+                                [ "could not set based on env vars, no var: ",
+                                  chunk $ T.pack $ show $ maybe [] NE.toList settingEnvVars
+                                ]
+                              pure NotFound
+                            Just a -> pure $ Found a
+
+                      case mEnv of
+                        Found a -> do
+                          markParsed
+                          pure a
+                        _ -> do
+                          let mConfDoc = settingConfDoc set
+                          mConf <- case settingConfigVals of
+                            Nothing -> pure NotRun
+                            Just ((ne, DecodingCodec c) :| _) -> do
+                              -- TODO try parsing with the others
+                              mObj <- asks ppEnvConf
+                              case mObj of
+                                Nothing -> do
+                                  debug ["no config object to set from"]
+                                  pure NotFound
+                                Just obj -> do
+                                  let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
+                                      jsonParser o (k :| rest) = case NE.nonEmpty rest of
+                                        Nothing -> do
+                                          case KeyMap.lookup (Key.fromString k) o of
+                                            Nothing -> pure Nothing
+                                            Just v -> Just <$> parseJSON v
+                                        Just neRest -> do
+                                          mO' <- o .:? Key.fromString k
+                                          case mO' of
+                                            Nothing -> pure Nothing
+                                            Just o' -> jsonParser o' neRest
+                                  case JSON.parseEither (jsonParser obj) ne of
+                                    Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
+                                    Right mV -> case mV of
                                       Nothing -> do
-                                        case KeyMap.lookup (Key.fromString k) o of
-                                          Nothing -> pure Nothing
-                                          Just v -> Just <$> parseJSON v
-                                      Just neRest -> do
-                                        mO' <- o .:? Key.fromString k
-                                        case mO' of
-                                          Nothing -> pure Nothing
-                                          Just o' -> jsonParser o' neRest
-                                case JSON.parseEither (jsonParser obj) ne of
-                                  Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                  Right mV -> case mV of
-                                    Nothing -> pure NotFound
-                                    Just v -> case JSON.parseEither (parseJSONVia c) v of
-                                      Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                      Right a -> pure $ maybe NotFound Found a
+                                        debug
+                                          [ "could not set based on config value, not configured: ",
+                                            chunk $ T.pack $ show $ NE.toList ne
+                                          ]
+                                        pure NotFound
+                                      Just v -> case JSON.parseEither (parseJSONVia c) v of
+                                        Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
+                                        Right mA -> case mA of
+                                          Nothing -> do
+                                            debug
+                                              [ "could not set based on config value, configured to nothing: ",
+                                                chunk $ T.pack $ show $ NE.toList ne
+                                              ]
+                                            pure NotFound
+                                          Just a -> do
+                                            debug
+                                              [ "set based on config value:",
+                                                chunk $ T.pack $ show v
+                                              ]
+                                            pure $ Found a
 
-                        case mConf of
-                          Found a -> do
-                            markParsed
-                            pure a
-                          _ ->
-                            case settingDefaultValue of
-                              Just (a, _) -> pure a -- Don't mark as parsed
-                              Nothing -> do
-                                let parseResultError e res = case res of
-                                      NotRun -> Nothing
-                                      NotFound -> Just e
-                                      Found _ -> Nothing -- Should not happen.
-                                maybe (ppError mLoc ParseErrorEmptySetting) (ppErrors mLoc) $
-                                  NE.nonEmpty $
-                                    catMaybes
-                                      [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
-                                        parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
-                                        parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
-                                        parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
-                                        parseResultError (ParseErrorMissingConfVal mConfDoc) mConf
-                                      ]
+                          case mConf of
+                            Found a -> do
+                              markParsed
+                              pure a
+                            _ ->
+                              case settingDefaultValue of
+                                Just (a, _) -> do
+                                  debug ["set to default value"]
+                                  pure a -- Don't mark as parsed
+                                Nothing -> do
+                                  let parseResultError e res = case res of
+                                        NotRun -> Nothing
+                                        NotFound -> Just e
+                                        Found _ -> Nothing -- Should not happen.
+                                  debug ["not found"]
+                                  maybe (ppError mLoc ParseErrorEmptySetting) (ppErrors mLoc) $
+                                    NE.nonEmpty $
+                                      catMaybes
+                                        [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
+                                          parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
+                                          parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
+                                          parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
+                                          parseResultError (ParseErrorMissingConfVal mConfDoc) mConf
+                                        ]
 
 data ParseResult a
   = NotRun
@@ -580,13 +693,15 @@ tryPP pp = do
   e <- ask
   results <- liftIO $ runPP pp s e
   (errOrRes, s') <- ppNonDetList results
-  put s'
   case errOrRes of
     Failure errs ->
       if all errorIsForgivable errs
-        then pure Nothing
+        then do
+          pure Nothing
         else ppErrors' errs
-    Success a -> pure $ Just a
+    Success a -> do
+      put s' -- Only set state if parsing succeeded.
+      pure $ Just a
 
 ppNonDet :: NonDetT IO a -> PP a
 ppNonDet = lift . lift . lift
@@ -601,14 +716,44 @@ data PPState = PPState
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
-    ppEnvConf :: !(Maybe JSON.Object)
+    ppEnvConf :: !(Maybe JSON.Object),
+    -- Nothing means "not debug mode"
+    ppEnvDebug :: !(Maybe TerminalCapabilities),
+    ppEnvIndent :: !Int
   }
+
+debug :: [Chunk] -> PP ()
+debug chunks = do
+  debugMode <- asks ppEnvDebug
+  forM_ debugMode $ \tc -> do
+    i <- asks ppEnvIndent
+    -- Debug mode needs to involve an impure print because parsers can run IO
+    -- actions and we need to see their output interleaved with the debug
+    -- output
+    liftIO $
+      hPutChunksLocaleWith tc stderr $
+        (replicate i "  " ++ chunks)
+          ++ [ "\n"
+             ]
+
+ppIndent :: PP a -> PP a
+ppIndent =
+  local
+    (\e -> e {ppEnvIndent = succ (ppEnvIndent e)})
 
 ppArg :: PP (Maybe String)
 ppArg = do
   args <- gets ppStateArgs
+  debug ["Trying to consume an argument"]
   let consumePossibilities = Args.consumeArgument args
-  (mA, args') <- ppNonDetList consumePossibilities
+  if null consumePossibilities
+    then debug ["Found no consume possibilities."]
+    else do
+      debug ["Found these possibilities to consume an argument:"]
+      forM_ consumePossibilities $ \p ->
+        debug [chunk $ T.pack $ show p]
+  p@(mA, args') <- ppNonDetList consumePossibilities
+  debug ["Considering this posibility: ", chunk $ T.pack $ show p]
   modify' (\s -> s {ppStateArgs = args'})
   pure mA
 

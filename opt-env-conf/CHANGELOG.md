@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+* Debug mode now provides much more info about all the settings that were and weren't parsed, and why.
+* Fixed a bug in which arguments that were consumed in a failed branch were not being unconsumed afterwards.
+* Nix functions now produce completion as well as man pages.
+
 ## [0.2.0.0] -- 2024-07-18
 
 ### Changed
