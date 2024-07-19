@@ -42,8 +42,23 @@ let
   });
   installManpages = exeNames: drv:
     foldr installManpage drv exeNames;
-  installCompletion = exeName: drv:
-    overrideCabal drv (old: { });
+  installCompletion = exeName: drv: overrideCabal (drv: {
+    postInstall = (drv.postInstall or "") + ''
+      bashCompDir="''${!outputBin}/share/bash-completion/completions"
+      zshCompDir="''${!outputBin}/share/zsh/vendor-completions"
+      fishCompDir="''${!outputBin}/share/fish/vendor_completions.d"
+      mkdir -p "$bashCompDir" "$zshCompDir" "$fishCompDir"
+      "''${!outputBin}/bin/${exeName}" --bash-completion-script "''${!outputBin}/bin/${exeName}" >"$bashCompDir/${exeName}"
+      "''${!outputBin}/bin/${exeName}" --zsh-completion-script "''${!outputBin}/bin/${exeName}" >"$zshCompDir/_${exeName}"
+      "''${!outputBin}/bin/${exeName}" --fish-completion-script "''${!outputBin}/bin/${exeName}" >"$fishCompDir/${exeName}.fish"
+
+      # Sanity check
+      grep -F ${exeName} <$bashCompDir/${exeName} >/dev/null || {
+        echo 'Could not find ${exeName} in completion script.'
+        exit 1
+      }
+    '';
+  });
   installCompletions = exeNames: drv:
     foldr installCompletion drv exeNames;
   installManpagesAndCompletions = exeNames: drv:
