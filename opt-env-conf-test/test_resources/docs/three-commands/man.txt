@@ -23,9 +23,10 @@ three-commands (-h|--help)
   
 
 .Sh COMMANDS
-  one       first
-  two       second
-  three     third
+  one                      first
+  two                      second
+  three-very-long-command-name
+                           third
 
 .Sh OPTIONS
   -h|--help Show this help text 
@@ -36,7 +37,7 @@ three-commands (-h|--help)
   two second
       --number|-n               number       
       --(enable|disable)-enable enable extra 
-  three third
+  three-very-long-command-name third
 
 .Sh ENVIRONMENT VARIABLES
   CONFIG_FILE FILE_PATH   Path to the configuration file
