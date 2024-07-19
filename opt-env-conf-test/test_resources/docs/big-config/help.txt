@@ -23,3 +23,6 @@ example with a big configuration
           [33m<number>[m # [32m64 bit signed integer[m
   
 
+[36mAvailable commands[m:
+no commands available
+

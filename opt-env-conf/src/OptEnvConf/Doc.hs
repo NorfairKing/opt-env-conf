@@ -321,7 +321,9 @@ renderManPage progname version progDesc docs =
               [".Sh ", "SYNOPSIS"],
               renderShortOptDocs progname optDocs,
               [".Sh ", "SETTINGS"],
-              renderSetDocs docs
+              renderSetDocs docs,
+              [".Sh ", "COMMANDS"],
+              renderCommandDocs docs
             ],
             concat
               [ [ [".Sh ", "OPTIONS"],
@@ -354,7 +356,9 @@ renderReferenceDocumentation progname docs =
           [ [ usageChunk : renderShortOptDocs progname optDocs,
               [],
               headerChunks "All settings",
-              renderSetDocs docs
+              renderSetDocs docs,
+              headerChunks "All commands",
+              renderCommandDocs docs
             ],
             concat
               [ [ headerChunks "Options",
@@ -405,7 +409,9 @@ renderHelpPage progname progDesc docs =
       [],
       unlinesChunks $ progDescLines progDesc,
       headerChunks "Available settings",
-      renderSetDocs docs
+      renderSetDocs docs,
+      headerChunks "Available commands",
+      renderCommandDocs docs
     ]
 
 renderSetDocs :: AnyDocs SetDoc -> [Chunk]
@@ -413,18 +419,10 @@ renderSetDocs = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsCommands _ -> [] -- todo: this empty list causes the double newline between settings and commands
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> goOr ds
       AnyDocsSingle d -> indent (renderSetDoc d)
-
-    goCommand :: CommandDoc SetDoc -> [[Chunk]]
-    goCommand CommandDoc {..} =
-      indent $
-        [helpChunk commandDocHelp]
-          : ["command: ", commandChunk commandDocArgument]
-          : go commandDocs
-          ++ [[]]
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: [AnyDocs SetDoc] -> [[Chunk]]
@@ -441,6 +439,46 @@ renderSetDocs = unlinesChunks . go
                     indent $ concatMap renderSetDocWithoutHeader $ d : sds,
                     [[]],
                     goOr rest
+                  ]
+      (d : ds) -> go d ++ goOr ds
+
+    goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
+    goSameHelp h = \case
+      [] -> ([], [])
+      (AnyDocsSingle d : ds) ->
+        if setDocHelp d == Just h
+          then
+            let (sds, rest) = goSameHelp h ds
+             in (d : sds, rest)
+          else ([], AnyDocsSingle d : ds)
+      ds -> ([], ds)
+
+renderCommandDocs :: AnyDocs SetDoc -> [Chunk]
+renderCommandDocs = unlinesChunks . (\cs -> if null cs then [["no commands available"]] else cs) . go
+  where
+    go :: AnyDocs SetDoc -> [[Chunk]]
+    go = \case
+      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsAnd ds -> concatMap go ds
+      AnyDocsOr ds -> goOr ds
+      AnyDocsSingle _ -> []
+
+    goCommand :: CommandDoc SetDoc -> [[Chunk]]
+    goCommand CommandDoc {..} =
+      indent $ [commandChunk commandDocArgument, "\t\t", helpChunk commandDocHelp] : []
+
+    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
+    goOr :: [AnyDocs SetDoc] -> [[Chunk]]
+    goOr = \case
+      [] -> []
+      [d] -> go d
+      (AnyDocsSingle d : ds) ->
+        case setDocHelp d of
+          Nothing -> go (AnyDocsSingle d) ++ goOr ds
+          Just h ->
+            let (_, rest) = goSameHelp h ds
+             in concat
+                  [  goOr rest
                   ]
       (d : ds) -> go d ++ goOr ds
 
@@ -479,10 +517,7 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
   where
     go :: Int -> AnyDocs OptDoc -> [Chunk]
     go nestingLevel = \case
-      AnyDocsCommands cs ->
-        unwordsChunks $ ["\n    "] : intersperse [orChunkNewlineIndent nestingLevel] (map
-              ( \CommandDoc {..} -> [commandChunk commandDocArgument] )
-              cs)
+      AnyDocsCommands _ -> unwordsChunks $ [["COMMAND"]]
       AnyDocsAnd ds -> unwordsChunks $ map (go (nestingLevel + 1)) ds
       AnyDocsOr ds -> renderOrChunks $ map (go (nestingLevel + 1)) ds
       AnyDocsSingle OptDoc {..} ->
@@ -514,9 +549,6 @@ renderOrChunks os =
 
 orChunkNewline :: Chunk
 orChunkNewline = fore cyan "\n |"
-
-orChunkNewlineIndent :: Int -> Chunk
-orChunkNewlineIndent indentationLevel = fore cyan $ chunk $ "\n " <>  T.replicate indentationLevel " "  <> "|"
 
 -- | Render long-form documentation of options
 renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]

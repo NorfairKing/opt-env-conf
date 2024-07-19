@@ -15,3 +15,6 @@ verbosity example
   switch: [37m-v[m
   
 
+[36mAvailable commands[m:
+no commands available
+

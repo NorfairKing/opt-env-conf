@@ -1,5 +1,3 @@
 [33msub-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m
  |[m [37m--version[m [36m
- |[m [36m([m[37m--config-file[m [33mFILE_PATH[m 
-     [35mtop[m [36m
-   |[m [35msub[m[36m)[m
+ |[m [36m([m[37m--config-file[m [33mFILE_PATH[m COMMAND[36m)[m

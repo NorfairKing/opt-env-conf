@@ -23,3 +23,6 @@ enableDisableSwitch example
       [33m<boolean>[m
 
 
+[36mAvailable commands[m:
+no commands available
+

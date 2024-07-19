@@ -9,9 +9,7 @@
 .Sh SYNOPSIS
 sub-commands (-h|--help) 
  | --version 
- | (--config-file FILE_PATH 
-     top 
-   | sub)
+ | (--config-file FILE_PATH COMMAND)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -23,31 +21,10 @@ sub-commands (-h|--help)
   option: --config-file FILE_PATH
   env: CONFIG_FILE FILE_PATH
   
-  command without subcommands
-  command: top
-    name
-    option: --name NAME
-    env: NAME NAME
-    config:
-      name: # or null
-        <string>
-    
-  
-  command with subcommands
-  command: sub
-    A
-    command: a
-    
-    B
-    command: b
-    
-    C
-    command: c
-    
-    D
-    command: d
-    
-  
+
+.Sh COMMANDS
+  top		command without subcommands
+  sub		command with subcommands
 
 .Sh OPTIONS
   -h|--help Show this help text 

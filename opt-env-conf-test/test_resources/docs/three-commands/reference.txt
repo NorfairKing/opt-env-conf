@@ -1,9 +1,6 @@
 [36mUsage: [m[33mthree-commands[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m
  |[m [37m--version[m [36m
- |[m [36m([m[37m--config-file[m [33mFILE_PATH[m 
-     [35mone[m [36m
-   |[m [35mtwo[m [36m
-   |[m [35mthree[m[36m)[m
+ |[m [36m([m[37m--config-file[m [33mFILE_PATH[m COMMAND[36m)[m
 
 [36mAll settings[m:
   [34mShow this help text[m
@@ -16,32 +13,11 @@
   option: [37m--config-file[m [33mFILE_PATH[m
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
-  [34mfirst[m
-  command: [35mone[m
-    [34margument[m
-    argument: [33mSTR[m
-    
-  
-  [34msecond[m
-  command: [35mtwo[m
-    [34mnumber[m
-    option: [37m--number[m[36m|[m[37m-n[m [33mINT[m
-    env: [37mNUMBER[m [33mINT[m
-    config:
-      [37mnumber[m: # [32mor null[m
-        [33m<number>[m # [32m64 bit signed integer[m
-    
-    [34menable extra[m
-    switch: [37m--(enable|disable)-enable[m
-    env: [37mENABLE[m [33mBOOL[m
-    config:
-      [37menable[m: # [32mor null[m
-        [33m<boolean>[m
-  
-  
-  [34mthird[m
-  command: [35mthree[m
-  
+
+[36mAll commands[m:
+  [35mone[m		[34mfirst[m
+  [35mtwo[m		[34msecond[m
+  [35mthree[m		[34mthird[m
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

@@ -9,10 +9,7 @@
 .Sh SYNOPSIS
 three-commands (-h|--help) 
  | --version 
- | (--config-file FILE_PATH 
-     one 
-   | two 
-   | three)
+ | (--config-file FILE_PATH COMMAND)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -24,32 +21,11 @@ three-commands (-h|--help)
   option: --config-file FILE_PATH
   env: CONFIG_FILE FILE_PATH
   
-  first
-  command: one
-    argument
-    argument: STR
-    
-  
-  second
-  command: two
-    number
-    option: --number|-n INT
-    env: NUMBER INT
-    config:
-      number: # or null
-        <number> # 64 bit signed integer
-    
-    enable extra
-    switch: --(enable|disable)-enable
-    env: ENABLE BOOL
-    config:
-      enable: # or null
-        <boolean>
-  
-  
-  third
-  command: three
-  
+
+.Sh COMMANDS
+  one		first
+  two		second
+  three		third
 
 .Sh OPTIONS
   -h|--help Show this help text 
