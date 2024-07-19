@@ -455,14 +455,14 @@ choice = \case
 -- This is intended for use-cases like resolving a file to an absolute path.
 -- It is morally ok for read-only IO actions but you will
 -- have a bad time if the action is not read-only.
-mapIO :: (a -> IO b) -> Parser a -> Parser b
-mapIO func = checkMapIO $ fmap Right . func
+mapIO :: (HasCallStack) => (a -> IO b) -> Parser a -> Parser b
+mapIO func = withFrozenCallStack $ checkMapIO $ fmap Right . func
 
 -- | Run an IO action without parsing anything
 --
 -- This action may be run more than once, so prefer to do IO outside of the parser.
-runIO :: IO a -> Parser a
-runIO func = mapIO (\() -> func) $ pure ()
+runIO :: (HasCallStack) => IO a -> Parser a
+runIO func = withFrozenCallStack $ mapIO (\() -> func) $ pure ()
 
 -- | Like 'checkMapMaybe' but without changing the type
 checkMaybe :: (HasCallStack) => (a -> Maybe a) -> Parser a -> Parser a

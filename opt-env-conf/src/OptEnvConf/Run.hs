@@ -334,11 +334,15 @@ runParserOn debugMode parser args envVars mConfig = do
       Parser a ->
       PP a
     go = \case
-      ParserPure a -> pure a
+      ParserPure a -> do
+        debug "pure value"
+        pure a
       ParserAp ff fa -> do
         debug "Ap"
         ppIndent $ go ff <*> go fa
-      ParserEmpty mLoc -> ppError mLoc ParseErrorEmpty
+      ParserEmpty mLoc -> do
+        debug $ "Empty: " <> maybe "without srcLoc" prettySrcLoc mLoc
+        ppError mLoc ParseErrorEmpty
       ParserSelect fe ff -> do
         debug "Select"
         ppIndent $ select (go fe) (go ff)
@@ -364,7 +368,7 @@ runParserOn debugMode parser args envVars mConfig = do
               as <- go (ParserMany p')
               pure (a : as)
       ParserAllOrNothing mLoc p' -> do
-        debug "AllOrNothing"
+        debug $ "AllOrNothing: " <> maybe "without srcLoc" prettySrcLoc mLoc
         ppIndent $ do
           e <- ask
           s <- get
@@ -392,36 +396,45 @@ runParserOn debugMode parser args envVars mConfig = do
                     then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
                     else ppErrors' errs
       ParserCheck mLoc forgivable f p' -> do
-        debug "Check"
+        debug $ "Parser with check: " <> maybe "without srcLoc" prettySrcLoc mLoc
         ppIndent $ do
-          a <- go p'
-          errOrB <- liftIO $ f a
-          case errOrB of
-            Left err -> do
-              debug $ "check failed, forgivable:" <> show forgivable
-              ppError mLoc $ ParseErrorCheckFailed forgivable err
-            Right b -> do
-              debug "check succeeded"
-              pure b
+          debug "parser"
+          a <- ppIndent $ go p'
+          debug "check"
+          ppIndent $ do
+            errOrB <- liftIO $ f a
+            case errOrB of
+              Left err -> do
+                debug $ "failed, forgivable:" <> show forgivable
+                ppError mLoc $ ParseErrorCheckFailed forgivable err
+              Right b -> do
+                debug "succeeded"
+                pure b
       ParserCommands mLoc cs -> do
-        debug "Commands"
+        debug $ "Commands: " <> maybe "without srcLoc" prettySrcLoc mLoc
         ppIndent $ do
           mS <- ppArg
-          liftIO $ print mS
           case mS of
-            Nothing -> ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
+            Nothing -> do
+              debug "No argument found for choosing a command."
+              ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
             Just s -> do
-              liftIO $ print $ map commandArg cs
               case find ((== s) . commandArg) cs of
-                Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+                Nothing -> do
+                  debug $ "Argument found, but no matching command: " <> show s
+                  ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
                 Just c -> do
-                  liftIO $ print $ commandArg c
+                  debug $ "Set command to " <> show (commandArg c)
                   go $ commandParser c
       ParserWithConfig pc pa -> do
         debug "WithConfig"
         ppIndent $ do
-          mNewConfig <- go pc
-          local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
+          debug "loading config"
+          mNewConfig <- ppIndent $ go pc
+          debug "with loaded config"
+          ppIndent $
+            local (\e -> e {ppEnvConf = mNewConfig}) $
+              go pa
       ParserSetting mLoc set@Setting {..} -> do
         debug $ "Setting: " <> maybe "without srcLoc" prettySrcLoc mLoc
         let markParsed = do
@@ -669,7 +682,7 @@ debug s = do
     -- actions and we need to see their output interleaved with the debug
     -- output
     liftIO $
-      putStrLn $
+      hPutStrLn stderr $
         replicate (i * 2) ' ' ++ s
 
 ppIndent :: PP a -> PP a
