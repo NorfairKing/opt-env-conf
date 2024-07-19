@@ -14,7 +14,6 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
-import Control.Monad
 import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
 import Data.Aeson (parseJSON, (.:?))
@@ -28,6 +27,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Data.Traversable
 import Data.Version
 import GHC.Stack (SrcLoc, prettySrcLoc)
@@ -103,9 +103,13 @@ runParser version progDesc p = do
     Nothing -> do
       let p' = internalParser version p
       let docs = parserDocs p'
+      mDebugMode <-
+        if debugMode
+          then Just <$> getTerminalCapabilitiesFromHandle stderr
+          else pure Nothing
       errOrResult <-
         runParserOn
-          debugMode
+          mDebugMode
           p'
           argMap
           envVars
@@ -135,11 +139,11 @@ runParser version progDesc p = do
             let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
                   Nothing -> error "If you see this there is a bug in opt-env-conf."
                   Just am -> am
-            errOrSets <- runParserOn True p argMap'' envVars Nothing
+            stderrTc <- getTerminalCapabilitiesFromHandle stderr
+            errOrSets <- runParserOn (Just stderrTc) p argMap'' envVars Nothing
             case errOrSets of
               Left errs -> do
-                tc <- getTerminalCapabilitiesFromHandle stderr
-                hPutChunksLocaleWith tc stderr $ renderErrors errs
+                hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
                 exitFailure
               Right _ -> do
                 tc <- getTerminalCapabilitiesFromHandle stdout
@@ -287,7 +291,7 @@ internalParser version p =
 -- from the current process.
 runParserOn ::
   -- DebugMode
-  Bool ->
+  Maybe TerminalCapabilities ->
   Parser a ->
   Args ->
   EnvMap ->
@@ -322,7 +326,7 @@ runParserOn debugMode parser args envVars mConfig = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
-                Nothing -> pure $ Left $ (if debugMode then id else eraseErrorSrcLocs) firstErrors
+                Nothing -> pure $ Left $ (if isJust debugMode then id else eraseErrorSrcLocs) firstErrors
                 Just ((eOR, _), ns') -> case eOR of
                   Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
@@ -667,21 +671,30 @@ data PPState = PPState
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
     ppEnvConf :: !(Maybe JSON.Object),
-    ppEnvDebug :: !Bool,
+    -- Nothing means "not debug mode"
+    ppEnvDebug :: !(Maybe TerminalCapabilities),
     ppEnvIndent :: !Int
   }
 
 debug :: String -> PP ()
 debug s = do
   debugMode <- asks ppEnvDebug
-  when debugMode $ do
-    i <- asks ppEnvIndent
-    -- Debug mode needs to involve an impure print because parsers can run IO
-    -- actions and we need to see their output interleaved with the debug
-    -- output
-    liftIO $
-      hPutStrLn stderr $
-        replicate (i * 2) ' ' ++ s
+  case debugMode of
+    Nothing -> pure ()
+    Just tc -> do
+      i <- asks ppEnvIndent
+      -- Debug mode needs to involve an impure print because parsers can run IO
+      -- actions and we need to see their output interleaved with the debug
+      -- output
+      liftIO $
+        hPutChunksLocaleWith
+          tc
+          stderr
+          [ chunk $
+              T.pack $
+                replicate (i * 2) ' ' ++ s,
+            "\n"
+          ]
 
 ppIndent :: PP a -> PP a
 ppIndent =
