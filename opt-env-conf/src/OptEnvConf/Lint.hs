@@ -248,7 +248,7 @@ lintParser =
         if null ls
           then validationTFailure $ LintError mLoc LintErrorNoCommands
           else and <$> traverse (go . commandParser) ls -- TODO is this right?
-      ParserWithConfig p1 p2 -> do
+      ParserWithConfig _ p1 p2 -> do
         c1 <- go p1
         c2 <- local (const True) (go p2)
         pure $ c1 || c2

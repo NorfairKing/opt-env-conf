@@ -150,14 +150,30 @@ data Parser a where
   -- Functor
   ParserPure :: !a -> Parser a
   -- Applicative
-  ParserAp :: !(Parser (a -> b)) -> !(Parser a) -> Parser b
+  ParserAp ::
+    !(Parser (a -> b)) ->
+    !(Parser a) ->
+    Parser b
   -- Selective
-  ParserSelect :: !(Parser (Either a b)) -> !(Parser (a -> b)) -> Parser b
+  ParserSelect ::
+    !(Parser (Either a b)) ->
+    !(Parser (a -> b)) ->
+    Parser b
   -- Alternative
-  ParserEmpty :: !(Maybe SrcLoc) -> Parser a
-  ParserAlt :: !(Parser a) -> !(Parser a) -> Parser a
-  ParserMany :: !(Parser a) -> Parser [a]
-  ParserAllOrNothing :: !(Maybe SrcLoc) -> !(Parser a) -> Parser a
+  ParserEmpty ::
+    !(Maybe SrcLoc) ->
+    Parser a
+  ParserAlt ::
+    !(Parser a) ->
+    !(Parser a) ->
+    Parser a
+  ParserMany ::
+    !(Parser a) ->
+    Parser [a]
+  ParserAllOrNothing ::
+    !(Maybe SrcLoc) ->
+    !(Parser a) ->
+    Parser a
   -- Map, Check, and IO
   ParserCheck ::
     !(Maybe SrcLoc) ->
@@ -167,11 +183,21 @@ data Parser a where
     !(Parser a) ->
     Parser b
   -- Commands
-  ParserCommands :: !(Maybe SrcLoc) -> [Command a] -> Parser a
+  ParserCommands ::
+    !(Maybe SrcLoc) ->
+    ![Command a] ->
+    Parser a
   -- | Load a configuration value and use it for the continuing parser
-  ParserWithConfig :: Parser (Maybe JSON.Object) -> !(Parser a) -> Parser a
+  ParserWithConfig ::
+    !(Maybe SrcLoc) ->
+    !(Parser (Maybe JSON.Object)) ->
+    !(Parser a) ->
+    Parser a
   -- | General settings
-  ParserSetting :: !(Maybe SrcLoc) -> !(Setting a) -> Parser a
+  ParserSetting ::
+    !(Maybe SrcLoc) ->
+    !(Setting a) ->
+    Parser a
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -183,7 +209,7 @@ instance Functor Parser where
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
     ParserCommands mLoc cs -> ParserCommands mLoc $ map (fmap f) cs
-    ParserWithConfig pc pa -> ParserWithConfig pc (fmap f pa)
+    ParserWithConfig mLoc pc pa -> ParserWithConfig mLoc pc (fmap f pa)
     -- TODO: make setting a functor and fmap here
     p -> ParserCheck Nothing True (pure . Right . f) p
 
@@ -211,7 +237,7 @@ instance Alternative Parser where
           ParserAllOrNothing _ p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
           ParserCommands _ cs -> null cs
-          ParserWithConfig pc ps -> isEmpty pc && isEmpty ps
+          ParserWithConfig _ pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty Nothing
@@ -278,9 +304,11 @@ showParserPrec = go
             . showListWith
               showCommandABit
               cs
-      ParserWithConfig p1 p2 ->
+      ParserWithConfig mLoc p1 p2 ->
         showParen (d > 10) $
           showString "WithConfig _ "
+            . showsPrec 11 mLoc
+            . showString " "
             . go 11 p1
             . showString " "
             . go 11 p2
@@ -569,33 +597,44 @@ command = Command mLoc
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Load a configuration value and use it for the given parser
-withConfig :: Parser (Maybe JSON.Object) -> Parser a -> Parser a
-withConfig = ParserWithConfig
+withConfig :: (HasCallStack) => Parser (Maybe JSON.Object) -> Parser a -> Parser a
+withConfig = ParserWithConfig mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Don't load any configuration, but still shut up lint errors about 'conf'
 -- being used without defining any way to load configuration.
 --
 -- This may be useful if you use a library's 'Parser' that uses 'conf' but do
 -- not want to parse any configuration.
-withoutConfig :: Parser a -> Parser a
-withoutConfig = withConfig (pure Nothing)
+withoutConfig :: (HasCallStack) => Parser a -> Parser a
+withoutConfig p = withFrozenCallStack $ withConfig (pure Nothing) p
 
 -- | Load a YAML config file and use it for the given parser
-withYamlConfig :: Parser (Maybe (Path Abs File)) -> Parser a -> Parser a
+withYamlConfig :: (HasCallStack) => Parser (Maybe (Path Abs File)) -> Parser a -> Parser a
 withYamlConfig pathParser =
-  withConfig $
-    mapIO (fmap join . mapM readYamlConfigFile) pathParser
+  withFrozenCallStack $
+    withConfig $
+      mapIO (fmap join . mapM readYamlConfigFile) pathParser
 
 -- | Load the Yaml config in the first of the filepaths that points to something that exists.
-withFirstYamlConfig :: Parser [Path Abs File] -> Parser a -> Parser a
-withFirstYamlConfig parsers = withConfig $ mapIO readFirstYamlConfigFile $ (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
+withFirstYamlConfig :: (HasCallStack) => Parser [Path Abs File] -> Parser a -> Parser a
+withFirstYamlConfig parsers =
+  withFrozenCallStack $
+    withConfig $
+      mapIO readFirstYamlConfigFile $
+        (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
 
 -- | Combine all Yaml config files that exist into a single combined config object.
 withCombinedYamlConfigs :: Parser [Path Abs File] -> Parser a -> Parser a
 withCombinedYamlConfigs = withCombinedYamlConfigs' combineConfigObjects
 
-withCombinedYamlConfigs' :: (Object -> JSON.Object -> JSON.Object) -> Parser [Path Abs File] -> Parser a -> Parser a
-withCombinedYamlConfigs' combiner parsers = withConfig $ mapIO (foldM resolveYamlConfigFile Nothing) $ (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
+withCombinedYamlConfigs' :: (HasCallStack) => (Object -> JSON.Object -> JSON.Object) -> Parser [Path Abs File] -> Parser a -> Parser a
+withCombinedYamlConfigs' combiner parsers =
+  withFrozenCallStack $
+    withConfig $
+      mapIO (foldM resolveYamlConfigFile Nothing) $
+        (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
   where
     resolveYamlConfigFile :: Maybe JSON.Object -> Path Abs File -> IO (Maybe JSON.Object)
     resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . readYamlConfigFile
@@ -637,18 +676,21 @@ xdgYamlConfigFile subdir =
 
 -- | Load a config file that is reconfigurable with an option and environment
 -- variable but @config.yaml@ in the local working directory by default.
-withLocalYamlConfig :: Parser a -> Parser a
-withLocalYamlConfig = withConfigurableYamlConfig $ mapIO resolveFile' $ pure "config.yaml"
+withLocalYamlConfig :: (HasCallStack) => Parser a -> Parser a
+withLocalYamlConfig p =
+  withFrozenCallStack $
+    withConfigurableYamlConfig (mapIO resolveFile' (pure "config.yaml")) p
 
 -- | Use the given 'Parser' for deciding which configuration file to load, but
 -- only if 'configuredConfigFile' fails to define it first.
-withConfigurableYamlConfig :: Parser (Path Abs File) -> Parser a -> Parser a
-withConfigurableYamlConfig p = withYamlConfig $ Just <$> (configuredConfigFile <|> p)
+withConfigurableYamlConfig :: (HasCallStack) => Parser (Path Abs File) -> Parser a -> Parser a
+withConfigurableYamlConfig pf pa =
+  withFrozenCallStack $ withYamlConfig (Just <$> (configuredConfigFile <|> pf)) pa
 
 -- | A standard parser for defining which configuration file to load.
 --
 -- This has no default value so you will have to combine it somehow.
-configuredConfigFile :: Parser (Path Abs File)
+configuredConfigFile :: (HasCallStack) => Parser (Path Abs File)
 configuredConfigFile =
   filePathSetting
     [ option,
@@ -669,7 +711,9 @@ yesNoSwitch ::
   -- | Builders
   [Builder Bool] ->
   Parser Bool
-yesNoSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "" "no-" "[no-]" defaultBool builders
+yesNoSwitch defaultBool builders =
+  withFrozenCallStack $
+    makeDoubleSwitch "" "no-" "[no-]" defaultBool builders
 
 -- | Define a setting for a 'Bool' with a given default value.
 --
@@ -683,7 +727,9 @@ enableDisableSwitch ::
   -- | Builders
   [Builder Bool] ->
   Parser Bool
-enableDisableSwitch defaultBool builders = withFrozenCallStack $ makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
+enableDisableSwitch defaultBool builders =
+  withFrozenCallStack $
+    makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
 
 makeDoubleSwitch ::
   (HasCallStack) =>
@@ -881,8 +927,8 @@ parserEraseSrcLocs = go
       ParserMany p -> ParserMany (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
-      ParserCommands mLoc cs -> ParserCommands mLoc $ map commandEraseSrcLocs cs
-      ParserWithConfig p1 p2 -> ParserWithConfig (go p1) (go p2)
+      ParserCommands _ cs -> ParserCommands Nothing $ map commandEraseSrcLocs cs
+      ParserWithConfig _ p1 p2 -> ParserWithConfig Nothing (go p1) (go p2)
       ParserSetting _ s -> ParserSetting Nothing s
 
 commandEraseSrcLocs :: Command a -> Command a
@@ -918,7 +964,7 @@ parserTraverseSetting func = go
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
       ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
-      ParserWithConfig p1 p2 -> ParserWithConfig <$> go p1 <*> go p2
+      ParserWithConfig mLoc p1 p2 -> ParserWithConfig mLoc <$> go p1 <*> go p2
       ParserSetting mLoc s -> ParserSetting mLoc <$> func s
 
 {-# ANN commandTraverseSetting ("NOCOVER" :: String) #-}
@@ -946,7 +992,7 @@ parserSettingsSet = go
       ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> S.unions $ map (go . commandParser) cs
-      ParserWithConfig p1 p2 -> S.union (go p1) (go p2)
+      ParserWithConfig _ p1 p2 -> S.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't
       ParserSetting mLoc _ -> maybe S.empty (S.singleton . hashSrcLoc) mLoc
 

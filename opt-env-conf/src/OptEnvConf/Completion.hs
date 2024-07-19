@@ -202,7 +202,12 @@ pureCompletionQuery parser ix args =
       ParserCommands _ cs -> do
         -- Don't re-use the state accross commands
         Just . concat . catMaybes <$> mapM goCommand cs
-      ParserWithConfig _ p -> go p
+      ParserWithConfig _ p1 p2 -> do
+        c1 <- go p1
+        case c1 of
+          Just [] -> go p2
+          Just ss -> pure $ Just ss
+          Nothing -> pure $ Just []
       ParserSetting _ Setting {..} ->
         if settingHidden
           then pure $ Just []

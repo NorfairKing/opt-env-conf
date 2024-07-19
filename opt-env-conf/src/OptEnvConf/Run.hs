@@ -430,8 +430,8 @@ runParserOn debugMode parser args envVars mConfig = do
                 Just c -> do
                   debug ["Set command to ", commandChunk (commandArg c)]
                   go $ commandParser c
-      ParserWithConfig pc pa -> do
-        debug [syntaxChunk "WithConfig"]
+      ParserWithConfig mLoc pc pa -> do
+        debug [syntaxChunk "WithConfig", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           debug ["loading config"]
           mNewConfig <- ppIndent $ go pc
