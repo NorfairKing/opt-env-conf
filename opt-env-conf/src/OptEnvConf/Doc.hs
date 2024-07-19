@@ -469,7 +469,7 @@ renderCommandDocs = unlinesChunks . (\cs -> if null cs then [["no commands avail
     goCommand maxLength CommandDoc {..} =
       indent $
         if length commandDocArgument <= maxLength' - 1
-          then [commandChunk commandDocArgument, chunk (T.replicate (maxLength' - length commandDocArgument) " "), helpChunk commandDocHelp] : []
+          then [[commandChunk commandDocArgument, chunk (T.replicate (maxLength' - length commandDocArgument) " "), helpChunk commandDocHelp]]
           else [commandChunk commandDocArgument] : [[chunk (T.replicate maxLength' " "), helpChunk commandDocHelp]]
       where
         maxLength' = minimum [25, maximum [10, maxLength]]
@@ -479,26 +479,7 @@ renderCommandDocs = unlinesChunks . (\cs -> if null cs then [["no commands avail
     goOr = \case
       [] -> []
       [d] -> go d
-      (AnyDocsSingle d : ds) ->
-        case setDocHelp d of
-          Nothing -> go (AnyDocsSingle d) ++ goOr ds
-          Just h ->
-            let (_, rest) = goSameHelp h ds
-             in concat
-                  [  goOr rest
-                  ]
       (d : ds) -> go d ++ goOr ds
-
-    goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
-    goSameHelp h = \case
-      [] -> ([], [])
-      (AnyDocsSingle d : ds) ->
-        if setDocHelp d == Just h
-          then
-            let (sds, rest) = goSameHelp h ds
-             in (d : sds, rest)
-          else ([], AnyDocsSingle d : ds)
-      ds -> ([], ds)
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
@@ -524,7 +505,7 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
   where
     go :: Int -> AnyDocs OptDoc -> [Chunk]
     go nestingLevel = \case
-      AnyDocsCommands _ -> unwordsChunks $ [["COMMAND"]]
+      AnyDocsCommands _ -> ["COMMAND"]
       AnyDocsAnd ds -> unwordsChunks $ map (go (nestingLevel + 1)) ds
       AnyDocsOr ds -> renderOrChunks $ map (go (nestingLevel + 1)) ds
       AnyDocsSingle OptDoc {..} ->
