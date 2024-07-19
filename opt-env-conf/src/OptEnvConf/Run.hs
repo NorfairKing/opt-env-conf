@@ -14,6 +14,7 @@ where
 
 import Autodocodec
 import Control.Arrow (left)
+import Control.Monad
 import Control.Monad.Reader hiding (Reader, reader, runReader)
 import Control.Monad.State
 import Data.Aeson (parseJSON, (.:?))
@@ -29,7 +30,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Traversable
 import Data.Version
-import GHC.Stack (SrcLoc)
+import GHC.Stack (SrcLoc, prettySrcLoc)
 import OptEnvConf.Args as Args
 import OptEnvConf.Completion
 import OptEnvConf.Doc
@@ -300,7 +301,9 @@ runParserOn parser args envVars mConfig = do
   let ppEnv =
         PPEnv
           { ppEnvEnv = envVars,
-            ppEnvConf = mConfig
+            ppEnvConf = mConfig,
+            ppEnvDebug = True,
+            ppEnvIndent = 0
           }
   let go' = do
         result <- go parser
@@ -329,64 +332,95 @@ runParserOn parser args envVars mConfig = do
       PP a
     go = \case
       ParserPure a -> pure a
-      ParserAp ff fa -> go ff <*> go fa
+      ParserAp ff fa -> do
+        debug "Ap"
+        ppIndent $ go ff <*> go fa
       ParserEmpty mLoc -> ppError mLoc ParseErrorEmpty
-      ParserSelect fe ff -> select (go fe) (go ff)
+      ParserSelect fe ff -> do
+        debug "Select"
+        ppIndent $ select (go fe) (go ff)
       ParserAlt p1 p2 -> do
-        eor <- tryPP (go p1)
-        case eor of
-          Just a -> pure a
-          Nothing -> go p2
+        debug "Alt"
+        ppIndent $ do
+          debug "Trying left side."
+          eor <- tryPP (go p1)
+          case eor of
+            Just a -> do
+              debug "Left side succeeded."
+              pure a
+            Nothing -> do
+              debug "Left side failed, trying right side."
+              go p2
       ParserMany p' -> do
-        eor <- tryPP $ go p'
-        case eor of
-          Nothing -> pure []
-          Just a -> do
-            as <- go (ParserMany p')
-            pure (a : as)
+        debug "Many"
+        ppIndent $ do
+          eor <- tryPP $ go p'
+          case eor of
+            Nothing -> pure []
+            Just a -> do
+              as <- go (ParserMany p')
+              pure (a : as)
       ParserAllOrNothing mLoc p' -> do
-        e <- ask
-        s <- get
-        results <- liftIO $ runPP (go p') s e
-        (result, s') <- ppNonDetList results
-        put s'
-        case result of
-          Success a -> pure a
-          Failure errs -> do
-            if not $ all errorIsForgivable errs
-              then ppErrors' errs
-              else do
-                -- Settings available below
-                let settingsSet = parserSettingsSet p'
-                -- Settings that have been parsed
-                parsedSet <- gets ppStateParsedSettings
-                -- Settings that have been parsed below
-                let parsedSettingsSet = settingsSet `S.intersection` parsedSet
-                -- If any settings have been parsed below, and parsing still failed
-                -- (this is the case because we're in the failure branch)
-                -- with only forgivable errors
-                -- (this is the case because we're in the branch where that's been checked)
-                -- then this should be an unforgivable error.
-                if not (null parsedSettingsSet)
-                  then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
-                  else ppErrors' errs
+        debug "AllOrNothing"
+        ppIndent $ do
+          e <- ask
+          s <- get
+          results <- liftIO $ runPP (go p') s e
+          (result, s') <- ppNonDetList results
+          put s'
+          case result of
+            Success a -> pure a
+            Failure errs -> do
+              if not $ all errorIsForgivable errs
+                then ppErrors' errs
+                else do
+                  -- Settings available below
+                  let settingsSet = parserSettingsSet p'
+                  -- Settings that have been parsed
+                  parsedSet <- gets ppStateParsedSettings
+                  -- Settings that have been parsed below
+                  let parsedSettingsSet = settingsSet `S.intersection` parsedSet
+                  -- If any settings have been parsed below, and parsing still failed
+                  -- (this is the case because we're in the failure branch)
+                  -- with only forgivable errors
+                  -- (this is the case because we're in the branch where that's been checked)
+                  -- then this should be an unforgivable error.
+                  if not (null parsedSettingsSet)
+                    then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
+                    else ppErrors' errs
       ParserCheck mLoc forgivable f p' -> do
-        a <- go p'
-        errOrB <- liftIO $ f a
-        case errOrB of
-          Left err -> ppError mLoc $ ParseErrorCheckFailed forgivable err
-          Right b -> pure b
+        debug "Check"
+        ppIndent $ do
+          a <- go p'
+          errOrB <- liftIO $ f a
+          case errOrB of
+            Left err -> do
+              debug $ "check failed, forgivable:" <> show forgivable
+              ppError mLoc $ ParseErrorCheckFailed forgivable err
+            Right b -> do
+              debug "check succeeded"
+              pure b
       ParserCommands mLoc cs -> do
-        mS <- ppArg
-        case mS of
-          Nothing -> ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
-          Just s -> case find ((== s) . commandArg) cs of
-            Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
-            Just c -> go $ commandParser c
+        debug "Commands"
+        ppIndent $ do
+          mS <- ppArg
+          liftIO $ print mS
+          case mS of
+            Nothing -> ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
+            Just s -> do
+              liftIO $ print $ map commandArg cs
+              case find ((== s) . commandArg) cs of
+                Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+                Just c -> do
+                  liftIO $ print $ commandArg c
+                  go $ commandParser c
       ParserWithConfig pc pa -> do
-        mNewConfig <- go pc
-        local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
+        debug "WithConfig"
+        ppIndent $ do
+          mNewConfig <- go pc
+          local (\e -> e {ppEnvConf = mNewConfig}) $ go pa
       ParserSetting mLoc set@Setting {..} -> do
+        debug $ "Setting: " <> maybe "without srcLoc" prettySrcLoc mLoc
         let markParsed = do
               maybe
                 (pure ())
@@ -412,7 +446,9 @@ runParserOn parser args envVars mConfig = do
                 Just argStr -> do
                   case tryReaders rs argStr of
                     Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
-                    Right a -> pure $ Found a
+                    Right a -> do
+                      debug $ "set based on argument: " <> show argStr
+                      pure $ Found a
             else pure NotRun
 
         case mArg of
@@ -427,7 +463,9 @@ runParserOn parser args envVars mConfig = do
                 mS <- ppSwitch settingDasheds
                 case mS of
                   Nothing -> pure NotFound
-                  Just () -> pure $ Found a
+                  Just () -> do
+                    debug "set based on switch."
+                    pure $ Found a
 
             case mSwitch of
               Found a -> do
@@ -446,7 +484,9 @@ runParserOn parser args envVars mConfig = do
                         Just optionStr -> do
                           case tryReaders rs optionStr of
                             Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
-                            Right a -> pure $ Found a
+                            Right a -> do
+                              debug $ "set based on option: " <> show optionStr
+                              pure $ Found a
                     else pure NotRun
 
                 case mOpt of
@@ -470,7 +510,9 @@ runParserOn parser args envVars mConfig = do
                         results <- for founds $ \varStr ->
                           case tryReaders rs varStr of
                             Left errs -> ppError mLoc $ ParseErrorEnvRead mEnvDoc errs
-                            Right a -> pure a
+                            Right a -> do
+                              debug $ "set based on env: " <> show varStr
+                              pure a
                         pure $ maybe NotFound Found $ listToMaybe results
 
                     case mEnv of
@@ -504,7 +546,11 @@ runParserOn parser args envVars mConfig = do
                                     Nothing -> pure NotFound
                                     Just v -> case JSON.parseEither (parseJSONVia c) v of
                                       Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                      Right a -> pure $ maybe NotFound Found a
+                                      Right mA -> case mA of
+                                        Nothing -> pure NotFound
+                                        Just a -> do
+                                          debug $ "set based on config value:" <> show v
+                                          pure $ Found a
 
                         case mConf of
                           Found a -> do
@@ -512,12 +558,15 @@ runParserOn parser args envVars mConfig = do
                             pure a
                           _ ->
                             case settingDefaultValue of
-                              Just (a, _) -> pure a -- Don't mark as parsed
+                              Just (a, _) -> do
+                                debug "set to default value"
+                                pure a -- Don't mark as parsed
                               Nothing -> do
                                 let parseResultError e res = case res of
                                       NotRun -> Nothing
                                       NotFound -> Just e
                                       Found _ -> Nothing -- Should not happen.
+                                debug "not found"
                                 maybe (ppError mLoc ParseErrorEmptySetting) (ppErrors mLoc) $
                                   NE.nonEmpty $
                                     catMaybes
@@ -580,13 +629,15 @@ tryPP pp = do
   e <- ask
   results <- liftIO $ runPP pp s e
   (errOrRes, s') <- ppNonDetList results
-  put s'
   case errOrRes of
     Failure errs ->
       if all errorIsForgivable errs
-        then pure Nothing
+        then do
+          pure Nothing
         else ppErrors' errs
-    Success a -> pure $ Just a
+    Success a -> do
+      put s' -- Only set state if parsing succeeded.
+      pure $ Just a
 
 ppNonDet :: NonDetT IO a -> PP a
 ppNonDet = lift . lift . lift
@@ -601,14 +652,33 @@ data PPState = PPState
 
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
-    ppEnvConf :: !(Maybe JSON.Object)
+    ppEnvConf :: !(Maybe JSON.Object),
+    ppEnvDebug :: !Bool,
+    ppEnvIndent :: !Int
   }
+
+debug :: String -> PP ()
+debug s = do
+  debugMode <- asks ppEnvDebug
+  when debugMode $ do
+    i <- asks ppEnvIndent
+    liftIO $
+      putStrLn $
+        replicate (i * 2) ' ' ++ s
+
+ppIndent :: PP a -> PP a
+ppIndent =
+  local
+    (\e -> e {ppEnvIndent = succ (ppEnvIndent e)})
 
 ppArg :: PP (Maybe String)
 ppArg = do
   args <- gets ppStateArgs
+  debug "Trying to consume an argument"
   let consumePossibilities = Args.consumeArgument args
-  (mA, args') <- ppNonDetList consumePossibilities
+  debug $ "Found these possibilities to consume an argument:" <> show consumePossibilities
+  p@(mA, args') <- ppNonDetList consumePossibilities
+  debug $ "Considering this posibility: " <> show p
   modify' (\s -> s {ppStateArgs = args'})
   pure mA
 

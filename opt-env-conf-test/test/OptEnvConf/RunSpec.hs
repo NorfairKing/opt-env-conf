@@ -354,6 +354,26 @@ spec = do
         (setting [reader str, option, long "foo"])
         "-dfu"
 
+      -- Arguments can be parsed as-is
+      argParseSpec
+        ["delete"]
+        ( commands
+            [ command "add" "add" (pure "hi"),
+              command "delete" "delete" (pure "ho")
+            ]
+        )
+        ("ho" :: String)
+
+      -- A command can have an argument
+      argParseSpec
+        ["add", "hi"]
+        ( commands
+            [ command "add" "add" $ setting [argument, reader str],
+              command "other" "other" (pure "ho")
+            ]
+        )
+        "hi"
+
       -- Here an argument has a value that looks like a command name but
       -- should still be treated as an argument.
       argParseSpec
@@ -663,6 +683,18 @@ spec = do
             Parser (Char, Maybe (Char, Char))
         )
         [ (["--before", "'m'"], ('m', Nothing))
+        ]
+
+      -- Failing after consuming args leaves the args unconsumed
+      argParseSpecs
+        ( choice
+            [ (++)
+                <$> many (setting [reader str, argument])
+                <*> setting [switch ["ho"], long "--switch"],
+              many $ setting [reader str, argument]
+            ]
+        )
+        [ (["args", "here"], ["args", "here"])
         ]
 
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
