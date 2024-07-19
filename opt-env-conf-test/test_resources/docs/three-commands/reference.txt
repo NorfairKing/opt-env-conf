@@ -15,17 +15,20 @@
   
 
 [36mAll commands[m:
-  [34mShow this help text[m
-  switch: [37m-h[m[36m|[m[37m--help[m
-
-  [34mOutput version information: 0.0.0[m
-  switch: [37m--version[m
-
   [34mfirst[m
   command: [35mone[m
-  
+    [34margument[m
+    argument: [33mSTR[m
+    
   [34msecond[m
   command: [35mtwo[m
+    [34mnumber[m
+    option: [37m--number[m[36m|[m[37m-n[m [33mINT[m
+    env: [37mNUMBER[m [33mINT[m
+    config:
+      [37mnumber[m: # [32mor null[m
+        [33m<number>[m # [32m64 bit signed integer[m
+    
     [34menable extra[m
     switch: [37m--(enable|disable)-enable[m
     env: [37mENABLE[m [33mBOOL[m
@@ -33,10 +36,8 @@
       [37menable[m: # [32mor null[m
         [33m<boolean>[m
   
-  
   [34mthird[m
   command: [35mthree-very-long-command-name[m
-  
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 

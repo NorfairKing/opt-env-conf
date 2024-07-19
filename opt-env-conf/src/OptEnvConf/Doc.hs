@@ -469,42 +469,46 @@ renderSetDocs = unlinesChunks . go
           else ([], AnyDocsSingle d : ds)
       ds -> ([], ds)
 
--- todo: don't print top level settings here
 renderCommandDocs :: AnyDocs SetDoc -> [Chunk]
-renderCommandDocs = unlinesChunks . go
+renderCommandDocs = unlinesChunks . go True
   where
-    go :: AnyDocs SetDoc -> [[Chunk]]
-    go = \case
+    go :: Bool -> AnyDocs SetDoc -> [[Chunk]]
+    go isTopLevel = \case
       AnyDocsCommands cs -> concatMap goCommand cs
-      AnyDocsAnd ds -> concatMap go ds
-      AnyDocsOr ds -> goOr ds
-      AnyDocsSingle _ -> []
+      AnyDocsAnd ds -> concatMap (go isTopLevel) ds
+      AnyDocsOr ds -> goOr isTopLevel ds
+      AnyDocsSingle d | isTopLevel -> []
+                      | otherwise  -> indent (renderSetDoc d)
 
     goCommand :: CommandDoc SetDoc -> [[Chunk]]
     goCommand CommandDoc {..} =
       indent $
         [helpChunk commandDocHelp]
           : ["command: ", commandChunk commandDocArgument]
-          : go commandDocs
-          ++ [[]]
+          : go False commandDocs
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
-    goOr :: [AnyDocs SetDoc] -> [[Chunk]]
-    goOr = \case
+    goOr :: Bool -> [AnyDocs SetDoc] -> [[Chunk]]
+    goOr isTopLevel = \case
       [] -> []
-      [d] -> go d
+      [d] -> go isTopLevel d
       (AnyDocsSingle d : ds) ->
         case setDocHelp d of
-          Nothing -> go (AnyDocsSingle d) ++ goOr ds
+          Nothing -> go isTopLevel (AnyDocsSingle d) ++ goOr isTopLevel ds
           Just h ->
             let (sds, rest) = goSameHelp h ds
-            in concat
-                  [ indent $ renderSetDocHeader (Just h),
-                    indent $ concatMap renderSetDocWithoutHeader $ d : sds,
-                    [[]],
-                    goOr rest
+             in concat
+                  [ concat
+                      [ concat
+                          [ indent $ renderSetDocHeader (Just h),
+                            indent $ concatMap renderSetDocWithoutHeader $ d : sds,
+                            [[]]
+                          ]
+                        | not isTopLevel
+                      ],
+                    goOr isTopLevel rest
                   ]
-      (d : ds) -> go d ++ goOr ds
+      (d : ds) -> go isTopLevel d ++ goOr isTopLevel ds
     goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
     goSameHelp h = \case
       [] -> ([], [])

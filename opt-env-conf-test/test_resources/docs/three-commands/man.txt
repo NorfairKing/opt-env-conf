@@ -23,17 +23,20 @@ three-commands (-h|--help)
   
 
 .Sh COMMANDS
-  Show this help text
-  switch: -h|--help
-
-  Output version information: 0.0.0
-  switch: --version
-
   first
   command: one
-  
+    argument
+    argument: STR
+    
   second
   command: two
+    number
+    option: --number|-n INT
+    env: NUMBER INT
+    config:
+      number: # or null
+        <number> # 64 bit signed integer
+    
     enable extra
     switch: --(enable|disable)-enable
     env: ENABLE BOOL
@@ -41,10 +44,8 @@ three-commands (-h|--help)
       enable: # or null
         <boolean>
   
-  
   third
   command: three-very-long-command-name
-  
 
 .Sh OPTIONS
   -h|--help Show this help text 
