@@ -60,7 +60,7 @@ goldenSettingsNixOptionsSpec path = withFrozenCallStack $ goldenParserNixOptions
 
 goldenParserNixOptionsSpec :: (HasCallStack) => Parser a -> FilePath -> Spec
 goldenParserNixOptionsSpec parser path = withFrozenCallStack $ do
-  specify "produces the same reference documentation as before" $
+  specify "produces the nix options as before" $
     pureGoldenNixOptions path parser
 
 pureGoldenNixOptions :: FilePath -> Parser a -> GoldenTest Text
