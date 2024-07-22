@@ -97,6 +97,11 @@
           #   ];
           #   inherit haskellPackages;
           # };
+          example-settings-check = haskellPackages.opt-env-conf.makeSettingsCheck
+            "example-settings-check"
+            "${haskellPackages.opt-env-conf-test}/bin/opt-env-conf-example"
+            [ "read" ]
+            { };
           pre-commit = pre-commit-hooks.lib.${system}.run {
             src = ./.;
             hooks = {

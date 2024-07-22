@@ -65,8 +65,8 @@ let
   installManpagesAndCompletions = exeNames: drv:
     installManpages exeNames (installCompletions exeNames drv);
 
-  mkSettingsCheck = name: exe: args: env: runCommand name env ''
-    ${exe} --run-settings-check ${concatStringsSep " " args} > $out 2>&1
+  makeSettingsCheck = name: exe: args: env: runCommand name env ''
+    ${exe} --run-settings-check ${concatStringsSep " " args} > $out
   '';
 
   # Note to reader: If you find code while debugging a build failure, please
@@ -74,7 +74,7 @@ let
   addSettingsCheckToService = service: service // {
     documentation =
       let
-        check = mkSettingsCheck
+        check = makeSettingsCheck
           (service.name or "settings-check")
           (last (init (splitString "\n" service.script)))
           (service.scriptArgs or [ ]) # TODO is this right?
@@ -92,7 +92,7 @@ let
         installCompletion
         installCompletions
         installManpagesAndCompletions
-        mkSettingsCheck
+        makeSettingsCheck
         addSettingsCheckToService
         addSettingsCheckToUserService;
     } // (old.passthru or { });
