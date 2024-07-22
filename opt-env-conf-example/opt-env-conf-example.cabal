@@ -1,0 +1,56 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           opt-env-conf-example
+version:        0.0.0.0
+copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
+build-type:     Simple
+extra-source-files:
+    test_resources/documentation.txt
+    options.nix
+
+library
+  exposed-modules:
+      OptEnvConf.Example
+  other-modules:
+      Paths_opt_env_conf_example
+  hs-source-dirs:
+      src/
+  ghc-options: -Wall
+  build-depends:
+      base <5
+    , opt-env-conf
+    , text
+  default-language: Haskell2010
+
+executable opt-env-conf-example
+  main-is: Main.hs
+  other-modules:
+      Paths_opt_env_conf_example
+  hs-source-dirs:
+      app
+  build-depends:
+      base <5
+    , opt-env-conf-example
+  default-language: Haskell2010
+
+test-suite opt-env-conf-example-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      OptEnvConf.ExampleSpec
+      Paths_opt_env_conf_example
+  hs-source-dirs:
+      test/
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-tool-depends:
+      sydtest-discover:sydtest-discover
+  build-depends:
+      base <5
+    , opt-env-conf-example
+    , opt-env-conf-test
+    , sydtest
+  default-language: Haskell2010

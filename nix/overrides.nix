@@ -7,7 +7,7 @@
 }:
 with lib;
 with haskell.lib;
-self: super:
+self: _:
 let
   optEnvConfPkg = name:
     buildFromSdist (overrideCabal (self.callPackage (../${name}/default.nix) { }) (old: {
@@ -33,7 +33,7 @@ let
     }));
 
   installManpage = exeName: drv: overrideCabal drv (old: {
-    postInstall = (drv.postInstall or "") + ''
+    postInstall = (old.postInstall or "") + ''
       mkdir -p $out/share/man/man1/
       export NO_COLOR=1
       ''${!outputBin}/bin/${exeName} --render-man-page > ${exeName}.1
@@ -65,8 +65,8 @@ let
   installManpagesAndCompletions = exeNames: drv:
     installManpages exeNames (installCompletions exeNames drv);
 
-  mkSettingsCheck = name: exe: args: env: runCommand name env ''
-    ${exe} --run-settings-check ${concatStringsSep " " args} > $out 2>&1
+  makeSettingsCheck = name: exe: args: env: runCommand name env ''
+    ${exe} --run-settings-check ${concatStringsSep " " args} > $out
   '';
 
   # Note to reader: If you find code while debugging a build failure, please
@@ -74,7 +74,7 @@ let
   addSettingsCheckToService = service: service // {
     documentation =
       let
-        check = mkSettingsCheck
+        check = makeSettingsCheck
           (service.name or "settings-check")
           (last (init (splitString "\n" service.script)))
           (service.scriptArgs or [ ]) # TODO is this right?
@@ -92,15 +92,13 @@ let
         installCompletion
         installCompletions
         installManpagesAndCompletions
-        mkSettingsCheck
+        makeSettingsCheck
         addSettingsCheckToService
         addSettingsCheckToUserService;
     } // (old.passthru or { });
   });
 
-  opt-env-conf-test =
-    installManpagesAndCompletions [ "opt-env-conf-example" ]
-      (optEnvConfPkg "opt-env-conf-test");
+  opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
 
   optEnvConfPackages = {
     inherit

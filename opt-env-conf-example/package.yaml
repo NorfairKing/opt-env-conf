@@ -1,0 +1,40 @@
+name: opt-env-conf-example
+version: '0.0.0.0'
+copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
+  
+extra-source-files:
+- test_resources/**/*
+- options.nix
+
+dependencies:
+- base <5
+
+
+library:
+  source-dirs: src/
+  ghc-options: -Wall
+  dependencies:
+  - opt-env-conf
+  - text
+
+executables:
+  opt-env-conf-example:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+    - opt-env-conf-example
+
+tests:
+  opt-env-conf-example-test:
+    main: Spec.hs
+    source-dirs: test/
+    build-tools: sydtest-discover
+    ghc-options:
+    - -Wall
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - opt-env-conf-example
+    - opt-env-conf-test
+    - sydtest

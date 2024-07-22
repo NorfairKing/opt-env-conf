@@ -262,18 +262,6 @@ library
     , text
   default-language: Haskell2010
 
-executable opt-env-conf-example
-  main-is: Main.hs
-  other-modules:
-      Paths_opt_env_conf_test
-  hs-source-dirs:
-      app
-  build-depends:
-      base <5
-    , opt-env-conf
-    , text
-  default-language: Haskell2010
-
 test-suite opt-env-conf-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs

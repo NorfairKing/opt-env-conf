@@ -27,14 +27,6 @@ library:
   - sydtest
   - text
 
-executables:
-  opt-env-conf-example:
-    main: Main.hs
-    source-dirs: app
-    dependencies:
-    - opt-env-conf
-    - text
-
 tests:
   opt-env-conf-test:
     main: Spec.hs

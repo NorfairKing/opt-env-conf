@@ -1,14 +1,18 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Main where
+module OptEnvConf.Example
+  ( exampleMain,
+    Instructions (..),
+  )
+where
 
 import Data.Text (Text)
 import OptEnvConf
-import Paths_opt_env_conf_test (version)
+import Paths_opt_env_conf_example (version)
 
-main :: IO ()
-main = do
+exampleMain :: IO ()
+exampleMain = do
   s <-
     runSettingsParser
       version

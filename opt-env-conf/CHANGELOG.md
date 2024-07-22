@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* Added a hidden `--render-reference-documentation` command.
+* Added a per-command `--help` page.
+
+### Changed
+
+* Changed the name of `mkSettingsCheck` to `makeSettingsCheck`.
+
 ## [0.3.0.0] - 2024-07-19
 
 ### Changed
