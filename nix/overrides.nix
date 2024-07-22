@@ -7,7 +7,7 @@
 }:
 with lib;
 with haskell.lib;
-self: super:
+self: _:
 let
   optEnvConfPkg = name:
     buildFromSdist (overrideCabal (self.callPackage (../${name}/default.nix) { }) (old: {
@@ -33,7 +33,7 @@ let
     }));
 
   installManpage = exeName: drv: overrideCabal drv (old: {
-    postInstall = (drv.postInstall or "") + ''
+    postInstall = (old.postInstall or "") + ''
       mkdir -p $out/share/man/man1/
       export NO_COLOR=1
       ''${!outputBin}/bin/${exeName} --render-man-page > ${exeName}.1
@@ -98,9 +98,7 @@ let
     } // (old.passthru or { });
   });
 
-  opt-env-conf-test =
-    installManpagesAndCompletions [ "opt-env-conf-example" ]
-      (optEnvConfPkg "opt-env-conf-test");
+  opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
 
   optEnvConfPackages = {
     inherit

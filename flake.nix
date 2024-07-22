@@ -75,6 +75,8 @@
               nixpkgs-23_11;
           };
           backwardCompatibilityChecks = pkgs.lib.mapAttrs (_: nixpkgs: backwardCompatibilityCheckFor nixpkgs) allNixpkgs;
+          opt-env-conf-example = haskellPackages.opt-env-conf.installManpagesAndCompletions [ "opt-env-conf-example" ]
+            (pkgs.haskell.lib.buildStrictly (haskellPackages.callPackage ./opt-env-conf-example { }));
         in
         backwardCompatibilityChecks // {
           forwardCompatibility = horizonPkgs.optEnvConfRelease;
@@ -99,7 +101,7 @@
           # };
           example-settings-check = haskellPackages.opt-env-conf.makeSettingsCheck
             "example-settings-check"
-            "${haskellPackages.opt-env-conf-test}/bin/opt-env-conf-example"
+            "${opt-env-conf-example}/bin/opt-env-conf-example"
             [ "read" ]
             { };
           pre-commit = pre-commit-hooks.lib.${system}.run {
@@ -111,7 +113,14 @@
               nixpkgs-fmt.enable = true;
               nixpkgs-fmt.excludes = [
                 ".*/default.nix"
-                ".*/nix-options.nix"
+                ".*/options.nix"
+                "opt-env-conf-test/test_resources.*.nix"
+              ];
+              deadnix.enable = true;
+              deadnix.excludes = [
+                ".*/default.nix"
+                ".*/options.nix"
+                "opt-env-conf-test/test_resources.*.nix"
               ];
               cabal2nix.enable = true;
             };

@@ -7,13 +7,10 @@ mkDerivation {
   pname = "opt-env-conf-test";
   version = "0.0.0.0";
   src = ./.;
-  isLibrary = true;
-  isExecutable = true;
   libraryHaskellDepends = [
     base genvalidity genvalidity-containers opt-env-conf
     safe-coloured-text sydtest text
   ];
-  executableHaskellDepends = [ base opt-env-conf text ];
   testHaskellDepends = [
     aeson autodocodec base containers genvalidity-aeson
     genvalidity-sydtest genvalidity-text mtl opt-env-conf path
@@ -23,5 +20,4 @@ mkDerivation {
   homepage = "https://github.com/NorfairKing/opt-env-conf#readme";
   description = "A testing companion package for opt-env-conf";
   license = "unknown";
-  mainProgram = "opt-env-conf-example";
 }
