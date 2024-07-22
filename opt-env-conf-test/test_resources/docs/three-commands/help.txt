@@ -17,8 +17,7 @@ example with three commands
   
 
 [36mAvailable commands[m:
-  [35mone[m                      [34mfirst[m
-  [35mtwo[m                      [34msecond[m
-  [35mthree-very-long-command-name[m
-                           [34mthird[m
+  [35mone[m                            [34mfirst[m 
+  [35mtwo[m                            [34msecond[m
+  [35mthree-very-long-command-name[m   [34mthird[m 
 

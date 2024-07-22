@@ -522,25 +522,18 @@ renderCommandDocs = unlinesChunks . go True
       ds -> ([], ds)
 
 renderCommandDocsShort :: AnyDocs SetDoc -> [Chunk]
-renderCommandDocsShort = unlinesChunks . go
+renderCommandDocsShort = layoutAsTable .  go
   where
-    go :: AnyDocs SetDoc -> [[Chunk]]
+    go :: AnyDocs SetDoc -> [[[Chunk]]]
     go = \case
-      AnyDocsCommands cs ->
-        let maxLength = maximum $ length . commandDocArgument <$> cs
-         in concatMap (goCommand maxLength) cs
+      AnyDocsCommands cs -> concatMap goCommand cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle _ -> []
 
-    goCommand :: Int -> CommandDoc SetDoc -> [[Chunk]]
-    goCommand maxLength CommandDoc {..} =
-      indent $
-        if length commandDocArgument <= maxLength' - 1
-          then [[commandChunk commandDocArgument, chunk (T.replicate (maxLength' - length commandDocArgument) " "), helpChunk commandDocHelp]]
-          else [commandChunk commandDocArgument] : [[chunk (T.replicate maxLength' " "), helpChunk commandDocHelp]]
-      where
-        maxLength' = minimum [25, maximum [10, maxLength]]
+    goCommand :: CommandDoc SetDoc -> [[[Chunk]]]
+    goCommand CommandDoc {..} =
+      [indent $ [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]]
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
