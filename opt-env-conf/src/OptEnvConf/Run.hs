@@ -138,6 +138,11 @@ runParser version progDesc p = do
             tc <- getTerminalCapabilitiesFromHandle stdout
             hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
             exitSuccess
+          RenderDocumentation -> do
+            progname <- getProgName
+            tc <- getTerminalCapabilitiesFromHandle stdout
+            hPutChunksLocaleWith tc stdout $ renderReferenceDocumentation progname docs
+            exitSuccess
           RenderNixosOptions -> do
             putStrLn $ T.unpack $ renderParserNixOptions p'
             exitSuccess
@@ -178,6 +183,7 @@ data Internal a
   = ShowHelp
   | ShowVersion
   | RenderMan
+  | RenderDocumentation
   | RenderNixosOptions
   | CheckSettings
   | BashCompletionScript (Path Abs File)
@@ -220,6 +226,12 @@ internalParser version p =
               long "render-man-page",
               hidden,
               help "Render a manpage"
+            ],
+          setting
+            [ switch RenderDocumentation,
+              long "render-reference-documentation",
+              hidden,
+              help "Render reference documentation"
             ],
           setting
             [ switch RenderNixosOptions,
