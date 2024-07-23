@@ -5,6 +5,7 @@
 ### Added
 
 * Added a hidden `--render-reference-documentation` command.
+* Added a per-command `--help` page.
 
 ## [0.3.0.0] - 2024-07-19
 

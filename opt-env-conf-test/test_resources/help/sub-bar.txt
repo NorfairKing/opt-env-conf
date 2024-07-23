@@ -1,0 +1,6 @@
+[36mUsage: [m[33mexample bar[m 
+
+bar explanation
+
+[36mAvailable settings[m:
+

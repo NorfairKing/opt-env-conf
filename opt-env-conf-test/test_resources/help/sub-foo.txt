@@ -1,0 +1,6 @@
+[36mUsage: [m[33mexample foo[m 
+
+foo explanation
+
+[36mAvailable settings[m:
+

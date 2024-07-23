@@ -7,7 +7,9 @@
 module OptEnvConf.Doc
   ( renderVersionPage,
     parserDocs,
+    commandParserDocs,
     renderHelpPage,
+    renderCommandHelpPage,
     renderManPage,
     renderReferenceDocumentation,
     parserOptDocs,
@@ -24,6 +26,7 @@ module OptEnvConf.Doc
     OptDoc (..),
     EnvDoc (..),
     ConfDoc (..),
+    CommandDoc (..),
     settingSetDoc,
     renderSetDoc,
     settingOptDoc,
@@ -188,16 +191,17 @@ parserDocs = simplifyAnyDocs . go
       ParserMany p -> go p -- TODO: is this right?
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
-      ParserCommands _ cs -> AnyDocsCommands $ map goCommand cs
+      ParserCommands _ cs -> AnyDocsCommands $ map commandParserDocs cs
       ParserWithConfig _ p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserSetting _ set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
-    goCommand :: Command a -> CommandDoc SetDoc
-    goCommand Command {..} =
-      CommandDoc
-        { commandDocArgument = commandArg,
-          commandDocHelp = commandHelp,
-          commandDocs = go commandParser
-        }
+
+commandParserDocs :: Command a -> CommandDoc SetDoc
+commandParserDocs Command {..} =
+  CommandDoc
+    { commandDocArgument = commandArg,
+      commandDocHelp = commandHelp,
+      commandDocs = parserDocs commandParser
+    }
 
 settingSetDoc :: Setting a -> Maybe SetDoc
 settingSetDoc Setting {..} = do
@@ -405,6 +409,10 @@ renderHelpPage progname progDesc docs =
       headerChunks "Available settings",
       renderSetDocs docs
     ]
+
+renderCommandHelpPage :: String -> [String] -> CommandDoc SetDoc -> [Chunk]
+renderCommandHelpPage progname commandPath CommandDoc {..} =
+  renderHelpPage (unwords $ progname : commandPath ++ [commandDocArgument]) commandDocHelp commandDocs
 
 renderSetDocs :: AnyDocs SetDoc -> [Chunk]
 renderSetDocs = unlinesChunks . go

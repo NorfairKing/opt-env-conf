@@ -8,6 +8,7 @@ module OptEnvConf.Run
   ( runSettingsParser,
     runParser,
     runParserOn,
+    runHelpParser,
     internalParser,
   )
 where
@@ -125,9 +126,18 @@ runParser version progDesc p = do
         Right i -> case i of
           ShowHelp -> do
             progname <- getProgName
-            tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderHelpPage progname progDesc docs
-            exitSuccess
+            errOrDocs <- runHelpParser mDebugMode argMap' p
+            case errOrDocs of
+              Left errs -> do
+                stderrTc <- getTerminalCapabilitiesFromHandle stderr
+                hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
+                exitFailure
+              Right mCommandDoc -> do
+                tc <- getTerminalCapabilitiesFromHandle stdout
+                hPutChunksLocaleWith tc stdout $ case mCommandDoc of
+                  Nothing -> renderHelpPage progname progDesc docs
+                  Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
+                exitSuccess
           ShowVersion -> do
             progname <- getProgName
             tc <- getTerminalCapabilitiesFromHandle stdout
@@ -322,7 +332,7 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn debugMode parser args envVars mConfig = do
+runParserOn mDebugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
@@ -332,7 +342,7 @@ runParserOn debugMode parser args envVars mConfig = do
         PPEnv
           { ppEnvEnv = envVars,
             ppEnvConf = mConfig,
-            ppEnvDebug = debugMode,
+            ppEnvDebug = mDebugMode,
             ppEnvIndent = 0
           }
   let go' = do
@@ -351,7 +361,7 @@ runParserOn debugMode parser args envVars mConfig = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
-                Nothing -> pure $ Left $ (if isJust debugMode then id else eraseErrorSrcLocs) firstErrors
+                Nothing -> pure $ Left firstErrors
                 Just ((eOR, _), ns') -> case eOR of
                   Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
@@ -686,6 +696,103 @@ tryReaders rs s = left NE.reverse $ go rs
       (r : rl) -> case runReader r s of
         Left err -> go' (err <| errs) rl
         Right a -> Right a
+
+runHelpParser ::
+  -- DebugMode
+  Maybe TerminalCapabilities ->
+  Args ->
+  Parser a ->
+  IO (Either (NonEmpty ParseError) (Maybe ([String], CommandDoc SetDoc)))
+runHelpParser mDebugMode args parser = do
+  let ppState =
+        PPState
+          { ppStateArgs = args,
+            ppStateParsedSettings = S.empty
+          }
+  let ppEnv =
+        PPEnv
+          { ppEnvEnv = EnvMap.empty,
+            ppEnvConf = Nothing,
+            ppEnvDebug = mDebugMode,
+            ppEnvIndent = 0
+          }
+  mResOrNext <- runPPLazy (go parser) ppState ppEnv
+  case mResOrNext of
+    Nothing -> pure $ Right Nothing
+    Just ((result, _), _) -> pure $ case result of
+      Failure errs -> Left errs
+      Success mDocs -> Right mDocs
+  where
+    -- We try to parse the commands as deep as possible and ignore everything else.
+    go :: Parser a -> PP (Maybe ([String], CommandDoc SetDoc))
+    go = \case
+      ParserPure _ -> do
+        debug [syntaxChunk "pure value"]
+        pure Nothing
+      ParserAp ff fa -> do
+        debug [syntaxChunk "Ap"]
+        ppIndent $ do
+          mf <- go ff
+          ma <- go fa
+          pure $ ma <|> mf -- Reverse order
+      ParserSelect fe ff -> do
+        debug [syntaxChunk "Select"]
+        ppIndent $ do
+          me <- go fe
+          mf <- go ff
+          pure $ mf <|> me -- Reverse order
+      ParserEmpty mLoc -> do
+        debug [syntaxChunk "Empty", ": ", mSrcLocChunk mLoc]
+        pure Nothing
+      ParserAlt p1 p2 -> do
+        debug [syntaxChunk "Alt"]
+        ppIndent $ do
+          debug ["Trying left side."]
+          eor <- ppIndent $ tryPP (go p1)
+          case eor of
+            Just a -> do
+              debug ["Left side succeeded."]
+              pure a
+            Nothing -> do
+              debug ["Left side failed, trying right side."]
+              ppIndent $ go p2
+      ParserMany p' -> do
+        debug [syntaxChunk "Many"]
+        ppIndent $ go p'
+      ParserAllOrNothing mLoc p' -> do
+        debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
+        ppIndent $ go p'
+      ParserCheck mLoc _ _ p' -> do
+        debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
+        ppIndent $ go p'
+      ParserWithConfig mLoc pc pa -> do
+        debug [syntaxChunk "WithConfig", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          mNewConfig <- go pc
+          mRes <- go pa
+          pure $ mRes <|> mNewConfig -- Reverse order
+      ParserSetting mLoc _ -> do
+        debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
+        pure Nothing
+      ParserCommands mLoc cs -> do
+        debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          mS <- ppArg
+          case mS of
+            Nothing -> do
+              debug ["No argument found for choosing a command."]
+              pure Nothing
+            Just s -> do
+              case find ((== s) . commandArg) cs of
+                Nothing -> do
+                  debug ["Argument found, but no matching command: ", chunk $ T.pack $ show s]
+                  pure Nothing
+                Just c -> do
+                  debug ["Set command to ", commandChunk (commandArg c)]
+                  mRes <- go $ commandParser c
+                  pure $ case mRes of
+                    Nothing -> Just ([], commandParserDocs c)
+                    Just res -> pure res
 
 type PP a = ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a
 

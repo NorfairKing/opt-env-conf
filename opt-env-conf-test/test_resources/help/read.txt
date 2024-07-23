@@ -1,0 +1,6 @@
+[36mUsage: [m[33mexample read[m 
+
+read command explanation
+
+[36mAvailable settings[m:
+

@@ -218,6 +218,14 @@ extra-source-files:
     test_resources/error/unrecognised-command.txt
     test_resources/error/unrecognised-option.txt
     test_resources/error/unrecognised-switch.txt
+    test_resources/help/create.txt
+    test_resources/help/read.txt
+    test_resources/help/sub-bar.txt
+    test_resources/help/sub-foo.txt
+    test_resources/help/sub.txt
+    test_resources/help/toplevel-pure-with-invalid-port.txt
+    test_resources/help/toplevel-pure.txt
+    test_resources/help/wrong-command.txt
     test_resources/lint/config-without-load.txt
     test_resources/lint/dash-in-long.txt
     test_resources/lint/dash-in-short.txt
@@ -271,10 +279,12 @@ test-suite opt-env-conf-test
       OptEnvConf.CompletionSpec
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
+      OptEnvConf.HelpSpec
       OptEnvConf.LintSpec
       OptEnvConf.NonDetSpec
       OptEnvConf.ReaderSpec
       OptEnvConf.RunSpec
+      OptEnvConf.TestUtils
       OptEnvConf.ToplevelSpec
       Paths_opt_env_conf_test
   hs-source-dirs:
