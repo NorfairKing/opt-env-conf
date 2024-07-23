@@ -1,4 +1,4 @@
-[36mUsage: [m[33mexample bar[m 
+[36mUsage: [m[33mexample sub bar[m 
 
 bar explanation
 
