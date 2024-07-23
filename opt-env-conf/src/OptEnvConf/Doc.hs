@@ -327,11 +327,11 @@ renderManPage progname version progDesc docs =
               renderSetDocs docs
             ],
             concat
-             [ [ [".Sh ", "COMMANDS"],
-                 renderCommandDocs docs
-               ]
-               | not (null commandDocs)
-             ],
+              [ [ [".Sh ", "COMMANDS"],
+                  renderCommandDocs docs
+                ]
+                | not (null commandDocs)
+              ],
             concat
               [ [ [".Sh ", "OPTIONS"],
                   renderLongOptDocs optDocs
@@ -483,8 +483,9 @@ renderCommandDocs = unlinesChunks . go True
       AnyDocsCommands cs -> concatMap goCommand cs
       AnyDocsAnd ds -> concatMap (go isTopLevel) ds
       AnyDocsOr ds -> goOr isTopLevel ds
-      AnyDocsSingle d | isTopLevel -> []
-                      | otherwise  -> indent (renderSetDoc d)
+      AnyDocsSingle d
+        | isTopLevel -> []
+        | otherwise -> indent (renderSetDoc d)
 
     goCommand :: CommandDoc SetDoc -> [[Chunk]]
     goCommand CommandDoc {..} =
@@ -523,12 +524,12 @@ renderCommandDocs = unlinesChunks . go True
         if setDocHelp d == Just h
           then
             let (sds, rest) = goSameHelp h ds
-            in (d : sds, rest)
+             in (d : sds, rest)
           else ([], AnyDocsSingle d : ds)
       ds -> ([], ds)
 
 renderCommandDocsShort :: AnyDocs SetDoc -> [Chunk]
-renderCommandDocsShort = layoutAsTable .  go
+renderCommandDocsShort = layoutAsTable . go
   where
     go :: AnyDocs SetDoc -> [[[Chunk]]]
     go = \case
@@ -539,7 +540,7 @@ renderCommandDocsShort = layoutAsTable .  go
 
     goCommand :: CommandDoc SetDoc -> [[[Chunk]]]
     goCommand CommandDoc {..} =
-      [indent $ [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]]
+      [indent [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]]
 
 parserOptDocs :: Parser a -> AnyDocs OptDoc
 parserOptDocs = docsToOptDocs . parserDocs
