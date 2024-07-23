@@ -6,4 +6,4 @@
   [35mtwo[m [34msecond[m
       [37m--number[m[36m|[m[37m-n[m               [34mnumber[m       
       [37m--(enable|disable)-enable[m [34menable extra[m 
-  [35mthree[m [34mthird[m
+  [35mthree-very-long-command-name[m [34mthird[m

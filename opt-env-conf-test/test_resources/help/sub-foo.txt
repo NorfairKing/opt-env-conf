@@ -1,0 +1,4 @@
+[36mUsage: [m[33mexample sub foo[m 
+
+foo explanation
+

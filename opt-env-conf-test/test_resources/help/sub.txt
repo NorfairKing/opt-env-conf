@@ -1,0 +1,8 @@
+[36mUsage: [m[33mexample sub[m COMMAND
+
+command with subcommand
+
+[36mAvailable commands[m:
+  [35mfoo[m   [34mfoo explanation[m
+  [35mbar[m   [34mbar explanation[m
+

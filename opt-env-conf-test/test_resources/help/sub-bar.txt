@@ -1,0 +1,4 @@
+[36mUsage: [m[33mexample sub bar[m 
+
+bar explanation
+

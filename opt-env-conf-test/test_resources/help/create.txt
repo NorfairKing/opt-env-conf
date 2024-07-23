@@ -1,0 +1,9 @@
+[36mUsage: [m[33mexample create[m [33mSTR[m
+
+create command explanation
+
+[36mAvailable settings[m:
+  [34mThe item to create[m
+  argument: [33mSTR[m
+  
+

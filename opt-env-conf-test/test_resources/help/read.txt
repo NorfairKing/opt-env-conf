@@ -1,0 +1,4 @@
+[36mUsage: [m[33mexample read[m 
+
+read command explanation
+

@@ -10,6 +10,7 @@ import Data.Version
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Test
+import OptEnvConf.TestUtils
 import Test.Syd
 import Text.Colour
 import Text.Show.Pretty as Pretty
@@ -106,10 +107,6 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
   it "renders the Nix options the same way" $
     pureGoldenTextFile ("test_resources/docs/" <> dir <> "/nix-options.nix") $
       renderParserNixOptions parser
-
-pureGoldenChunksFile :: FilePath -> [Chunk] -> GoldenTest Text
-pureGoldenChunksFile fp cs =
-  pureGoldenTextFile fp $ renderChunksText With24BitColours cs
 
 data Greet = Greet !String !String !Bool
 
@@ -288,7 +285,7 @@ threeCommandsParser =
               [ help "enable extra",
                 name "enable"
               ],
-        command "three" "third" (pure Three)
+        command "three-very-long-command-name" "third" (pure Three)
       ]
 
 data SubCommands

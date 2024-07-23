@@ -53,8 +53,8 @@ Used in production
 | Parsing configuration values         | ✔️              | ✖️                      | ✖️          | ✔️             |
 | Generated global `--help` page       | ✔️              | ✔️                      | ✖️          | ✖️             |
 | Coloured global `--help` page        | ✔️              | ✖️                      | ✖️          | ✖️             |
-| Generated per-command `--help` page  | 🚧             | ✔️                      | ✖️          | ✖️             |
-| Coloured per-command `--help` page   | 🚧             | ✖️                      | ✖️          | ✖️             |
+| Generated per-command `--help` page  | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Coloured per-command `--help` page   | ✔️              | ✖️                      | ✖️          | ✖️             |
 | Generated `--version` command        | ✔️              | ✖️                      | ✖️          | ✖️             |
 | Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |
 | Helpful parse errors                 | ✔️              | ✔️                      | ✔️          | ✔️             |

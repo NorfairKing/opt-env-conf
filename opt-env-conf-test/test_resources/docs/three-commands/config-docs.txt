@@ -34,7 +34,7 @@ AnyDocsAnd
                 ]
           }
       , CommandDoc
-          { commandDocArgument = "three"
+          { commandDocArgument = "three-very-long-command-name"
           , commandDocHelp = "third"
           , commandDocs = AnyDocsAnd []
           }

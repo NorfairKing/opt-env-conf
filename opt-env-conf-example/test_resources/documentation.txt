@@ -1,4 +1,4 @@
-[36mUsage: [m[33mopt-env-conf-example[m [37m--config-file[m [33mFILE_PATH[m [37m--log-level[m [33mLOG_LEVEL[m [37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [37m--payment-currency[m [33mCURRENCY[m [35mcreate[m [33mSTR[m [36m|[m [35mread[m [36m|[m [35mupdate[m [33mSTR[m [33mSTR[m [36m|[m [35mdelete[m
+[36mUsage: [m[33mopt-env-conf-example[m [37m--config-file[m [33mFILE_PATH[m [37m--log-level[m [33mLOG_LEVEL[m [37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [37m--payment-currency[m [33mCURRENCY[m COMMAND
 
 [36mAll settings[m:
   [34mPath to the configuration file[m
@@ -33,6 +33,8 @@
     [37mpayment.currency[m: # [32mor null[m
       [33m<string>[m
   
+
+[36mAll commands[m:
   [34mCreate[m
   command: [35mcreate[m
     [34mThe item to create[m
