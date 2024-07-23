@@ -995,8 +995,9 @@ parserSettingsSet = go
       -- The nothing part shouldn't happen but I don't know when it doesn't
       ParserSetting mLoc _ -> maybe S.empty (S.singleton . hashSrcLoc) mLoc
 
+-- An 'Ord'-able SrcLoc
 newtype SrcLocHash = SrcLocHash Int
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord)
 
 hashSrcLoc :: SrcLoc -> SrcLocHash
 hashSrcLoc = SrcLocHash . hash . prettySrcLoc

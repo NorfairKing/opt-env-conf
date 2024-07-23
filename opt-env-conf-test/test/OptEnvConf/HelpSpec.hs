@@ -51,7 +51,6 @@ spec = do
     ["quux"]
 
 data Instructions = Instructions !Settings !Dispatch
-  deriving (Show)
 
 instance HasParser Instructions where
   settingsParser =
@@ -64,7 +63,6 @@ data Dispatch
   = DispatchRead
   | DispatchCreate !String
   | DispatchWithSub !Sub
-  deriving (Show)
 
 instance HasParser Dispatch where
   settingsParser =
@@ -84,7 +82,6 @@ instance HasParser Dispatch where
 data Sub
   = SubFoo
   | SubBar
-  deriving (Show)
 
 instance HasParser Sub where
   settingsParser =
@@ -98,7 +95,6 @@ data Settings = Settings
     settingLogLevel :: String,
     settingPaymentSettings :: Maybe PaymentSettings
   }
-  deriving (Show)
 
 instance HasParser Settings where
   settingsParser = do
@@ -126,7 +122,6 @@ data PaymentSettings = PaymentSettings
     paymentSetSecretKey :: Text,
     paymentSetCurrency :: Maybe String
   }
-  deriving (Show)
 
 instance HasParser PaymentSettings where
   settingsParser = do

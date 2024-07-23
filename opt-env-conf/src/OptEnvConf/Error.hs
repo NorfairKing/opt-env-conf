@@ -6,20 +6,16 @@ module OptEnvConf.Error where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import Data.Set (Set)
-import qualified Data.Set as S
 import qualified Data.Text as T
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Doc
 import OptEnvConf.Output
-import OptEnvConf.Parser (SrcLocHash, hashSrcLoc)
 import Text.Colour
 
 data ParseError = ParseError
   { parseErrorSrcLoc :: !(Maybe SrcLoc),
     parseErrorMessage :: !ParseErrorMessage
   }
-  deriving (Show)
 
 data ParseErrorMessage
   = ParseErrorEmpty
@@ -133,6 +129,3 @@ renderError ParseError {..} =
           ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
       maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
     ]
-
-errorSrcLocSet :: (Foldable f) => f ParseError -> Set SrcLocHash
-errorSrcLocSet = foldl (\s e -> maybe s ((`S.insert` s) . hashSrcLoc) (parseErrorSrcLoc e)) S.empty

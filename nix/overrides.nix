@@ -98,12 +98,14 @@ let
     } // (old.passthru or { });
   });
 
-  opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
 
   optEnvConfPackages = {
-    inherit
-      opt-env-conf
-      opt-env-conf-test;
+    inherit opt-env-conf;
+    opt-env-conf-test = optEnvConfPkg "opt-env-conf-test";
+    opt-env-conf-example =
+      self.opt-env-conf.installManpagesAndCompletions
+        [ "opt-env-conf-example" ]
+        (optEnvConfPkg "opt-env-conf-example");
   };
 in
 {

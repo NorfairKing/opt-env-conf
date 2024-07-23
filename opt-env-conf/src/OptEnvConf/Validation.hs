@@ -82,11 +82,6 @@ instance Selective (Validation e) where
     Left a -> f a
     Right b -> b
 
-instance Monad (Validation e) where
-  return = pure
-  Success a >>= f = f a
-  Failure es >>= _ = Failure es
-
 validationFailure :: e -> Validation e a
 validationFailure e = Failure (e :| [])
 

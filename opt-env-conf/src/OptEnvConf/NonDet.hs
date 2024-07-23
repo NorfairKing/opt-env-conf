@@ -8,7 +8,6 @@ module OptEnvConf.NonDet
     runNonDetT,
     runNonDetTLazy,
     liftNonDetTList,
-    liftNonDetTListM,
     NonDetT,
   )
 where
@@ -16,7 +15,6 @@ where
 import Control.Applicative
 import Control.Monad
 import Control.Monad.State
-import Control.Selective
 import Data.Functor.Identity
 
 type NonDet = NonDetT Identity
@@ -34,9 +32,6 @@ runNonDetTLazy = runListTLazy
 
 liftNonDetTList :: (Applicative m) => [a] -> NonDetT m a
 liftNonDetTList = liftListT
-
-liftNonDetTListM :: (Applicative m) => [m a] -> NonDetT m a
-liftNonDetTListM = liftListTM
 
 -- The monadic list type
 data MList m a
@@ -89,14 +84,6 @@ runListTComplete = unListT >=> go
 liftListT :: (Applicative m) => [a] -> ListT m a
 liftListT = ListT . pure . liftMList
 
-liftListTM :: (Applicative m) => [m a] -> ListT m a
-liftListTM = ListT . go
-  where
-    go :: (Applicative m) => [m a] -> m (MList m a)
-    go = \case
-      [] -> pure MNil
-      (ma : mas) -> MCons <$> ma <*> pure (go mas)
-
 instance (Functor f) => Functor (ListT f) where
   fmap f = ListT . fmap (fmap f) . unListT
 
@@ -107,18 +94,11 @@ instance (Monad f) => Applicative (ListT f) where
     a <- fa
     pure (f a)
 
-instance (Monad f) => Selective (ListT f) where
-  select = selectM
-
 instance (MonadIO m) => MonadIO (ListT m) where
   liftIO = lift . liftIO
 
 instance MonadTrans ListT where
   lift = ListT . fmap (`MCons` pure MNil)
-
-instance (MonadState s m) => MonadState s (ListT m) where
-  get = lift get
-  put = lift . put
 
 -- Note: This alternative instance only "alternates" on the nondeterminism, not the
 -- underlying effect.
@@ -128,10 +108,6 @@ instance (Monad f) => Alternative (ListT f) where
 
 instance (Monad f) => Monad (ListT f) where
   (>>=) m f = joinListT $ fmap f m
-
-instance (Monad f) => MonadPlus (ListT f) where
-  mzero = empty
-  mplus = (<|>)
 
 joinListT :: (Monad m) => ListT m (ListT m a) -> ListT m a
 joinListT (ListT xss) = ListT . joinMMMList $ fmap (fmap unListT) xss

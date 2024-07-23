@@ -101,42 +101,12 @@ data AnyDocs a
   | AnyDocsSingle !a
   deriving (Show)
 
-instance Functor AnyDocs where
-  fmap f = \case
-    AnyDocsCommands cs -> AnyDocsCommands $ map (fmap f) cs
-    AnyDocsAnd as -> AnyDocsAnd $ fmap (fmap f) as
-    AnyDocsOr as -> AnyDocsOr $ fmap (fmap f) as
-    AnyDocsSingle a -> AnyDocsSingle $ f a
-
-instance Foldable AnyDocs where
-  foldMap f = \case
-    AnyDocsCommands cs -> foldMap (foldMap f) cs
-    AnyDocsAnd as -> foldMap (foldMap f) as
-    AnyDocsOr as -> foldMap (foldMap f) as
-    AnyDocsSingle a -> f a
-
-instance Traversable AnyDocs where
-  traverse f = \case
-    AnyDocsCommands cs -> AnyDocsCommands <$> traverse (traverse f) cs
-    AnyDocsAnd as -> AnyDocsAnd <$> traverse (traverse f) as
-    AnyDocsOr as -> AnyDocsOr <$> traverse (traverse f) as
-    AnyDocsSingle a -> AnyDocsSingle <$> f a
-
 data CommandDoc a = CommandDoc
   { commandDocArgument :: String,
     commandDocHelp :: Help,
     commandDocs :: AnyDocs a
   }
   deriving (Show)
-
-instance Functor CommandDoc where
-  fmap f cd = cd {commandDocs = fmap f (commandDocs cd)}
-
-instance Foldable CommandDoc where
-  foldMap f = foldMap f . commandDocs
-
-instance Traversable CommandDoc where
-  traverse f cd = (\d -> cd {commandDocs = d}) <$> traverse f (commandDocs cd)
 
 mapMaybeDocs :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
 mapMaybeDocs func = simplifyAnyDocs . go
@@ -463,7 +433,7 @@ renderSetDocs = unlinesChunks . go
              in concat
                   [ indent $ renderSetDocHeader (Just h),
                     indent $ concatMap renderSetDocWithoutHeader $ d : sds,
-                    [ [] | not (null rest) ],
+                    [[] | not (null rest)],
                     goOr rest
                   ]
       (d : ds) -> go d ++ goOr ds

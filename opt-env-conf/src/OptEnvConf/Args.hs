@@ -20,7 +20,6 @@ module OptEnvConf.Args
     renderArg,
     Dashed (..),
     renderDashed,
-    renderDashedArg,
     prefixDashed,
   )
 where
@@ -393,11 +392,6 @@ renderDashed :: Dashed -> String
 renderDashed = \case
   DashedShort c -> ['-', c]
   DashedLong cs -> '-' : '-' : NE.toList cs
-
-renderDashedArg :: Dashed -> Arg
-renderDashedArg = \case
-  DashedShort c -> ArgDashed False (c :| [])
-  DashedLong cs -> ArgDashed True cs
 
 prefixDashed :: String -> Dashed -> Dashed
 prefixDashed p = \case

@@ -75,8 +75,6 @@
               nixpkgs-23_11;
           };
           backwardCompatibilityChecks = pkgs.lib.mapAttrs (_: nixpkgs: backwardCompatibilityCheckFor nixpkgs) allNixpkgs;
-          opt-env-conf-example = haskellPackages.opt-env-conf.installManpagesAndCompletions [ "opt-env-conf-example" ]
-            (pkgs.haskell.lib.buildStrictly (haskellPackages.callPackage ./opt-env-conf-example { }));
         in
         backwardCompatibilityChecks // {
           forwardCompatibility = horizonPkgs.optEnvConfRelease;
@@ -89,6 +87,7 @@
             ];
             coverage = [
               "opt-env-conf-test"
+              "opt-env-conf-example"
             ];
           };
           # weeder-check = pkgs.weeder-nix.makeWeederCheck {
@@ -96,14 +95,16 @@
           #   packages = [
           #     "opt-env-conf"
           #     "opt-env-conf-test"
+          #     "opt-env-conf-example"
           #   ];
           #   inherit haskellPackages;
           # };
-          example-settings-check = haskellPackages.opt-env-conf.makeSettingsCheck
-            "example-settings-check"
-            "${opt-env-conf-example}/bin/opt-env-conf-example"
-            [ "read" ]
-            { };
+          example-settings-check =
+            haskellPackages.opt-env-conf.makeSettingsCheck
+              "example-settings-check"
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              [ "read" ]
+              { };
           pre-commit = pre-commit-hooks.lib.${system}.run {
             src = ./.;
             hooks = {
