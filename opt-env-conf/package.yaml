@@ -19,7 +19,7 @@ library:
   ghc-options: -Wall
   dependencies:
   - aeson
-  - autodocodec >= 0.2.3.0
+  - autodocodec >= 0.3.0.0
   - autodocodec-nix
   - autodocodec-schema
   - autodocodec-yaml
