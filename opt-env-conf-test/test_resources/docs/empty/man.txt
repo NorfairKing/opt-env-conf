@@ -7,8 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-empty (-h|--help) 
- | --version
+empty (-h|--help) | --version
 .Sh SETTINGS
   Show this help text
   switch: -h|--help

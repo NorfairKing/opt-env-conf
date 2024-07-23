@@ -593,15 +593,15 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
 renderOrChunks :: [[Chunk]] -> [Chunk]
 renderOrChunks os =
   unwordsChunks $
-    intersperse [orChunkNewline] $
+    intersperse [orChunk] $
       map parenthesise os
   where
     parenthesise :: [Chunk] -> [Chunk]
     parenthesise [c] = [c]
     parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
 
-orChunkNewline :: Chunk
-orChunkNewline = fore cyan "\n |"
+orChunk :: Chunk
+orChunk = fore cyan "|"
 
 -- | Render long-form documentation of options
 renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]

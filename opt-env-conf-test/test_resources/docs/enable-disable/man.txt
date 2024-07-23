@@ -7,9 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-enable-disable (-h|--help) 
- | --version 
- | (--config-file FILE_PATH --(enable|disable)-example)
+enable-disable (-h|--help) | --version | (--config-file FILE_PATH --(enable|disable)-example)
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
