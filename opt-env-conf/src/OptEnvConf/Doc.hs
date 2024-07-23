@@ -566,13 +566,13 @@ setDocOptDoc SetDoc {..} = do
 
 -- | Render short-form documentation of options
 renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go 0
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go
   where
-    go :: Int -> AnyDocs OptDoc -> [Chunk]
-    go nestingLevel = \case
+    go :: AnyDocs OptDoc -> [Chunk]
+    go = \case
       AnyDocsCommands _ -> ["COMMAND"]
-      AnyDocsAnd ds -> unwordsChunks $ map (go (nestingLevel + 1)) ds
-      AnyDocsOr ds -> renderOrChunks $ map (go (nestingLevel + 1)) ds
+      AnyDocsAnd ds -> unwordsChunks $ map go ds
+      AnyDocsOr ds -> renderOrChunks $ map go ds
       AnyDocsSingle OptDoc {..} ->
         unwordsChunks $
           concat
