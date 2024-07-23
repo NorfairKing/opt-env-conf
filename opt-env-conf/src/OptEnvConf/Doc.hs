@@ -420,10 +420,14 @@ renderHelpPage progname progDesc docs =
     concat
       [ [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
           [],
-          unlinesChunks $ progDescLines progDesc,
-          headerChunks "Available settings",
-          renderSetDocs docs
+          unlinesChunks $ progDescLines progDesc
         ],
+        concat
+          [ [ headerChunks "Available settings",
+              renderSetDocs docs
+            ]
+            | not (nullDocs docs)
+          ],
         concat
           [ [ headerChunks "Available commands",
               renderCommandDocsShort docs

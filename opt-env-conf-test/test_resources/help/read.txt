@@ -2,5 +2,3 @@
 
 read command explanation
 
-[36mAvailable settings[m:
-

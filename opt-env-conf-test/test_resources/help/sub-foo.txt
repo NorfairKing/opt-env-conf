@@ -2,5 +2,3 @@
 
 foo explanation
 
-[36mAvailable settings[m:
-

@@ -2,5 +2,3 @@
 
 bar explanation
 
-[36mAvailable settings[m:
-
