@@ -26,7 +26,6 @@ yes-no (-h|--help) | --version | (--config-file FILE_PATH --[no-]example)
     example: # or null
       <boolean>
 
-
 .Sh OPTIONS
   -h|--help      Show this help text               
   --version      Output version information: 0.0.0 

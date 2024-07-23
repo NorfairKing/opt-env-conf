@@ -445,7 +445,7 @@ renderSetDocs = unlinesChunks . go
   where
     go :: AnyDocs SetDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands _ -> [] -- todo: this empty list causes the double newline between settings and commands
+      AnyDocsCommands _ -> []
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> goOr ds
       AnyDocsSingle d -> indent (renderSetDoc d)
@@ -463,7 +463,7 @@ renderSetDocs = unlinesChunks . go
              in concat
                   [ indent $ renderSetDocHeader (Just h),
                     indent $ concatMap renderSetDocWithoutHeader $ d : sds,
-                    [[]],
+                    [ [] | not (null rest) ],
                     goOr rest
                   ]
       (d : ds) -> go d ++ goOr ds
