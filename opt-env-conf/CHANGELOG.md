@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0.1] - 2024-07-26
+
+### Added
+
+* The `viaCodec` reader.
+
 ## [0.4.0.0] - 2024-07-23
 
 ### Added

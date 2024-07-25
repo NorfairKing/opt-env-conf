@@ -12,6 +12,7 @@ module OptEnvConf.Reader
     str,
     auto,
     exists,
+    viaCodec,
 
     -- * Constructing your own reader
     maybeReader,
@@ -29,13 +30,16 @@ module OptEnvConf.Reader
   )
 where
 
+import Autodocodec
 import Control.Monad.Reader (MonadReader (..))
+import Data.Aeson.Types as JSON
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.String
+import qualified Data.Text as T
 import Text.Read (readMaybe)
 
 newtype Reader a = Reader {unReader :: String -> Either String a}
@@ -83,6 +87,9 @@ auto = Reader $ \s -> case readMaybe s of
 -- > exists = Reader $ const $ pure True
 exists :: Reader Bool
 exists = Reader $ const $ pure True
+
+viaCodec :: (HasCodec a) => Reader a
+viaCodec = eitherReader $ parseEither $ parseJSONViaCodec . JSON.String . T.pack
 
 -- | Turn a 'Maybe' parsing function into a 'Reader'
 maybeReader :: (String -> Maybe a) -> Reader a
