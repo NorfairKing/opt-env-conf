@@ -73,9 +73,23 @@ let
       ${exe} --run-settings-check ${concatStringsSep " " args}
     '';
   };
+
+  # A nix build that does a settings check.
+  # Note that this will only work if the option parsing does not rely on any
+  # files not available in the nix build sandbox.
+  # If it does, you'll need to use 'makeSettingsCheckScript' and run it outside
+  # of the build sandbox, for example in an activation script.
   makeSettingsCheck = name: exe: args: env: runCommand name env ''
     ${makeSettingsCheckScript name exe args env}/bin/${name} > "$out"
   '';
+
+  makeSettingsCheckHomeManagerActivationScript = name: exe: args: env: {
+    after = [ "writeBoundary" ];
+    before = [ ];
+    data = ''
+      run ${makeSettingsCheckScript name exe args env}/bin/${name}
+    '';
+  };
 
   # Note to reader: If you find code while debugging a build failure, please
   # contribute a more accurate version of this function:
@@ -102,6 +116,7 @@ let
         installManpagesAndCompletions
         makeSettingsCheckScript
         makeSettingsCheck
+        makeSettingsCheckHomeManagerActivationScript
         addSettingsCheckToService
         addSettingsCheckToUserService;
     } // (old.passthru or { });
