@@ -3,6 +3,7 @@
 , symlinkJoin
 , gzip
 , runCommand
+, writeShellApplication
 , ...
 }:
 with lib;
@@ -65,8 +66,15 @@ let
   installManpagesAndCompletions = exeNames: drv:
     installManpages exeNames (installCompletions exeNames drv);
 
+  makeSettingsCheckScript = name: exe: args: env: writeShellApplication {
+    inherit name;
+    runtimeEnv = env;
+    text = ''
+      ${exe} --run-settings-check ${concatStringsSep " " args}
+    '';
+  };
   makeSettingsCheck = name: exe: args: env: runCommand name env ''
-    ${exe} --run-settings-check ${concatStringsSep " " args} > $out
+    ${makeSettingsCheckScript name exe args env}/bin/${name} > "$out"
   '';
 
   # Note to reader: If you find code while debugging a build failure, please
@@ -92,6 +100,7 @@ let
         installCompletion
         installCompletions
         installManpagesAndCompletions
+        makeSettingsCheckScript
         makeSettingsCheck
         addSettingsCheckToService
         addSettingsCheckToUserService;
