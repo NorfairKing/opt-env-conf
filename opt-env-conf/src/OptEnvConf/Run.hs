@@ -245,9 +245,9 @@ internalParser version p =
             ],
           setting
             [ switch RenderNixosOptions,
-              long "render-nixos-options",
+              long "render-nix-options",
               hidden,
-              help "Render nixos options"
+              help "Render Nix options"
             ],
           allowLeftovers $
             setting
