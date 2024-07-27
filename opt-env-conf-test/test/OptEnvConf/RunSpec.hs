@@ -1,7 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.RunSpec (spec) where
 
+import Autodocodec
 import Control.Applicative
 import Data.Aeson as JSON (Object, Value (Null), toJSON)
 import qualified Data.Aeson.Key as Key
@@ -275,7 +278,7 @@ spec = do
           forAllValid $ \c' ->
             forAllValid $ \key -> do
               let c = KeyMap.insert key JSON.Null c'
-              let defaultVal = "hi"
+              let defaultVal = "hi" :: String
               let p = setting [conf (Key.toString key), value defaultVal]
               let expected = defaultVal
               shouldParse p Args.emptyArgs e (Just c) expected
@@ -284,35 +287,35 @@ spec = do
       argParseSpec
         ["--foo", "bar"]
         (setting [reader str, option, long "foo"])
-        "bar"
+        ("bar" :: String)
       argParseSpec
         ["--foo", "bar"]
         (many $ setting [reader str, option, long "foo"])
-        ["bar"]
+        (["bar"] :: [String])
       argParseSpec
         ["--foo", "bar", "--foo", "quux"]
         (many $ setting [reader str, option, long "foo"])
-        ["bar", "quux"]
+        (["bar", "quux"] :: [String])
       argParseSpec
         ["--foo", "bar", "-f", "quux"]
         (many $ setting [reader str, option, short 'f', long "foo"])
-        ["bar", "quux"]
+        (["bar", "quux"] :: [String])
       argParseSpec
         ["-f", "bar", "--foo", "quux"]
         (many $ setting [reader str, option, short 'f', long "foo"])
-        ["bar", "quux"]
+        (["bar", "quux"] :: [String])
 
       argParseSpec
         ["--", "all", "-bare", "--arguments"]
         (many $ setting [reader str, argument])
         -- No double-dash!
-        ["all", "-bare", "--arguments"]
+        (["all", "-bare", "--arguments"] :: [String])
 
       -- Switch before argument
       argParseSpec
         ["--foo", "bar"]
         ((,) <$> setting [switch True, long "foo"] <*> setting [reader str, argument])
-        (True, "bar")
+        (True, "bar" :: String)
 
       -- Note that this could also be parsed as (False, "--foo") with a
       -- leftover argument but somehow that's not what we want.
@@ -321,13 +324,13 @@ spec = do
       argParseSpec
         ["--foo", "bar"]
         ((,) <$> setting [switch True, long "foo", value False] <*> setting [reader str, argument])
-        (True, "bar")
+        (True, "bar" :: String)
 
       -- Switch before argument, but defined after
       argParseSpec
         ["--foo", "bar"]
         ((,) <$> setting [reader str, argument] <*> setting [switch True, long "foo"])
-        ("bar", True)
+        ("bar" :: String, True)
 
       -- Dashed as argument
       -- This example shows that we can't just skip dasheds when looking for
@@ -335,7 +338,7 @@ spec = do
       argParseSpec
         ["--foo", "bar"]
         ((,) <$> setting [reader str, argument] <*> setting [reader str, argument])
-        ("--foo", "bar")
+        ("--foo" :: String, "bar" :: String)
 
       -- Dashed as value for an option
       -- This example shows that we can't "just" treat any argument with dashed
@@ -344,7 +347,7 @@ spec = do
       argParseSpec
         ["--foo", "--bar"]
         (setting [reader str, option, long "foo"])
-        "--bar"
+        ("--bar" :: String)
 
       -- Short dashed as a value for an option
       -- This example shows that we can't "just" unfold combined short options.
@@ -352,7 +355,7 @@ spec = do
       argParseSpec
         ["--foo", "-dfu"]
         (setting [reader str, option, long "foo"])
-        "-dfu"
+        ("-dfu" :: String)
 
       -- Arguments can be parsed as-is
       argParseSpec
@@ -372,7 +375,7 @@ spec = do
               command "other" "other" (pure "ho")
             ]
         )
-        "hi"
+        ("hi" :: String)
 
       -- Here an argument has a value that looks like a command name but
       -- should still be treated as an argument.
@@ -385,7 +388,7 @@ spec = do
                 command "arg" "command" (pure '2')
               ]
         )
-        ("command", '2')
+        ("command" :: String, '2')
 
       -- Same as above but with an option instead of an argument
       argParseSpec
@@ -397,7 +400,7 @@ spec = do
                 command "arg" "command" (pure '2')
               ]
         )
-        ("command", '2')
+        ("command" :: String, '2')
 
       -- Unfolding switches
       argParseSpecs
@@ -440,7 +443,7 @@ spec = do
                 example ("file" :: String)
               ]
         )
-        [ (["-f", "foo"], (0, "foo")),
+        [ (["-f", "foo"], (0, "foo" :: String)),
           (["-v", "-f", "foo"], (1, "foo")),
           (["-vf", "foo", "-v"], (2, "foo")),
           (["-vvf", "foo"], (2, "foo")),
@@ -469,7 +472,7 @@ spec = do
                 )
         )
         [ ([], ([], 0)),
-          (["--file", "foo", "-v"], (["foo"], 1)),
+          (["--file", "foo", "-v"], (["foo" :: String], 1)),
           (["-vf", "foo"], (["foo"], 1))
         ]
       -- Equals version of long option
@@ -480,7 +483,7 @@ spec = do
               long "file"
             ]
         )
-        [ (["--file", "foo"], "foo"),
+        [ (["--file", "foo"], "foo" :: String),
           (["--file=foo"], "foo")
         ]
 
@@ -492,7 +495,7 @@ spec = do
               short 'f'
             ]
         )
-        [ (["-f", "foo"], "foo"),
+        [ (["-f", "foo"], "foo" :: String),
           (["-ffoo"], "foo")
         ]
 
@@ -636,12 +639,12 @@ spec = do
       argParseSpecs
         ((Left <$> setting [switch True, long "bash-completion-script"]) <|> (Right <$> setting [reader str, argument]))
         [ (["--bash-completion-script"], Left True),
-          (["arg"], Right "arg")
+          (["arg"], Right ("arg" :: String))
         ]
       argParseSpecs
         ((Left <$> setting [switch True, long "bash-completion-script"]) <|> (Right <$> optional (setting [reader str, argument])))
         [ (["--bash-completion-script"], Left True),
-          (["arg"], Right (Just "arg"))
+          (["arg"], Right (Just ("arg" :: String)))
         ]
 
       argParseSpecs
@@ -694,7 +697,31 @@ spec = do
               many $ setting [reader str, argument]
             ]
         )
-        [ (["args", "here"], ["args", "here"])
+        [ (["args", "here"], ["args", "here" :: String])
+        ]
+
+      -- Required config value
+      confParseSpecs
+        (setting [conf "hi"] :: Parser String)
+        [ (Just [("hi", "ho")], "ho")
+        ]
+
+      -- Optional config value
+      confParseSpecs
+        (optional $ setting [conf "hi"] :: Parser (Maybe String))
+        [ (Nothing, Nothing),
+          (Just [("hi", "ho")], Just "ho")
+        ]
+
+      -- Multiple possible codecs
+      confParseSpecs
+        ( setting
+            [ confWith "hi" (Left <$> codec),
+              confWith "foo" (Right <$> codec)
+            ]
+        )
+        [ (Just [("hi", toJSON (5 :: Int))], Left 5),
+          (Just [("foo", "bar")], Right "bar" :: Either Int String)
         ]
 
 argParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([String], a)] -> Spec
@@ -702,7 +729,7 @@ argParseSpecs p table = withFrozenCallStack $ mapM_ (\(args, result) -> argParse
 
 argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a -> Spec
 argParseSpec args p expected = withFrozenCallStack $ do
-  it (unwords ["parses", show args, "as", show expected]) $ do
+  it (unwords ["parses args", show args, "as", show expected]) $ do
     let argMap = parseArgs args
     errOrRes <- runParserOn Nothing p argMap EnvMap.empty Nothing
     case errOrRes of
@@ -714,9 +741,20 @@ envParseSpecs p table = withFrozenCallStack $ mapM_ (\(envs, result) -> envParse
 
 envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser a -> a -> Spec
 envParseSpec envVars p expected = withFrozenCallStack $ do
-  it (unwords ["parses", show envVars, "as", show expected]) $ do
+  it (unwords ["parses environment", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
     errOrRes <- runParserOn Nothing p emptyArgs envMap Nothing
+    case errOrRes of
+      Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
+      Right actual -> actual `shouldBe` expected
+
+confParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [(Maybe JSON.Object, a)] -> Spec
+confParseSpecs p table = withFrozenCallStack $ mapM_ (\(mConf, result) -> confParseSpec mConf p result) table
+
+confParseSpec :: (HasCallStack) => (Show a, Eq a) => Maybe JSON.Object -> Parser a -> a -> Spec
+confParseSpec mConf p expected = withFrozenCallStack $ do
+  it (unwords ["parses configuration", show mConf, "as", show expected]) $ do
+    errOrRes <- runParserOn Nothing p emptyArgs EnvMap.empty mConf
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected

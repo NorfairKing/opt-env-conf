@@ -518,7 +518,6 @@ runParserOn mDebugMode parser args envVars mConfig = do
               markParsed
               pure a
             _ -> do
-              -- TODO do this without all the nesting
               mSwitch <- case settingSwitchValue of
                 Nothing -> pure NotRun
                 Just a -> do
@@ -608,50 +607,60 @@ runParserOn mDebugMode parser args envVars mConfig = do
                           let mConfDoc = settingConfDoc set
                           mConf <- case settingConfigVals of
                             Nothing -> pure NotRun
-                            Just (ConfigValSetting {..} :| _) -> do
-                              -- TODO try parsing with the others
+                            Just confSets -> do
                               mObj <- asks ppEnvConf
                               case mObj of
                                 Nothing -> do
                                   debug ["no config object to set from"]
                                   pure NotFound
                                 Just obj -> do
-                                  let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
-                                      jsonParser o (k :| rest) = case NE.nonEmpty rest of
-                                        Nothing -> do
-                                          case KeyMap.lookup (Key.fromString k) o of
-                                            Nothing -> pure Nothing
-                                            Just v -> Just <$> parseJSON v
-                                        Just neRest -> do
-                                          mO' <- o .:? Key.fromString k
-                                          case mO' of
-                                            Nothing -> pure Nothing
-                                            Just o' -> jsonParser o' neRest
-                                  case JSON.parseEither (jsonParser obj) configValSettingPath of
-                                    Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                    Right mV -> case mV of
-                                      Nothing -> do
-                                        debug
-                                          [ "could not set based on config value, not configured: ",
-                                            chunk $ T.pack $ show $ NE.toList configValSettingPath
-                                          ]
-                                        pure NotFound
-                                      Just v -> case JSON.parseEither (parseJSONVia configValSettingCodec) v of
-                                        Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                        Right mA -> case mA of
-                                          Nothing -> do
-                                            debug
-                                              [ "could not set based on config value, configured to nothing: ",
-                                                chunk $ T.pack $ show $ NE.toList configValSettingPath
-                                              ]
-                                            pure NotFound
-                                          Just a -> do
-                                            debug
-                                              [ "set based on config value:",
-                                                chunk $ T.pack $ show v
-                                              ]
-                                            pure $ Found a
-
+                                  let goConfSet ConfigValSetting {..} = do
+                                        let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
+                                            jsonParser o (k :| rest) = case NE.nonEmpty rest of
+                                              Nothing -> do
+                                                case KeyMap.lookup (Key.fromString k) o of
+                                                  Nothing -> pure Nothing
+                                                  Just v -> Just <$> parseJSON v
+                                              Just neRest -> do
+                                                mO' <- o .:? Key.fromString k
+                                                case mO' of
+                                                  Nothing -> pure Nothing
+                                                  Just o' -> jsonParser o' neRest
+                                        case JSON.parseEither (jsonParser obj) configValSettingPath of
+                                          Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
+                                          Right mV -> case mV of
+                                            Nothing -> do
+                                              debug
+                                                [ "could not set based on config value, not configured: ",
+                                                  chunk $ T.pack $ show $ NE.toList configValSettingPath
+                                                ]
+                                              pure Nothing
+                                            Just v -> case JSON.parseEither (parseJSONVia configValSettingCodec) v of
+                                              Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
+                                              Right mA -> case mA of
+                                                Nothing -> do
+                                                  debug
+                                                    [ "could not set based on config value, configured to nothing: ",
+                                                      chunk $ T.pack $ show $ NE.toList configValSettingPath
+                                                    ]
+                                                  pure Nothing
+                                                Just a -> do
+                                                  debug
+                                                    [ "set based on config value:",
+                                                      chunk $ T.pack $ show v
+                                                    ]
+                                                  pure $ Just a
+                                  let toRes = \case
+                                        Nothing -> NotFound
+                                        Just a -> Found a
+                                  let goConfSets (confSet :| rest) = case NE.nonEmpty rest of
+                                        Nothing -> toRes <$> goConfSet confSet
+                                        Just ne -> do
+                                          res <- goConfSet confSet
+                                          case res of
+                                            Just a -> pure $ Found a
+                                            Nothing -> goConfSets ne
+                                  goConfSets confSets
                           case mConf of
                             Found a -> do
                               markParsed
