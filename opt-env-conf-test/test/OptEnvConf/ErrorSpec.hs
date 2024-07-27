@@ -204,7 +204,7 @@ parseArgsErrorSpec fp p args =
             errOrResult <- runParserOn Nothing p (parseArgs args) EnvMap.empty Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
-              Left errs -> pure $ renderErrors $ eraseErrorSrcLocs errs
+              Left errs -> pure $ renderErrors errs
 
 parseEnvErrorSpec :: (HasCallStack) => (Show a) => FilePath -> Parser a -> [(String, String)] -> Spec
 parseEnvErrorSpec fp p e =
@@ -215,7 +215,7 @@ parseEnvErrorSpec fp p e =
             errOrResult <- runParserOn Nothing p emptyArgs (EnvMap.parse e) Nothing
             case errOrResult of
               Right a -> expectationFailure $ unlines ["Should not have been able to parse, but did and got:", show a]
-              Left errs -> pure $ renderErrors $ eraseErrorSrcLocs errs
+              Left errs -> pure $ renderErrors errs
 
 goldenChunksFile :: FilePath -> IO [Chunk] -> GoldenTest Text
 goldenChunksFile fp cs =

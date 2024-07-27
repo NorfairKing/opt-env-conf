@@ -6,6 +6,7 @@
 
 * Fixed a bug in which unrecognised arguments would be parsed exponentially.
 * The special `--version` command no longer allows any other arguments.
+* Fixed a bug in which some source locations still showed up even though debug mode was not on.
 
 ## [0.4.0.1] - 2024-07-26
 

@@ -358,7 +358,13 @@ runParserOn mDebugMode parser args envVars mConfig = do
               -- TODO: Consider keeping around all errors?
               mNext <- runNonDetTLazy ns
               case mNext of
-                Nothing -> pure $ Left firstErrors
+                Nothing ->
+                  pure $
+                    Left $
+                      let f = case mDebugMode of
+                            Nothing -> eraseErrorSrcLocs
+                            Just _ -> id
+                       in f firstErrors
                 Just ((eOR, _), ns') -> case eOR of
                   Success a -> pure (Right a)
                   Failure _ -> goNexts ns'
