@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0.2] - 2024-07-27
+
+### Changed
+
+* Fixed a bug in which unrecognised arguments would be parsed exponentially.
+* The special `--version` command no longer allows any other arguments.
+
 ## [0.4.0.1] - 2024-07-26
 
 ### Added

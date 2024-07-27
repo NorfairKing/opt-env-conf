@@ -107,85 +107,99 @@ runParser version progDesc p = do
     Nothing -> do
       let p' = internalParser version p
       let docs = parserDocs p'
+
       mDebugMode <-
         if debugMode
           then Just <$> getTerminalCapabilitiesFromHandle stderr
           else pure Nothing
-      errOrResult <-
-        runParserOn
-          mDebugMode
-          p'
-          argMap
-          envVars
-          Nothing
-      case errOrResult of
-        Left errs -> do
-          tc <- getTerminalCapabilitiesFromHandle stderr
-          hPutChunksLocaleWith tc stderr $ renderErrors errs
-          exitFailure
-        Right i -> case i of
-          ShowHelp -> do
-            progname <- getProgName
-            errOrDocs <- runHelpParser mDebugMode argMap' p
-            case errOrDocs of
-              Left errs -> do
-                stderrTc <- getTerminalCapabilitiesFromHandle stderr
-                hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
-                exitFailure
-              Right mCommandDoc -> do
-                tc <- getTerminalCapabilitiesFromHandle stdout
-                hPutChunksLocaleWith tc stdout $ case mCommandDoc of
-                  Nothing -> renderHelpPage progname progDesc docs
-                  Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
-                exitSuccess
-          ShowVersion -> do
-            progname <- getProgName
-            tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderVersionPage progname version
-            exitSuccess
-          RenderMan -> do
-            progname <- getProgName
-            tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
-            exitSuccess
-          RenderDocumentation -> do
-            progname <- getProgName
-            tc <- getTerminalCapabilitiesFromHandle stdout
-            hPutChunksLocaleWith tc stdout $ renderReferenceDocumentation progname docs
-            exitSuccess
-          RenderNixosOptions -> do
-            putStrLn $ T.unpack $ renderParserNixOptions p'
-            exitSuccess
-          CheckSettings -> do
-            let argMap'' = case consumeSwitch [DashedLong settingsCheckSwitch] argMap of
-                  Nothing -> error "If you see this there is a bug in opt-env-conf."
-                  Just am -> am
-            stderrTc <- getTerminalCapabilitiesFromHandle stderr
-            errOrSets <- runParserOn (Just stderrTc) p argMap'' envVars Nothing
-            case errOrSets of
-              Left errs -> do
-                hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
-                exitFailure
-              Right _ -> do
-                tc <- getTerminalCapabilitiesFromHandle stdout
-                hPutChunksLocaleWith tc stdout ["Settings parsed successfully."]
-                exitSuccess
-          BashCompletionScript progPath -> do
-            progname <- getProgName
-            generateBashCompletionScript progPath progname
-            exitSuccess
-          ZshCompletionScript progPath -> do
-            progname <- getProgName
-            generateZshCompletionScript progPath progname
-            exitSuccess
-          FishCompletionScript progPath -> do
-            progname <- getProgName
-            generateFishCompletionScript progPath progname
-            exitSuccess
-          CompletionQuery enriched index ws -> do
-            runCompletionQuery p' enriched index ws
-            exitSuccess
-          ParsedNormally a -> pure a
+
+      let mHelpConsumed = consumeSwitch ["-h", "--help"] argMap
+      let (helpMode, args') = case mHelpConsumed of
+            Nothing -> (False, argMap)
+            Just am -> (True, am)
+
+      if helpMode
+        then do
+          progname <- getProgName
+          errOrDocs <- runHelpParser mDebugMode args' p
+          case errOrDocs of
+            Left errs -> do
+              stderrTc <- getTerminalCapabilitiesFromHandle stderr
+              hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
+              exitFailure
+            Right mCommandDoc -> do
+              tc <- getTerminalCapabilitiesFromHandle stdout
+              hPutChunksLocaleWith tc stdout $ case mCommandDoc of
+                Nothing -> renderHelpPage progname progDesc docs
+                Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
+              exitSuccess
+        else do
+          let mCheckConsumed = consumeSwitch ["--run-settings-check"] args'
+          let (checkMode, args) = case mCheckConsumed of
+                Nothing -> (False, args')
+                Just am -> (True, am)
+
+          if checkMode
+            then do
+              stderrTc <- getTerminalCapabilitiesFromHandle stderr
+              errOrSets <- runParserOn (Just stderrTc) p args envVars Nothing
+              case errOrSets of
+                Left errs -> do
+                  hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
+                  exitFailure
+                Right _ -> do
+                  tc <- getTerminalCapabilitiesFromHandle stdout
+                  hPutChunksLocaleWith tc stdout ["Settings parsed successfully."]
+                  exitSuccess
+            else do
+              errOrResult <-
+                runParserOn
+                  mDebugMode
+                  p'
+                  args
+                  envVars
+                  Nothing
+              case errOrResult of
+                Left errs -> do
+                  tc <- getTerminalCapabilitiesFromHandle stderr
+                  hPutChunksLocaleWith tc stderr $ renderErrors errs
+                  exitFailure
+                Right i -> case i of
+                  ShowHelp -> die "unreachable, this option is only here for documentation."
+                  ShowVersion -> do
+                    progname <- getProgName
+                    tc <- getTerminalCapabilitiesFromHandle stdout
+                    hPutChunksLocaleWith tc stdout $ renderVersionPage progname version
+                    exitSuccess
+                  RenderMan -> do
+                    progname <- getProgName
+                    tc <- getTerminalCapabilitiesFromHandle stdout
+                    hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
+                    exitSuccess
+                  RenderDocumentation -> do
+                    progname <- getProgName
+                    tc <- getTerminalCapabilitiesFromHandle stdout
+                    hPutChunksLocaleWith tc stdout $ renderReferenceDocumentation progname docs
+                    exitSuccess
+                  RenderNixosOptions -> do
+                    putStrLn $ T.unpack $ renderParserNixOptions p'
+                    exitSuccess
+                  BashCompletionScript progPath -> do
+                    progname <- getProgName
+                    generateBashCompletionScript progPath progname
+                    exitSuccess
+                  ZshCompletionScript progPath -> do
+                    progname <- getProgName
+                    generateZshCompletionScript progPath progname
+                    exitSuccess
+                  FishCompletionScript progPath -> do
+                    progname <- getProgName
+                    generateFishCompletionScript progPath progname
+                    exitSuccess
+                  CompletionQuery enriched index ws -> do
+                    runCompletionQuery p' enriched index ws
+                    exitSuccess
+                  ParsedNormally a -> pure a
 
 -- Internal structure to help us do what the framework
 -- is supposed to.
@@ -195,7 +209,6 @@ data Internal a
   | RenderMan
   | RenderDocumentation
   | RenderNixosOptions
-  | CheckSettings
   | BashCompletionScript (Path Abs File)
   | ZshCompletionScript (Path Abs File)
   | FishCompletionScript (Path Abs File)
@@ -208,119 +221,103 @@ data Internal a
       ![String]
   | ParsedNormally !a
 
-settingsCheckSwitch :: NonEmpty Char
-settingsCheckSwitch =
-  -- Pretty long so it probably doesn't collide.
-  'r' :| "un-settings-check"
-
 internalParser :: Version -> Parser a -> Parser (Internal a)
 internalParser version p =
-  let allowLeftovers :: Parser a -> Parser a
-      allowLeftovers p' = fst <$> ((,) <$> p' <*> many (setting [reader str, argument, hidden] :: Parser String))
-   in choice
-        [ allowLeftovers $
-            setting
-              [ switch ShowHelp,
-                short 'h',
-                long "help",
-                help "Show this help text"
-              ],
-          allowLeftovers $
-            setting
-              [ switch ShowVersion,
-                long "version",
-                help $ "Output version information: " <> showVersion version
-              ],
-          setting
-            [ switch RenderMan,
-              long "render-man-page",
-              hidden,
-              help "Render a manpage"
-            ],
-          setting
-            [ switch RenderDocumentation,
-              long "render-reference-documentation",
-              hidden,
-              help "Render reference documentation"
-            ],
-          setting
-            [ switch RenderNixosOptions,
-              long "render-nix-options",
-              hidden,
-              help "Render Nix options"
-            ],
-          allowLeftovers $
-            setting
-              [ switch CheckSettings,
-                long $ NE.toList settingsCheckSwitch,
-                hidden,
-                help "Run the parser and exit if parsing succeeded."
-              ],
-          BashCompletionScript
-            <$> mapIO
-              parseAbsFile
-              ( setting
-                  [ option,
-                    reader str,
-                    long "bash-completion-script",
-                    hidden,
-                    help "Render the bash completion script"
-                  ]
-              ),
-          ZshCompletionScript
-            <$> mapIO
-              parseAbsFile
-              ( setting
-                  [ option,
-                    reader str,
-                    long "zsh-completion-script",
-                    hidden,
-                    help "Render the zsh completion script"
-                  ]
-              ),
-          ZshCompletionScript
-            <$> mapIO
-              parseAbsFile
-              ( setting
-                  [ option,
-                    reader str,
-                    long "fish-completion-script",
-                    hidden,
-                    help "Render the fish completion script"
-                  ]
-              ),
-          setting
-            [ help "Query completion",
-              switch CompletionQuery,
-              -- Long string that no normal user would ever use.
-              long "query-opt-env-conf-completion",
-              hidden
-            ]
-            <*> setting
-              [ switch True,
-                long "completion-enriched",
-                value False,
-                hidden,
-                help "Whether to enable enriched completion"
-              ]
-            <*> setting
+  choice
+    [ setting
+        [ switch ShowHelp,
+          short 'h',
+          long "help",
+          help "Show this help text"
+        ],
+      setting
+        [ switch ShowVersion,
+          long "version",
+          help $ "Output version information: " <> showVersion version
+        ],
+      setting
+        [ switch RenderMan,
+          long "render-man-page",
+          hidden,
+          help "Render a manpage"
+        ],
+      setting
+        [ switch RenderDocumentation,
+          long "render-reference-documentation",
+          hidden,
+          help "Render reference documentation"
+        ],
+      setting
+        [ switch RenderNixosOptions,
+          long "render-nix-options",
+          hidden,
+          help "Render Nix options"
+        ],
+      BashCompletionScript
+        <$> mapIO
+          parseAbsFile
+          ( setting
               [ option,
-                reader auto,
-                long "completion-index",
+                reader str,
+                long "bash-completion-script",
                 hidden,
-                help "The index between the arguments where completion was invoked."
+                help "Render the bash completion script"
               ]
-            <*> many
-              ( setting
-                  [ option,
-                    reader str,
-                    long "completion-word",
-                    hidden,
-                    help "The words (arguments) that have already been typed"
-                  ]
-              ),
-          ParsedNormally <$> p
+          ),
+      ZshCompletionScript
+        <$> mapIO
+          parseAbsFile
+          ( setting
+              [ option,
+                reader str,
+                long "zsh-completion-script",
+                hidden,
+                help "Render the zsh completion script"
+              ]
+          ),
+      ZshCompletionScript
+        <$> mapIO
+          parseAbsFile
+          ( setting
+              [ option,
+                reader str,
+                long "fish-completion-script",
+                hidden,
+                help "Render the fish completion script"
+              ]
+          ),
+      setting
+        [ help "Query completion",
+          switch CompletionQuery,
+          -- Long string that no normal user would ever use.
+          long "query-opt-env-conf-completion",
+          hidden
         ]
+        <*> setting
+          [ switch True,
+            long "completion-enriched",
+            value False,
+            hidden,
+            help "Whether to enable enriched completion"
+          ]
+        <*> setting
+          [ option,
+            reader auto,
+            long "completion-index",
+            hidden,
+            help "The index between the arguments where completion was invoked."
+          ]
+        <*> many
+          ( setting
+              [ option,
+                reader str,
+                long "completion-word",
+                hidden,
+                help "The words (arguments) that have already been typed"
+              ]
+          ),
+      ParsedNormally <$> p
+    ]
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.

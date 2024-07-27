@@ -13,6 +13,10 @@ spec = do
   let dummyParser = pure 'a'
   let dummyRun = runParser dummyVersion dummyProgDesc dummyParser
   sequential $ do
+    it "can fail fast when too many unrecognsied arguments are given" $
+      withArgs ["-option1", "option", "--option2", "option", "--option3", "option", "--option4", "option"] $
+        dummyRun `shouldThrow` (== ExitFailure 1)
+
     describe "--help" $ do
       it "can show help text with --help" $
         withArgs ["--help"] $
@@ -30,9 +34,6 @@ spec = do
     describe "--version" $ do
       it "can show version info with --version" $
         withArgs ["--version"] $
-          dummyRun `shouldThrow` (== ExitSuccess)
-      it "can show version info with --version even when there are more args" $
-        withArgs ["--version", "more", "args", "here"] $
           dummyRun `shouldThrow` (== ExitSuccess)
 
     describe "--run-settings-check" $ do
