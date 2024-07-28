@@ -5,6 +5,7 @@
 ### Changed
 
 * Support (commands [..] <|> commands [..]) by concat-ing the lists of commands.
+* Improved the documentation of parsers that use `some`.
 
 ## [0.4.0.2] - 2024-07-27
 

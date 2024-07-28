@@ -169,6 +169,9 @@ data Parser a where
   ParserMany ::
     !(Parser a) ->
     Parser [a]
+  ParserSome ::
+    !(Parser a) ->
+    Parser (NonEmpty a)
   ParserAllOrNothing ::
     !(Maybe SrcLoc) ->
     !(Parser a) ->
@@ -232,7 +235,8 @@ instance Alternative Parser where
           ParserSelect pe pf -> isEmpty pe && isEmpty pf
           ParserEmpty _ -> True
           ParserAlt _ _ -> False
-          ParserMany _ -> False
+          ParserMany p -> isEmpty p
+          ParserSome p -> isEmpty p
           ParserAllOrNothing _ p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
           ParserCommands _ cs -> null cs
@@ -265,8 +269,7 @@ instance Alternative Parser where
                   _ -> ParserAlt p1' p2'
              in go p1 p2
   many = ParserMany
-
-  some p = (:) <$> p <*> many p
+  some = fmap NE.toList . ParserSome
 
 showParserABit :: Parser a -> String
 showParserABit = ($ "") . showParserPrec 0
@@ -301,6 +304,10 @@ showParserPrec = go
       ParserMany p ->
         showParen (d > 10) $
           showString "Many "
+            . go 11 p
+      ParserSome p ->
+        showParen (d > 10) $
+          showString "Some "
             . go 11 p
       ParserAllOrNothing mLoc p ->
         showParen (d > 10) $
@@ -487,7 +494,7 @@ strArgument builders =
 
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
-someNonEmpty p = (:|) <$> p <*> many p
+someNonEmpty = ParserSome
 
 -- | Try a list of parsers in order
 choice :: (HasCallStack) => [Parser a] -> Parser a
@@ -945,6 +952,7 @@ parserEraseSrcLocs = go
       ParserEmpty _ -> ParserEmpty Nothing
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
       ParserMany p -> ParserMany (go p)
+      ParserSome p -> ParserSome (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
       ParserCommands _ cs -> ParserCommands Nothing $ map commandEraseSrcLocs cs
@@ -981,6 +989,7 @@ parserTraverseSetting func = go
       ParserEmpty mLoc -> pure $ ParserEmpty mLoc
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
       ParserMany p -> ParserMany <$> go p
+      ParserSome p -> ParserSome <$> go p
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
       ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
@@ -1009,6 +1018,7 @@ parserSettingsSet = go
       ParserEmpty _ -> S.empty
       ParserAlt p1 p2 -> S.union (go p1) (go p2)
       ParserMany p -> go p
+      ParserSome p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> S.unions $ map (go . commandParser) cs

@@ -1,0 +1,14 @@
+Many
+  (Setting
+     Nothing
+     (Setting
+        []
+        [ _ ]
+        True
+        Nothing
+        False
+        Nothing
+        Nothing
+        Nothing
+        (Just "ARGUMENT")
+        (Just "Argument")))

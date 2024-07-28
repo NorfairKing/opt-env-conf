@@ -18,7 +18,8 @@ import Text.Show.Pretty as Pretty
 spec :: Spec
 spec = do
   exampleParserSpec "empty" "empty parser" emptyParser
-  exampleParserSpec "args" "args parser" argsParser
+  exampleParserSpec "many-args" "many args parser" manyArgsParser
+  exampleParserSpec "some-args" "some args parser" someArgsParser
   exampleParserSpec "optional" "optional argument" optionalParser
   exampleParserSpec "big-config" "example with a big configuration" bigConfigParser
   exampleParserSpec "sub-settings" "example with a sub settings" subSettingsParser
@@ -177,19 +178,27 @@ subSettingsParser =
             metavar "STR"
           ]
 
-data Args = Args [String]
+manyArgsParser :: Parser [String]
+manyArgsParser =
+  many
+    ( setting
+        [ reader str,
+          argument,
+          help "Argument",
+          metavar "ARGUMENT"
+        ]
+    )
 
-argsParser :: Parser Args
-argsParser =
-  Args
-    <$> many
-      ( setting
-          [ reader str,
-            argument,
-            help "Argument",
-            metavar "ARGUMENT"
-          ]
-      )
+someArgsParser :: Parser [String]
+someArgsParser =
+  some
+    ( setting
+        [ reader str,
+          argument,
+          help "Argument",
+          metavar "ARGUMENT"
+        ]
+    )
 
 data Optional = Optional (Maybe String)
 

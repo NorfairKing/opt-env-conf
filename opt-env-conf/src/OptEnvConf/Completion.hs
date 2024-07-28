@@ -197,6 +197,11 @@ pureCompletionQuery parser ix args =
         case mR of
           Nothing -> pure Nothing
           Just os -> fmap (os ++) <$> go p
+      ParserSome p -> do
+        mR <- go p
+        case mR of
+          Nothing -> pure Nothing
+          Just os -> fmap (os ++) <$> go p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> do

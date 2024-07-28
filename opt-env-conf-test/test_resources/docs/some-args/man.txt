@@ -1,0 +1,26 @@
+.Dd $Mdocdate$
+.Dt some-args 1
+.Os
+.Sh NAME
+.Nm some-args
+.Nd some args parser
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+some-args (-h|--help) | --version | ARGUMENT
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  Argument
+  argument: ARGUMENT
+  
+
+.Sh OPTIONS
+  -h|--help Show this help text               
+  --version Output version information: 0.0.0 
+  ARGUMENT  Argument                          
+

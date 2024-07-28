@@ -1,13 +1,13 @@
 .Dd $Mdocdate$
-.Dt args 1
+.Dt many-args 1
 .Os
 .Sh NAME
-.Nm args
-.Nd args parser
+.Nm many-args
+.Nd many args parser
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-args (-h|--help) | --version | ARGUMENT
+many-args (-h|--help) | --version | ARGUMENT
 .Sh SETTINGS
   Show this help text
   switch: -h|--help

@@ -1,5 +1,5 @@
 [31mSetting parser is invalid:[m
   
   [31mInvalid Setting:[m
-  [33mmany[m was called with a parser that may succeed without consuming anything.
+  [33mmany[m or [33msome[m was called with a parser that may succeed without consuming anything.
   This is not allowed because the parser would run infinitely.

@@ -20,20 +20,6 @@ extra-source-files:
     test_resources/completion/bash-completion-script.bash
     test_resources/completion/fish-completion-script.fish
     test_resources/completion/zsh-completion-script.zsh
-    test_resources/docs/args/config-docs.txt
-    test_resources/docs/args/config.txt
-    test_resources/docs/args/docs.txt
-    test_resources/docs/args/env-docs.txt
-    test_resources/docs/args/env.txt
-    test_resources/docs/args/help.txt
-    test_resources/docs/args/man.txt
-    test_resources/docs/args/nix-options.nix
-    test_resources/docs/args/opt-docs.txt
-    test_resources/docs/args/opt-long.txt
-    test_resources/docs/args/opt-short.txt
-    test_resources/docs/args/reference.txt
-    test_resources/docs/args/show.txt
-    test_resources/docs/args/version.txt
     test_resources/docs/big-config/config-docs.txt
     test_resources/docs/big-config/config.txt
     test_resources/docs/big-config/docs.txt
@@ -104,6 +90,20 @@ extra-source-files:
     test_resources/docs/hidden/reference.txt
     test_resources/docs/hidden/show.txt
     test_resources/docs/hidden/version.txt
+    test_resources/docs/many-args/config-docs.txt
+    test_resources/docs/many-args/config.txt
+    test_resources/docs/many-args/docs.txt
+    test_resources/docs/many-args/env-docs.txt
+    test_resources/docs/many-args/env.txt
+    test_resources/docs/many-args/help.txt
+    test_resources/docs/many-args/man.txt
+    test_resources/docs/many-args/nix-options.nix
+    test_resources/docs/many-args/opt-docs.txt
+    test_resources/docs/many-args/opt-long.txt
+    test_resources/docs/many-args/opt-short.txt
+    test_resources/docs/many-args/reference.txt
+    test_resources/docs/many-args/show.txt
+    test_resources/docs/many-args/version.txt
     test_resources/docs/optional/config-docs.txt
     test_resources/docs/optional/config.txt
     test_resources/docs/optional/docs.txt
@@ -118,6 +118,20 @@ extra-source-files:
     test_resources/docs/optional/reference.txt
     test_resources/docs/optional/show.txt
     test_resources/docs/optional/version.txt
+    test_resources/docs/some-args/config-docs.txt
+    test_resources/docs/some-args/config.txt
+    test_resources/docs/some-args/docs.txt
+    test_resources/docs/some-args/env-docs.txt
+    test_resources/docs/some-args/env.txt
+    test_resources/docs/some-args/help.txt
+    test_resources/docs/some-args/man.txt
+    test_resources/docs/some-args/nix-options.nix
+    test_resources/docs/some-args/opt-docs.txt
+    test_resources/docs/some-args/opt-long.txt
+    test_resources/docs/some-args/opt-short.txt
+    test_resources/docs/some-args/reference.txt
+    test_resources/docs/some-args/show.txt
+    test_resources/docs/some-args/version.txt
     test_resources/docs/sub-commands/config-docs.txt
     test_resources/docs/sub-commands/config.txt
     test_resources/docs/sub-commands/docs.txt
@@ -244,6 +258,8 @@ extra-source-files:
     test_resources/lint/no-reader-for-option.txt
     test_resources/lint/null-setting.txt
     test_resources/lint/only-default.txt
+    test_resources/lint/some-conf.txt
+    test_resources/lint/some-env.txt
     test_resources/lint/unreadable-example.txt
 
 source-repository head

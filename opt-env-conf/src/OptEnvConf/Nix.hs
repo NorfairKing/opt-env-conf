@@ -37,6 +37,7 @@ parserNixOptions = go
       ParserEmpty _ -> M.empty
       ParserAlt p1 p2 -> M.unionWith combineOption (go p1) (go p2) -- TODO is this right?
       ParserMany p -> go p
+      ParserSome p -> go p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> M.unionsWith combineOption $ map goCommand cs

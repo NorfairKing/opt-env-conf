@@ -199,6 +199,8 @@ renderLintError LintError {..} =
           ]
         LintErrorManyInfinite ->
           [ [ functionChunk "many",
+              " or ",
+              functionChunk "some",
               " was called with a parser that may succeed without consuming anything."
             ],
             ["This is not allowed because the parser would run infinitely."]
@@ -237,6 +239,12 @@ lintParser =
         pure (c1 && c2) -- TODO: is this right?
         -- TODO lint if we don't try to parse anything consuming under many.
       ParserMany p -> do
+        c <- go p
+        when (not c) $
+          mapValidationTFailure (LintError Nothing) $
+            validationTFailure LintErrorManyInfinite
+        pure c
+      ParserSome p -> do
         c <- go p
         when (not c) $
           mapValidationTFailure (LintError Nothing) $

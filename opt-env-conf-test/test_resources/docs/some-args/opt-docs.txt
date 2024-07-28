@@ -1,0 +1,10 @@
+AnyDocsSingle
+  OptDoc
+    { optDocTryArgument = True
+    , optDocTrySwitch = False
+    , optDocTryOption = False
+    , optDocDasheds = []
+    , optDocDefault = Nothing
+    , optDocMetavar = Just "ARGUMENT"
+    , optDocHelp = Just "Argument"
+    }

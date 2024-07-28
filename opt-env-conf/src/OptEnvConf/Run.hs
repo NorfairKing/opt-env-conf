@@ -407,6 +407,13 @@ runParserOn mDebugMode parser args envVars mConfig = do
             Just a -> do
               as <- go (ParserMany p')
               pure (a : as)
+      ParserSome p' -> do
+        debug [syntaxChunk "Some"]
+        ppIndent $ do
+          a <- go p'
+          debug ["First element of some succeeded, continuing with Many"]
+          as <- go (ParserMany p')
+          pure (a :| as)
       ParserAllOrNothing mLoc p' -> do
         debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
@@ -773,6 +780,9 @@ runHelpParser mDebugMode args parser = do
                     ppIndent $ go p2
             ParserMany p' -> do
               debug [syntaxChunk "Many"]
+              ppIndent $ go p'
+            ParserSome p' -> do
+              debug [syntaxChunk "Some"]
               ppIndent $ go p'
             ParserAllOrNothing mLoc p' -> do
               debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
