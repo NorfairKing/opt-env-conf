@@ -146,6 +146,16 @@ spec = do
         Parser Int
     )
   goldenLintTest
+    "undecodable-example"
+    ( withoutConfig $
+        setting
+          [ help "Example value isn't decodable",
+            conf "example",
+            example "NaN"
+          ] ::
+        Parser Int
+    )
+  goldenLintTest
     "many-env"
     ( many $
         setting

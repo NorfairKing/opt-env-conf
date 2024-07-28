@@ -13,8 +13,10 @@ module OptEnvConf.Lint
   )
 where
 
+import Autodocodec
 import Control.Monad
 import Control.Monad.Reader
+import qualified Data.Aeson.Types as JSON
 import Data.Either
 import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
@@ -51,6 +53,7 @@ data LintErrorMessage
   | LintErrorNoMetavarForEnvVar
   | LintErrorNoCommands
   | LintErrorUnreadableExample !String
+  | LintErrorUndecodableExample !String
   | LintErrorConfigWithoutLoad
   | LintErrorManyInfinite
 
@@ -192,6 +195,10 @@ renderLintError LintError {..} =
           [ [functionChunk "example", " was called with an example that none of the ", functionChunk "reader", "s succeed in reading."],
             ["Example: ", chunk $ T.pack e]
           ]
+        LintErrorUndecodableExample e ->
+          [ [functionChunk "example", " was called with an example that none of the ", functionChunk "conf", "s succeed in decoding."],
+            ["Example: ", chunk $ T.pack e]
+          ]
         LintErrorConfigWithoutLoad ->
           [ [ functionChunk "conf",
               " was called with no way to load configuration."
@@ -299,9 +306,15 @@ lintParser =
         when (isJust settingEnvVars && not settingHidden && isNothing settingMetavar) $
           validationTFailure LintErrorNoMetavarForEnvVar
         for_ settingExamples $ \e ->
-          when (not $ any (\r -> isRight $ OptEnvConf.runReader r e) settingReaders) $
-            validationTFailure $
-              LintErrorUnreadableExample e
+          let canRead r = isRight $ OptEnvConf.runReader r e
+           in when ((settingTryArgument || settingTryOption) && not (any canRead settingReaders)) $
+                validationTFailure $
+                  LintErrorUnreadableExample e
+        for_ settingExamples $ \e ->
+          let canDecode (ConfigValSetting _ c) = isRight $ JSON.parseEither (parseJSONVia c) (JSON.String (T.pack e))
+           in when (isJust settingConfigVals && not (any canDecode (maybe [] NE.toList settingConfigVals))) $
+                validationTFailure $
+                  LintErrorUndecodableExample e
         hasConfig <- ask
         when (isJust settingConfigVals && not hasConfig) $
           validationTFailure LintErrorConfigWithoutLoad

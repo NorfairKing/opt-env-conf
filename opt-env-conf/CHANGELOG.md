@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0.4] - 2024-07-28
+
+### Added
+
+* Added a lint for examples that none of the configuration codecs can decode.
+
+### Changed
+
+* Fixed: linter would 'catch' unreadable examples even though a setting would only read a configuration value
+
 ## [0.4.0.3] - 2024-07-28
 
 ### Changed
