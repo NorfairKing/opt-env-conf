@@ -16,6 +16,7 @@ data ParseError = ParseError
   { parseErrorSrcLoc :: !(Maybe SrcLoc),
     parseErrorMessage :: !ParseErrorMessage
   }
+  deriving (Show)
 
 data ParseErrorMessage
   = ParseErrorEmpty

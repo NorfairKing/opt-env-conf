@@ -700,6 +700,40 @@ spec = do
         [ (["args", "here"], ["args", "here" :: String])
         ]
 
+      -- Unrecognised args should be forgivable
+      argParseSpecs
+        ( let fallback = setting [reader str, option, long "foo"]
+              withCommand = commands [command "run" "command in front" fallback]
+           in withCommand <|> fallback
+        )
+        [ (["run", "--foo", "bar"], "bar" :: String),
+          (["--foo", "bar"], "bar" :: String)
+        ]
+
+      -- Alt-ing commands concats the commands
+      argParseSpecs
+        ( let fallback = setting [reader str, option, long "foo"]
+              withCommand1 = commands [command "run1" "command in front" fallback]
+              withCommand2 = commands [command "run2" "command in front" fallback]
+           in withCommand1 <|> withCommand2 <|> fallback
+        )
+        [ (["run1", "--foo", "bar"], "bar" :: String),
+          (["run2", "--foo", "bar"], "bar" :: String),
+          (["--foo", "bar"], "bar" :: String)
+        ]
+
+      -- Alt-ing commands concats the commands, even recursively
+      argParseSpecs
+        ( let fallback = setting [reader str, option, long "foo"]
+              withCommand1 = commands [command "run1" "command in front" fallback]
+              withCommand2 = commands [command "run2" "command in front" fallback]
+           in withCommand1 <|> (withCommand2 <|> fallback)
+        )
+        [ (["run1", "--foo", "bar"], "bar" :: String),
+          (["run2", "--foo", "bar"], "bar" :: String),
+          (["--foo", "bar"], "bar" :: String)
+        ]
+
       -- Required config value
       confParseSpecs
         (setting [conf "hi"] :: Parser String)
@@ -733,7 +767,12 @@ argParseSpec args p expected = withFrozenCallStack $ do
     let argMap = parseArgs args
     errOrRes <- runParserOn Nothing p argMap EnvMap.empty Nothing
     case errOrRes of
-      Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
+      Left errs ->
+        expectationFailure $
+          unlines
+            [ T.unpack $ renderChunksText With24BitColours $ renderErrors errs,
+              ppShow errs
+            ]
       Right actual -> actual `shouldBe` expected
 
 envParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([(String, String)], a)] -> Spec

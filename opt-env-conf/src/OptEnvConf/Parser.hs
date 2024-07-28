@@ -242,7 +242,28 @@ instance Alternative Parser where
           (True, True) -> ParserEmpty Nothing
           (True, False) -> p2
           (False, True) -> p1
-          (False, False) -> ParserAlt p1 p2
+          (False, False) ->
+            let go p1' p2' = case (p1', p2') of
+                  -- <|> needs to be associative, so we need to reorder the
+                  -- alts to always be right-leaning
+                  --
+                  -- That means if we want to construct this parser, where p1 and p3 are commands parsers:
+                  --    p
+                  --   / \
+                  -- p1   p2
+                  --     /  \
+                  --    p3   p4
+                  --
+                  -- We need to rearrange it to
+                  --          p
+                  --         / \
+                  -- p1 ++ p3   p4
+                  (ParserCommands _ _, ParserAlt p3' p4') ->
+                    go (go p1' p3') p4'
+                  (ParserCommands mLoc1 cs1, ParserCommands mLoc2 cs2) ->
+                    ParserCommands (mLoc1 <|> mLoc2) (cs1 ++ cs2)
+                  _ -> ParserAlt p1' p2'
+             in go p1 p2
   many = ParserMany
 
   some p = (:) <$> p <*> many p

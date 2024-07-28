@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0.3] - 2024-07-28
+
+### Changed
+
+* Support (commands [..] <|> commands [..]) by concat-ing the lists of commands.
+
 ## [0.4.0.2] - 2024-07-27
 
 ### Changed
