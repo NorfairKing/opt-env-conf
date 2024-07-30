@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0.5] - 2024-07-28
+
+### Added
+
+* Documentation now shows example values and default values.
+
 ## [0.4.0.4] - 2024-07-28
 
 ### Added

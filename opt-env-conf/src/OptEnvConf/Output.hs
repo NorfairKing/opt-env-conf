@@ -59,6 +59,12 @@ confValChunk = fore white . chunk . T.pack . intercalate "." . NE.toList
 defaultValueChunks :: String -> [Chunk]
 defaultValueChunks val = ["default: ", fore yellow $ chunk $ T.pack val]
 
+exampleValuesChunks :: [String] -> [Chunk]
+exampleValuesChunks vals = case vals of
+  [] -> []
+  [val] -> ["example: ", fore yellow $ chunk $ T.pack val]
+  _ -> ["examples: ", fore yellow $ chunk $ T.intercalate ", " $ map (T.pack . show) vals]
+
 mHelpChunk :: Maybe Help -> Chunk
 mHelpChunk = maybe (fore red "undocumented") helpChunk
 

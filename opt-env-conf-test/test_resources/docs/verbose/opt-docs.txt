@@ -5,6 +5,7 @@ AnyDocsSingle
     , optDocTryOption = False
     , optDocDasheds = [ DashedShort 'v' ]
     , optDocDefault = Nothing
+    , optDocExamples = []
     , optDocMetavar = Nothing
     , optDocHelp =
         Just "Verbosity level. Use multiple to increase verbosity"

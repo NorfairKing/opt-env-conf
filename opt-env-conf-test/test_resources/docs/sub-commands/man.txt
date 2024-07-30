@@ -24,6 +24,7 @@ sub-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
   command without subcommands
   command: top
     name
+    example: john
     option: --name NAME
     env: NAME NAME
     config:
@@ -48,11 +49,11 @@ sub-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
   
 
 .Sh OPTIONS
-  -h|--help Show this help text 
-  --version Output version information: 0.0.0 
-  --config-file Path to the configuration file 
+  -h|--help Show this help text
+  --version Output version information: 0.0.0
+  --config-file Path to the configuration file
   top command without subcommands
-      --name name 
+      --name name example: john
   sub command with subcommands
       a A
       b B
@@ -60,11 +61,12 @@ sub-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
       d D
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE_PATH   Path to the configuration file
-  NAME NAME               name                          
+  CONFIG_FILE FILE_PATH   Path to the configuration file                
+  NAME NAME               name                             example: john
 
 .Sh CONFIGURATION VALUES
   name
+  example: john
   name:
     # or null
     <string>

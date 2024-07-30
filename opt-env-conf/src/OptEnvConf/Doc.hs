@@ -63,6 +63,7 @@ data SetDoc = SetDoc
     setDocEnvVars :: !(Maybe (NonEmpty String)),
     setDocConfKeys :: !(Maybe (NonEmpty (NonEmpty String, JSONSchema))),
     setDocDefault :: !(Maybe String),
+    setDocExamples :: ![String],
     setDocMetavar :: !(Maybe Metavar),
     setDocHelp :: !(Maybe String)
   }
@@ -74,6 +75,7 @@ data OptDoc = OptDoc
     optDocTryOption :: !Bool,
     optDocDasheds :: ![Dashed],
     optDocDefault :: !(Maybe String),
+    optDocExamples :: ![String],
     optDocMetavar :: !(Maybe Metavar),
     optDocHelp :: !(Maybe String)
   }
@@ -82,6 +84,7 @@ data OptDoc = OptDoc
 data EnvDoc = EnvDoc
   { envDocVars :: !(NonEmpty String),
     envDocDefault :: !(Maybe String),
+    envDocExamples :: ![String],
     envDocMetavar :: !(Maybe Metavar),
     envDocHelp :: !(Maybe String)
   }
@@ -90,6 +93,7 @@ data EnvDoc = EnvDoc
 data ConfDoc = ConfDoc
   { confDocKeys :: !(NonEmpty (NonEmpty String, JSONSchema)),
     confDocDefault :: !(Maybe String),
+    confDocExamples :: ![String],
     confDocHelp :: !(Maybe String)
   }
   deriving (Show)
@@ -189,6 +193,7 @@ settingSetDoc Setting {..} = do
           )
           <$> settingConfigVals
   let setDocDefault = snd <$> settingDefaultValue
+  let setDocExamples = settingExamples
   let setDocMetavar = settingMetavar
   let setDocHelp = settingHelp
   pure SetDoc {..}
@@ -210,7 +215,13 @@ renderSetDocHeader = maybe [[fore red "undocumented"]] helpLines
 renderSetDocWithoutHeader :: SetDoc -> [[Chunk]]
 renderSetDocWithoutHeader SetDoc {..} =
   concat
-    [ [ unwordsChunks
+    [ [ defaultValueChunks dv
+        | dv <- maybeToList setDocDefault
+      ],
+      [ exampleValuesChunks setDocExamples
+        | not (null setDocExamples)
+      ],
+      [ unwordsChunks
           [ ["argument:"],
             [mMetavarChunk setDocMetavar]
           ]
@@ -531,6 +542,7 @@ setDocOptDoc SetDoc {..} = do
       optDocTryOption = setDocTryOption
       optDocDasheds = setDocDasheds
       optDocDefault = setDocDefault
+      optDocExamples = setDocExamples
       optDocMetavar = setDocMetavar
       optDocHelp = setDocHelp
   pure OptDoc {..}
@@ -605,17 +617,20 @@ renderLongOptDocs = unlinesChunks . go
 
 renderOptDocLong :: OptDoc -> [[Chunk]]
 renderOptDocLong OptDoc {..} =
-  [ unwordsChunks $
-      concat
-        [ maybeToList $ dashedChunks optDocDasheds,
-          [ [ mMetavarChunk optDocMetavar
-            ]
-            | optDocTryArgument
-          ]
-        ],
-    [mHelpChunk optDocHelp],
-    unwordsChunks [defaultValueChunks d | d <- maybeToList optDocDefault]
-  ]
+  concat
+    [ [ unwordsChunks $
+          concat
+            [ maybeToList $ dashedChunks optDocDasheds,
+              [ [ mMetavarChunk optDocMetavar
+                ]
+                | optDocTryArgument
+              ]
+            ],
+        [mHelpChunk optDocHelp]
+      ],
+      [defaultValueChunks d | d <- maybeToList optDocDefault],
+      [exampleValuesChunks optDocExamples | not (null optDocExamples)]
+    ]
 
 parserEnvDocs :: Parser a -> AnyDocs EnvDoc
 parserEnvDocs = docsToEnvDocs . parserDocs
@@ -627,6 +642,7 @@ setDocEnvDoc :: SetDoc -> Maybe EnvDoc
 setDocEnvDoc SetDoc {..} = do
   envDocVars <- setDocEnvVars
   let envDocDefault = setDocDefault
+  let envDocExamples = setDocExamples
   let envDocMetavar = setDocMetavar
   let envDocHelp = setDocHelp
   pure EnvDoc {..}
@@ -647,13 +663,17 @@ renderEnvDocs = layoutAsTable . go
 
 renderEnvDoc :: EnvDoc -> [[Chunk]]
 renderEnvDoc EnvDoc {..} =
-  [ unwordsChunks
-      [ envVarChunksNE envDocVars,
-        [ mMetavarChunk envDocMetavar
-        ]
+  concat
+    [ [ unwordsChunks
+          [ envVarChunksNE envDocVars,
+            [ mMetavarChunk envDocMetavar
+            ]
+          ],
+        [mHelpChunk envDocHelp]
       ],
-    [mHelpChunk envDocHelp]
-  ]
+      [defaultValueChunks d | d <- maybeToList envDocDefault],
+      [exampleValuesChunks envDocExamples | not (null envDocExamples)]
+    ]
 
 parserConfDocs :: Parser a -> AnyDocs ConfDoc
 parserConfDocs = docsToConfDocs . parserDocs
@@ -665,6 +685,7 @@ setDocConfDoc :: SetDoc -> Maybe ConfDoc
 setDocConfDoc SetDoc {..} = do
   confDocKeys <- setDocConfKeys
   let confDocDefault = setDocDefault
+  let confDocExamples = setDocExamples
   let confDocHelp = setDocHelp
   pure ConfDoc {..}
 
@@ -691,13 +712,17 @@ renderConfDocs = unlinesChunks . go
 
 renderConfDoc :: ConfDoc -> [[Chunk]]
 renderConfDoc ConfDoc {..} =
-  [mHelpChunk confDocHelp]
-    : concatMap
-      ( \(key, schema) ->
-          case jsonSchemaChunkLines schema of
-            [line] ->
-              [[confValChunk key, ": "] ++ line]
-            ls ->
-              [confValChunk key, ":"] : indent ls
-      )
-      (NE.toList confDocKeys)
+  concat
+    [ [[mHelpChunk confDocHelp]],
+      [defaultValueChunks d | d <- maybeToList confDocDefault],
+      [exampleValuesChunks confDocExamples | not (null confDocExamples)],
+      concatMap
+        ( \(key, schema) ->
+            case jsonSchemaChunkLines schema of
+              [line] ->
+                [[confValChunk key, ": "] ++ line]
+              ls ->
+                [confValChunk key, ":"] : indent ls
+        )
+        (NE.toList confDocKeys)
+    ]

@@ -20,7 +20,7 @@ verbose (-h|--help) | --version | -v
   
 
 .Sh OPTIONS
-  -h|--help Show this help text                                 
-  --version Output version information: 0.0.0                   
-  -v        Verbosity level. Use multiple to increase verbosity 
+  -h|--help Show this help text                                
+  --version Output version information: 0.0.0                  
+  -v        Verbosity level. Use multiple to increase verbosity
 

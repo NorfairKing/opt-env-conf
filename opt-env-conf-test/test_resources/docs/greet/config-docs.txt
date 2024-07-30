@@ -3,6 +3,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "GREET_CONFIG_FILE" :| []
         , envDocDefault = Nothing
+        , envDocExamples = []
         , envDocMetavar = Just "FILE_PATH"
         , envDocHelp = Just "Path to the configuration file"
         }
@@ -10,6 +11,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "GREET_GREETING" :| []
         , envDocDefault = Just "\"Hello\""
+        , envDocExamples = [ "Greetings" ]
         , envDocMetavar = Just "GREETING"
         , envDocHelp = Just "Greeting to use"
         }
@@ -17,6 +19,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "GREET_POLITE" :| []
         , envDocDefault = Just "False"
+        , envDocExamples = []
         , envDocMetavar = Just "ANY"
         , envDocHelp = Just "Whether to be polite"
         }

@@ -20,6 +20,8 @@ greet (-h|--help) | --version | (--config-file FILE_PATH -g|--greeting GREETING 
   env: GREET_CONFIG_FILE FILE_PATH
   
   Greeting to use
+  default: "Hello"
+  example: Greetings
   option: -g|--greeting GREETING
   env: GREET_GREETING GREETING
   config:
@@ -27,9 +29,11 @@ greet (-h|--help) | --version | (--config-file FILE_PATH -g|--greeting GREETING 
       <string>
   
   Who to greet
+  default: "world"
   argument: SUBJECT
   
   Whether to be polite
+  default: False
   switch: -p|--polite
   env: GREET_POLITE ANY
   config:
@@ -38,24 +42,27 @@ greet (-h|--help) | --version | (--config-file FILE_PATH -g|--greeting GREETING 
   
 
 .Sh OPTIONS
-  -h|--help     Show this help text                               
-  --version     Output version information: 0.0.0                 
-  --config-file Path to the configuration file                    
-  -g|--greeting Greeting to use                   default: "Hello"
-  SUBJECT       Who to greet                      default: "world"
-  -p|--polite   Whether to be polite              default: False  
+  -h|--help     Show this help text                                                  
+  --version     Output version information: 0.0.0                                    
+  --config-file Path to the configuration file                                       
+  -g|--greeting Greeting to use                   default: "Hello" example: Greetings
+  SUBJECT       Who to greet                      default: "world"                   
+  -p|--polite   Whether to be polite              default: False                     
 
 .Sh ENVIRONMENT VARIABLES
-  GREET_CONFIG_FILE FILE_PATH   Path to the configuration file
-  GREET_GREETING GREETING       Greeting to use               
-  GREET_POLITE ANY              Whether to be polite          
+  GREET_CONFIG_FILE FILE_PATH   Path to the configuration file                                        
+  GREET_GREETING GREETING       Greeting to use                  default: "Hello"   example: Greetings
+  GREET_POLITE ANY              Whether to be polite             default: False                       
 
 .Sh CONFIGURATION VALUES
   Greeting to use
+  default: "Hello"
+  example: Greetings
   greeting:
     # or null
     <string>
   Whether to be polite
+  default: False
   polite:
     # or null
     <boolean>

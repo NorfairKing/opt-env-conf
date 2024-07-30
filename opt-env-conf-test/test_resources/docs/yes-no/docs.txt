@@ -8,6 +8,7 @@ AnyDocsAnd
         , setDocEnvVars = Just ("CONFIG_FILE" :| [])
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing
+        , setDocExamples = []
         , setDocMetavar = Just "FILE_PATH"
         , setDocHelp = Just "Path to the configuration file"
         }
@@ -21,6 +22,7 @@ AnyDocsAnd
             , setDocEnvVars = Nothing
             , setDocConfKeys = Nothing
             , setDocDefault = Nothing
+            , setDocExamples = []
             , setDocMetavar = Nothing
             , setDocHelp = Just "Example of a yes/no switch"
             }
@@ -33,6 +35,7 @@ AnyDocsAnd
             , setDocEnvVars = Just ("EXAMPLE" :| [])
             , setDocConfKeys = Nothing
             , setDocDefault = Nothing
+            , setDocExamples = []
             , setDocMetavar = Just "BOOL"
             , setDocHelp = Just "Example of a yes/no switch"
             }
@@ -50,6 +53,7 @@ AnyDocsAnd
                    ) :|
                      [])
             , setDocDefault = Nothing
+            , setDocExamples = []
             , setDocMetavar = Nothing
             , setDocHelp = Just "Example of a yes/no switch"
             }

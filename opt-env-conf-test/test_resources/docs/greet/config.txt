@@ -1,8 +1,11 @@
   [34mGreeting to use[m
+  default: [33m"Hello"[m
+  example: [33mGreetings[m
   [37mgreeting[m:
     # [32mor null[m
     [33m<string>[m
   [34mWhether to be polite[m
+  default: [33mFalse[m
   [37mpolite[m:
     # [32mor null[m
     [33m<boolean>[m

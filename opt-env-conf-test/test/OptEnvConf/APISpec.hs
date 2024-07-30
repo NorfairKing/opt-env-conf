@@ -125,6 +125,7 @@ greetParser =
             env "GREETING",
             conf "greeting",
             value "Hello",
+            example "Greetings",
             help "Greeting to use"
           ]
         <*> setting
@@ -311,9 +312,11 @@ subCommandsParser =
               [ help "name",
                 reader str,
                 metavar "NAME",
-                name "name"
+                name "name",
+                example "john"
               ],
-        command "sub" "command with subcommands" $ Sub <$> sub1Parser <*> sub2Parser
+        command "sub" "command with subcommands" $
+          Sub <$> sub1Parser <*> sub2Parser
       ]
 
 data Sub1 = A | B

@@ -1,2 +1,2 @@
-Missing option: [37m--bar[m [34mThis one will not exist[m 
+Missing option: [37m--bar[m [34mThis one will not exist[m
 You are seeing this error because at least one, but not all, of the settings in an allOrNothing (or subSettings) parser have been defined.

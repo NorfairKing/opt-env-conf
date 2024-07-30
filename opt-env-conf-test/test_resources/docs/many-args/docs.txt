@@ -7,6 +7,7 @@ AnyDocsSingle
     , setDocEnvVars = Nothing
     , setDocConfKeys = Nothing
     , setDocDefault = Nothing
+    , setDocExamples = []
     , setDocMetavar = Just "ARGUMENT"
     , setDocHelp = Just "Argument"
     }

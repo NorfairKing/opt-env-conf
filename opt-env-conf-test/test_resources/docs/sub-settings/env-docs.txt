@@ -6,5 +6,6 @@ AnyDocsSingle
         ) :|
           []
     , confDocDefault = Nothing
+    , confDocExamples = []
     , confDocHelp = Just "Example with sub-settings"
     }

@@ -6,6 +6,7 @@ AnyDocsAnd
         , optDocTryOption = True
         , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
         , optDocDefault = Nothing
+        , optDocExamples = []
         , optDocMetavar = Just "FILE_PATH"
         , optDocHelp = Just "Path to the configuration file"
         }
@@ -16,6 +17,7 @@ AnyDocsAnd
         , optDocTryOption = False
         , optDocDasheds = [ DashedLong ('[' :| "no-]example") ]
         , optDocDefault = Nothing
+        , optDocExamples = []
         , optDocMetavar = Nothing
         , optDocHelp = Just "Example of a yes/no switch"
         }

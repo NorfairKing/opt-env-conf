@@ -5,6 +5,7 @@ AnyDocsSingle
     , optDocTryOption = False
     , optDocDasheds = []
     , optDocDefault = Nothing
+    , optDocExamples = []
     , optDocMetavar = Just "ARGUMENT"
     , optDocHelp = Just "Argument"
     }

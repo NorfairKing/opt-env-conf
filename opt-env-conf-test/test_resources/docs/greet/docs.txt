@@ -8,6 +8,7 @@ AnyDocsAnd
         , setDocEnvVars = Just ("GREET_CONFIG_FILE" :| [])
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing
+        , setDocExamples = []
         , setDocMetavar = Just "FILE_PATH"
         , setDocHelp = Just "Path to the configuration file"
         }
@@ -26,6 +27,7 @@ AnyDocsAnd
                ) :|
                  [])
         , setDocDefault = Just "\"Hello\""
+        , setDocExamples = [ "Greetings" ]
         , setDocMetavar = Just "GREETING"
         , setDocHelp = Just "Greeting to use"
         }
@@ -38,6 +40,7 @@ AnyDocsAnd
         , setDocEnvVars = Nothing
         , setDocConfKeys = Nothing
         , setDocDefault = Just "\"world\""
+        , setDocExamples = []
         , setDocMetavar = Just "SUBJECT"
         , setDocHelp = Just "Who to greet"
         }
@@ -53,6 +56,7 @@ AnyDocsAnd
               (( "polite" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
                  [])
         , setDocDefault = Just "False"
+        , setDocExamples = []
         , setDocMetavar = Just "ANY"
         , setDocHelp = Just "Whether to be polite"
         }

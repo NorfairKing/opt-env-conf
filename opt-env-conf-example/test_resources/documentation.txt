@@ -6,6 +6,7 @@
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
   [34mminimal severity of log messages[m
+  default: [33m"DEBUG"[m
   option: [37m--log-level[m [33mLOG_LEVEL[m
   env: [37mLOG_LEVEL[m [33mLOG_LEVEL[m
   config:
@@ -58,28 +59,29 @@
   
 
 [36mOptions[m:
-  [37m--config-file[m [34mPath to the configuration file[m 
+  [37m--config-file[m [34mPath to the configuration file[m
   [37m--log-level[m [34mminimal severity of log messages[m default: [33m"DEBUG"[m
-  [37m--payment-public-key[m [34mPublic key[m 
-  [37m--payment-secret-key[m [34mSecret key[m 
-  [37m--payment-currency[m [34mCurrency[m 
+  [37m--payment-public-key[m [34mPublic key[m
+  [37m--payment-secret-key[m [34mSecret key[m
+  [37m--payment-currency[m [34mCurrency[m
   [35mcreate[m [34mCreate[m
-      [33mSTR[m [34mThe item to create[m 
+      [33mSTR[m [34mThe item to create[m
   [35mread[m [34mRead[m
   [35mupdate[m [34mUpdate[m
-      [33mSTR[m [34mThe item identifier of the item to update[m 
-      [33mSTR[m [34mThe contents of the item to update[m        
+      [33mSTR[m [34mThe item identifier of the item to update[m
+      [33mSTR[m [34mThe contents of the item to update[m       
   [35mdelete[m [34mDelete[m
 
 [36mEnvironment Variables[m:
-  [37mCONFIG_FILE[m [33mFILE_PATH[m           [34mPath to the configuration file[m  
-  [37mLOG_LEVEL[m [33mLOG_LEVEL[m             [34mminimal severity of log messages[m
-  [37mPAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m   [34mPublic key[m                      
-  [37mPAYMENT_SECRET_KEY[m [33mFILE_PATH[m    [34mSecret key[m                      
-  [37mPAYMENT_CURRENCY[m [33mCURRENCY[m       [34mCurrency[m                        
+  [37mCONFIG_FILE[m [33mFILE_PATH[m           [34mPath to the configuration file[m                     
+  [37mLOG_LEVEL[m [33mLOG_LEVEL[m             [34mminimal severity of log messages[m   default: [33m"DEBUG"[m
+  [37mPAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m   [34mPublic key[m                                         
+  [37mPAYMENT_SECRET_KEY[m [33mFILE_PATH[m    [34mSecret key[m                                         
+  [37mPAYMENT_CURRENCY[m [33mCURRENCY[m       [34mCurrency[m                                           
 
 [36mConfiguration Values[m:
   [34mminimal severity of log messages[m
+  default: [33m"DEBUG"[m
   [37mlog-level[m:
     # [32mor null[m
     [33m<string>[m

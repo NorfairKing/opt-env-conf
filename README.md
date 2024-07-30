@@ -2,8 +2,7 @@
 
 ## Status
 
-Ready to try out,
-Used in production
+Used in production in all my products and some companies.
 
 ## Goals
 

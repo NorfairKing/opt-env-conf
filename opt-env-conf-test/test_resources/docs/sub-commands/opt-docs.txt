@@ -6,6 +6,7 @@ AnyDocsAnd
         , optDocTryOption = True
         , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
         , optDocDefault = Nothing
+        , optDocExamples = []
         , optDocMetavar = Just "FILE_PATH"
         , optDocHelp = Just "Path to the configuration file"
         }
@@ -21,6 +22,7 @@ AnyDocsAnd
                   , optDocTryOption = True
                   , optDocDasheds = [ DashedLong ('n' :| "ame") ]
                   , optDocDefault = Nothing
+                  , optDocExamples = [ "john" ]
                   , optDocMetavar = Just "NAME"
                   , optDocHelp = Just "name"
                   }

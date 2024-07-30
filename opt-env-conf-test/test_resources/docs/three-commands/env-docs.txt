@@ -25,6 +25,7 @@ AnyDocsCommands
                       ) :|
                         []
                   , confDocDefault = Nothing
+                  , confDocExamples = []
                   , confDocHelp = Just "number"
                   }
             , AnyDocsSingle
@@ -33,6 +34,7 @@ AnyDocsCommands
                       ( "enable" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
                         []
                   , confDocDefault = Nothing
+                  , confDocExamples = []
                   , confDocHelp = Just "enable extra"
                   }
             ]

@@ -20,7 +20,7 @@ optional (-h|--help) | --version | ARGUMENT
   
 
 .Sh OPTIONS
-  -h|--help Show this help text               
-  --version Output version information: 0.0.0 
-  ARGUMENT  Argument                          
+  -h|--help Show this help text              
+  --version Output version information: 0.0.0
+  ARGUMENT  Argument                         
 

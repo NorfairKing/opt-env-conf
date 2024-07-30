@@ -8,6 +8,7 @@ AnyDocsAnd
         , setDocEnvVars = Just ("CONFIG_FILE" :| [])
         , setDocConfKeys = Nothing
         , setDocDefault = Nothing
+        , setDocExamples = []
         , setDocMetavar = Just "FILE_PATH"
         , setDocHelp = Just "Path to the configuration file"
         }
@@ -28,6 +29,7 @@ AnyDocsAnd
                         (( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
                            [])
                   , setDocDefault = Nothing
+                  , setDocExamples = [ "john" ]
                   , setDocMetavar = Just "NAME"
                   , setDocHelp = Just "name"
                   }

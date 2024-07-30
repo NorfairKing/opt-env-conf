@@ -3,6 +3,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "CONFIG_FILE" :| []
         , envDocDefault = Nothing
+        , envDocExamples = []
         , envDocMetavar = Just "FILE_PATH"
         , envDocHelp = Just "Path to the configuration file"
         }
@@ -10,6 +11,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "FOO_BAR_QUUX" :| []
         , envDocDefault = Nothing
+        , envDocExamples = []
         , envDocMetavar = Just "STR"
         , envDocHelp = Just "Example with sub-settings"
         }

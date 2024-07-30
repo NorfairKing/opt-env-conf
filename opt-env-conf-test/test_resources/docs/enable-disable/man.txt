@@ -27,10 +27,10 @@ enable-disable (-h|--help) | --version | (--config-file FILE_PATH --(enable|disa
       <boolean>
 
 .Sh OPTIONS
-  -h|--help                  Show this help text                 
-  --version                  Output version information: 0.0.0   
-  --config-file              Path to the configuration file      
-  --(enable|disable)-example Example of an enable/disable switch 
+  -h|--help                  Show this help text                
+  --version                  Output version information: 0.0.0  
+  --config-file              Path to the configuration file     
+  --(enable|disable)-example Example of an enable/disable switch
 
 .Sh ENVIRONMENT VARIABLES
   CONFIG_FILE FILE_PATH   Path to the configuration file     

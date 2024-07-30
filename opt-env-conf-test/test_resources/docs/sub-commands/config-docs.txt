@@ -3,6 +3,7 @@ AnyDocsAnd
       EnvDoc
         { envDocVars = "CONFIG_FILE" :| []
         , envDocDefault = Nothing
+        , envDocExamples = []
         , envDocMetavar = Just "FILE_PATH"
         , envDocHelp = Just "Path to the configuration file"
         }
@@ -15,6 +16,7 @@ AnyDocsAnd
                 EnvDoc
                   { envDocVars = "NAME" :| []
                   , envDocDefault = Nothing
+                  , envDocExamples = [ "john" ]
                   , envDocMetavar = Just "NAME"
                   , envDocHelp = Just "name"
                   }

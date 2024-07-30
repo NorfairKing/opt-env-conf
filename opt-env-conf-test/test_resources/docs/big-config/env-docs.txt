@@ -26,5 +26,6 @@ AnyDocsSingle
         ) :|
           []
     , confDocDefault = Nothing
+    , confDocExamples = []
     , confDocHelp = Just "big configuration object"
     }

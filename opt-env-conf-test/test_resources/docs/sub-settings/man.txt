@@ -28,10 +28,10 @@ sub-settings (-h|--help) | --version | (--config-file FILE_PATH --foo-bar-quux S
   
 
 .Sh OPTIONS
-  -h|--help      Show this help text               
-  --version      Output version information: 0.0.0 
-  --config-file  Path to the configuration file    
-  --foo-bar-quux Example with sub-settings         
+  -h|--help      Show this help text              
+  --version      Output version information: 0.0.0
+  --config-file  Path to the configuration file   
+  --foo-bar-quux Example with sub-settings        
 
 .Sh ENVIRONMENT VARIABLES
   CONFIG_FILE FILE_PATH   Path to the configuration file

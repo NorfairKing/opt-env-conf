@@ -9,6 +9,7 @@ AnyDocsCommands
                   ( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
                     []
               , confDocDefault = Nothing
+              , confDocExamples = [ "john" ]
               , confDocHelp = Just "name"
               }
       }

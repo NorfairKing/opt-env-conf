@@ -14,6 +14,8 @@ hello world example
   env: [37mGREET_CONFIG_FILE[m [33mFILE_PATH[m
   
   [34mGreeting to use[m
+  default: [33m"Hello"[m
+  example: [33mGreetings[m
   option: [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m
   env: [37mGREET_GREETING[m [33mGREETING[m
   config:
@@ -21,9 +23,11 @@ hello world example
       [33m<string>[m
   
   [34mWho to greet[m
+  default: [33m"world"[m
   argument: [33mSUBJECT[m
   
   [34mWhether to be polite[m
+  default: [33mFalse[m
   switch: [37m-p[m[36m|[m[37m--polite[m
   env: [37mGREET_POLITE[m [33mANY[m
   config:

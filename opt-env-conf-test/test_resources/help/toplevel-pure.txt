@@ -8,6 +8,7 @@ example program description
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
   [34mport to serve requests on[m
+  default: [33m8080[m
   option: [37m--port[m [33mPORT[m
   env: [37mPORT[m [33mPORT[m
   config:
@@ -15,6 +16,7 @@ example program description
       [33m<number>[m # [32m16 bit unsigned integer[m
   
   [34mminimal severity of log messages[m
+  default: [33m"DEBUG"[m
   option: [37m--log-level[m [33mLOG_LEVEL[m
   env: [37mLOG_LEVEL[m [33mLOG_LEVEL[m
   config:

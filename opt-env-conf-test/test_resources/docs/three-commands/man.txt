@@ -49,14 +49,14 @@ three-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
   
 
 .Sh OPTIONS
-  -h|--help Show this help text 
-  --version Output version information: 0.0.0 
-  --config-file Path to the configuration file 
+  -h|--help Show this help text
+  --version Output version information: 0.0.0
+  --config-file Path to the configuration file
   one first
-      STR argument 
+      STR argument
   two second
-      --number|-n               number       
-      --(enable|disable)-enable enable extra 
+      --number|-n               number      
+      --(enable|disable)-enable enable extra
   three-very-long-command-name third
 
 .Sh ENVIRONMENT VARIABLES

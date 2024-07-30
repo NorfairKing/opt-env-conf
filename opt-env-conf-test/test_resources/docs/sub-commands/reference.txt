@@ -16,6 +16,7 @@
   [34mcommand without subcommands[m
   command: [35mtop[m
     [34mname[m
+    example: [33mjohn[m
     option: [37m--name[m [33mNAME[m
     env: [37mNAME[m [33mNAME[m
     config:
@@ -40,11 +41,11 @@
   
 
 [36mOptions[m:
-  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m 
-  [37m--version[m [34mOutput version information: 0.0.0[m 
-  [37m--config-file[m [34mPath to the configuration file[m 
+  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
+  [37m--version[m [34mOutput version information: 0.0.0[m
+  [37m--config-file[m [34mPath to the configuration file[m
   [35mtop[m [34mcommand without subcommands[m
-      [37m--name[m [34mname[m 
+      [37m--name[m [34mname[m example: [33mjohn[m
   [35msub[m [34mcommand with subcommands[m
       [35ma[m [34mA[m
       [35mb[m [34mB[m
@@ -52,11 +53,12 @@
       [35md[m [34mD[m
 
 [36mEnvironment Variables[m:
-  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m
-  [37mNAME[m [33mNAME[m               [34mname[m                          
+  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m                
+  [37mNAME[m [33mNAME[m               [34mname[m                             example: [33mjohn[m
 
 [36mConfiguration Values[m:
   [34mname[m
+  example: [33mjohn[m
   [37mname[m:
     # [32mor null[m
     [33m<string>[m

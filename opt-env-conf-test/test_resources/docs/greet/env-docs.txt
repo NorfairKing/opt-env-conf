@@ -7,6 +7,7 @@ AnyDocsAnd
             ) :|
               []
         , confDocDefault = Just "\"Hello\""
+        , confDocExamples = [ "Greetings" ]
         , confDocHelp = Just "Greeting to use"
         }
   , AnyDocsSingle
@@ -15,6 +16,7 @@ AnyDocsAnd
             ( "polite" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
               []
         , confDocDefault = Just "False"
+        , confDocExamples = []
         , confDocHelp = Just "Whether to be polite"
         }
   ]
