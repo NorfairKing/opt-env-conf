@@ -6,7 +6,7 @@
     type = lib.types.nullOr lib.types.str;
   };
   payment = lib.mkOption {
-    default = {};
+    default = { };
     type = lib.types.submodule {
       options = {
         currency = lib.mkOption {

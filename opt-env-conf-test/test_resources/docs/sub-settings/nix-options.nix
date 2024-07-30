@@ -1,11 +1,11 @@
 { lib }:
 {
   foo = lib.mkOption {
-    default = {};
+    default = { };
     type = lib.types.submodule {
       options = {
         bar = lib.mkOption {
-          default = {};
+          default = { };
           type = lib.types.submodule {
             options = {
               quux = lib.mkOption {

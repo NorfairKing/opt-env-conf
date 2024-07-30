@@ -13,7 +13,7 @@ example program description
   env: [37mPORT[m [33mPORT[m
   config:
     [37mport[m: # [32mor null[m
-      [33m<number>[m # [32m16 bit unsigned integer[m
+      [33m<integer>[m # [32m16 bit unsigned integer[m
   
   [34mminimal severity of log messages[m
   default: [33m"DEBUG"[m

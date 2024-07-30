@@ -13,12 +13,11 @@ AnyDocsSingle
                             Required
                             (MapSchema
                                (MapSchema
-                                  (NumberSchema
-                                     (Just
-                                        NumberBounds
-                                          { numberBoundsLower = -9.223372036854775808e18
-                                          , numberBoundsUpper = 9.223372036854775807e18
-                                          }))))
+                                  (IntegerSchema
+                                     Bounds
+                                       { boundsLower = Just (-9223372036854775808)
+                                       , boundsUpper = Just 9223372036854775807
+                                       })))
                             Nothing :|
                             [ ObjectKeySchema "sub" (Optional Nothing) StringSchema Nothing
                             ])))

@@ -18,7 +18,7 @@
       [37mmap[m: # [31mrequired[m
         [37m<key>[m: 
           [37m<key>[m: 
-            [33m<number>[m # [32m64 bit signed integer[m
+            [33m<integer>[m # [32m64 bit signed integer[m
       [37msub[m: # [34moptional[m
         [33m<string>[m
   
@@ -39,7 +39,7 @@
     [37mmap[m: # [31mrequired[m
       [37m<key>[m: 
         [37m<key>[m: 
-          [33m<number>[m # [32m64 bit signed integer[m
+          [33m<integer>[m # [32m64 bit signed integer[m
     [37msub[m: # [34moptional[m
       [33m<string>[m
 

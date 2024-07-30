@@ -34,7 +34,7 @@ three-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
     env: NUMBER INT
     config:
       number: # or null
-        <number> # 64 bit signed integer
+        <integer> # 64 bit signed integer
     
     enable extra
     switch: --(enable|disable)-enable
@@ -68,7 +68,7 @@ three-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
   number
   number:
     # or null
-    <number> # 64 bit signed integer
+    <integer> # 64 bit signed integer
   enable extra
   enable:
     # or null
