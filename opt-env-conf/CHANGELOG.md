@@ -8,6 +8,7 @@
   can pattern-match on the builders.
 * `yesNoSwitch` and `enableDisableSwitch` now no longer take a default value,
   but accept default `value` builders instead.
+* Renamed 'viaCodec' to 'viaStringCodec'.
 
 ## [0.4.0.5] - 2024-07-28
 

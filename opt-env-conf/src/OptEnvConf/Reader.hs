@@ -12,7 +12,7 @@ module OptEnvConf.Reader
     str,
     auto,
     exists,
-    viaCodec,
+    viaStringCodec,
 
     -- * Constructing your own reader
     maybeReader,
@@ -88,8 +88,9 @@ auto = Reader $ \s -> case readMaybe s of
 exists :: Reader Bool
 exists = Reader $ const $ pure True
 
-viaCodec :: (HasCodec a) => Reader a
-viaCodec = eitherReader $ parseEither $ parseJSONViaCodec . JSON.String . T.pack
+-- | Read a value as if it were specified as a 'String' and parsed via the given 'Codec'.
+viaStringCodec :: (HasCodec a) => Reader a
+viaStringCodec = eitherReader $ parseEither $ parseJSONViaCodec . JSON.String . T.pack
 
 -- | Turn a 'Maybe' parsing function into a 'Reader'
 maybeReader :: (String -> Maybe a) -> Reader a
