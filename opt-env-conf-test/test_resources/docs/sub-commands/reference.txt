@@ -16,12 +16,12 @@
   [34mcommand without subcommands[m
   command: [35mtop[m
     [34mname[m
-    example: [33mjohn[m
     option: [37m--name[m [33mNAME[m
     env: [37mNAME[m [33mNAME[m
     config:
       [37mname[m: # [32mor null[m
         [33m<string>[m
+    example: [33mjohn[m
     
   
   [34mcommand with subcommands[m

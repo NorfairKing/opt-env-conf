@@ -24,12 +24,12 @@ sub-commands (-h|--help) | --version | (--config-file FILE_PATH COMMAND)
   command without subcommands
   command: top
     name
-    example: john
     option: --name NAME
     env: NAME NAME
     config:
       name: # or null
         <string>
+    example: john
     
   
   command with subcommands

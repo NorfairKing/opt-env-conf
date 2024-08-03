@@ -215,13 +215,7 @@ renderSetDocHeader = maybe [[fore red "undocumented"]] helpLines
 renderSetDocWithoutHeader :: SetDoc -> [[Chunk]]
 renderSetDocWithoutHeader SetDoc {..} =
   concat
-    [ [ defaultValueChunks dv
-        | dv <- maybeToList setDocDefault
-      ],
-      [ exampleValuesChunks setDocExamples
-        | not (null setDocExamples)
-      ],
-      [ unwordsChunks
+    [ [ unwordsChunks
           [ ["argument:"],
             [mMetavarChunk setDocMetavar]
           ]
@@ -267,7 +261,13 @@ renderSetDocWithoutHeader SetDoc {..} =
             )
             (NE.toList confs)
           | confs <- maybeToList setDocConfKeys
-        ]
+        ],
+      [ defaultValueChunks dv
+        | dv <- maybeToList setDocDefault
+      ],
+      [ exampleValuesChunks setDocExamples
+        | not (null setDocExamples)
+      ]
     ]
 
 helpLines :: Help -> [[Chunk]]

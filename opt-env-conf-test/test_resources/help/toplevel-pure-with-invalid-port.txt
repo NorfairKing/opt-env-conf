@@ -8,20 +8,20 @@ example program description
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
   
   [34mport to serve requests on[m
-  default: [33m8080[m
   option: [37m--port[m [33mPORT[m
   env: [37mPORT[m [33mPORT[m
   config:
     [37mport[m: # [32mor null[m
       [33m<integer>[m # [32m16 bit unsigned integer[m
+  default: [33m8080[m
   
   [34mminimal severity of log messages[m
-  default: [33m"DEBUG"[m
   option: [37m--log-level[m [33mLOG_LEVEL[m
   env: [37mLOG_LEVEL[m [33mLOG_LEVEL[m
   config:
     [37mlog-level[m: # [32mor null[m
       [33m<string>[m
+  default: [33m"DEBUG"[m
   
   [34mPublic key[m
   option: [37m--payment-public-key[m [33mPUBLIC_KEY[m

@@ -20,25 +20,25 @@ greet (-h|--help) | --version | (--config-file FILE_PATH -g|--greeting GREETING 
   env: GREET_CONFIG_FILE FILE_PATH
   
   Greeting to use
-  default: "Hello"
-  example: Greetings
   option: -g|--greeting GREETING
   env: GREET_GREETING GREETING
   config:
     greeting: # or null
       <string>
+  default: "Hello"
+  example: Greetings
   
   Who to greet
-  default: "world"
   argument: SUBJECT
+  default: "world"
   
   Whether to be polite
-  default: False
   switch: -p|--polite
   env: GREET_POLITE ANY
   config:
     polite: # or null
       <boolean>
+  default: False
   
 
 .Sh OPTIONS
