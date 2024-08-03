@@ -1,13 +1,13 @@
 .Dd $Mdocdate$
-.Dt enable-disable 1
+.Dt enable-disable-optional 1
 .Os
 .Sh NAME
-.Nm enable-disable
-.Nd enableDisableSwitch example
+.Nm enable-disable-optional
+.Nd enableDisableSwitch' example
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-enable-disable (-h|--help) | --version | --(enable|disable)-example
+enable-disable-optional (-h|--help) | --version | --(enable|disable)-example
 .Sh SETTINGS
   Show this help text
   switch: -h|--help

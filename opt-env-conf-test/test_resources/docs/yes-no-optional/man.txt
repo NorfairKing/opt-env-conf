@@ -1,13 +1,13 @@
 .Dd $Mdocdate$
-.Dt yes-no 1
+.Dt yes-no-optional 1
 .Os
 .Sh NAME
-.Nm yes-no
-.Nd yesNoSwitch example
+.Nm yes-no-optional
+.Nd yesNoSwitch' example
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-yes-no (-h|--help) | --version | --[no-]example
+yes-no-optional (-h|--help) | --version | --[no-]example
 .Sh SETTINGS
   Show this help text
   switch: -h|--help

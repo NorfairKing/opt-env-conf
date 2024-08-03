@@ -26,6 +26,8 @@ spec = do
   exampleParserSpec "hidden" "example with hidden settings" hiddenParser
   exampleParserSpec "enable-disable" "enableDisableSwitch example" enableDisableParser
   exampleParserSpec "yes-no" "yesNoSwitch example" yesNoParser
+  exampleParserSpec "enable-disable-optional" "enableDisableSwitch' example" enableDisableParser'
+  exampleParserSpec "yes-no-optional" "yesNoSwitch' example" yesNoParser'
   exampleParserSpec "verbose" "verbosity example" verboseParser
   exampleParserSpec "greet" "hello world example" greetParser
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
@@ -233,7 +235,7 @@ data EnableDisable = EnableDisable Bool
 
 enableDisableParser :: Parser EnableDisable
 enableDisableParser =
-  withLocalYamlConfig $
+  withoutConfig $
     EnableDisable
       <$> enableDisableSwitch
         True
@@ -243,11 +245,24 @@ enableDisableParser =
           conf "example"
         ]
 
+enableDisableParser' :: Parser (Maybe EnableDisable)
+enableDisableParser' =
+  withoutConfig $
+    fmap EnableDisable
+      <$> optional
+        ( enableDisableSwitch'
+            [ long "example",
+              help "Example of an enable/disable switch",
+              env "EXAMPLE",
+              conf "example"
+            ]
+        )
+
 data YesNo = YesNo Bool
 
 yesNoParser :: Parser YesNo
 yesNoParser =
-  withLocalYamlConfig $
+  withoutConfig $
     YesNo
       <$> yesNoSwitch
         True
@@ -256,6 +271,19 @@ yesNoParser =
           env "EXAMPLE",
           conf "example"
         ]
+
+yesNoParser' :: Parser (Maybe YesNo)
+yesNoParser' =
+  withoutConfig $
+    fmap YesNo
+      <$> optional
+        ( yesNoSwitch'
+            [ long "example",
+              help "Example of a yes/no switch",
+              env "EXAMPLE",
+              conf "example"
+            ]
+        )
 
 data Empty = Empty
 

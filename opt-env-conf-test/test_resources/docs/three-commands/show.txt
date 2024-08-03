@@ -86,24 +86,11 @@ WithConfig
                      (Just "INT")
                      (Just "number"))))
             (Alt
-               (Setting
-                  Nothing
-                  (Setting
-                     [ DashedLong ('(' :| "enable|disable)-enable") ]
-                     []
-                     False
-                     (Just _)
-                     False
-                     Nothing
-                     Nothing
-                     Nothing
-                     Nothing
-                     (Just "enable extra")))
                (Alt
                   (Setting
                      Nothing
                      (Setting
-                        [ DashedLong ('d' :| "isable-enable") ]
+                        [ DashedLong ('(' :| "enable|disable)-enable") ]
                         []
                         False
                         (Just _)
@@ -112,12 +99,12 @@ WithConfig
                         Nothing
                         Nothing
                         Nothing
-                        Nothing))
+                        (Just "enable extra")))
                   (Alt
                      (Setting
                         Nothing
                         (Setting
-                           [ DashedLong ('e' :| "nable-enable") ]
+                           [ DashedLong ('d' :| "isable-enable") ]
                            []
                            False
                            (Just _)
@@ -131,17 +118,30 @@ WithConfig
                         (Setting
                            Nothing
                            (Setting
+                              [ DashedLong ('e' :| "nable-enable") ]
                               []
-                              [ _ ]
+                              False
+                              (Just _)
                               False
                               Nothing
-                              False
-                              (Just ("ENABLE" :| []))
                               Nothing
                               Nothing
-                              (Just "BOOL")
-                              (Just "enable extra")))
+                              Nothing
+                              Nothing))
                         (Alt
+                           (Setting
+                              Nothing
+                              (Setting
+                                 []
+                                 [ _ ]
+                                 False
+                                 Nothing
+                                 False
+                                 (Just ("ENABLE" :| []))
+                                 Nothing
+                                 Nothing
+                                 (Just "BOOL")
+                                 (Just "enable extra")))
                            (Setting
                               Nothing
                               (Setting
@@ -162,7 +162,7 @@ WithConfig
                                        []))
                                  Nothing
                                  Nothing
-                                 (Just "enable extra")))
-                           (Pure _)))))))
+                                 (Just "enable extra")))))))
+               (Pure _)))
      , Command "three-very-long-command-name" "third" (Pure _)
      ])

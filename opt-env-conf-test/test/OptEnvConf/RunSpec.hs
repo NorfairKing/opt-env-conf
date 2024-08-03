@@ -608,6 +608,13 @@ spec = do
           (["--disable-example"], False)
         ]
 
+      argParseSpecs
+        (optional $ enableDisableSwitch' [long "example", env "EXAMPLE", conf "example"])
+        [ ([], Nothing),
+          (["--enable-example"], Just True),
+          (["--disable-example"], Just False)
+        ]
+
       envParseSpecs
         (enableDisableSwitch True [long "example", env "EXAMPLE", env "ALTERNATIVE", conf "example"])
         [ ([], True),
@@ -619,6 +626,45 @@ spec = do
 
       envParseSpecs
         (enableDisableSwitch False [long "example", env "EXAMPLE", env "ALTERNATIVE", conf "example"])
+        [ ([], False),
+          ([("EXAMPLE", "True")], True),
+          ([("ALTERNATIVE", "True")], True),
+          ([("EXAMPLE", "False")], False),
+          ([("ALTERNATIVE", "False")], False)
+        ]
+
+      argParseSpecs
+        (yesNoSwitch True [long "example", env "EXAMPLE", conf "example"])
+        [ ([], True),
+          (["--example"], True),
+          (["--no-example"], False)
+        ]
+
+      argParseSpecs
+        (yesNoSwitch False [long "example", env "EXAMPLE", conf "example"])
+        [ ([], False),
+          (["--example"], True),
+          (["--no-example"], False)
+        ]
+
+      argParseSpecs
+        (optional $ yesNoSwitch' [long "example", env "EXAMPLE", conf "example"])
+        [ ([], Nothing),
+          (["--example"], Just True),
+          (["--no-example"], Just False)
+        ]
+
+      envParseSpecs
+        (yesNoSwitch True [long "example", env "EXAMPLE", env "ALTERNATIVE", conf "example"])
+        [ ([], True),
+          ([("EXAMPLE", "False")], False),
+          ([("ALTERNATIVE", "False")], False),
+          ([("EXAMPLE", "True")], True),
+          ([("ALTERNATIVE", "True")], True)
+        ]
+
+      envParseSpecs
+        (yesNoSwitch False [long "example", env "EXAMPLE", env "ALTERNATIVE", conf "example"])
         [ ([], False),
           ([("EXAMPLE", "True")], True),
           ([("ALTERNATIVE", "True")], True),

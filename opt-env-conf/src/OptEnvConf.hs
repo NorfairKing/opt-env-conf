@@ -93,8 +93,11 @@ module OptEnvConf
 
     -- *** Switches
     enableDisableSwitch,
+    enableDisableSwitch',
     yesNoSwitch,
+    yesNoSwitch',
     makeDoubleSwitch,
+    makeDoubleSwitch',
 
     -- *** Secrets
     readSecretTextFile,
