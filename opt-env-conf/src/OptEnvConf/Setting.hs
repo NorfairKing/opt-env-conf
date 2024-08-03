@@ -30,6 +30,7 @@ module OptEnvConf.Setting
     shownExample,
     hidden,
     Builder (..),
+    BuildInstruction (..),
 
     -- * Internal
     showSettingABit,

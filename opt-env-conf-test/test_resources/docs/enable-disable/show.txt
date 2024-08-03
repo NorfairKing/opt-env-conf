@@ -3,6 +3,23 @@ WithConfig
   Nothing
   (Pure _)
   (Alt
+     (Check
+        Nothing
+        True
+        _
+        (Setting
+           Nothing
+           (Setting
+              [ DashedLong ('(' :| "enable|disable)-example") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "Example of an enable/disable switch"))))
      (Alt
         (Check
            Nothing
@@ -11,7 +28,7 @@ WithConfig
            (Setting
               Nothing
               (Setting
-                 [ DashedLong ('(' :| "enable|disable)-example") ]
+                 [ DashedLong ('d' :| "isable-example") ]
                  []
                  False
                  (Just _)
@@ -20,7 +37,7 @@ WithConfig
                  Nothing
                  Nothing
                  Nothing
-                 (Just "Example of an enable/disable switch"))))
+                 Nothing)))
         (Alt
            (Check
               Nothing
@@ -29,7 +46,7 @@ WithConfig
               (Setting
                  Nothing
                  (Setting
-                    [ DashedLong ('d' :| "isable-example") ]
+                    [ DashedLong ('e' :| "nable-example") ]
                     []
                     False
                     (Just _)
@@ -47,34 +64,17 @@ WithConfig
                  (Setting
                     Nothing
                     (Setting
-                       [ DashedLong ('e' :| "nable-example") ]
                        []
+                       [ _ ]
                        False
-                       (Just _)
+                       Nothing
                        False
+                       (Just ("EXAMPLE" :| []))
                        Nothing
                        Nothing
-                       Nothing
-                       Nothing
-                       Nothing)))
+                       (Just "BOOL")
+                       (Just "Example of an enable/disable switch"))))
               (Alt
-                 (Check
-                    Nothing
-                    True
-                    _
-                    (Setting
-                       Nothing
-                       (Setting
-                          []
-                          [ _ ]
-                          False
-                          Nothing
-                          False
-                          (Just ("EXAMPLE" :| []))
-                          Nothing
-                          Nothing
-                          (Just "BOOL")
-                          (Just "Example of an enable/disable switch"))))
                  (Check
                     Nothing
                     True
@@ -98,5 +98,5 @@ WithConfig
                                 []))
                           Nothing
                           Nothing
-                          (Just "Example of an enable/disable switch"))))))))
-     (Pure _))
+                          (Just "Example of an enable/disable switch"))))
+                 (Pure _))))))

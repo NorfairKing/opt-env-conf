@@ -48,11 +48,8 @@ module OptEnvConf.Parser
     withoutConfig,
     configuredConfigFile,
     enableDisableSwitch,
-    enableDisableSwitch',
     yesNoSwitch,
-    yesNoSwitch',
     makeDoubleSwitch,
-    makeDoubleSwitch',
     readSecretTextFile,
 
     -- * Parser implementation
@@ -731,58 +728,35 @@ configuredConfigFile =
 
 -- | Define a setting for a 'Bool' with a given default value.
 --
--- If you pass in `long` values, it will have @--foobar@ and @--no-foobar@ switches.
--- If you pass in `env` values, it will read those environment variables too.
--- If you pass in `conf` values, it will read those configuration values too.
+-- If you pass in 'long' values, it will have @--foobar@ and @--no-foobar@ switches.
+-- If you pass in 'env' values, it will read those environment variables too.
+-- If you pass in 'conf' values, it will read those configuration values too.
+-- If you pass in a 'value' value, it will use that as the default value.
 yesNoSwitch ::
   (HasCallStack) =>
-  -- | Default value
-  Bool ->
   -- | Builders
   [Builder Bool] ->
   Parser Bool
-yesNoSwitch defaultBool builders =
+yesNoSwitch builders =
   withFrozenCallStack $
-    makeDoubleSwitch "" "no-" "[no-]" defaultBool builders
-
--- | Like 'yesNoSwitch' but without a default value
-yesNoSwitch' ::
-  (HasCallStack) =>
-  -- | Builders
-  [Builder Bool] ->
-  Parser Bool
-yesNoSwitch' builders =
-  withFrozenCallStack $
-    makeDoubleSwitch' "" "no-" "[no-]" builders
+    makeDoubleSwitch "" "no-" "[no-]" builders
 
 -- | Define a setting for a 'Bool' with a given default value.
 --
--- If you pass in `long` values, it will have @--enable-foobar@ and @--disable-foobar@ switches.
--- If you pass in `env` values, it will read those environment variables too.
--- If you pass in `conf` values, it will read those configuration values too.
+-- If you pass in 'long' values, it will have @--enable-foobar@ and @--disable-foobar@ switches.
+-- If you pass in 'env' values, it will read those environment variables too.
+-- If you pass in 'conf' values, it will read those configuration values too.
+-- If you pass in a 'value' value, it will use that as the default value.
 enableDisableSwitch ::
   (HasCallStack) =>
-  -- | Default value
-  Bool ->
   -- | Builders
   [Builder Bool] ->
   Parser Bool
-enableDisableSwitch defaultBool builders =
+enableDisableSwitch builders =
   withFrozenCallStack $
-    makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" defaultBool builders
+    makeDoubleSwitch "enable-" "disable-" "(enable|disable)-" builders
 
--- | Like 'enableDisableSwitch' but without a default value
-enableDisableSwitch' ::
-  (HasCallStack) =>
-  -- | Builders
-  [Builder Bool] ->
-  Parser Bool
-enableDisableSwitch' builders =
-  withFrozenCallStack $
-    makeDoubleSwitch' "enable-" "disable-" "(enable|disable)-" builders
-
--- Like 'makeDoubleSwitch' but without a default value
-makeDoubleSwitch' ::
+makeDoubleSwitch ::
   (HasCallStack) =>
   -- | Prefix for 'True' 'long's
   String ->
@@ -793,7 +767,7 @@ makeDoubleSwitch' ::
   -- | Builders
   [Builder Bool] ->
   Parser Bool
-makeDoubleSwitch' truePrefix falsePrefix helpPrefix builders =
+makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
   withFrozenCallStack $
     choice $
       catMaybes
@@ -801,11 +775,17 @@ makeDoubleSwitch' truePrefix falsePrefix helpPrefix builders =
           Just parseDisableSwitch,
           Just parseEnableSwitch,
           parseEnv,
-          parseConfigVal
+          parseConfigVal,
+          parseDefaultVal
         ]
   where
-    s = buildSetting builders
     mLoc = snd <$> listToMaybe (getCallStack callStack)
+    s = buildSetting builders
+    parseDefaultVal :: Maybe (Parser Bool)
+    parseDefaultVal = do
+      (dv, _) <- settingDefaultValue s
+      pure $ pure dv
+
     parseEnableSwitch :: Parser Bool
     parseEnableSwitch =
       ParserSetting mLoc $
@@ -900,22 +880,6 @@ makeDoubleSwitch' truePrefix falsePrefix helpPrefix builders =
     prefixDashedLong prefix = \case
       DashedShort _ -> Nothing
       d -> Just $ prefixDashed prefix d
-
-makeDoubleSwitch ::
-  (HasCallStack) =>
-  -- | Prefix for 'True' 'long's
-  String ->
-  -- | Prefix for 'False' 'long's
-  String ->
-  -- | Prefix for the documented 'long's
-  String ->
-  -- | Default nalue
-  Bool ->
-  -- | Builders
-  [Builder Bool] ->
-  Parser Bool
-makeDoubleSwitch truePrefix falsePrefix helpPrefix defaultBool builders =
-  withFrozenCallStack $ choice [makeDoubleSwitch' truePrefix falsePrefix helpPrefix builders, pure defaultBool]
 
 -- | Read a text file but strip whitespace so it can be edited with an editor
 -- that messes with line endings.

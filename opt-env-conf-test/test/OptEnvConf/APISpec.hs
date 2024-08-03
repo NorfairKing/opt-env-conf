@@ -238,11 +238,11 @@ enableDisableParser =
   withoutConfig $
     EnableDisable
       <$> enableDisableSwitch
-        True
         [ long "example",
           help "Example of an enable/disable switch",
           env "EXAMPLE",
-          conf "example"
+          conf "example",
+          value True
         ]
 
 enableDisableParser' :: Parser (Maybe EnableDisable)
@@ -250,7 +250,7 @@ enableDisableParser' =
   withoutConfig $
     fmap EnableDisable
       <$> optional
-        ( enableDisableSwitch'
+        ( enableDisableSwitch
             [ long "example",
               help "Example of an enable/disable switch",
               env "EXAMPLE",
@@ -265,11 +265,11 @@ yesNoParser =
   withoutConfig $
     YesNo
       <$> yesNoSwitch
-        True
         [ long "example",
           help "Example of a yes/no switch",
           env "EXAMPLE",
-          conf "example"
+          conf "example",
+          value True
         ]
 
 yesNoParser' :: Parser (Maybe YesNo)
@@ -277,7 +277,7 @@ yesNoParser' =
   withoutConfig $
     fmap YesNo
       <$> optional
-        ( yesNoSwitch'
+        ( yesNoSwitch
             [ long "example",
               help "Example of a yes/no switch",
               env "EXAMPLE",
@@ -319,9 +319,9 @@ threeCommandsParser =
                 short 'n'
               ]
             <*> enableDisableSwitch
-              False
               [ help "enable extra",
-                name "enable"
+                name "enable",
+                value False
               ],
         command "three-very-long-command-name" "third" (pure Three)
       ]
