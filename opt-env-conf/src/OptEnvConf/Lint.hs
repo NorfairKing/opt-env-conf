@@ -131,6 +131,8 @@ renderLintError LintError {..} =
           ]
         LintErrorNoReaderForOption ->
           [ [ functionChunk "option",
+              " or ",
+              functionChunk "name",
               " has no ",
               functionChunk "reader",
               "."
@@ -147,6 +149,8 @@ renderLintError LintError {..} =
           ]
         LintErrorNoMetavarForOption ->
           [ [ functionChunk "option",
+              " or ",
+              functionChunk "name",
               " has no ",
               functionChunk "metavar",
               "."
@@ -174,6 +178,8 @@ renderLintError LintError {..} =
           ]
         LintErrorNoReaderForEnvVar ->
           [ [ functionChunk "env",
+              " or ",
+              functionChunk "name",
               " has no ",
               functionChunk "reader",
               "."
@@ -181,6 +187,8 @@ renderLintError LintError {..} =
           ]
         LintErrorNoMetavarForEnvVar ->
           [ [ functionChunk "env",
+              " or ",
+              functionChunk "name",
               " has no ",
               functionChunk "metavar",
               "."
@@ -201,6 +209,8 @@ renderLintError LintError {..} =
           ]
         LintErrorConfigWithoutLoad ->
           [ [ functionChunk "conf",
+              " or ",
+              functionChunk "name",
               " was called with no way to load configuration."
             ]
           ]

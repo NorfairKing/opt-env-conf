@@ -9,6 +9,7 @@
 * `yesNoSwitch` and `enableDisableSwitch` now no longer take a default value,
   but accept default `value` builders instead.
 * Renamed 'viaCodec' to 'viaStringCodec'.
+* Clearer lints when using `name`.
 
 ## [0.4.0.5] - 2024-07-28
 
