@@ -2,3 +2,7 @@
 
 foo explanation
 
+[36mAvailable settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+

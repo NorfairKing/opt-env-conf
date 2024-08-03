@@ -12,6 +12,7 @@
 * Clearer lints when using `name`.
 * Clearer lint about loading configuration.
 * Default values are now shown at the end but before example values in documentation.
+* Proper `[--optional-option-docs]`
 
 ## [0.4.0.5] - 2024-07-28
 

@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-many-args (-h|--help) | --version | ARGUMENT
+many-args [ARGUMENT]
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -17,7 +17,6 @@ many-args (-h|--help) | --version | ARGUMENT
 
   Argument
   argument: ARGUMENT
-  
 
 .Sh OPTIONS
   -h|--help Show this help text              

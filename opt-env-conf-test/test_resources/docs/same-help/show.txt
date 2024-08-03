@@ -1,0 +1,146 @@
+WithConfig
+  _
+  Nothing
+  (Pure _)
+  (Ap
+     (Alt
+        (Check
+           Nothing
+           True
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('i' :| "nt") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just ("INT" :| []))
+                 (Just
+                    (ConfigValSetting
+                       ("int" :| [])
+                       BimapCodec
+                       _
+                       _
+                       (EitherCodec
+                          PossiblyJointUnion
+                          NullCodec
+                          (BimapCodec
+                             _
+                             _
+                             (IntegerCodec
+                                Nothing
+                                Bounds
+                                  { boundsLower = Just (-9223372036854775808)
+                                  , boundsUpper = Just 9223372036854775807
+                                  }))) :|
+                       []))
+                 Nothing
+                 (Just "INT")
+                 (Just "int or string"))))
+        (Check
+           Nothing
+           True
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('s' :| "tring") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just ("STRING" :| []))
+                 (Just
+                    (ConfigValSetting
+                       ("string" :| [])
+                       BimapCodec
+                       _
+                       _
+                       (EitherCodec
+                          PossiblyJointUnion
+                          NullCodec
+                          (BimapCodec _ _ (StringCodec Nothing))) :|
+                       []))
+                 Nothing
+                 (Just "STR")
+                 (Just "int or string")))))
+     (Alt
+        (Setting
+           Nothing
+           (Setting
+              [ DashedLong ('[' :| "no-]other") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "int or string")))
+        (Alt
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('n' :| "o-other") ]
+                 []
+                 False
+                 (Just _)
+                 False
+                 Nothing
+                 Nothing
+                 Nothing
+                 Nothing
+                 Nothing))
+           (Alt
+              (Setting
+                 Nothing
+                 (Setting
+                    [ DashedLong ('o' :| "ther") ]
+                    []
+                    False
+                    (Just _)
+                    False
+                    Nothing
+                    Nothing
+                    Nothing
+                    Nothing
+                    Nothing))
+              (Alt
+                 (Setting
+                    Nothing
+                    (Setting
+                       []
+                       [ _ ]
+                       False
+                       Nothing
+                       False
+                       (Just ("OTHER" :| []))
+                       Nothing
+                       Nothing
+                       (Just "BOOL")
+                       (Just "int or string")))
+                 (Alt
+                    (Setting
+                       Nothing
+                       (Setting
+                          []
+                          []
+                          False
+                          Nothing
+                          False
+                          Nothing
+                          (Just
+                             (ConfigValSetting
+                                ("other" :| [])
+                                BimapCodec
+                                _
+                                _
+                                (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                                []))
+                          Nothing
+                          Nothing
+                          (Just "int or string")))
+                    (Pure _)))))))

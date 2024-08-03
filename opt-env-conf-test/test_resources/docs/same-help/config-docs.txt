@@ -1,0 +1,30 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          EnvDoc
+            { envDocVars = "INT" :| []
+            , envDocDefault = Nothing
+            , envDocExamples = []
+            , envDocMetavar = Just "INT"
+            , envDocHelp = Just "int or string"
+            }
+      , AnyDocsSingle
+          EnvDoc
+            { envDocVars = "STRING" :| []
+            , envDocDefault = Nothing
+            , envDocExamples = []
+            , envDocMetavar = Just "STR"
+            , envDocHelp = Just "int or string"
+            }
+      ]
+  , AnyDocsOr
+      [ AnyDocsSingle
+          EnvDoc
+            { envDocVars = "OTHER" :| []
+            , envDocDefault = Nothing
+            , envDocExamples = []
+            , envDocMetavar = Just "BOOL"
+            , envDocHelp = Just "int or string"
+            }
+      ]
+  ]

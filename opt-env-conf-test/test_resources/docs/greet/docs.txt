@@ -1,63 +1,70 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , setDocEnvVars = Just ("GREET_CONFIG_FILE" :| [])
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Just "FILE_PATH"
-        , setDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , setDocEnvVars = Just ("GREET_CONFIG_FILE" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "FILE_PATH"
+               , setDocHelp = Just "Path to the configuration file"
+               })
+      , AnyDocsSingle Nothing
+      ]
   , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds =
-            [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-        , setDocEnvVars = Just ("GREET_GREETING" :| [])
-        , setDocConfKeys =
-            Just
-              (( "greeting" :| []
-               , AnyOfSchema (NullSchema :| [ StringSchema ])
-               ) :|
-                 [])
-        , setDocDefault = Just "\"Hello\""
-        , setDocExamples = [ "Greetings" ]
-        , setDocMetavar = Just "GREETING"
-        , setDocHelp = Just "Greeting to use"
-        }
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = False
+           , setDocTryOption = True
+           , setDocDasheds =
+               [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+           , setDocEnvVars = Just ("GREET_GREETING" :| [])
+           , setDocConfKeys =
+               Just
+                 (( "greeting" :| []
+                  , AnyOfSchema (NullSchema :| [ StringSchema ])
+                  ) :|
+                    [])
+           , setDocDefault = Just "\"Hello\""
+           , setDocExamples = [ "Greetings" ]
+           , setDocMetavar = Just "GREETING"
+           , setDocHelp = Just "Greeting to use"
+           })
   , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = True
-        , setDocTrySwitch = False
-        , setDocTryOption = False
-        , setDocDasheds = []
-        , setDocEnvVars = Nothing
-        , setDocConfKeys = Nothing
-        , setDocDefault = Just "\"world\""
-        , setDocExamples = []
-        , setDocMetavar = Just "SUBJECT"
-        , setDocHelp = Just "Who to greet"
-        }
+      (Just
+         SetDoc
+           { setDocTryArgument = True
+           , setDocTrySwitch = False
+           , setDocTryOption = False
+           , setDocDasheds = []
+           , setDocEnvVars = Nothing
+           , setDocConfKeys = Nothing
+           , setDocDefault = Just "\"world\""
+           , setDocExamples = []
+           , setDocMetavar = Just "SUBJECT"
+           , setDocHelp = Just "Who to greet"
+           })
   , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = True
-        , setDocTryOption = False
-        , setDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-        , setDocEnvVars = Just ("GREET_POLITE" :| [])
-        , setDocConfKeys =
-            Just
-              (( "polite" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
-                 [])
-        , setDocDefault = Just "False"
-        , setDocExamples = []
-        , setDocMetavar = Just "ANY"
-        , setDocHelp = Just "Whether to be polite"
-        }
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = True
+           , setDocTryOption = False
+           , setDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+           , setDocEnvVars = Just ("GREET_POLITE" :| [])
+           , setDocConfKeys =
+               Just
+                 (( "polite" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+                    [])
+           , setDocDefault = Just "False"
+           , setDocExamples = []
+           , setDocMetavar = Just "ANY"
+           , setDocHelp = Just "Whether to be polite"
+           })
   ]

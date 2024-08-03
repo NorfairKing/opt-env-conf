@@ -1,8 +1,10 @@
-AnyDocsSingle
-  EnvDoc
-    { envDocVars = "EXAMPLE" :| []
-    , envDocDefault = Nothing
-    , envDocExamples = []
-    , envDocMetavar = Just "BOOL"
-    , envDocHelp = Just "Example of a yes/no switch"
-    }
+AnyDocsOr
+  [ AnyDocsSingle
+      EnvDoc
+        { envDocVars = "EXAMPLE" :| []
+        , envDocDefault = Nothing
+        , envDocExamples = []
+        , envDocMetavar = Just "BOOL"
+        , envDocHelp = Just "Example of a yes/no switch"
+        }
+  ]

@@ -1,4 +1,4 @@
-[36mUsage: [m[33mhidden[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m
+[36mUsage: [m[33mhidden[m 
 
 example with hidden settings
 
@@ -8,5 +8,4 @@ example with hidden settings
 
   [34mOutput version information: 0.0.0[m
   switch: [37m--version[m
-  
 

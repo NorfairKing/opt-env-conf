@@ -1,12 +1,14 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      EnvDoc
-        { envDocVars = "GREET_CONFIG_FILE" :| []
-        , envDocDefault = Nothing
-        , envDocExamples = []
-        , envDocMetavar = Just "FILE_PATH"
-        , envDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          EnvDoc
+            { envDocVars = "GREET_CONFIG_FILE" :| []
+            , envDocDefault = Nothing
+            , envDocExamples = []
+            , envDocMetavar = Just "FILE_PATH"
+            , envDocHelp = Just "Path to the configuration file"
+            }
+      ]
   , AnyDocsSingle
       EnvDoc
         { envDocVars = "GREET_GREETING" :| []

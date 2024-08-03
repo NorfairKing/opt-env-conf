@@ -1,0 +1,44 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          ConfDoc
+            { confDocKeys =
+                ( "int" :| []
+                , AnyOfSchema
+                    (NullSchema :|
+                       [ IntegerSchema
+                           Bounds
+                             { boundsLower = Just (-9223372036854775808)
+                             , boundsUpper = Just 9223372036854775807
+                             }
+                       ])
+                ) :|
+                  []
+            , confDocDefault = Nothing
+            , confDocExamples = []
+            , confDocHelp = Just "int or string"
+            }
+      , AnyDocsSingle
+          ConfDoc
+            { confDocKeys =
+                ( "string" :| []
+                , AnyOfSchema (NullSchema :| [ StringSchema ])
+                ) :|
+                  []
+            , confDocDefault = Nothing
+            , confDocExamples = []
+            , confDocHelp = Just "int or string"
+            }
+      ]
+  , AnyDocsOr
+      [ AnyDocsSingle
+          ConfDoc
+            { confDocKeys =
+                ( "other" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+                  []
+            , confDocDefault = Nothing
+            , confDocExamples = []
+            , confDocHelp = Just "int or string"
+            }
+      ]
+  ]

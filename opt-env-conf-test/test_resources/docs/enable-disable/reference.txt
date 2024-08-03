@@ -1,10 +1,10 @@
-[36mUsage: [m[33menable-disable[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [37m--(enable|disable)-example[m
+[36mUsage: [m[33menable-disable[m [36m[[m[37m--(enable|disable)-example[m[36m][m
 
 [36mAll settings[m:
   [34mShow this help text[m
   switch: [37m-h[m[36m|[m[37m--help[m
 
-  [34mOutput version information: 0.0.0[m
+  [34mOutput version information[m
   switch: [37m--version[m
 
   [34mExample of an enable/disable switch[m
@@ -16,7 +16,7 @@
 
 [36mOptions[m:
   [37m-h[m[36m|[m[37m--help[m                  [34mShow this help text[m                
-  [37m--version[m                  [34mOutput version information: 0.0.0[m  
+  [37m--version[m                  [34mOutput version information[m         
   [37m--(enable|disable)-example[m [34mExample of an enable/disable switch[m
 
 [36mEnvironment Variables[m:

@@ -1,52 +1,58 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , setDocEnvVars = Just ("CONFIG_FILE" :| [])
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Just "FILE_PATH"
-        , setDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , setDocEnvVars = Just ("CONFIG_FILE" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "FILE_PATH"
+               , setDocHelp = Just "Path to the configuration file"
+               })
+      , AnyDocsSingle Nothing
+      ]
   , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = False
-        , setDocDasheds = []
-        , setDocEnvVars = Nothing
-        , setDocConfKeys =
-            Just
-              (( "big" :| []
-               , AnyOfSchema
-                   (NullSchema :|
-                      [ CommentSchema
-                          "BigConfig"
-                          (ObjectSchema
-                             (ObjectAllOfSchema
-                                (ObjectKeySchema
-                                   "map"
-                                   Required
-                                   (MapSchema
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = False
+           , setDocTryOption = False
+           , setDocDasheds = []
+           , setDocEnvVars = Nothing
+           , setDocConfKeys =
+               Just
+                 (( "big" :| []
+                  , AnyOfSchema
+                      (NullSchema :|
+                         [ CommentSchema
+                             "BigConfig"
+                             (ObjectSchema
+                                (ObjectAllOfSchema
+                                   (ObjectKeySchema
+                                      "map"
+                                      Required
                                       (MapSchema
-                                         (IntegerSchema
-                                            Bounds
-                                              { boundsLower = Just (-9223372036854775808)
-                                              , boundsUpper = Just 9223372036854775807
-                                              })))
-                                   Nothing :|
-                                   [ ObjectKeySchema "sub" (Optional Nothing) StringSchema Nothing
-                                   ])))
-                      ])
-               ) :|
-                 [])
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Nothing
-        , setDocHelp = Just "big configuration object"
-        }
+                                         (MapSchema
+                                            (IntegerSchema
+                                               Bounds
+                                                 { boundsLower = Just (-9223372036854775808)
+                                                 , boundsUpper = Just 9223372036854775807
+                                                 })))
+                                      Nothing :|
+                                      [ ObjectKeySchema
+                                          "sub" (Optional Nothing) StringSchema Nothing
+                                      ])))
+                         ])
+                  ) :|
+                    [])
+           , setDocDefault = Nothing
+           , setDocExamples = []
+           , setDocMetavar = Nothing
+           , setDocHelp = Just "big configuration object"
+           })
   ]

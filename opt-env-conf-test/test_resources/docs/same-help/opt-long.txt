@@ -1,0 +1,3 @@
+  [37m--int[m        [34mint or string[m
+  [37m--string[m     [34mint or string[m
+  [37m--[no-]other[m [34mint or string[m

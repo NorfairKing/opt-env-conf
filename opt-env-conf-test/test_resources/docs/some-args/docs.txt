@@ -1,13 +1,33 @@
-AnyDocsSingle
-  SetDoc
-    { setDocTryArgument = True
-    , setDocTrySwitch = False
-    , setDocTryOption = False
-    , setDocDasheds = []
-    , setDocEnvVars = Nothing
-    , setDocConfKeys = Nothing
-    , setDocDefault = Nothing
-    , setDocExamples = []
-    , setDocMetavar = Just "ARGUMENT"
-    , setDocHelp = Just "Argument"
-    }
+AnyDocsAnd
+  [ AnyDocsSingle
+      (Just
+         SetDoc
+           { setDocTryArgument = True
+           , setDocTrySwitch = False
+           , setDocTryOption = False
+           , setDocDasheds = []
+           , setDocEnvVars = Nothing
+           , setDocConfKeys = Nothing
+           , setDocDefault = Nothing
+           , setDocExamples = []
+           , setDocMetavar = Just "ARGUMENT"
+           , setDocHelp = Just "Argument"
+           })
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = True
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Nothing
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "ARGUMENT"
+               , setDocHelp = Just "Argument"
+               })
+      , AnyDocsSingle Nothing
+      ]
+  ]

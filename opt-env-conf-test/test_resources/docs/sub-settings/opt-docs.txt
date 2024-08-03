@@ -1,24 +1,28 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = False
-        , optDocTryOption = True
-        , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , optDocDefault = Nothing
-        , optDocExamples = []
-        , optDocMetavar = Just "FILE_PATH"
-        , optDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "FILE_PATH"
+               , optDocHelp = Just "Path to the configuration file"
+               })
+      ]
   , AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = False
-        , optDocTryOption = True
-        , optDocDasheds = [ DashedLong ('f' :| "oo-bar-quux") ]
-        , optDocDefault = Nothing
-        , optDocExamples = []
-        , optDocMetavar = Just "STR"
-        , optDocHelp = Just "Example with sub-settings"
-        }
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = False
+           , optDocTryOption = True
+           , optDocDasheds = [ DashedLong ('f' :| "oo-bar-quux") ]
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Just "STR"
+           , optDocHelp = Just "Example with sub-settings"
+           })
   ]

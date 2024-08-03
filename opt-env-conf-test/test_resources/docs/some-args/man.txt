@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-some-args (-h|--help) | --version | ARGUMENT
+some-args ARGUMENT [ARGUMENT]
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -17,10 +17,17 @@ some-args (-h|--help) | --version | ARGUMENT
 
   Argument
   argument: ARGUMENT
-  
+
+  Argument
+  argument: ARGUMENT
 
 .Sh OPTIONS
   -h|--help Show this help text              
   --version Output version information: 0.0.0
   ARGUMENT  Argument                         
+  ARGUMENT  Argument                         
+
+.Sh ENVIRONMENT VARIABLES
+
+.Sh CONFIGURATION VALUES
 

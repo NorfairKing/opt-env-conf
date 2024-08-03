@@ -1,4 +1,4 @@
-[36mUsage: [m[33mgreet[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m [33mSUBJECT[m [37m-p[m[36m|[m[37m--polite[m[36m)[m
+[36mUsage: [m[33mgreet[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m [36m[[m[37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m[36m][m [36m[[m[33mSUBJECT[m[36m][m [36m[[m[37m-p[m[36m|[m[37m--polite[m[36m][m
 
 hello world example
 
@@ -12,7 +12,7 @@ hello world example
   [34mPath to the configuration file[m
   option: [37m--config-file[m [33mFILE_PATH[m
   env: [37mGREET_CONFIG_FILE[m [33mFILE_PATH[m
-  
+
   [34mGreeting to use[m
   option: [37m-g[m[36m|[m[37m--greeting[m [33mGREETING[m
   env: [37mGREET_GREETING[m [33mGREETING[m
@@ -21,11 +21,11 @@ hello world example
       [33m<string>[m
   default: [33m"Hello"[m
   example: [33mGreetings[m
-  
+
   [34mWho to greet[m
   argument: [33mSUBJECT[m
   default: [33m"world"[m
-  
+
   [34mWhether to be polite[m
   switch: [37m-p[m[36m|[m[37m--polite[m
   env: [37mGREET_POLITE[m [33mANY[m
@@ -33,5 +33,4 @@ hello world example
     [37mpolite[m: # [32mor null[m
       [33m<boolean>[m
   default: [33mFalse[m
-  
 

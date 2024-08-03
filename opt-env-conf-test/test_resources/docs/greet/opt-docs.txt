@@ -1,47 +1,53 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = False
-        , optDocTryOption = True
-        , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , optDocDefault = Nothing
-        , optDocExamples = []
-        , optDocMetavar = Just "FILE_PATH"
-        , optDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "FILE_PATH"
+               , optDocHelp = Just "Path to the configuration file"
+               })
+      ]
   , AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = False
-        , optDocTryOption = True
-        , optDocDasheds =
-            [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
-        , optDocDefault = Just "\"Hello\""
-        , optDocExamples = [ "Greetings" ]
-        , optDocMetavar = Just "GREETING"
-        , optDocHelp = Just "Greeting to use"
-        }
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = False
+           , optDocTryOption = True
+           , optDocDasheds =
+               [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
+           , optDocDefault = Just "\"Hello\""
+           , optDocExamples = [ "Greetings" ]
+           , optDocMetavar = Just "GREETING"
+           , optDocHelp = Just "Greeting to use"
+           })
   , AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = True
-        , optDocTrySwitch = False
-        , optDocTryOption = False
-        , optDocDasheds = []
-        , optDocDefault = Just "\"world\""
-        , optDocExamples = []
-        , optDocMetavar = Just "SUBJECT"
-        , optDocHelp = Just "Who to greet"
-        }
+      (Just
+         OptDoc
+           { optDocTryArgument = True
+           , optDocTrySwitch = False
+           , optDocTryOption = False
+           , optDocDasheds = []
+           , optDocDefault = Just "\"world\""
+           , optDocExamples = []
+           , optDocMetavar = Just "SUBJECT"
+           , optDocHelp = Just "Who to greet"
+           })
   , AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = True
-        , optDocTryOption = False
-        , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
-        , optDocDefault = Just "False"
-        , optDocExamples = []
-        , optDocMetavar = Just "ANY"
-        , optDocHelp = Just "Whether to be polite"
-        }
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
+           , optDocDefault = Just "False"
+           , optDocExamples = []
+           , optDocMetavar = Just "ANY"
+           , optDocHelp = Just "Whether to be polite"
+           })
   ]

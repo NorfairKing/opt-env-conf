@@ -1,14 +1,18 @@
-AnyDocsSingle
-  SetDoc
-    { setDocTryArgument = False
-    , setDocTrySwitch = True
-    , setDocTryOption = False
-    , setDocDasheds = [ DashedShort 'v' ]
-    , setDocEnvVars = Nothing
-    , setDocConfKeys = Nothing
-    , setDocDefault = Nothing
-    , setDocExamples = []
-    , setDocMetavar = Nothing
-    , setDocHelp =
-        Just "Verbosity level. Use multiple to increase verbosity"
-    }
+AnyDocsOr
+  [ AnyDocsSingle
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = True
+           , setDocTryOption = False
+           , setDocDasheds = [ DashedShort 'v' ]
+           , setDocEnvVars = Nothing
+           , setDocConfKeys = Nothing
+           , setDocDefault = Nothing
+           , setDocExamples = []
+           , setDocMetavar = Nothing
+           , setDocHelp =
+               Just "Verbosity level. Use multiple to increase verbosity"
+           })
+  , AnyDocsSingle Nothing
+  ]

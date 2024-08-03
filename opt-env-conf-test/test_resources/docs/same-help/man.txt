@@ -1,0 +1,62 @@
+.Dd $Mdocdate$
+.Dt same-help 1
+.Os
+.Sh NAME
+.Nm same-help
+.Nd example where multiple options use the same help string
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+same-help [--int INT | --string STR] [--[no-]other]
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  int or string
+  option: --int INT
+  env: INT INT
+  config:
+    int: # or null
+      <integer> # 64 bit signed integer
+  option: --string STR
+  env: STRING STR
+  config:
+    string: # or null
+      <string>
+
+  int or string
+  switch: --[no-]other
+  env: OTHER BOOL
+  config:
+    other: # or null
+      <boolean>
+
+.Sh OPTIONS
+  -h|--help    Show this help text              
+  --version    Output version information: 0.0.0
+  --int        int or string                    
+  --string     int or string                    
+  --[no-]other int or string                    
+
+.Sh ENVIRONMENT VARIABLES
+  INT INT      int or string
+  STRING STR   int or string
+  OTHER BOOL   int or string
+
+.Sh CONFIGURATION VALUES
+  int or string
+  int:
+    # or null
+    <integer> # 64 bit signed integer
+  int or string
+  string:
+    # or null
+    <string>
+  int or string
+  other:
+    # or null
+    <boolean>
+

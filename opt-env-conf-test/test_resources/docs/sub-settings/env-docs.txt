@@ -1,11 +1,14 @@
-AnyDocsSingle
-  ConfDoc
-    { confDocKeys =
-        ( "foo" :| [ "bar" , "quux" ]
-        , AnyOfSchema (NullSchema :| [ StringSchema ])
-        ) :|
-          []
-    , confDocDefault = Nothing
-    , confDocExamples = []
-    , confDocHelp = Just "Example with sub-settings"
-    }
+AnyDocsAnd
+  [ AnyDocsOr []
+  , AnyDocsSingle
+      ConfDoc
+        { confDocKeys =
+            ( "foo" :| [ "bar" , "quux" ]
+            , AnyOfSchema (NullSchema :| [ StringSchema ])
+            ) :|
+              []
+        , confDocDefault = Nothing
+        , confDocExamples = []
+        , confDocHelp = Just "Example with sub-settings"
+        }
+  ]

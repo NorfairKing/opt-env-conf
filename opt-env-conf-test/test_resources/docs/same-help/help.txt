@@ -1,0 +1,30 @@
+[36mUsage: [m[33msame-help[m [36m[[m[37m--int[m [33mINT[m [36m|[m [37m--string[m [33mSTR[m[36m][m [36m[[m[37m--[no-]other[m[36m][m
+
+example where multiple options use the same help string
+
+[36mAvailable settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mint or string[m
+  option: [37m--int[m [33mINT[m
+  env: [37mINT[m [33mINT[m
+  config:
+    [37mint[m: # [32mor null[m
+      [33m<integer>[m # [32m64 bit signed integer[m
+  option: [37m--string[m [33mSTR[m
+  env: [37mSTRING[m [33mSTR[m
+  config:
+    [37mstring[m: # [32mor null[m
+      [33m<string>[m
+
+  [34mint or string[m
+  switch: [37m--[no-]other[m
+  env: [37mOTHER[m [33mBOOL[m
+  config:
+    [37mother[m: # [32mor null[m
+      [33m<boolean>[m
+

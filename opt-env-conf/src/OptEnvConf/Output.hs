@@ -85,3 +85,11 @@ srcLocChunk = fore cyan . chunk . T.pack . prettySrcLoc
 
 indent :: [[Chunk]] -> [[Chunk]]
 indent = map ("  " :)
+
+parenthesise :: [Chunk] -> [Chunk]
+parenthesise [c] = [c]
+parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
+
+bracketise :: [Chunk] -> [Chunk]
+bracketise [c] = [fore cyan "[", c, fore cyan "]"]
+bracketise cs = fore cyan "[" : cs ++ [fore cyan "]"]

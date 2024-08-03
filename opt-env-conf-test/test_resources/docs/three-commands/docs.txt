@@ -1,35 +1,40 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , setDocEnvVars = Just ("CONFIG_FILE" :| [])
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Just "FILE_PATH"
-        , setDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , setDocEnvVars = Just ("CONFIG_FILE" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "FILE_PATH"
+               , setDocHelp = Just "Path to the configuration file"
+               })
+      , AnyDocsSingle Nothing
+      ]
   , AnyDocsCommands
       [ CommandDoc
           { commandDocArgument = "one"
           , commandDocHelp = "first"
           , commandDocs =
               AnyDocsSingle
-                SetDoc
-                  { setDocTryArgument = True
-                  , setDocTrySwitch = False
-                  , setDocTryOption = False
-                  , setDocDasheds = []
-                  , setDocEnvVars = Nothing
-                  , setDocConfKeys = Nothing
-                  , setDocDefault = Nothing
-                  , setDocExamples = []
-                  , setDocMetavar = Just "STR"
-                  , setDocHelp = Just "argument"
-                  }
+                (Just
+                   SetDoc
+                     { setDocTryArgument = True
+                     , setDocTrySwitch = False
+                     , setDocTryOption = False
+                     , setDocDasheds = []
+                     , setDocEnvVars = Nothing
+                     , setDocConfKeys = Nothing
+                     , setDocDefault = Nothing
+                     , setDocExamples = []
+                     , setDocMetavar = Just "STR"
+                     , setDocHelp = Just "argument"
+                     })
           }
       , CommandDoc
           { commandDocArgument = "two"
@@ -37,80 +42,89 @@ AnyDocsAnd
           , commandDocs =
               AnyDocsAnd
                 [ AnyDocsSingle
-                    SetDoc
-                      { setDocTryArgument = False
-                      , setDocTrySwitch = False
-                      , setDocTryOption = True
-                      , setDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
-                      , setDocEnvVars = Just ("NUMBER" :| [])
-                      , setDocConfKeys =
-                          Just
-                            (( "number" :| []
-                             , AnyOfSchema
-                                 (NullSchema :|
-                                    [ IntegerSchema
-                                        Bounds
-                                          { boundsLower = Just (-9223372036854775808)
-                                          , boundsUpper = Just 9223372036854775807
-                                          }
-                                    ])
-                             ) :|
-                               [])
-                      , setDocDefault = Nothing
-                      , setDocExamples = []
-                      , setDocMetavar = Just "INT"
-                      , setDocHelp = Just "number"
-                      }
+                    (Just
+                       SetDoc
+                         { setDocTryArgument = False
+                         , setDocTrySwitch = False
+                         , setDocTryOption = True
+                         , setDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                         , setDocEnvVars = Just ("NUMBER" :| [])
+                         , setDocConfKeys =
+                             Just
+                               (( "number" :| []
+                                , AnyOfSchema
+                                    (NullSchema :|
+                                       [ IntegerSchema
+                                           Bounds
+                                             { boundsLower = Just (-9223372036854775808)
+                                             , boundsUpper = Just 9223372036854775807
+                                             }
+                                       ])
+                                ) :|
+                                  [])
+                         , setDocDefault = Nothing
+                         , setDocExamples = []
+                         , setDocMetavar = Just "INT"
+                         , setDocHelp = Just "number"
+                         })
                 , AnyDocsOr
                     [ AnyDocsSingle
-                        SetDoc
-                          { setDocTryArgument = False
-                          , setDocTrySwitch = True
-                          , setDocTryOption = False
-                          , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
-                          , setDocEnvVars = Nothing
-                          , setDocConfKeys = Nothing
-                          , setDocDefault = Nothing
-                          , setDocExamples = []
-                          , setDocMetavar = Nothing
-                          , setDocHelp = Just "enable extra"
-                          }
+                        (Just
+                           SetDoc
+                             { setDocTryArgument = False
+                             , setDocTrySwitch = True
+                             , setDocTryOption = False
+                             , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
+                             , setDocEnvVars = Nothing
+                             , setDocConfKeys = Nothing
+                             , setDocDefault = Nothing
+                             , setDocExamples = []
+                             , setDocMetavar = Nothing
+                             , setDocHelp = Just "enable extra"
+                             })
+                    , AnyDocsSingle Nothing
+                    , AnyDocsSingle Nothing
                     , AnyDocsSingle
-                        SetDoc
-                          { setDocTryArgument = False
-                          , setDocTrySwitch = False
-                          , setDocTryOption = False
-                          , setDocDasheds = []
-                          , setDocEnvVars = Just ("ENABLE" :| [])
-                          , setDocConfKeys = Nothing
-                          , setDocDefault = Nothing
-                          , setDocExamples = []
-                          , setDocMetavar = Just "BOOL"
-                          , setDocHelp = Just "enable extra"
-                          }
+                        (Just
+                           SetDoc
+                             { setDocTryArgument = False
+                             , setDocTrySwitch = False
+                             , setDocTryOption = False
+                             , setDocDasheds = []
+                             , setDocEnvVars = Just ("ENABLE" :| [])
+                             , setDocConfKeys = Nothing
+                             , setDocDefault = Nothing
+                             , setDocExamples = []
+                             , setDocMetavar = Just "BOOL"
+                             , setDocHelp = Just "enable extra"
+                             })
                     , AnyDocsSingle
-                        SetDoc
-                          { setDocTryArgument = False
-                          , setDocTrySwitch = False
-                          , setDocTryOption = False
-                          , setDocDasheds = []
-                          , setDocEnvVars = Nothing
-                          , setDocConfKeys =
-                              Just
-                                (( "enable" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
-                                   [])
-                          , setDocDefault = Nothing
-                          , setDocExamples = []
-                          , setDocMetavar = Nothing
-                          , setDocHelp = Just "enable extra"
-                          }
+                        (Just
+                           SetDoc
+                             { setDocTryArgument = False
+                             , setDocTrySwitch = False
+                             , setDocTryOption = False
+                             , setDocDasheds = []
+                             , setDocEnvVars = Nothing
+                             , setDocConfKeys =
+                                 Just
+                                   (( "enable" :| []
+                                    , AnyOfSchema (NullSchema :| [ BoolSchema ])
+                                    ) :|
+                                      [])
+                             , setDocDefault = Nothing
+                             , setDocExamples = []
+                             , setDocMetavar = Nothing
+                             , setDocHelp = Just "enable extra"
+                             })
+                    , AnyDocsSingle Nothing
                     ]
                 ]
           }
       , CommandDoc
           { commandDocArgument = "three-very-long-command-name"
           , commandDocHelp = "third"
-          , commandDocs = AnyDocsAnd []
+          , commandDocs = AnyDocsSingle Nothing
           }
       ]
   ]

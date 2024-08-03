@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -42,7 +43,7 @@ where
 import Autodocodec.Schema
 import Autodocodec.Yaml.Schema
 import Control.Monad
-import Data.List (intersperse)
+import Data.List (intercalate, intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -103,17 +104,21 @@ data AnyDocs a
   | AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
   | AnyDocsSingle !a
-  deriving (Show)
+  deriving (Show, Functor)
 
 data CommandDoc a = CommandDoc
   { commandDocArgument :: String,
     commandDocHelp :: Help,
     commandDocs :: AnyDocs a
   }
-  deriving (Show)
+  deriving (Show, Functor)
 
 mapMaybeDocs :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
-mapMaybeDocs func = simplifyAnyDocs . go
+mapMaybeDocs func = simplifyAnyDocs . mapMaybeDocs' func
+
+-- Like mapMaybeDocs but without simplifying
+mapMaybeDocs' :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
+mapMaybeDocs' func = go
   where
     go = \case
       AnyDocsCommands cs -> AnyDocsCommands $ map goCommandDoc cs
@@ -131,9 +136,7 @@ simplifyAnyDocs = go
       AnyDocsAnd ds -> case concatMap goAnd ds of
         [a] -> a
         as -> AnyDocsAnd as
-      AnyDocsOr ds -> case concatMap goOr ds of
-        [a] -> a
-        as -> AnyDocsOr as
+      AnyDocsOr ds -> AnyDocsOr $ concatMap goOr ds
       AnyDocsSingle v -> AnyDocsSingle v
 
     goDoc cd = cd {commandDocs = go (commandDocs cd)}
@@ -151,32 +154,36 @@ simplifyAnyDocs = go
       ds -> [go ds]
 
 -- | Derive parser documentation
-parserDocs :: Parser a -> AnyDocs SetDoc
+--
+-- API Note: We return a Maybe inside the AnyDocs so that we can keep track of hidden settings and use this information to know whether settings are optional or not.
+parserDocs :: Parser a -> AnyDocs (Maybe SetDoc)
 parserDocs = simplifyAnyDocs . go
   where
-    noDocs = AnyDocsAnd []
-    go :: Parser a -> AnyDocs SetDoc
+    go :: Parser a -> AnyDocs (Maybe SetDoc)
     go = \case
-      ParserPure _ -> noDocs
+      ParserPure _ -> AnyDocsSingle Nothing
       ParserAp pf pa -> AnyDocsAnd [go pf, go pa]
       ParserSelect p1 p2 -> AnyDocsAnd [go p1, go p2]
       ParserEmpty _ -> AnyDocsOr []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
-      ParserMany p -> go p -- TODO: is this right?
-      ParserSome p -> go p -- TODO: is this right?
+      ParserMany p -> AnyDocsOr [go p, AnyDocsSingle Nothing]
+      ParserSome p -> AnyDocsAnd [go p, go (ParserMany p)] -- TODO: is this right?
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ cs -> AnyDocsCommands $ map commandParserDocs cs
       ParserWithConfig _ p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
-      ParserSetting _ set -> maybe noDocs AnyDocsSingle $ settingSetDoc set
+      ParserSetting _ set -> AnyDocsSingle $ settingSetDoc set
 
-commandParserDocs :: Command a -> CommandDoc SetDoc
+commandParserDocs :: Command a -> CommandDoc (Maybe SetDoc)
 commandParserDocs Command {..} =
   CommandDoc
     { commandDocArgument = commandArg,
       commandDocHelp = commandHelp,
       commandDocs = parserDocs commandParser
     }
+
+withoutHiddenDocs :: AnyDocs (Maybe a) -> AnyDocs a
+withoutHiddenDocs = mapMaybeDocs id
 
 settingSetDoc :: Setting a -> Maybe SetDoc
 settingSetDoc Setting {..} = do
@@ -281,10 +288,11 @@ renderManPage ::
   String ->
   Version ->
   String ->
-  AnyDocs SetDoc ->
+  AnyDocs (Maybe SetDoc) ->
   [Chunk]
-renderManPage progname version progDesc docs =
-  let optDocs = docsToOptDocs docs
+renderManPage progname version progDesc docs' =
+  let docs = withHelpAndVersionDocs (Just version) docs'
+      optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
       commandDocs = docsToCommandDocs docs
@@ -304,7 +312,7 @@ renderManPage progname version progDesc docs =
               [".Sh ", "VERSION"],
               [versionChunk version],
               [".Sh ", "SYNOPSIS"],
-              renderShortOptDocs progname optDocs,
+              renderShortOptDocs progname $ docsToOptDocs docs',
               [".Sh ", "SETTINGS"],
               renderSetDocs docs
             ],
@@ -335,15 +343,16 @@ renderManPage progname version progDesc docs =
           ]
 
 -- | Render reference documentation
-renderReferenceDocumentation :: String -> AnyDocs SetDoc -> [Chunk]
-renderReferenceDocumentation progname docs =
-  let optDocs = docsToOptDocs docs
+renderReferenceDocumentation :: String -> AnyDocs (Maybe SetDoc) -> [Chunk]
+renderReferenceDocumentation progname docs' =
+  let docs = withHelpAndVersionDocs Nothing docs'
+      optDocs = docsToOptDocs docs
       envDocs = docsToEnvDocs docs
       confDocs = docsToConfDocs docs
       commandDocs = docsToCommandDocs docs
    in unlinesChunks $
         concat
-          [ [ usageChunk : renderShortOptDocs progname optDocs,
+          [ [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs'),
               [],
               headerChunks "All settings",
               renderSetDocs docs
@@ -395,21 +404,36 @@ renderVersionPage progname version =
       ["\n"]
     ]
 
--- | Render the output of @--help@
-renderHelpPage :: String -> String -> AnyDocs SetDoc -> [Chunk]
-renderHelpPage progname progDesc docs =
+-- | Render the output of top-level @--help@
+renderHelpPage :: String -> Version -> String -> AnyDocs (Maybe SetDoc) -> [Chunk]
+renderHelpPage progname version =
+  renderHelpPageHelper progname [] (Just version)
+
+-- | Render the output of a @--help@ with at least one command
+renderCommandHelpPage :: String -> [String] -> CommandDoc (Maybe SetDoc) -> [Chunk]
+renderCommandHelpPage progname commandPath CommandDoc {..} =
+  renderHelpPageHelper
+    progname
+    (commandPath ++ [commandDocArgument])
+    Nothing
+    commandDocHelp
+    commandDocs
+
+renderHelpPageHelper :: String -> [String] -> Maybe Version -> String -> AnyDocs (Maybe SetDoc) -> [Chunk]
+renderHelpPageHelper progname' commandPath mVersion progDesc docs =
   unlinesChunks $
     concat
-      [ [ usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
+      [ [ let progname = unwords $ progname' : commandPath
+           in usageChunk : renderShortOptDocs progname (docsToOptDocs docs),
           [],
           unlinesChunks $ progDescLines progDesc
         ],
-        concat
-          [ [ headerChunks "Available settings",
-              renderSetDocs docs
-            ]
-            | not (nullDocs docs)
-          ],
+        [ headerChunks "Available settings",
+          renderSetDocs $
+            if null commandPath
+              then withHelpAndVersionDocs mVersion docs
+              else withHelpDocs docs
+        ],
         concat
           [ [ headerChunks "Available commands",
               renderCommandDocsShort docs
@@ -418,37 +442,63 @@ renderHelpPage progname progDesc docs =
           ]
       ]
 
-renderCommandHelpPage :: String -> [String] -> CommandDoc SetDoc -> [Chunk]
-renderCommandHelpPage progname commandPath CommandDoc {..} =
-  renderHelpPage (unwords $ progname : commandPath ++ [commandDocArgument]) commandDocHelp commandDocs
+withHelpAndVersionDocs :: Maybe Version -> AnyDocs (Maybe SetDoc) -> AnyDocs (Maybe SetDoc)
+withHelpAndVersionDocs mVersion sd = simplifyAnyDocs $ AnyDocsOr [helpDocs, versionDocs mVersion, sd]
 
-renderSetDocs :: AnyDocs SetDoc -> [Chunk]
-renderSetDocs = unlinesChunks . go
+withHelpDocs :: AnyDocs (Maybe SetDoc) -> AnyDocs (Maybe SetDoc)
+withHelpDocs sd = simplifyAnyDocs $ AnyDocsOr [helpDocs, sd]
+
+helpDocs :: AnyDocs (Maybe SetDoc)
+helpDocs =
+  AnyDocsSingle $
+    Just
+      SetDoc
+        { setDocTryArgument = False,
+          setDocTrySwitch = True,
+          setDocTryOption = False,
+          setDocDasheds = ["-h", "--help"],
+          setDocEnvVars = Nothing,
+          setDocConfKeys = Nothing,
+          setDocDefault = Nothing,
+          setDocExamples = [],
+          setDocMetavar = Nothing,
+          setDocHelp = Just "Show this help text"
+        }
+
+versionDocs :: Maybe Version -> AnyDocs (Maybe SetDoc)
+versionDocs mVersion =
+  AnyDocsSingle $
+    Just
+      SetDoc
+        { setDocTryArgument = False,
+          setDocTrySwitch = True,
+          setDocTryOption = False,
+          setDocDasheds = ["--version"],
+          setDocEnvVars = Nothing,
+          setDocConfKeys = Nothing,
+          setDocDefault = Nothing,
+          setDocExamples = [],
+          setDocMetavar = Nothing,
+          setDocHelp = Just $ case mVersion of
+            Nothing -> "Output version information"
+            Just version -> "Output version information: " <> showVersion version
+        }
+
+renderSetDocs :: AnyDocs (Maybe SetDoc) -> [Chunk]
+renderSetDocs = unlinesChunks . intercalate [[]] . go . combineSetDocs . withoutHiddenDocs
   where
-    go :: AnyDocs SetDoc -> [[Chunk]]
+    -- One section each, so we can add empty lines inbetween
+    go :: AnyDocs (NonEmpty SetDoc) -> [[[Chunk]]]
     go = \case
       AnyDocsCommands _ -> []
       AnyDocsAnd ds -> concatMap go ds
-      AnyDocsOr ds -> goOr ds
-      AnyDocsSingle d -> indent (renderSetDoc d)
-
-    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
-    goOr :: [AnyDocs SetDoc] -> [[Chunk]]
-    goOr = \case
-      [] -> []
-      [d] -> go d
-      (AnyDocsSingle d : ds) ->
-        case setDocHelp d of
-          Nothing -> go (AnyDocsSingle d) ++ goOr ds
-          Just h ->
-            let (sds, rest) = goSameHelp h ds
-             in concat
-                  [ indent $ renderSetDocHeader (Just h),
-                    indent $ concatMap renderSetDocWithoutHeader $ d : sds,
-                    [[] | not (null rest)],
-                    goOr rest
-                  ]
-      (d : ds) -> go d ++ goOr ds
+      AnyDocsOr ds -> concatMap go ds
+      AnyDocsSingle (d :| ds) ->
+        [ concat
+            [ indent $ renderSetDocHeader (setDocHelp d),
+              indent $ concatMap renderSetDocWithoutHeader (d : ds)
+            ]
+        ]
 
     goSameHelp :: Help -> [AnyDocs SetDoc] -> ([SetDoc], [AnyDocs SetDoc])
     goSameHelp h = \case
@@ -461,8 +511,31 @@ renderSetDocs = unlinesChunks . go
           else ([], AnyDocsSingle d : ds)
       ds -> ([], ds)
 
-renderCommandDocs :: AnyDocs SetDoc -> [Chunk]
-renderCommandDocs = unlinesChunks . go True
+    -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
+    combineSetDocs :: AnyDocs SetDoc -> AnyDocs (NonEmpty SetDoc)
+    combineSetDocs = go'
+      where
+        go' :: AnyDocs SetDoc -> AnyDocs (NonEmpty SetDoc)
+        go' = \case
+          AnyDocsCommands _ -> AnyDocsCommands [] -- Don't care about commands here
+          AnyDocsOr ds -> AnyDocsOr $ goOr' ds
+          AnyDocsAnd ds -> AnyDocsAnd $ map go' ds
+          AnyDocsSingle d -> AnyDocsSingle (d :| [])
+        goOr' :: [AnyDocs SetDoc] -> [AnyDocs (NonEmpty SetDoc)]
+        goOr' = \case
+          [] -> []
+          [d] -> [go' d]
+          (AnyDocsSingle d : ds) ->
+            case setDocHelp d of
+              Nothing -> go' (AnyDocsSingle d) : goOr' ds
+              Just h ->
+                let (sds, rest) = goSameHelp h ds
+                    ne = d :| sds
+                 in AnyDocsSingle ne : goOr' rest
+          (d : ds) -> go' d : goOr' ds
+
+renderCommandDocs :: AnyDocs (Maybe SetDoc) -> [Chunk]
+renderCommandDocs = unlinesChunks . go True . withoutHiddenDocs
   where
     go :: Bool -> AnyDocs SetDoc -> [[Chunk]]
     go isTopLevel = \case
@@ -514,8 +587,8 @@ renderCommandDocs = unlinesChunks . go True
           else ([], AnyDocsSingle d : ds)
       ds -> ([], ds)
 
-renderCommandDocsShort :: AnyDocs SetDoc -> [Chunk]
-renderCommandDocsShort = layoutAsTable . go
+renderCommandDocsShort :: AnyDocs (Maybe SetDoc) -> [Chunk]
+renderCommandDocsShort = layoutAsTable . go . withoutHiddenDocs
   where
     go :: AnyDocs SetDoc -> [[[Chunk]]]
     go = \case
@@ -528,11 +601,11 @@ renderCommandDocsShort = layoutAsTable . go
     goCommand CommandDoc {..} =
       [indent [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]]
 
-parserOptDocs :: Parser a -> AnyDocs OptDoc
+parserOptDocs :: Parser a -> AnyDocs (Maybe OptDoc)
 parserOptDocs = docsToOptDocs . parserDocs
 
-docsToOptDocs :: AnyDocs SetDoc -> AnyDocs OptDoc
-docsToOptDocs = mapMaybeDocs setDocOptDoc
+docsToOptDocs :: AnyDocs (Maybe SetDoc) -> AnyDocs (Maybe OptDoc)
+docsToOptDocs = mapMaybeDocs (>>= Just . setDocOptDoc)
 
 setDocOptDoc :: SetDoc -> Maybe OptDoc
 setDocOptDoc SetDoc {..} = do
@@ -548,47 +621,64 @@ setDocOptDoc SetDoc {..} = do
   pure OptDoc {..}
 
 -- | Render short-form documentation of options
-renderShortOptDocs :: String -> AnyDocs OptDoc -> [Chunk]
-renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . go
+renderShortOptDocs :: String -> AnyDocs (Maybe OptDoc) -> [Chunk]
+renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname], cs]) . fromMaybe [] . go False
   where
-    go :: AnyDocs OptDoc -> [Chunk]
-    go = \case
-      AnyDocsCommands _ -> ["COMMAND"]
-      AnyDocsAnd ds -> unwordsChunks $ map go ds
-      AnyDocsOr ds -> renderOrChunks $ map go ds
-      AnyDocsSingle OptDoc {..} ->
-        unwordsChunks $
-          concat
-            [ [ [mMetavarChunk optDocMetavar]
-                | optDocTryArgument
-              ],
-              [ concat $ maybeToList $ dashedChunks optDocDasheds
-                | optDocTrySwitch
-              ],
-              [ concat
-                  [ concat $ maybeToList $ dashedChunks optDocDasheds,
-                    [" ", mMetavarChunk optDocMetavar]
+    withoutNothings =
+      filter
+        ( \case
+            AnyDocsSingle Nothing -> False
+            AnyDocsAnd [] -> False
+            AnyDocsOr [] -> False
+            _ -> True
+        )
+    go ::
+      -- Need parens
+      Bool ->
+      AnyDocs (Maybe OptDoc) ->
+      Maybe [Chunk]
+    go b =
+      \case
+        AnyDocsCommands _ -> Just ["COMMAND"]
+        AnyDocsAnd ds ->
+          case mapMaybe (go False) (withoutNothings ds) of
+            [] -> Nothing
+            [c] -> Just c
+            cs -> Just $ (if b then parenthesise else id) $ unwordsChunks cs
+        AnyDocsOr ds ->
+          case mapMaybe (go False) (withoutNothings ds) of
+            [] -> Nothing
+            cs -> Just $ bracketise $ unwordsChunks $ intersperse [orChunk] cs
+        AnyDocsSingle mOd -> case mOd of
+          Nothing -> Nothing
+          Just OptDoc {..} ->
+            Just
+              $ ( if isJust optDocDefault
+                    then bracketise
+                    else id
+                )
+              $ unwordsChunks
+              $ concat
+                [ [ [mMetavarChunk optDocMetavar]
+                    | optDocTryArgument
+                  ],
+                  [ concat $ maybeToList $ dashedChunks optDocDasheds
+                    | optDocTrySwitch
+                  ],
+                  [ concat
+                      [ concat $ maybeToList $ dashedChunks optDocDasheds,
+                        [" ", mMetavarChunk optDocMetavar]
+                      ]
+                    | optDocTryOption
                   ]
-                | optDocTryOption
-              ]
-            ]
-
-renderOrChunks :: [[Chunk]] -> [Chunk]
-renderOrChunks os =
-  unwordsChunks $
-    intersperse [orChunk] $
-      map parenthesise os
-  where
-    parenthesise :: [Chunk] -> [Chunk]
-    parenthesise [c] = [c]
-    parenthesise cs = fore cyan "(" : cs ++ [fore cyan ")"]
+                ]
 
 orChunk :: Chunk
 orChunk = fore cyan "|"
 
 -- | Render long-form documentation of options
-renderLongOptDocs :: AnyDocs OptDoc -> [Chunk]
-renderLongOptDocs = unlinesChunks . go
+renderLongOptDocs :: AnyDocs (Maybe OptDoc) -> [Chunk]
+renderLongOptDocs = unlinesChunks . go . withoutHiddenDocs
   where
     go :: AnyDocs OptDoc -> [[Chunk]]
     go = \case
@@ -635,8 +725,8 @@ renderOptDocLong OptDoc {..} =
 parserEnvDocs :: Parser a -> AnyDocs EnvDoc
 parserEnvDocs = docsToEnvDocs . parserDocs
 
-docsToEnvDocs :: AnyDocs SetDoc -> AnyDocs EnvDoc
-docsToEnvDocs = mapMaybeDocs setDocEnvDoc
+docsToEnvDocs :: AnyDocs (Maybe SetDoc) -> AnyDocs EnvDoc
+docsToEnvDocs = mapMaybeDocs (>>= setDocEnvDoc)
 
 setDocEnvDoc :: SetDoc -> Maybe EnvDoc
 setDocEnvDoc SetDoc {..} = do
@@ -678,8 +768,8 @@ renderEnvDoc EnvDoc {..} =
 parserConfDocs :: Parser a -> AnyDocs ConfDoc
 parserConfDocs = docsToConfDocs . parserDocs
 
-docsToConfDocs :: AnyDocs SetDoc -> AnyDocs ConfDoc
-docsToConfDocs = mapMaybeDocs setDocConfDoc
+docsToConfDocs :: AnyDocs (Maybe SetDoc) -> AnyDocs ConfDoc
+docsToConfDocs = mapMaybeDocs (>>= setDocConfDoc)
 
 setDocConfDoc :: SetDoc -> Maybe ConfDoc
 setDocConfDoc SetDoc {..} = do
@@ -692,7 +782,7 @@ setDocConfDoc SetDoc {..} = do
 settingConfDoc :: Setting a -> Maybe ConfDoc
 settingConfDoc = settingSetDoc >=> setDocConfDoc
 
-docsToCommandDocs :: AnyDocs SetDoc -> [CommandDoc SetDoc]
+docsToCommandDocs :: AnyDocs (Maybe SetDoc) -> [CommandDoc (Maybe SetDoc)]
 docsToCommandDocs = \case
   AnyDocsCommands cs -> cs
   AnyDocsAnd ds -> concatMap docsToCommandDocs ds

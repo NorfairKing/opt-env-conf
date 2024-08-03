@@ -1,5 +1,6 @@
 AnyDocsAnd
-  [ AnyDocsSingle
+  [ AnyDocsOr []
+  , AnyDocsSingle
       ConfDoc
         { confDocKeys =
             ( "greeting" :| []

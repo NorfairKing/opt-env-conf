@@ -1,47 +1,50 @@
-AnyDocsCommands
-  [ CommandDoc
-      { commandDocArgument = "top"
-      , commandDocHelp = "command without subcommands"
-      , commandDocs =
-          AnyDocsSingle
-            ConfDoc
-              { confDocKeys =
-                  ( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
-                    []
-              , confDocDefault = Nothing
-              , confDocExamples = [ "john" ]
-              , confDocHelp = Just "name"
-              }
-      }
-  , CommandDoc
-      { commandDocArgument = "sub"
-      , commandDocHelp = "command with subcommands"
-      , commandDocs =
-          AnyDocsAnd
-            [ AnyDocsCommands
-                [ CommandDoc
-                    { commandDocArgument = "a"
-                    , commandDocHelp = "A"
-                    , commandDocs = AnyDocsAnd []
-                    }
-                , CommandDoc
-                    { commandDocArgument = "b"
-                    , commandDocHelp = "B"
-                    , commandDocs = AnyDocsAnd []
-                    }
+AnyDocsAnd
+  [ AnyDocsOr []
+  , AnyDocsCommands
+      [ CommandDoc
+          { commandDocArgument = "top"
+          , commandDocHelp = "command without subcommands"
+          , commandDocs =
+              AnyDocsSingle
+                ConfDoc
+                  { confDocKeys =
+                      ( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
+                        []
+                  , confDocDefault = Nothing
+                  , confDocExamples = [ "john" ]
+                  , confDocHelp = Just "name"
+                  }
+          }
+      , CommandDoc
+          { commandDocArgument = "sub"
+          , commandDocHelp = "command with subcommands"
+          , commandDocs =
+              AnyDocsAnd
+                [ AnyDocsCommands
+                    [ CommandDoc
+                        { commandDocArgument = "a"
+                        , commandDocHelp = "A"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    , CommandDoc
+                        { commandDocArgument = "b"
+                        , commandDocHelp = "B"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    ]
+                , AnyDocsCommands
+                    [ CommandDoc
+                        { commandDocArgument = "c"
+                        , commandDocHelp = "C"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    , CommandDoc
+                        { commandDocArgument = "d"
+                        , commandDocHelp = "D"
+                        , commandDocs = AnyDocsAnd []
+                        }
+                    ]
                 ]
-            , AnyDocsCommands
-                [ CommandDoc
-                    { commandDocArgument = "c"
-                    , commandDocHelp = "C"
-                    , commandDocs = AnyDocsAnd []
-                    }
-                , CommandDoc
-                    { commandDocArgument = "d"
-                    , commandDocHelp = "D"
-                    , commandDocs = AnyDocsAnd []
-                    }
-                ]
-            ]
-      }
+          }
+      ]
   ]

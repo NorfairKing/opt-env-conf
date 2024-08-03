@@ -1,4 +1,4 @@
-[36mUsage: [m[33mverbose[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [37m-v[m
+[36mUsage: [m[33mverbose[m [36m[[m[37m-v[m[36m][m
 
 verbosity example
 
@@ -11,5 +11,4 @@ verbosity example
 
   [34mVerbosity level. Use multiple to increase verbosity[m
   switch: [37m-v[m
-  
 

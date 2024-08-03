@@ -1,38 +1,43 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , setDocEnvVars = Just ("CONFIG_FILE" :| [])
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Just "FILE_PATH"
-        , setDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , setDocEnvVars = Just ("CONFIG_FILE" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "FILE_PATH"
+               , setDocHelp = Just "Path to the configuration file"
+               })
+      , AnyDocsSingle Nothing
+      ]
   , AnyDocsCommands
       [ CommandDoc
           { commandDocArgument = "top"
           , commandDocHelp = "command without subcommands"
           , commandDocs =
               AnyDocsSingle
-                SetDoc
-                  { setDocTryArgument = False
-                  , setDocTrySwitch = False
-                  , setDocTryOption = True
-                  , setDocDasheds = [ DashedLong ('n' :| "ame") ]
-                  , setDocEnvVars = Just ("NAME" :| [])
-                  , setDocConfKeys =
-                      Just
-                        (( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
-                           [])
-                  , setDocDefault = Nothing
-                  , setDocExamples = [ "john" ]
-                  , setDocMetavar = Just "NAME"
-                  , setDocHelp = Just "name"
-                  }
+                (Just
+                   SetDoc
+                     { setDocTryArgument = False
+                     , setDocTrySwitch = False
+                     , setDocTryOption = True
+                     , setDocDasheds = [ DashedLong ('n' :| "ame") ]
+                     , setDocEnvVars = Just ("NAME" :| [])
+                     , setDocConfKeys =
+                         Just
+                           (( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
+                              [])
+                     , setDocDefault = Nothing
+                     , setDocExamples = [ "john" ]
+                     , setDocMetavar = Just "NAME"
+                     , setDocHelp = Just "name"
+                     })
           }
       , CommandDoc
           { commandDocArgument = "sub"
@@ -43,24 +48,24 @@ AnyDocsAnd
                     [ CommandDoc
                         { commandDocArgument = "a"
                         , commandDocHelp = "A"
-                        , commandDocs = AnyDocsAnd []
+                        , commandDocs = AnyDocsSingle Nothing
                         }
                     , CommandDoc
                         { commandDocArgument = "b"
                         , commandDocHelp = "B"
-                        , commandDocs = AnyDocsAnd []
+                        , commandDocs = AnyDocsSingle Nothing
                         }
                     ]
                 , AnyDocsCommands
                     [ CommandDoc
                         { commandDocArgument = "c"
                         , commandDocHelp = "C"
-                        , commandDocs = AnyDocsAnd []
+                        , commandDocs = AnyDocsSingle Nothing
                         }
                     , CommandDoc
                         { commandDocArgument = "d"
                         , commandDocHelp = "D"
-                        , commandDocs = AnyDocsAnd []
+                        , commandDocs = AnyDocsSingle Nothing
                         }
                     ]
                 ]

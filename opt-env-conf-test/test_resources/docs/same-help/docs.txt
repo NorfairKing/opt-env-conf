@@ -1,0 +1,100 @@
+AnyDocsAnd
+  [ AnyDocsSingle Nothing
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('i' :| "nt") ]
+               , setDocEnvVars = Just ("INT" :| [])
+               , setDocConfKeys =
+                   Just
+                     (( "int" :| []
+                      , AnyOfSchema
+                          (NullSchema :|
+                             [ IntegerSchema
+                                 Bounds
+                                   { boundsLower = Just (-9223372036854775808)
+                                   , boundsUpper = Just 9223372036854775807
+                                   }
+                             ])
+                      ) :|
+                        [])
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "INT"
+               , setDocHelp = Just "int or string"
+               })
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('s' :| "tring") ]
+               , setDocEnvVars = Just ("STRING" :| [])
+               , setDocConfKeys =
+                   Just
+                     (( "string" :| []
+                      , AnyOfSchema (NullSchema :| [ StringSchema ])
+                      ) :|
+                        [])
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "STR"
+               , setDocHelp = Just "int or string"
+               })
+      ]
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = True
+               , setDocTryOption = False
+               , setDocDasheds = [ DashedLong ('[' :| "no-]other") ]
+               , setDocEnvVars = Nothing
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp = Just "int or string"
+               })
+      , AnyDocsSingle Nothing
+      , AnyDocsSingle Nothing
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Just ("OTHER" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "BOOL"
+               , setDocHelp = Just "int or string"
+               })
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Nothing
+               , setDocConfKeys =
+                   Just
+                     (( "other" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+                        [])
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp = Just "int or string"
+               })
+      , AnyDocsSingle Nothing
+      ]
+  ]

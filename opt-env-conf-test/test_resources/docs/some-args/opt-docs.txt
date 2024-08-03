@@ -1,11 +1,28 @@
-AnyDocsSingle
-  OptDoc
-    { optDocTryArgument = True
-    , optDocTrySwitch = False
-    , optDocTryOption = False
-    , optDocDasheds = []
-    , optDocDefault = Nothing
-    , optDocExamples = []
-    , optDocMetavar = Just "ARGUMENT"
-    , optDocHelp = Just "Argument"
-    }
+AnyDocsAnd
+  [ AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = True
+           , optDocTrySwitch = False
+           , optDocTryOption = False
+           , optDocDasheds = []
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Just "ARGUMENT"
+           , optDocHelp = Just "Argument"
+           })
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = True
+               , optDocTrySwitch = False
+               , optDocTryOption = False
+               , optDocDasheds = []
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "ARGUMENT"
+               , optDocHelp = Just "Argument"
+               })
+      ]
+  ]

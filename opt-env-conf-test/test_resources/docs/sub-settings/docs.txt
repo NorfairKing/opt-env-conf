@@ -1,33 +1,38 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , setDocEnvVars = Just ("CONFIG_FILE" :| [])
-        , setDocConfKeys = Nothing
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Just "FILE_PATH"
-        , setDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , setDocEnvVars = Just ("CONFIG_FILE" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "FILE_PATH"
+               , setDocHelp = Just "Path to the configuration file"
+               })
+      , AnyDocsSingle Nothing
+      ]
   , AnyDocsSingle
-      SetDoc
-        { setDocTryArgument = False
-        , setDocTrySwitch = False
-        , setDocTryOption = True
-        , setDocDasheds = [ DashedLong ('f' :| "oo-bar-quux") ]
-        , setDocEnvVars = Just ("FOO_BAR_QUUX" :| [])
-        , setDocConfKeys =
-            Just
-              (( "foo" :| [ "bar" , "quux" ]
-               , AnyOfSchema (NullSchema :| [ StringSchema ])
-               ) :|
-                 [])
-        , setDocDefault = Nothing
-        , setDocExamples = []
-        , setDocMetavar = Just "STR"
-        , setDocHelp = Just "Example with sub-settings"
-        }
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = False
+           , setDocTryOption = True
+           , setDocDasheds = [ DashedLong ('f' :| "oo-bar-quux") ]
+           , setDocEnvVars = Just ("FOO_BAR_QUUX" :| [])
+           , setDocConfKeys =
+               Just
+                 (( "foo" :| [ "bar" , "quux" ]
+                  , AnyOfSchema (NullSchema :| [ StringSchema ])
+                  ) :|
+                    [])
+           , setDocDefault = Nothing
+           , setDocExamples = []
+           , setDocMetavar = Just "STR"
+           , setDocHelp = Just "Example with sub-settings"
+           })
   ]

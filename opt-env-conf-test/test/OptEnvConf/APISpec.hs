@@ -29,6 +29,7 @@ spec = do
   exampleParserSpec "enable-disable-optional" "enableDisableSwitch' example" enableDisableParser'
   exampleParserSpec "yes-no-optional" "yesNoSwitch' example" yesNoParser'
   exampleParserSpec "verbose" "verbosity example" verboseParser
+  exampleParserSpec "same-help" "example where multiple options use the same help string" sameHelpParser
   exampleParserSpec "greet" "hello world example" greetParser
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
   exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
@@ -36,10 +37,9 @@ spec = do
 exampleParserSpec :: (HasCallStack) => FilePath -> String -> Parser a -> Spec
 exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
   let version = makeVersion [0, 0, 0]
-  let parser = internalParser version p
 
   it "passes the linter" $
-    parserLintTest parser
+    parserLintTest p
 
   it "shows the parser in the same way" $
     goldenStringFile ("test_resources/docs/" <> dir <> "/show.txt") $
@@ -73,43 +73,58 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
 
   it "documents the help page in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/help.txt") $
-      renderHelpPage dir progDesc $
-        parserDocs parser
+      renderHelpPage dir version progDesc $
+        parserDocs p
 
   it "documents the short opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-short.txt") $
       renderShortOptDocs dir $
-        parserOptDocs parser
+        parserOptDocs p
 
   it "documents the long opt parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/opt-long.txt") $
       renderLongOptDocs $
-        parserOptDocs parser
+        parserOptDocs p
 
   it "documents the env parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/env.txt") $
       renderEnvDocs $
-        parserEnvDocs parser
+        parserEnvDocs p
 
   it "documents the conf parser in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/config.txt") $
       renderConfDocs $
-        parserConfDocs parser
+        parserConfDocs p
 
   it "documents the man page in the same way" $
     pureGoldenTextFile ("test_resources/docs/" <> dir <> "/man.txt") $
       renderChunksText WithoutColours $
         renderManPage dir version progDesc $
-          parserDocs parser
+          parserDocs p
 
   it "renders the reference documentation in the same way" $
     pureGoldenChunksFile ("test_resources/docs/" <> dir <> "/reference.txt") $
       renderReferenceDocumentation dir $
-        parserDocs parser
+        parserDocs p
 
   it "renders the Nix options the same way" $
     pureGoldenTextFile ("test_resources/docs/" <> dir <> "/nix-options.nix") $
-      renderParserNixOptions parser
+      renderParserNixOptions p
+
+sameHelpParser :: Parser (Either Int String, Bool)
+sameHelpParser =
+  withoutConfig $
+    let h = help "int or string"
+     in (,)
+          <$> choice
+            [ Left <$> setting [h, name "int", reader auto, metavar "INT"],
+              Right <$> setting [h, name "string", reader str, metavar "STR"]
+            ]
+          <*> yesNoSwitch
+            [ h,
+              name "other",
+              value True
+            ]
 
 data Greet = Greet !String !String !Bool
 

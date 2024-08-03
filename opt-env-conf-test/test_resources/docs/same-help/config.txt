@@ -1,0 +1,12 @@
+  [34mint or string[m
+  [37mint[m:
+    # [32mor null[m
+    [33m<integer>[m # [32m64 bit signed integer[m
+  [34mint or string[m
+  [37mstring[m:
+    # [32mor null[m
+    [33m<string>[m
+  [34mint or string[m
+  [37mother[m:
+    # [32mor null[m
+    [33m<boolean>[m

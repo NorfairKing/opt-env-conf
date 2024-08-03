@@ -10,6 +10,7 @@ import Control.Applicative
 import Data.GenValidity.Aeson ()
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Version
 import Data.Word
 import OptEnvConf
 import OptEnvConf.Args as Args
@@ -152,6 +153,7 @@ instance HasParser PaymentSettings where
 helpSpec :: String -> [String] -> Spec
 helpSpec file args =
   it (unwords ["this help page in the same way for args:", show args]) $ do
+    let version = makeVersion [0, 0, 0]
     let argMap = Args.parseArgs args
     let parser = settingsParser @Instructions
     errOrDocs <- runHelpParser Nothing argMap parser
@@ -162,5 +164,5 @@ helpSpec file args =
         pure $
           pureGoldenChunksFile ("test_resources/help/" <> file <> ".txt") $
             case mCommandDoc of
-              Nothing -> renderHelpPage progname "example program description" (parserDocs parser)
+              Nothing -> renderHelpPage progname version "example program description" (parserDocs parser)
               Just (commandPath, commandDoc) -> renderCommandHelpPage progname commandPath commandDoc

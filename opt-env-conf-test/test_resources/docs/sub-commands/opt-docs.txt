@@ -1,31 +1,35 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = False
-        , optDocTryOption = True
-        , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , optDocDefault = Nothing
-        , optDocExamples = []
-        , optDocMetavar = Just "FILE_PATH"
-        , optDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "FILE_PATH"
+               , optDocHelp = Just "Path to the configuration file"
+               })
+      ]
   , AnyDocsCommands
       [ CommandDoc
           { commandDocArgument = "top"
           , commandDocHelp = "command without subcommands"
           , commandDocs =
               AnyDocsSingle
-                OptDoc
-                  { optDocTryArgument = False
-                  , optDocTrySwitch = False
-                  , optDocTryOption = True
-                  , optDocDasheds = [ DashedLong ('n' :| "ame") ]
-                  , optDocDefault = Nothing
-                  , optDocExamples = [ "john" ]
-                  , optDocMetavar = Just "NAME"
-                  , optDocHelp = Just "name"
-                  }
+                (Just
+                   OptDoc
+                     { optDocTryArgument = False
+                     , optDocTrySwitch = False
+                     , optDocTryOption = True
+                     , optDocDasheds = [ DashedLong ('n' :| "ame") ]
+                     , optDocDefault = Nothing
+                     , optDocExamples = [ "john" ]
+                     , optDocMetavar = Just "NAME"
+                     , optDocHelp = Just "name"
+                     })
           }
       , CommandDoc
           { commandDocArgument = "sub"

@@ -1,11 +1,16 @@
-AnyDocsSingle
-  OptDoc
-    { optDocTryArgument = False
-    , optDocTrySwitch = True
-    , optDocTryOption = False
-    , optDocDasheds = [ DashedLong ('[' :| "no-]example") ]
-    , optDocDefault = Nothing
-    , optDocExamples = []
-    , optDocMetavar = Nothing
-    , optDocHelp = Just "Example of a yes/no switch"
-    }
+AnyDocsOr
+  [ AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedLong ('[' :| "no-]example") ]
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Nothing
+           , optDocHelp = Just "Example of a yes/no switch"
+           })
+  , AnyDocsSingle Nothing
+  , AnyDocsSingle Nothing
+  ]

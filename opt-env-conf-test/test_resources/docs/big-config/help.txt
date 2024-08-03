@@ -1,4 +1,4 @@
-[36mUsage: [m[33mbig-config[m [36m([m[37m-h[m[36m|[m[37m--help[m[36m)[m [36m|[m [37m--version[m [36m|[m [36m([m[37m--config-file[m [33mFILE_PATH[m[36m)[m
+[36mUsage: [m[33mbig-config[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m
 
 example with a big configuration
 
@@ -12,7 +12,7 @@ example with a big configuration
   [34mPath to the configuration file[m
   option: [37m--config-file[m [33mFILE_PATH[m
   env: [37mCONFIG_FILE[m [33mFILE_PATH[m
-  
+
   [34mbig configuration object[m
   config:
     [37mbig[m: # [32mor null[m
@@ -23,5 +23,4 @@ example with a big configuration
             [33m<integer>[m # [32m64 bit signed integer[m
       [37msub[m: # [34moptional[m
         [33m<string>[m
-  
 

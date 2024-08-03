@@ -1,12 +1,14 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      EnvDoc
-        { envDocVars = "CONFIG_FILE" :| []
-        , envDocDefault = Nothing
-        , envDocExamples = []
-        , envDocMetavar = Just "FILE_PATH"
-        , envDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          EnvDoc
+            { envDocVars = "CONFIG_FILE" :| []
+            , envDocDefault = Nothing
+            , envDocExamples = []
+            , envDocMetavar = Just "FILE_PATH"
+            , envDocHelp = Just "Path to the configuration file"
+            }
+      ]
   , AnyDocsCommands
       [ CommandDoc
           { commandDocArgument = "one"
@@ -26,14 +28,16 @@ AnyDocsAnd
                       , envDocMetavar = Just "INT"
                       , envDocHelp = Just "number"
                       }
-                , AnyDocsSingle
-                    EnvDoc
-                      { envDocVars = "ENABLE" :| []
-                      , envDocDefault = Nothing
-                      , envDocExamples = []
-                      , envDocMetavar = Just "BOOL"
-                      , envDocHelp = Just "enable extra"
-                      }
+                , AnyDocsOr
+                    [ AnyDocsSingle
+                        EnvDoc
+                          { envDocVars = "ENABLE" :| []
+                          , envDocDefault = Nothing
+                          , envDocExamples = []
+                          , envDocMetavar = Just "BOOL"
+                          , envDocHelp = Just "enable extra"
+                          }
+                    ]
                 ]
           }
       , CommandDoc

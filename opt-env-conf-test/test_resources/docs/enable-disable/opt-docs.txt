@@ -1,11 +1,16 @@
-AnyDocsSingle
-  OptDoc
-    { optDocTryArgument = False
-    , optDocTrySwitch = True
-    , optDocTryOption = False
-    , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
-    , optDocDefault = Nothing
-    , optDocExamples = []
-    , optDocMetavar = Nothing
-    , optDocHelp = Just "Example of an enable/disable switch"
-    }
+AnyDocsOr
+  [ AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Nothing
+           , optDocHelp = Just "Example of an enable/disable switch"
+           })
+  , AnyDocsSingle Nothing
+  , AnyDocsSingle Nothing
+  ]

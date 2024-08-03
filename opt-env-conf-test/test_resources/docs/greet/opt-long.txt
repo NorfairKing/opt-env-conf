@@ -1,6 +1,4 @@
-  [37m-h[m[36m|[m[37m--help[m     [34mShow this help text[m                                                  
-  [37m--version[m     [34mOutput version information: 0.0.0[m                                    
-  [37m--config-file[m [34mPath to the configuration file[m                                       
-  [37m-g[m[36m|[m[37m--greeting[m [34mGreeting to use[m                   default: [33m"Hello"[m example: [33mGreetings[m
-  [33mSUBJECT[m       [34mWho to greet[m                      default: [33m"world"[m                   
-  [37m-p[m[36m|[m[37m--polite[m   [34mWhether to be polite[m              default: [33mFalse[m                     
+  [37m--config-file[m [34mPath to the configuration file[m                                    
+  [37m-g[m[36m|[m[37m--greeting[m [34mGreeting to use[m                default: [33m"Hello"[m example: [33mGreetings[m
+  [33mSUBJECT[m       [34mWho to greet[m                   default: [33m"world"[m                   
+  [37m-p[m[36m|[m[37m--polite[m   [34mWhether to be polite[m           default: [33mFalse[m                     

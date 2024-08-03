@@ -105,8 +105,7 @@ runParser version progDesc p = do
       hPutChunksLocaleWith tc stderr $ renderLintErrors errs
       exitFailure
     Nothing -> do
-      let p' = internalParser version p
-      let docs = parserDocs p'
+      let docs = parserDocs p
 
       mDebugMode <-
         if debugMode
@@ -130,7 +129,7 @@ runParser version progDesc p = do
             Right mCommandDoc -> do
               tc <- getTerminalCapabilitiesFromHandle stdout
               hPutChunksLocaleWith tc stdout $ case mCommandDoc of
-                Nothing -> renderHelpPage progname progDesc docs
+                Nothing -> renderHelpPage progname version progDesc docs
                 Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
               exitSuccess
         else do
@@ -152,6 +151,7 @@ runParser version progDesc p = do
                   hPutChunksLocaleWith tc stdout ["Settings parsed successfully."]
                   exitSuccess
             else do
+              let p' = internalParser p
               errOrResult <-
                 runParserOn
                   mDebugMode
@@ -165,7 +165,6 @@ runParser version progDesc p = do
                   hPutChunksLocaleWith tc stderr $ renderErrors errs
                   exitFailure
                 Right i -> case i of
-                  ShowHelp -> die "unreachable, this option is only here for documentation."
                   ShowVersion -> do
                     progname <- getProgName
                     tc <- getTerminalCapabilitiesFromHandle stdout
@@ -204,8 +203,7 @@ runParser version progDesc p = do
 -- Internal structure to help us do what the framework
 -- is supposed to.
 data Internal a
-  = ShowHelp
-  | ShowVersion
+  = ShowVersion
   | RenderMan
   | RenderDocumentation
   | RenderNixosOptions
@@ -221,19 +219,13 @@ data Internal a
       ![String]
   | ParsedNormally !a
 
-internalParser :: Version -> Parser a -> Parser (Internal a)
-internalParser version p =
+internalParser :: Parser a -> Parser (Internal a)
+internalParser p =
   choice
     [ setting
-        [ switch ShowHelp,
-          short 'h',
-          long "help",
-          help "Show this help text"
-        ],
-      setting
         [ switch ShowVersion,
           long "version",
-          help $ "Output version information: " <> showVersion version
+          hidden
         ],
       setting
         [ switch RenderMan,
@@ -721,7 +713,7 @@ runHelpParser ::
   Maybe TerminalCapabilities ->
   Args ->
   Parser a ->
-  IO (Either (NonEmpty ParseError) (Maybe ([String], CommandDoc SetDoc)))
+  IO (Either (NonEmpty ParseError) (Maybe ([String], CommandDoc (Maybe SetDoc))))
 runHelpParser mDebugMode args parser = do
   let ppState =
         PPState
@@ -743,9 +735,9 @@ runHelpParser mDebugMode args parser = do
       Success mDocs -> Right mDocs
   where
     -- We try to parse the commands as deep as possible and ignore everything else.
-    go' :: [String] -> Parser a -> PP (Maybe ([String], CommandDoc SetDoc))
+    go' :: [String] -> Parser a -> PP (Maybe ([String], CommandDoc (Maybe SetDoc)))
     go' path =
-      let go :: Parser a -> PP (Maybe ([String], CommandDoc SetDoc))
+      let go :: Parser a -> PP (Maybe ([String], CommandDoc (Maybe SetDoc)))
           go = go' path
        in \case
             ParserPure _ -> do

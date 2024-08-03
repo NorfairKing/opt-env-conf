@@ -1,0 +1,44 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('i' :| "nt") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "INT"
+               , optDocHelp = Just "int or string"
+               })
+      , AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('s' :| "tring") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "STR"
+               , optDocHelp = Just "int or string"
+               })
+      ]
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = True
+               , optDocTryOption = False
+               , optDocDasheds = [ DashedLong ('[' :| "no-]other") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Nothing
+               , optDocHelp = Just "int or string"
+               })
+      , AnyDocsSingle Nothing
+      , AnyDocsSingle Nothing
+      ]
+  ]

@@ -1,46 +1,51 @@
-AnyDocsCommands
-  [ CommandDoc
-      { commandDocArgument = "one"
-      , commandDocHelp = "first"
-      , commandDocs = AnyDocsAnd []
-      }
-  , CommandDoc
-      { commandDocArgument = "two"
-      , commandDocHelp = "second"
-      , commandDocs =
-          AnyDocsAnd
-            [ AnyDocsSingle
-                ConfDoc
-                  { confDocKeys =
-                      ( "number" :| []
-                      , AnyOfSchema
-                          (NullSchema :|
-                             [ IntegerSchema
-                                 Bounds
-                                   { boundsLower = Just (-9223372036854775808)
-                                   , boundsUpper = Just 9223372036854775807
-                                   }
-                             ])
-                      ) :|
-                        []
-                  , confDocDefault = Nothing
-                  , confDocExamples = []
-                  , confDocHelp = Just "number"
-                  }
-            , AnyDocsSingle
-                ConfDoc
-                  { confDocKeys =
-                      ( "enable" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
-                        []
-                  , confDocDefault = Nothing
-                  , confDocExamples = []
-                  , confDocHelp = Just "enable extra"
-                  }
-            ]
-      }
-  , CommandDoc
-      { commandDocArgument = "three-very-long-command-name"
-      , commandDocHelp = "third"
-      , commandDocs = AnyDocsAnd []
-      }
+AnyDocsAnd
+  [ AnyDocsOr []
+  , AnyDocsCommands
+      [ CommandDoc
+          { commandDocArgument = "one"
+          , commandDocHelp = "first"
+          , commandDocs = AnyDocsAnd []
+          }
+      , CommandDoc
+          { commandDocArgument = "two"
+          , commandDocHelp = "second"
+          , commandDocs =
+              AnyDocsAnd
+                [ AnyDocsSingle
+                    ConfDoc
+                      { confDocKeys =
+                          ( "number" :| []
+                          , AnyOfSchema
+                              (NullSchema :|
+                                 [ IntegerSchema
+                                     Bounds
+                                       { boundsLower = Just (-9223372036854775808)
+                                       , boundsUpper = Just 9223372036854775807
+                                       }
+                                 ])
+                          ) :|
+                            []
+                      , confDocDefault = Nothing
+                      , confDocExamples = []
+                      , confDocHelp = Just "number"
+                      }
+                , AnyDocsOr
+                    [ AnyDocsSingle
+                        ConfDoc
+                          { confDocKeys =
+                              ( "enable" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+                                []
+                          , confDocDefault = Nothing
+                          , confDocExamples = []
+                          , confDocHelp = Just "enable extra"
+                          }
+                    ]
+                ]
+          }
+      , CommandDoc
+          { commandDocArgument = "three-very-long-command-name"
+          , commandDocHelp = "third"
+          , commandDocs = AnyDocsAnd []
+          }
+      ]
   ]

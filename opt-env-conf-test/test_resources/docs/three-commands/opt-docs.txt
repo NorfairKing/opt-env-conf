@@ -1,31 +1,35 @@
 AnyDocsAnd
-  [ AnyDocsSingle
-      OptDoc
-        { optDocTryArgument = False
-        , optDocTrySwitch = False
-        , optDocTryOption = True
-        , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-        , optDocDefault = Nothing
-        , optDocExamples = []
-        , optDocMetavar = Just "FILE_PATH"
-        , optDocHelp = Just "Path to the configuration file"
-        }
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "FILE_PATH"
+               , optDocHelp = Just "Path to the configuration file"
+               })
+      ]
   , AnyDocsCommands
       [ CommandDoc
           { commandDocArgument = "one"
           , commandDocHelp = "first"
           , commandDocs =
               AnyDocsSingle
-                OptDoc
-                  { optDocTryArgument = True
-                  , optDocTrySwitch = False
-                  , optDocTryOption = False
-                  , optDocDasheds = []
-                  , optDocDefault = Nothing
-                  , optDocExamples = []
-                  , optDocMetavar = Just "STR"
-                  , optDocHelp = Just "argument"
-                  }
+                (Just
+                   OptDoc
+                     { optDocTryArgument = True
+                     , optDocTrySwitch = False
+                     , optDocTryOption = False
+                     , optDocDasheds = []
+                     , optDocDefault = Nothing
+                     , optDocExamples = []
+                     , optDocMetavar = Just "STR"
+                     , optDocHelp = Just "argument"
+                     })
           }
       , CommandDoc
           { commandDocArgument = "two"
@@ -33,27 +37,33 @@ AnyDocsAnd
           , commandDocs =
               AnyDocsAnd
                 [ AnyDocsSingle
-                    OptDoc
-                      { optDocTryArgument = False
-                      , optDocTrySwitch = False
-                      , optDocTryOption = True
-                      , optDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
-                      , optDocDefault = Nothing
-                      , optDocExamples = []
-                      , optDocMetavar = Just "INT"
-                      , optDocHelp = Just "number"
-                      }
-                , AnyDocsSingle
-                    OptDoc
-                      { optDocTryArgument = False
-                      , optDocTrySwitch = True
-                      , optDocTryOption = False
-                      , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
-                      , optDocDefault = Nothing
-                      , optDocExamples = []
-                      , optDocMetavar = Nothing
-                      , optDocHelp = Just "enable extra"
-                      }
+                    (Just
+                       OptDoc
+                         { optDocTryArgument = False
+                         , optDocTrySwitch = False
+                         , optDocTryOption = True
+                         , optDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                         , optDocDefault = Nothing
+                         , optDocExamples = []
+                         , optDocMetavar = Just "INT"
+                         , optDocHelp = Just "number"
+                         })
+                , AnyDocsOr
+                    [ AnyDocsSingle
+                        (Just
+                           OptDoc
+                             { optDocTryArgument = False
+                             , optDocTrySwitch = True
+                             , optDocTryOption = False
+                             , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
+                             , optDocDefault = Nothing
+                             , optDocExamples = []
+                             , optDocMetavar = Nothing
+                             , optDocHelp = Just "enable extra"
+                             })
+                    , AnyDocsSingle Nothing
+                    , AnyDocsSingle Nothing
+                    ]
                 ]
           }
       , CommandDoc

@@ -1,9 +1,11 @@
-AnyDocsSingle
-  ConfDoc
-    { confDocKeys =
-        ( "example" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
-          []
-    , confDocDefault = Nothing
-    , confDocExamples = []
-    , confDocHelp = Just "Example of an enable/disable switch"
-    }
+AnyDocsOr
+  [ AnyDocsSingle
+      ConfDoc
+        { confDocKeys =
+            ( "example" :| [] , AnyOfSchema (NullSchema :| [ BoolSchema ]) ) :|
+              []
+        , confDocDefault = Nothing
+        , confDocExamples = []
+        , confDocHelp = Just "Example of an enable/disable switch"
+        }
+  ]
