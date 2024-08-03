@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.0.0] - 2024-08-03
+
+### Changed
+
+* Made `Builder`s contain a list of `BuildInstructions` so library functions
+  can pattern-match on the builders.
+* `yesNoSwitch` and `enableDisableSwitch` now no longer take a default value,
+  but accept default `value` builders instead.
+
 ## [0.4.0.5] - 2024-07-28
 
 ### Added

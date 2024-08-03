@@ -44,6 +44,7 @@ where
 import Autodocodec
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe
 import OptEnvConf.Args (Dashed (..))
 import OptEnvConf.Casing
 import OptEnvConf.Reader
@@ -156,30 +157,64 @@ showNonEmptyWith func (a :| as) =
       . showListWith func as
 
 -- | Builder for a 'Setting'
-newtype Builder a = Builder {unBuilder :: Setting a -> Setting a}
+newtype Builder a = Builder {unBuilder :: [BuildInstruction a]}
+
+data BuildInstruction a
+  = BuildAddHelp !String
+  | BuildSetMetavar !String
+  | BuildTryArgument
+  | BuildTryOption
+  | BuildSetSwitchValue !a
+  | BuildAddReader !(Reader a)
+  | BuildAddLong !(NonEmpty Char)
+  | BuildAddShort !Char
+  | BuildAddEnv !String
+  | BuildAddConf !(ConfigValSetting a)
+  | BuildSetDefault !a !String
+  | BuildAddExample !String
+  | BuildSetHidden
+
+applyBuildInstructions :: [BuildInstruction a] -> Setting a -> Setting a
+applyBuildInstructions is s = foldr applyBuildInstruction s is
+
+applyBuildInstruction :: BuildInstruction a -> Setting a -> Setting a
+applyBuildInstruction bi s = case bi of
+  BuildAddHelp h -> s {settingHelp = Just $ maybe h (<> h) (settingHelp s)}
+  BuildSetMetavar mv -> s {settingMetavar = Just mv}
+  BuildTryArgument -> s {settingTryArgument = True}
+  BuildTryOption -> s {settingTryOption = True}
+  BuildSetSwitchValue a -> s {settingSwitchValue = Just a}
+  BuildAddReader r -> s {settingReaders = r : settingReaders s}
+  BuildAddLong l -> s {settingDasheds = DashedLong l : settingDasheds s}
+  BuildAddShort c -> s {settingDasheds = DashedShort c : settingDasheds s}
+  BuildAddEnv v -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
+  BuildAddConf t -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
+  BuildSetDefault a shown -> s {settingDefaultValue = Just (a, shown)}
+  BuildAddExample e -> s {settingExamples = e : settingExamples s}
+  BuildSetHidden -> s {settingHidden = True}
 
 instance Semigroup (Builder f) where
-  (<>) (Builder f1) (Builder f2) = Builder (f1 . f2)
+  (<>) (Builder f1) (Builder f2) = Builder (f1 <> f2)
 
 instance Monoid (Builder f) where
-  mempty = Builder id
+  mempty = Builder []
   mappend = (<>)
 
 -- | Complete a 'Builder' into a 'Setting'
 completeBuilder :: Builder a -> Setting a
-completeBuilder b = unBuilder b emptySetting
+completeBuilder b = applyBuildInstructions (unBuilder b) emptySetting
 
 -- | Document a setting
 --
 -- Multiple 'help's concatenate help on new lines.
 help :: String -> Builder a
-help s = Builder $ \op -> op {settingHelp = Just $ maybe s (s <>) (settingHelp op)}
+help s = Builder [BuildAddHelp s]
 
 -- | Document an 'option' or 'env' var.
 --
 -- Multiple 'metavar's override eachother.
 metavar :: String -> Builder a
-metavar mv = Builder $ \s -> s {settingMetavar = Just mv}
+metavar mv = Builder [BuildSetMetavar mv]
 
 -- | Try to parse an argument.
 --
@@ -187,7 +222,7 @@ metavar mv = Builder $ \s -> s {settingMetavar = Just mv}
 --
 -- Multiple 'argument's are redundant.
 argument :: Builder a
-argument = Builder $ \s -> s {settingTryArgument = True}
+argument = Builder [BuildTryArgument]
 
 -- | Try to parse an argument.
 --
@@ -196,7 +231,7 @@ argument = Builder $ \s -> s {settingTryArgument = True}
 --
 -- Multiple 'option's are redundant.
 option :: Builder a
-option = Builder $ \s -> s {settingTryOption = True}
+option = Builder [BuildTryOption]
 
 -- | Try to parse a switch, activate the given value when succesful
 --
@@ -204,11 +239,11 @@ option = Builder $ \s -> s {settingTryOption = True}
 --
 -- Multiple 'switch's override eachother.
 switch :: a -> Builder a
-switch v = Builder $ \s -> s {settingSwitchValue = Just v}
+switch v = Builder [BuildSetSwitchValue v]
 
 -- | Declare how to parse an argument, option, or environment variable.
 reader :: Reader a -> Builder a
-reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
+reader r = Builder [BuildAddReader r]
 
 -- | Try to parse this 'long' 'option' or 'switch'.
 --
@@ -221,9 +256,7 @@ reader r = Builder $ \s -> s {settingReaders = r : settingReaders s}
 -- Multiple 'long's will be tried in order.
 -- Empty 'long's will be ignored.
 long :: String -> Builder a
-long l = Builder $ \s -> case NE.nonEmpty l of
-  Nothing -> s
-  Just ne -> s {settingDasheds = DashedLong ne : settingDasheds s}
+long l = Builder [BuildAddLong ne | ne <- maybeToList (NE.nonEmpty l)]
 
 -- | Try to parse this 'short' 'option' or 'switch'.
 --
@@ -234,7 +267,7 @@ long l = Builder $ \s -> case NE.nonEmpty l of
 --
 -- Multiple 'short's will be tried in order.
 short :: Char -> Builder a
-short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
+short c = Builder [BuildAddShort c]
 
 -- | Try to parse an environment variable.
 --
@@ -242,13 +275,23 @@ short c = Builder $ \s -> s {settingDasheds = DashedShort c : settingDasheds s}
 --
 -- Multiple 'env's will be tried in order.
 env :: String -> Builder a
-env v = Builder $ \s -> s {settingEnvVars = Just $ maybe (v :| []) (v <|) $ settingEnvVars s}
+env v = Builder [BuildAddEnv v]
 
 -- | Try to parse a configuration value at the given key.
 --
 -- Multiple 'conf's will be tried in order.
 conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
+
+-- | Like 'conf' but with a custom 'Codec' for parsing the value.
+confWith :: String -> ValueCodec void a -> Builder a
+confWith k c = confWith' k (maybeCodec c)
+
+-- | Like 'confWith' but allows interpreting 'Null' as a value other than "Not found".
+confWith' :: String -> ValueCodec void (Maybe a) -> Builder a
+confWith' k c =
+  let t = ConfigValSetting {configValSettingPath = k :| [], configValSettingCodec = c}
+   in Builder [BuildAddConf t]
 
 -- | Short-hand function for 'option', 'long', 'env', and 'conf' at the same time.
 --
@@ -262,16 +305,6 @@ name s =
       conf (toConfigCase s)
     ]
 
--- | Like 'conf' but with a custom 'Codec' for parsing the value.
-confWith :: String -> ValueCodec void a -> Builder a
-confWith k c = confWith' k (maybeCodec c)
-
--- | Like 'confWith' but allows interpreting 'Null' as a value other than "Not found".
-confWith' :: String -> ValueCodec void (Maybe a) -> Builder a
-confWith' k c =
-  let t = ConfigValSetting {configValSettingPath = k :| [], configValSettingCodec = c}
-   in Builder $ \s -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
-
 -- | Set the default value
 --
 -- Multiple 'value's override eachother.
@@ -283,7 +316,7 @@ value a = valueWithShown a (show a)
 
 -- | Set the default value, along with a shown version of it.
 valueWithShown :: a -> String -> Builder a
-valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown)}
+valueWithShown a shown = Builder [BuildSetDefault a shown]
 
 -- | Provide an example value for documentation.
 --
@@ -291,7 +324,7 @@ valueWithShown a shown = Builder $ \s -> s {settingDefaultValue = Just (a, shown
 --
 -- If you use 'reader' 'auto', you'll want to use 'shownExample' instead.
 example :: String -> Builder a
-example s = Builder $ \set -> set {settingExamples = s : settingExamples set}
+example s = Builder [BuildAddExample s]
 
 -- | Use 'Show' to show an 'example'.
 --
@@ -303,4 +336,4 @@ shownExample = example . show
 --
 -- Multiple 'hidden's are redundant.
 hidden :: Builder a
-hidden = Builder $ \s -> s {settingHidden = True}
+hidden = Builder [BuildSetHidden]
