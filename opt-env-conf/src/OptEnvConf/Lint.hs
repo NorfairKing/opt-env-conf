@@ -212,6 +212,12 @@ renderLintError LintError {..} =
               " or ",
               functionChunk "name",
               " was called with no way to load configuration."
+            ],
+            [ "You can load configuration with ",
+              functionChunk "withConfig",
+              ", or explicitly not load any configuration with ",
+              functionChunk "withoutConfig",
+              "."
             ]
           ]
         LintErrorManyInfinite ->

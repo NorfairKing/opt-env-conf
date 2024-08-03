@@ -10,6 +10,7 @@
   but accept default `value` builders instead.
 * Renamed 'viaCodec' to 'viaStringCodec'.
 * Clearer lints when using `name`.
+* Clearer lint about loading configuration.
 
 ## [0.4.0.5] - 2024-07-28
 
