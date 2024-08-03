@@ -645,7 +645,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
                                                   pure Nothing
                                                 Just a -> do
                                                   debug
-                                                    [ "set based on config value:",
+                                                    [ "set based on config value: ",
                                                       chunk $ T.pack $ show v
                                                     ]
                                                   pure $ Just a
