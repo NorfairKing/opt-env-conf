@@ -1,2 +1,3 @@
 Missing command, available commands:
-[33mone[m [33mtwo[m
+[35mone[m: [34mfirst[m
+[35mtwo[m: [34msecond[m

@@ -32,8 +32,8 @@ data ParseErrorMessage
   | ParseErrorMissingSwitch !(Maybe OptDoc)
   | ParseErrorMissingConfVal !(Maybe ConfDoc)
   | ParseErrorConfigRead !(Maybe ConfDoc) !String
-  | ParseErrorMissingCommand ![String]
-  | ParseErrorUnrecognisedCommand !String ![String]
+  | ParseErrorMissingCommand ![CommandDoc ()]
+  | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
   | ParseErrorAllOrNothing
   | ParseErrorUnrecognised !(NonEmpty String)
   deriving (Show)
@@ -115,14 +115,13 @@ renderError ParseError {..} =
             : maybe [] renderConfDoc md
             ++ [[chunk $ T.pack $ show s]]
         ParseErrorMissingCommand cs ->
-          [ ["Missing command, available commands:"],
-            unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs
-          ]
+          ["Missing command, available commands:"]
+            : availableCommandsLines cs
         ParseErrorUnrecognisedCommand c cs ->
           [ [fore red "Unrecognised command: ", fore yellow $ chunk (T.pack c)],
-            [fore blue "available commands:"],
-            unwordsChunks $ map (pure . fore yellow . chunk . T.pack) cs
+            [fore blue "available commands:"]
           ]
+            ++ availableCommandsLines cs
         ParseErrorAllOrNothing ->
           [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing (or subSettings) parser have been defined."]
           ]
@@ -130,3 +129,10 @@ renderError ParseError {..} =
           ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
       maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
     ]
+
+availableCommandsLines :: [CommandDoc a] -> [[Chunk]]
+availableCommandsLines = map $ \CommandDoc {..} ->
+  [ commandChunk commandDocArgument,
+    ": ",
+    helpChunk commandDocHelp
+  ]

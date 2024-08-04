@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0.1] - 2024-08-04
+
+### Changed
+
+* Errors involving commands now show command descriptions.
+
 ## [0.5.0.0] - 2024-08-03
 
 ### Changed

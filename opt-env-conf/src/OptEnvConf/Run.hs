@@ -453,15 +453,16 @@ runParserOn mDebugMode parser args envVars mConfig = do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           mS <- ppArg
+          let docsForErrors = map (void . commandParserDocs) cs
           case mS of
             Nothing -> do
               debug ["No argument found for choosing a command."]
-              ppError mLoc $ ParseErrorMissingCommand $ map commandArg cs
+              ppError mLoc $ ParseErrorMissingCommand docsForErrors
             Just s -> do
               case find ((== s) . commandArg) cs of
                 Nothing -> do
                   debug ["Argument found, but no matching command: ", chunk $ T.pack $ show s]
-                  ppError mLoc $ ParseErrorUnrecognisedCommand s (map commandArg cs)
+                  ppError mLoc $ ParseErrorUnrecognisedCommand s docsForErrors
                 Just c -> do
                   debug ["Set command to ", commandChunk (commandArg c)]
                   go $ commandParser c
