@@ -4,6 +4,8 @@
 module OptEnvConf.Example
   ( exampleMain,
     Instructions (..),
+    Dispatch (..),
+    Settings (..),
   )
 where
 
@@ -34,7 +36,7 @@ data Dispatch
   | DispatchRead
   | DispatchUpdate !String !String
   | DispatchDelete
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance HasParser Dispatch where
   settingsParser =
@@ -69,7 +71,7 @@ data Settings = Settings
   { settingLogLevel :: String,
     settingPaymentSettings :: Maybe PaymentSettings
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance HasParser Settings where
   settingsParser = do
@@ -89,7 +91,7 @@ data PaymentSettings = PaymentSettings
     paymentSetSecretKey :: Text,
     paymentSetCurrency :: Maybe String
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance HasParser PaymentSettings where
   settingsParser = do

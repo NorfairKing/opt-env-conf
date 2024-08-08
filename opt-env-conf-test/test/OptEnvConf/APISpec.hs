@@ -117,8 +117,20 @@ sameHelpParser =
     let h = help "int or string"
      in (,)
           <$> choice
-            [ Left <$> setting [h, name "int", reader auto, metavar "INT"],
-              Right <$> setting [h, name "string", reader str, metavar "STR"]
+            [ Left
+                <$> setting
+                  [ h,
+                    name "int",
+                    reader auto,
+                    metavar "INT"
+                  ],
+              Right
+                <$> setting
+                  [ h,
+                    name "string",
+                    reader str,
+                    metavar "STR"
+                  ]
             ]
           <*> yesNoSwitch
             [ h,
@@ -331,7 +343,8 @@ threeCommandsParser =
                 option,
                 metavar "INT",
                 name "number",
-                short 'n'
+                short 'n',
+                shownExample 5
               ]
             <*> enableDisableSwitch
               [ help "enable extra",

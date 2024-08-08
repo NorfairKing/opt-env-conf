@@ -44,7 +44,7 @@ AnyDocsAnd
                          , optDocTryOption = True
                          , optDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
                          , optDocDefault = Nothing
-                         , optDocExamples = []
+                         , optDocExamples = [ "5" ]
                          , optDocMetavar = Just "INT"
                          , optDocHelp = Just "number"
                          })

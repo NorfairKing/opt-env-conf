@@ -31,7 +31,6 @@ module OptEnvConf.Reader
 where
 
 import Autodocodec
-import Control.Monad.Reader (MonadReader (..))
 import Data.Aeson.Types as JSON
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
@@ -44,24 +43,6 @@ import Text.Read (readMaybe)
 
 newtype Reader a = Reader {unReader :: String -> Either String a}
   deriving (Functor)
-
-instance Applicative Reader where
-  pure = Reader . const . Right
-  (<*>) (Reader ff) (Reader fa) =
-    Reader $ \s ->
-      ff s <*> fa s
-
-instance Monad Reader where
-  (>>=) (Reader fa) fb = Reader $ \s -> do
-    a <- fa s
-    unReader (fb a) s
-
-instance MonadReader String Reader where
-  ask = Reader Right
-  reader f = Reader $ \s -> Right (f s)
-  local fs f = Reader $ \s ->
-    let s' = fs s
-     in unReader f s'
 
 runReader :: Reader a -> String -> Either String a
 runReader = unReader
@@ -94,8 +75,8 @@ viaStringCodec = eitherReader $ parseEither $ parseJSONViaCodec . JSON.String . 
 
 -- | Turn a 'Maybe' parsing function into a 'Reader'
 maybeReader :: (String -> Maybe a) -> Reader a
-maybeReader func = Reader $ \s -> case func s of
-  Nothing -> Left $ "Unparsable value: " <> show s
+maybeReader func = eitherReader $ \s -> case func s of
+  Nothing -> Left $ "Unparseable value: " <> show s
   Just a -> Right a
 
 -- | Turn an 'Either' parsing function into a 'Reader'

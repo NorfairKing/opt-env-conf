@@ -8,7 +8,7 @@ mkDerivation {
   version = "0.0.0.0";
   src = ./.;
   libraryHaskellDepends = [
-    base genvalidity genvalidity-containers opt-env-conf
+    aeson base genvalidity genvalidity-containers opt-env-conf
     safe-coloured-text sydtest text
   ];
   testHaskellDepends = [
