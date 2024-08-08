@@ -1,6 +1,0 @@
-[31mSetting parser is invalid:[m
-  
-  [31mInvalid Setting:[m
-  [33mexample[m was called with an example that none of the [33mconf[ms succeed in decoding.
-  Example: NaN
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:151:9 in main:OptEnvConf.LintSpec[m

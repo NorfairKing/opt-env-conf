@@ -26,6 +26,7 @@
     config:
       [37mnumber[m: # [32mor null[m
         [33m<integer>[m # [32m64 bit signed integer[m
+    example: [33m5[m
     
     [34menable extra[m
     switch: [37m--(enable|disable)-enable[m
@@ -46,17 +47,18 @@
   [35mone[m [34mfirst[m
       [33mSTR[m [34margument[m
   [35mtwo[m [34msecond[m
-      [37m--number[m[36m|[m[37m-n[m               [34mnumber[m      
-      [37m--(enable|disable)-enable[m [34menable extra[m
+      [37m--number[m[36m|[m[37m-n[m               [34mnumber[m       example: [33m5[m
+      [37m--(enable|disable)-enable[m [34menable extra[m           
   [35mthree-very-long-command-name[m [34mthird[m
 
 [36mEnvironment Variables[m:
-  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m
-  [37mNUMBER[m [33mINT[m              [34mnumber[m                        
-  [37mENABLE[m [33mBOOL[m             [34menable extra[m                  
+  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m             
+  [37mNUMBER[m [33mINT[m              [34mnumber[m                           example: [33m5[m
+  [37mENABLE[m [33mBOOL[m             [34menable extra[m                               
 
 [36mConfiguration Values[m:
   [34mnumber[m
+  example: [33m5[m
   [37mnumber[m:
     # [32mor null[m
     [33m<integer>[m # [32m64 bit signed integer[m

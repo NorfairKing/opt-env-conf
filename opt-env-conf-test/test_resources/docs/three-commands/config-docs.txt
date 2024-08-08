@@ -24,7 +24,7 @@ AnyDocsAnd
                     EnvDoc
                       { envDocVars = "NUMBER" :| []
                       , envDocDefault = Nothing
-                      , envDocExamples = []
+                      , envDocExamples = [ "5" ]
                       , envDocMetavar = Just "INT"
                       , envDocHelp = Just "number"
                       }

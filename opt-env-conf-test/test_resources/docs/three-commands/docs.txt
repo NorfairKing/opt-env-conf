@@ -63,7 +63,7 @@ AnyDocsAnd
                                 ) :|
                                   [])
                          , setDocDefault = Nothing
-                         , setDocExamples = []
+                         , setDocExamples = [ "5" ]
                          , setDocMetavar = Just "INT"
                          , setDocHelp = Just "number"
                          })

@@ -90,15 +90,15 @@
               "opt-env-conf-example"
             ];
           };
-          # weeder-check = pkgs.weeder-nix.makeWeederCheck {
-          #   weederToml = ./weeder.toml;
-          #   packages = [
-          #     "opt-env-conf"
-          #     "opt-env-conf-test"
-          #     "opt-env-conf-example"
-          #   ];
-          #   inherit haskellPackages;
-          # };
+          weeder-check = pkgs.weeder-nix.makeWeederCheck {
+            weederToml = ./weeder.toml;
+            packages = [
+              "opt-env-conf"
+              "opt-env-conf-test"
+              "opt-env-conf-example"
+            ];
+            inherit haskellPackages;
+          };
           example-settings-check =
             haskellPackages.opt-env-conf.makeSettingsCheck
               "example-settings-check"

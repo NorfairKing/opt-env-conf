@@ -34,6 +34,7 @@ three-commands [--config-file FILE_PATH] COMMAND
     config:
       number: # or null
         <integer> # 64 bit signed integer
+    example: 5
     
     enable extra
     switch: --(enable|disable)-enable
@@ -54,17 +55,18 @@ three-commands [--config-file FILE_PATH] COMMAND
   one first
       STR argument
   two second
-      --number|-n               number      
-      --(enable|disable)-enable enable extra
+      --number|-n               number       example: 5
+      --(enable|disable)-enable enable extra           
   three-very-long-command-name third
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE_PATH   Path to the configuration file
-  NUMBER INT              number                        
-  ENABLE BOOL             enable extra                  
+  CONFIG_FILE FILE_PATH   Path to the configuration file             
+  NUMBER INT              number                           example: 5
+  ENABLE BOOL             enable extra                               
 
 .Sh CONFIGURATION VALUES
   number
+  example: 5
   number:
     # or null
     <integer> # 64 bit signed integer

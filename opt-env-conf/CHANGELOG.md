@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1.0] - 2024-08-08
+
+### Removed
+
+* Removed the "undecodable example" lint because it was faulty when example values aren't Strings.
+
 ## [0.5.0.1] - 2024-08-04
 
 ### Changed

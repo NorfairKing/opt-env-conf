@@ -302,7 +302,6 @@ extra-source-files:
     test_resources/lint/only-default.txt
     test_resources/lint/some-conf.txt
     test_resources/lint/some-env.txt
-    test_resources/lint/undecodable-example.txt
     test_resources/lint/unreadable-example.txt
 
 source-repository head
