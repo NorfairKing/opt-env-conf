@@ -320,7 +320,8 @@ library
       src/
   ghc-options: -Wall
   build-depends:
-      base <5
+      aeson
+    , base <5
     , genvalidity
     , genvalidity-containers
     , opt-env-conf

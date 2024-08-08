@@ -20,6 +20,7 @@ library:
   source-dirs: src/
   ghc-options: -Wall
   dependencies:
+  - aeson
   - genvalidity
   - genvalidity-containers
   - opt-env-conf
