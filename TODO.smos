@@ -1,0 +1,46 @@
+version: 2.0.0
+value:
+- entry: OptEnvConf
+  forest:
+  - entry: checklist for new features
+    forest:
+    - Succesful parse test
+    - Failing parse test with golden errors
+    - golden show
+    - golden documentation
+    - golden lints
+    - api usage test
+  - put a metavar inside a reader?
+  - helpers for parsing tests
+  - 'errors: if the env var would fail to parse, fail, even if something before parses'
+  - entry: Refactors
+    forest:
+    - set up weeder
+    - don't depend on the terminfo on windows
+    - header: try the lazy parsing in tryPP too
+      contents: This would potentially save some IO actions being executed, but will
+        be tricky to keep semantics the same
+  - entry: Testing
+    forest:
+    - header: 'make the run tests comprehensive: at least one test for each parsing
+        feature'
+      contents: Setting up weeder does this automatically
+    - set up doctests
+    - make good tests for every branch of the runParser function
+  - entry: Errors
+    forest:
+    - suggest typos when options aren't recognised
+    - maybe show the settings that were defined when throwing the AllOrNothing error
+  - entry: Documentation
+    forest:
+    - 'help with multiple lines: help chunks return lines'
+    - header: make the alts a list for nicer showing?
+      contents: then we can get rid of empty too
+    - make the short opts multi-line when commands are in use
+    - make the short opts multi-line when there are many
+    - make multiline help look good too
+    - make the manpage look great
+    - when parsing two of the same config values, show them with an or instead of
+      showing the schema twice
+    - no need for the extra indent in the settings part of the manpage
+  - get rid of all todos
