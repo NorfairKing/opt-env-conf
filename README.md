@@ -24,16 +24,16 @@ Used in production in all my products and some companies.
     - [x] Switch: `progname --verbose`
         - [x] Long switch: `progname --verbose`
         - [x] Short switch: `progname -v`
-- [ ] Documentation
-    - [ ] `--help`
+- [x] Documentation
+    - [x] `--help`
         - [x] Global `--help` page
-        - [ ] Per-command `--help` page
+        - [x] Per-command `--help` page
     - [x] Generated `--version` command
     - [x] Generated manpage
 - [ ] Completion
-    - [ ] Bash completion
-    - [ ] Zsh completion
-    - [ ] Fish completion
+    - [x] Bash completion
+    - [x] Zsh completion
+    - [x] Fish completion
 - [x] Static settings check
 
 ## Comparison to similar projects
