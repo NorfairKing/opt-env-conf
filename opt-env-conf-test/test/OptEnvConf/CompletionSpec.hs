@@ -35,3 +35,33 @@ spec = do
         `shouldBe` [Completion "--example" Nothing]
 
     pending "can complete a long switch with an equals sign"
+
+    pending "prefers the long setting name over the short one"
+
+    let parser =
+          (,)
+            <$> setting [long "example"]
+            <*> commands
+              [ command "foo" "Foo" (setting [long "sub"]),
+                command "bar" "Bar" ((,) <$> setting [long "one"] <*> setting [long "two"]),
+                command "baz" "Baz" (pure ("baz", "qux"))
+              ]
+    it "can complete a list of all commands and top-level settings from empty input" $
+      pureCompletionQuery parser 1 [] -- [] or [""]? or both?
+        `shouldBe` [ Completion "foo" Nothing,
+                     Completion "bar" Nothing,
+                     Completion "baz" Nothing,
+                     Completion "--example" Nothing
+                   ]
+
+    it "can complete a list of all commands given a matching prefix" $
+      pureCompletionQuery parser 1 ["b"]
+        `shouldBe` [ Completion "bar" Nothing,
+                     Completion "baz" Nothing
+                   ]
+
+    it "can complete the settings specific to a command when the command name is there" $
+      pureCompletionQuery parser 1 ["bar "]
+        `shouldBe` [ Completion "--one" Nothing,
+                     Completion "--two" Nothing
+                   ]
