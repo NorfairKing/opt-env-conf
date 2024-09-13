@@ -83,8 +83,10 @@ let
     ${makeSettingsCheckScript name exe args env}/bin/${name} > "$out"
   '';
 
-  makeSettingsCheckHomeManagerActivationScript = name: exe: args: env: {
-    after = [ "writeBoundary" ];
+  makeSettingsCheckHomeManagerActivationScript = name: makeSettingsCheckHomeManagerActivationScriptAfter name [ ];
+
+  makeSettingsCheckHomeManagerActivationScriptAfter = name: after: exe: args: env: {
+    inherit after;
     before = [ ];
     data = ''
       run ${makeSettingsCheckScript name exe args env}/bin/${name}
@@ -117,6 +119,7 @@ let
         makeSettingsCheckScript
         makeSettingsCheck
         makeSettingsCheckHomeManagerActivationScript
+        makeSettingsCheckHomeManagerActivationScriptAfter
         addSettingsCheckToService
         addSettingsCheckToUserService;
     } // (old.passthru or { });
