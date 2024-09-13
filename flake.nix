@@ -89,6 +89,10 @@
               "opt-env-conf-test"
               "opt-env-conf-example"
             ];
+            needToBeLinkedAgainstDekkingValue = [
+              "sydtest"
+              "genvalidity-sydtest"
+            ];
           };
           # weeder-check = pkgs.weeder-nix.makeWeederCheck {
           #   weederToml = ./weeder.toml;
