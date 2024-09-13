@@ -9,13 +9,13 @@ ghc-options:
 
 extra-deps:
 - github: NorfairKing/safe-coloured-text
-  commit: 61f14d21b7399fe97da24e484c2f9fedaf532bb8
+  commit: 046f10147a058c00c2706d98c341219e3cbc7669
   subdirs:
   - safe-coloured-text
   - safe-coloured-text-layout
   - safe-coloured-text-gen
 - github: NorfairKing/autodocodec
-  commit: c51eaad56acb0f9e6fa68ae7c1a14ba9dd8650c6
+  commit: be4aba9ef133520a8a4087aa26915aaabf1376a7
   subdirs:
     - autodocodec
     - autodocodec-yaml
