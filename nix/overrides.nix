@@ -69,6 +69,8 @@ let
   makeSettingsCheckScript = name: exe: args: env: writeShellApplication {
     inherit name;
     runtimeEnv = env;
+    # Because we set PATH sometimes
+    excludeShellChecks = [ "SC2123" ];
     text = ''
       ${exe} --run-settings-check ${concatStringsSep " " args}
     '';
@@ -96,11 +98,14 @@ let
   addSettingsCheckToService = service: service // {
     documentation =
       let
+        path = service.path or [ ];
+        pathVar = makeSearchPath "bin" path;
+        environment = ((service.environment or { }) // { PATH = pathVar; });
         check = makeSettingsCheck
           (service.name or "settings-check")
           (last (init (splitString "\n" service.script)))
           (service.scriptArgs or [ ]) # TODO is this right?
-          (service.environment or { });
+          environment;
       in
       (service.documentation or [ ]) ++ [ "${check}" ];
   };
