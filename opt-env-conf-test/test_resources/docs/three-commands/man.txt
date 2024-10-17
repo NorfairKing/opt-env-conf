@@ -7,7 +7,7 @@
 .Sh VERSION
 0.0.0
 .Sh SYNOPSIS
-three-commands [--config-file FILE_PATH] COMMAND
+three-commands [COMMAND]
 .Sh SETTINGS
   Show this help text
   switch: -h|--help
@@ -15,13 +15,9 @@ three-commands [--config-file FILE_PATH] COMMAND
   Output version information: 0.0.0
   switch: --version
 
-  Path to the configuration file
-  option: --config-file FILE_PATH
-  env: CONFIG_FILE FILE_PATH
-
 .Sh COMMANDS
   first
-  command: one
+  command: one (default)
     argument
     argument: STR
     
@@ -51,8 +47,7 @@ three-commands [--config-file FILE_PATH] COMMAND
 .Sh OPTIONS
   -h|--help Show this help text
   --version Output version information: 0.0.0
-  --config-file Path to the configuration file
-  one first
+  one (default) first
       STR argument
   two second
       --number|-n               number       example: 5
@@ -60,9 +55,8 @@ three-commands [--config-file FILE_PATH] COMMAND
   three-very-long-command-name third
 
 .Sh ENVIRONMENT VARIABLES
-  CONFIG_FILE FILE_PATH   Path to the configuration file             
-  NUMBER INT              number                           example: 5
-  ENABLE BOOL             enable extra                               
+  NUMBER INT    number         example: 5
+  ENABLE BOOL   enable extra             
 
 .Sh CONFIGURATION VALUES
   number

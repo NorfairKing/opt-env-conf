@@ -1,31 +1,10 @@
 WithConfig
   _
   Nothing
-  (Check
-     Nothing
-     False
-     _
-     (Alt
-        (Check
-           Nothing
-           False
-           _
-           (Setting
-              Nothing
-              (Setting
-                 [ DashedLong ('c' :| "onfig-file") ]
-                 [ _ ]
-                 False
-                 Nothing
-                 True
-                 (Just ("CONFIG_FILE" :| []))
-                 Nothing
-                 Nothing
-                 (Just "FILE_PATH")
-                 (Just "Path to the configuration file"))))
-        (Check Nothing False _ (Pure _))))
+  (Pure _)
   (Commands
      Nothing
+     (Just "one")
      [ Command
          "one"
          "first"

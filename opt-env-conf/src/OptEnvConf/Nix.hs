@@ -40,7 +40,7 @@ parserNixOptions = go
       ParserSome p -> go p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
-      ParserCommands _ cs -> M.unionsWith combineOption $ map goCommand cs
+      ParserCommands _ _ cs -> M.unionsWith combineOption $ map goCommand cs
       ParserWithConfig _ p1 p2 ->
         -- I'm not sure if we need the first as well because you wouldn't use a
         -- config to load a config but it's technically possible so let's

@@ -268,7 +268,7 @@ lintParser =
         pure c
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
-      ParserCommands mLoc ls -> do
+      ParserCommands mLoc _ ls -> do
         if null ls
           then validationTFailure $ LintError mLoc LintErrorNoCommands
           else and <$> traverse (go . commandParser) ls -- TODO is this right?

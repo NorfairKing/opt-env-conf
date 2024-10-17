@@ -402,6 +402,28 @@ spec = do
         )
         ("command" :: String, '2')
 
+      -- Commands can have a default
+      argParseSpec
+        []
+        ( commands
+            [ command "a" "a" (pure "a"),
+              command "b" "b" (pure "b"),
+              defaultCommand "b"
+            ]
+        )
+        ("b" :: String)
+
+      -- Commands can have a default with an argument
+      argParseSpec
+        ["c"]
+        ( commands
+            [ command "a" "a" (pure "a"),
+              command "b" "b" $ setting [argument, reader str],
+              defaultCommand "b"
+            ]
+        )
+        ("c" :: String)
+
       -- Unfolding switches
       argParseSpecs
         ( length
@@ -812,14 +834,15 @@ argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses args", show args, "as", show expected]) $ do
     let argMap = parseArgs args
     errOrRes <- runParserOn Nothing p argMap EnvMap.empty Nothing
-    case errOrRes of
-      Left errs ->
-        expectationFailure $
-          unlines
-            [ T.unpack $ renderChunksText With24BitColours $ renderErrors errs,
-              ppShow errs
-            ]
-      Right actual -> actual `shouldBe` expected
+    context (showParserABit p) $
+      case errOrRes of
+        Left errs ->
+          expectationFailure $
+            unlines
+              [ T.unpack $ renderChunksText With24BitColours $ renderErrors errs,
+                ppShow errs
+              ]
+        Right actual -> actual `shouldBe` expected
 
 envParseSpecs :: (HasCallStack) => (Show a, Eq a) => Parser a -> [([(String, String)], a)] -> Spec
 envParseSpecs p table = withFrozenCallStack $ mapM_ (\(envs, result) -> envParseSpec envs p result) table

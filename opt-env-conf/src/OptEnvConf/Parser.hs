@@ -27,6 +27,7 @@ module OptEnvConf.Parser
     allOrNothing,
     commands,
     command,
+    defaultCommand,
     subArgs,
     subArgs_,
     subEnv,
@@ -56,6 +57,7 @@ module OptEnvConf.Parser
     Parser (..),
     HasParser (..),
     Command (..),
+    CommandsBuilder (..),
     Metavar,
     Help,
     showParserABit,
@@ -102,6 +104,10 @@ import OptEnvConf.Setting
 import Path
 import Path.IO
 import Text.Show
+
+data CommandsBuilder a
+  = CommandsBuilderCommand !(Command a)
+  | CommandsBuilderDefault !String
 
 data Command a = Command
   { commandSrcLoc :: !(Maybe SrcLoc),
@@ -187,6 +193,8 @@ data Parser a where
   -- Commands
   ParserCommands ::
     !(Maybe SrcLoc) ->
+    -- Default command
+    !(Maybe String) ->
     ![Command a] ->
     Parser a
   -- | Load a configuration value and use it for the continuing parser
@@ -210,7 +218,7 @@ instance Functor Parser where
     ParserEmpty mLoc -> ParserEmpty mLoc
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
-    ParserCommands mLoc cs -> ParserCommands mLoc $ map (fmap f) cs
+    ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault $ map (fmap f) cs
     ParserWithConfig mLoc pc pa -> ParserWithConfig mLoc pc (fmap f pa)
     -- TODO: make setting a functor and fmap here
     p -> ParserCheck Nothing True (pure . Right . f) p
@@ -239,7 +247,7 @@ instance Alternative Parser where
           ParserSome p -> isEmpty p
           ParserAllOrNothing _ p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
-          ParserCommands _ cs -> null cs
+          ParserCommands _ _ cs -> null cs
           ParserWithConfig _ pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
@@ -262,10 +270,10 @@ instance Alternative Parser where
                   --          p
                   --         / \
                   -- p1 ++ p3   p4
-                  (ParserCommands _ _, ParserAlt p3' p4') ->
+                  (ParserCommands _ _ _, ParserAlt p3' p4') ->
                     go (go p1' p3') p4'
-                  (ParserCommands mLoc1 cs1, ParserCommands mLoc2 cs2) ->
-                    ParserCommands (mLoc1 <|> mLoc2) (cs1 ++ cs2)
+                  (ParserCommands mLoc1 mDefault1 cs1, ParserCommands mLoc2 mDefault2 cs2) ->
+                    ParserCommands (mLoc1 <|> mLoc2) (mDefault1 <|> mDefault2) (cs1 ++ cs2)
                   _ -> ParserAlt p1' p2'
              in go p1 p2
   many = ParserMany
@@ -323,10 +331,12 @@ showParserPrec = go
             . showsPrec 11 forgivable
             . showString " _ "
             . go 11 p
-      ParserCommands mLoc cs ->
+      ParserCommands mLoc mDefault cs ->
         showParen (d > 10) $
           showString "Commands "
             . showsPrec 11 mLoc
+            . showString " "
+            . showsPrec 11 mDefault
             . showString " "
             . showListWith
               showCommandABit
@@ -604,9 +614,19 @@ checkMapIOForgivable = ParserCheck mLoc True
 -- | Declare multiple commands
 --
 -- Use 'command' to define a 'Command'.
-commands :: (HasCallStack) => [Command a] -> Parser a
-commands = ParserCommands mLoc
+commands :: (HasCallStack) => [CommandsBuilder a] -> Parser a
+commands cbs =
+  let (mDefault, cs) = go cbs
+   in ParserCommands mLoc mDefault cs
   where
+    go :: [CommandsBuilder a] -> (Maybe String, [Command a])
+    go = \case
+      [] -> (Nothing, [])
+      (b : bs) ->
+        let (mDefault, cs) = go bs
+         in case b of
+              CommandsBuilderCommand c -> (mDefault, c : cs)
+              CommandsBuilderDefault d -> (mDefault <|> Just d, cs)
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Declare a single command with a name, documentation and parser
@@ -618,10 +638,16 @@ command ::
   String ->
   -- | Parser
   Parser a ->
-  Command a
-command = Command mLoc
+  CommandsBuilder a
+command n docs parser = CommandsBuilderCommand $ Command mLoc n docs parser
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
+
+defaultCommand ::
+  -- | Name
+  String ->
+  CommandsBuilder a
+defaultCommand = CommandsBuilderDefault
 
 -- | Load a configuration value and use it for the given parser
 withConfig :: (HasCallStack) => Parser (Maybe JSON.Object) -> Parser a -> Parser a
@@ -956,7 +982,7 @@ parserEraseSrcLocs = go
       ParserSome p -> ParserSome (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
-      ParserCommands _ cs -> ParserCommands Nothing $ map commandEraseSrcLocs cs
+      ParserCommands _ mDefault cs -> ParserCommands Nothing mDefault $ map commandEraseSrcLocs cs
       ParserWithConfig _ p1 p2 -> ParserWithConfig Nothing (go p1) (go p2)
       ParserSetting _ s -> ParserSetting Nothing s
 
@@ -993,7 +1019,7 @@ parserTraverseSetting func = go
       ParserSome p -> ParserSome <$> go p
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
-      ParserCommands mLoc cs -> ParserCommands mLoc <$> traverse (commandTraverseSetting func) cs
+      ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig mLoc p1 p2 -> ParserWithConfig mLoc <$> go p1 <*> go p2
       ParserSetting mLoc s -> ParserSetting mLoc <$> func s
 
@@ -1022,7 +1048,7 @@ parserSettingsSet = go
       ParserSome p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheck _ _ _ p -> go p
-      ParserCommands _ cs -> S.unions $ map (go . commandParser) cs
+      ParserCommands _ _ cs -> S.unions $ map (go . commandParser) cs
       ParserWithConfig _ p1 p2 -> S.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't
       ParserSetting mLoc _ -> maybe S.empty (S.singleton . hashSrcLoc) mLoc

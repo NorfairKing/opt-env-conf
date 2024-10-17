@@ -17,6 +17,7 @@ AnyDocsAnd
       , AnyDocsSingle Nothing
       ]
   , AnyDocsCommands
+      Nothing
       [ CommandDoc
           { commandDocArgument = "top"
           , commandDocHelp = "command without subcommands"
@@ -45,6 +46,7 @@ AnyDocsAnd
           , commandDocs =
               AnyDocsAnd
                 [ AnyDocsCommands
+                    Nothing
                     [ CommandDoc
                         { commandDocArgument = "a"
                         , commandDocHelp = "A"
@@ -57,6 +59,7 @@ AnyDocsAnd
                         }
                     ]
                 , AnyDocsCommands
+                    (Just "c")
                     [ CommandDoc
                         { commandDocArgument = "c"
                         , commandDocHelp = "C"

@@ -36,6 +36,7 @@ module OptEnvConf
     -- ** Commands
     commands,
     command,
+    defaultCommand,
 
     -- ** Composing settings with the usual type-classes
     optional,

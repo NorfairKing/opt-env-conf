@@ -1,75 +1,60 @@
-AnyDocsAnd
-  [ AnyDocsOr
-      [ AnyDocsSingle
-          (Just
-             OptDoc
-               { optDocTryArgument = False
-               , optDocTrySwitch = False
-               , optDocTryOption = True
-               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-               , optDocDefault = Nothing
-               , optDocExamples = []
-               , optDocMetavar = Just "FILE_PATH"
-               , optDocHelp = Just "Path to the configuration file"
-               })
-      ]
-  , AnyDocsCommands
-      [ CommandDoc
-          { commandDocArgument = "one"
-          , commandDocHelp = "first"
-          , commandDocs =
-              AnyDocsSingle
+AnyDocsCommands
+  (Just "one")
+  [ CommandDoc
+      { commandDocArgument = "one"
+      , commandDocHelp = "first"
+      , commandDocs =
+          AnyDocsSingle
+            (Just
+               OptDoc
+                 { optDocTryArgument = True
+                 , optDocTrySwitch = False
+                 , optDocTryOption = False
+                 , optDocDasheds = []
+                 , optDocDefault = Nothing
+                 , optDocExamples = []
+                 , optDocMetavar = Just "STR"
+                 , optDocHelp = Just "argument"
+                 })
+      }
+  , CommandDoc
+      { commandDocArgument = "two"
+      , commandDocHelp = "second"
+      , commandDocs =
+          AnyDocsAnd
+            [ AnyDocsSingle
                 (Just
                    OptDoc
-                     { optDocTryArgument = True
+                     { optDocTryArgument = False
                      , optDocTrySwitch = False
-                     , optDocTryOption = False
-                     , optDocDasheds = []
+                     , optDocTryOption = True
+                     , optDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
                      , optDocDefault = Nothing
-                     , optDocExamples = []
-                     , optDocMetavar = Just "STR"
-                     , optDocHelp = Just "argument"
+                     , optDocExamples = [ "5" ]
+                     , optDocMetavar = Just "INT"
+                     , optDocHelp = Just "number"
                      })
-          }
-      , CommandDoc
-          { commandDocArgument = "two"
-          , commandDocHelp = "second"
-          , commandDocs =
-              AnyDocsAnd
+            , AnyDocsOr
                 [ AnyDocsSingle
                     (Just
                        OptDoc
                          { optDocTryArgument = False
-                         , optDocTrySwitch = False
-                         , optDocTryOption = True
-                         , optDocDasheds = [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
+                         , optDocTrySwitch = True
+                         , optDocTryOption = False
+                         , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
                          , optDocDefault = Nothing
-                         , optDocExamples = [ "5" ]
-                         , optDocMetavar = Just "INT"
-                         , optDocHelp = Just "number"
+                         , optDocExamples = []
+                         , optDocMetavar = Nothing
+                         , optDocHelp = Just "enable extra"
                          })
-                , AnyDocsOr
-                    [ AnyDocsSingle
-                        (Just
-                           OptDoc
-                             { optDocTryArgument = False
-                             , optDocTrySwitch = True
-                             , optDocTryOption = False
-                             , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-enable") ]
-                             , optDocDefault = Nothing
-                             , optDocExamples = []
-                             , optDocMetavar = Nothing
-                             , optDocHelp = Just "enable extra"
-                             })
-                    , AnyDocsSingle Nothing
-                    , AnyDocsSingle Nothing
-                    ]
+                , AnyDocsSingle Nothing
+                , AnyDocsSingle Nothing
                 ]
-          }
-      , CommandDoc
-          { commandDocArgument = "three-very-long-command-name"
-          , commandDocHelp = "third"
-          , commandDocs = AnyDocsAnd []
-          }
-      ]
+            ]
+      }
+  , CommandDoc
+      { commandDocArgument = "three-very-long-command-name"
+      , commandDocHelp = "third"
+      , commandDocs = AnyDocsAnd []
+      }
   ]

@@ -1,4 +1,4 @@
-[36mUsage: [m[33mthree-commands[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m COMMAND
+[36mUsage: [m[33mthree-commands[m [COMMAND]
 
 example with three commands
 
@@ -9,12 +9,8 @@ example with three commands
   [34mOutput version information: 0.0.0[m
   switch: [37m--version[m
 
-  [34mPath to the configuration file[m
-  option: [37m--config-file[m [33mFILE_PATH[m
-  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
-
 [36mAvailable commands[m:
-  [35mone[m                            [34mfirst[m 
+  [35mone[m (default)                  [34mfirst[m 
   [35mtwo[m                            [34msecond[m
   [35mthree-very-long-command-name[m   [34mthird[m 
 

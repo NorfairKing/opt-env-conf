@@ -26,6 +26,7 @@ WithConfig
         (Check Nothing False _ (Pure _))))
   (Commands
      Nothing
+     Nothing
      [ Command
          "top"
          "command without subcommands"
@@ -61,7 +62,11 @@ WithConfig
          "command with subcommands"
          (Ap
             (Commands
-               Nothing [ Command "a" "A" (Pure _) , Command "b" "B" (Pure _) ])
+               Nothing
+               Nothing
+               [ Command "a" "A" (Pure _) , Command "b" "B" (Pure _) ])
             (Commands
-               Nothing [ Command "c" "C" (Pure _) , Command "d" "D" (Pure _) ]))
+               Nothing
+               (Just "c")
+               [ Command "c" "C" (Pure _) , Command "d" "D" (Pure _) ]))
      ])

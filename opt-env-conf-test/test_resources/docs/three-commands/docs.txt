@@ -1,22 +1,7 @@
 AnyDocsAnd
-  [ AnyDocsOr
-      [ AnyDocsSingle
-          (Just
-             SetDoc
-               { setDocTryArgument = False
-               , setDocTrySwitch = False
-               , setDocTryOption = True
-               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
-               , setDocEnvVars = Just ("CONFIG_FILE" :| [])
-               , setDocConfKeys = Nothing
-               , setDocDefault = Nothing
-               , setDocExamples = []
-               , setDocMetavar = Just "FILE_PATH"
-               , setDocHelp = Just "Path to the configuration file"
-               })
-      , AnyDocsSingle Nothing
-      ]
+  [ AnyDocsSingle Nothing
   , AnyDocsCommands
+      (Just "one")
       [ CommandDoc
           { commandDocArgument = "one"
           , commandDocHelp = "first"

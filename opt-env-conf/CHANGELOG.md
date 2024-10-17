@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0.0] - 2024-10-18
+
+### Added
+
+* `defaultCommand`
+
+### Changed
+
+* `commands` now takes `CommandsBuilder`s.
+
 ## [0.5.1.1] - 2024-08-08
 
 ### Changed

@@ -377,7 +377,7 @@ data ThreeCommands
 
 threeCommandsParser :: Parser ThreeCommands
 threeCommandsParser =
-  withLocalYamlConfig $
+  withoutConfig $
     commands
       [ command "one" "first" $
           One
@@ -403,7 +403,8 @@ threeCommandsParser =
                 name "enable",
                 value False
               ],
-        command "three-very-long-command-name" "third" (pure Three)
+        command "three-very-long-command-name" "third" (pure Three),
+        defaultCommand "one"
       ]
 
 data SubCommands
@@ -442,7 +443,8 @@ sub2Parser :: Parser Sub2
 sub2Parser =
   commands
     [ command "c" "C" $ pure C,
-      command "d" "D" $ pure D
+      command "d" "D" $ pure D,
+      defaultCommand "c"
     ]
 
 verboseParser :: Parser Int

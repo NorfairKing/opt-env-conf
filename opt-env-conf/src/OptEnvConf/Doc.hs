@@ -100,7 +100,7 @@ data ConfDoc = ConfDoc
   deriving (Show)
 
 data AnyDocs a
-  = AnyDocsCommands [CommandDoc a]
+  = AnyDocsCommands !(Maybe String) [CommandDoc a]
   | AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
   | AnyDocsSingle !a
@@ -121,7 +121,7 @@ mapMaybeDocs' :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
 mapMaybeDocs' func = go
   where
     go = \case
-      AnyDocsCommands cs -> AnyDocsCommands $ map goCommandDoc cs
+      AnyDocsCommands mDefault cs -> AnyDocsCommands mDefault $ map goCommandDoc cs
       AnyDocsAnd ds -> AnyDocsAnd $ map go ds
       AnyDocsOr ds -> AnyDocsOr $ map go ds
       AnyDocsSingle d -> maybe (AnyDocsAnd []) AnyDocsSingle $ func d
@@ -132,7 +132,7 @@ simplifyAnyDocs :: AnyDocs a -> AnyDocs a
 simplifyAnyDocs = go
   where
     go = \case
-      AnyDocsCommands cs -> AnyDocsCommands $ map goDoc cs
+      AnyDocsCommands mDefault cs -> AnyDocsCommands mDefault $ map goDoc cs
       AnyDocsAnd ds -> case concatMap goAnd ds of
         [a] -> a
         as -> AnyDocsAnd as
@@ -142,13 +142,13 @@ simplifyAnyDocs = go
     goDoc cd = cd {commandDocs = go (commandDocs cd)}
 
     goAnd = \case
-      AnyDocsCommands c -> [AnyDocsCommands $ map goDoc c]
+      AnyDocsCommands mDefault c -> [AnyDocsCommands mDefault $ map goDoc c]
       AnyDocsAnd ds -> concatMap (goAnd . go) ds
       AnyDocsOr [] -> []
       ds -> [go ds]
 
     goOr = \case
-      AnyDocsCommands c -> [AnyDocsCommands $ map goDoc c]
+      AnyDocsCommands mDefault c -> [AnyDocsCommands mDefault $ map goDoc c]
       AnyDocsOr ds -> concatMap (goOr . go) ds
       AnyDocsAnd [] -> []
       ds -> [go ds]
@@ -170,7 +170,7 @@ parserDocs = simplifyAnyDocs . go
       ParserSome p -> AnyDocsAnd [go p, go (ParserMany p)] -- TODO: is this right?
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
-      ParserCommands _ cs -> AnyDocsCommands $ map commandParserDocs cs
+      ParserCommands _ mDefault cs -> AnyDocsCommands mDefault $ map commandParserDocs cs
       ParserWithConfig _ p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?
       ParserSetting _ set -> AnyDocsSingle $ settingSetDoc set
 
@@ -385,7 +385,7 @@ renderReferenceDocumentation progname docs' =
 
 nullDocs :: AnyDocs a -> Bool
 nullDocs = \case
-  AnyDocsCommands cs -> all nullCommandDoc cs
+  AnyDocsCommands _ cs -> all nullCommandDoc cs
   AnyDocsOr [] -> True
   AnyDocsOr _ -> False
   AnyDocsAnd [] -> True
@@ -490,7 +490,7 @@ renderSetDocs = unlinesChunks . intercalate [[]] . go . combineSetDocs . without
     -- One section each, so we can add empty lines inbetween
     go :: AnyDocs (NonEmpty SetDoc) -> [[[Chunk]]]
     go = \case
-      AnyDocsCommands _ -> []
+      AnyDocsCommands _ _ -> []
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle (d :| ds) ->
@@ -517,7 +517,7 @@ renderSetDocs = unlinesChunks . intercalate [[]] . go . combineSetDocs . without
       where
         go' :: AnyDocs SetDoc -> AnyDocs (NonEmpty SetDoc)
         go' = \case
-          AnyDocsCommands _ -> AnyDocsCommands [] -- Don't care about commands here
+          AnyDocsCommands _ _ -> AnyDocsCommands Nothing [] -- Don't care about commands here
           AnyDocsOr ds -> AnyDocsOr $ goOr' ds
           AnyDocsAnd ds -> AnyDocsAnd $ map go' ds
           AnyDocsSingle d -> AnyDocsSingle (d :| [])
@@ -539,20 +539,22 @@ renderCommandDocs = unlinesChunks . go True . withoutHiddenDocs
   where
     go :: Bool -> AnyDocs SetDoc -> [[Chunk]]
     go isTopLevel = \case
-      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsCommands mDefault cs -> concatMap (goCommand mDefault) cs
       AnyDocsAnd ds -> concatMap (go isTopLevel) ds
       AnyDocsOr ds -> goOr isTopLevel ds
       AnyDocsSingle d
         | isTopLevel -> []
         | otherwise -> indent (renderSetDoc d)
 
-    goCommand :: CommandDoc SetDoc -> [[Chunk]]
-    goCommand CommandDoc {..} =
+    goCommand :: Maybe String -> CommandDoc SetDoc -> [[Chunk]]
+    goCommand mDefault CommandDoc {..} =
       indent $
-        [helpChunk commandDocHelp]
-          : ["command: ", commandChunk commandDocArgument]
-          : go False commandDocs
-          ++ [[]]
+        let isDefault = mDefault == Just commandDocArgument
+            suffix = if isDefault then " (default)" else ""
+         in [helpChunk commandDocHelp]
+              : ["command: ", commandChunk commandDocArgument, suffix]
+              : go False commandDocs
+              ++ [[]]
 
     -- Group together settings with the same help (produced by combinators like enableDisableSwitch)
     goOr :: Bool -> [AnyDocs SetDoc] -> [[Chunk]]
@@ -592,14 +594,16 @@ renderCommandDocsShort = layoutAsTable . go . withoutHiddenDocs
   where
     go :: AnyDocs SetDoc -> [[[Chunk]]]
     go = \case
-      AnyDocsCommands cs -> concatMap goCommand cs
+      AnyDocsCommands mDefault cs -> concatMap (goCommand mDefault) cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle _ -> []
 
-    goCommand :: CommandDoc SetDoc -> [[[Chunk]]]
-    goCommand CommandDoc {..} =
-      [indent [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]]
+    goCommand :: Maybe String -> CommandDoc SetDoc -> [[[Chunk]]]
+    goCommand mDefault CommandDoc {..} =
+      let isDefault = mDefault == Just commandDocArgument
+          suffix = if isDefault then " (default)" else ""
+       in [indent [[commandChunk commandDocArgument, suffix], [helpChunk commandDocHelp]]]
 
 parserOptDocs :: Parser a -> AnyDocs (Maybe OptDoc)
 parserOptDocs = docsToOptDocs . parserDocs
@@ -639,7 +643,9 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
       Maybe [Chunk]
     go b =
       \case
-        AnyDocsCommands _ -> Just ["COMMAND"]
+        AnyDocsCommands mDefault _ -> case mDefault of
+          Nothing -> Just ["COMMAND"]
+          Just _ -> Just ["[COMMAND]"]
         AnyDocsAnd ds ->
           case mapMaybe (go False) (withoutNothings ds) of
             [] -> Nothing
@@ -682,12 +688,14 @@ renderLongOptDocs = unlinesChunks . go . withoutHiddenDocs
   where
     go :: AnyDocs OptDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands cs ->
+      AnyDocsCommands mDefault cs ->
         concatMap
           ( \CommandDoc {..} ->
-              indent $
-                unwordsChunks [[commandChunk commandDocArgument], [helpChunk commandDocHelp]]
-                  : indent (go commandDocs)
+              let isDefault = mDefault == Just commandDocArgument
+                  suffix = if isDefault then " (default)" else ""
+               in indent $
+                    unwordsChunks [[commandChunk commandDocArgument, suffix], [helpChunk commandDocHelp]]
+                      : indent (go commandDocs)
           )
           cs
       AnyDocsAnd ds -> case goTable (AnyDocsAnd ds) of
@@ -700,7 +708,7 @@ renderLongOptDocs = unlinesChunks . go . withoutHiddenDocs
 
     goTable :: AnyDocs OptDoc -> Maybe [[[Chunk]]]
     goTable = \case
-      AnyDocsCommands _ -> Nothing
+      AnyDocsCommands _ _ -> Nothing
       AnyDocsAnd ds -> concat <$> mapM goTable ds
       AnyDocsOr ds -> concat <$> mapM goTable ds
       AnyDocsSingle od -> Just [renderOptDocLong od]
@@ -746,7 +754,7 @@ renderEnvDocs = layoutAsTable . go
   where
     go :: AnyDocs EnvDoc -> [[[Chunk]]]
     go = \case
-      AnyDocsCommands cs -> concatMap (go . commandDocs) cs
+      AnyDocsCommands _ cs -> concatMap (go . commandDocs) cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle ed -> [indent $ renderEnvDoc ed]
@@ -784,7 +792,7 @@ settingConfDoc = settingSetDoc >=> setDocConfDoc
 
 docsToCommandDocs :: AnyDocs (Maybe SetDoc) -> [CommandDoc (Maybe SetDoc)]
 docsToCommandDocs = \case
-  AnyDocsCommands cs -> cs
+  AnyDocsCommands _ cs -> cs
   AnyDocsAnd ds -> concatMap docsToCommandDocs ds
   AnyDocsOr ds -> concatMap docsToCommandDocs ds
   AnyDocsSingle _ -> []
@@ -795,7 +803,7 @@ renderConfDocs = unlinesChunks . go
   where
     go :: AnyDocs ConfDoc -> [[Chunk]]
     go = \case
-      AnyDocsCommands cs -> concatMap (go . commandDocs) cs
+      AnyDocsCommands _ cs -> concatMap (go . commandDocs) cs
       AnyDocsAnd ds -> concatMap go ds
       AnyDocsOr ds -> concatMap go ds
       AnyDocsSingle ed -> indent (renderConfDoc ed)

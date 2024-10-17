@@ -1,49 +1,38 @@
-AnyDocsAnd
-  [ AnyDocsOr
-      [ AnyDocsSingle
-          EnvDoc
-            { envDocVars = "CONFIG_FILE" :| []
-            , envDocDefault = Nothing
-            , envDocExamples = []
-            , envDocMetavar = Just "FILE_PATH"
-            , envDocHelp = Just "Path to the configuration file"
-            }
-      ]
-  , AnyDocsCommands
-      [ CommandDoc
-          { commandDocArgument = "one"
-          , commandDocHelp = "first"
-          , commandDocs = AnyDocsAnd []
-          }
-      , CommandDoc
-          { commandDocArgument = "two"
-          , commandDocHelp = "second"
-          , commandDocs =
-              AnyDocsAnd
+AnyDocsCommands
+  (Just "one")
+  [ CommandDoc
+      { commandDocArgument = "one"
+      , commandDocHelp = "first"
+      , commandDocs = AnyDocsAnd []
+      }
+  , CommandDoc
+      { commandDocArgument = "two"
+      , commandDocHelp = "second"
+      , commandDocs =
+          AnyDocsAnd
+            [ AnyDocsSingle
+                EnvDoc
+                  { envDocVars = "NUMBER" :| []
+                  , envDocDefault = Nothing
+                  , envDocExamples = [ "5" ]
+                  , envDocMetavar = Just "INT"
+                  , envDocHelp = Just "number"
+                  }
+            , AnyDocsOr
                 [ AnyDocsSingle
                     EnvDoc
-                      { envDocVars = "NUMBER" :| []
+                      { envDocVars = "ENABLE" :| []
                       , envDocDefault = Nothing
-                      , envDocExamples = [ "5" ]
-                      , envDocMetavar = Just "INT"
-                      , envDocHelp = Just "number"
+                      , envDocExamples = []
+                      , envDocMetavar = Just "BOOL"
+                      , envDocHelp = Just "enable extra"
                       }
-                , AnyDocsOr
-                    [ AnyDocsSingle
-                        EnvDoc
-                          { envDocVars = "ENABLE" :| []
-                          , envDocDefault = Nothing
-                          , envDocExamples = []
-                          , envDocMetavar = Just "BOOL"
-                          , envDocHelp = Just "enable extra"
-                          }
-                    ]
                 ]
-          }
-      , CommandDoc
-          { commandDocArgument = "three-very-long-command-name"
-          , commandDocHelp = "third"
-          , commandDocs = AnyDocsAnd []
-          }
-      ]
+            ]
+      }
+  , CommandDoc
+      { commandDocArgument = "three-very-long-command-name"
+      , commandDocHelp = "third"
+      , commandDocs = AnyDocsAnd []
+      }
   ]

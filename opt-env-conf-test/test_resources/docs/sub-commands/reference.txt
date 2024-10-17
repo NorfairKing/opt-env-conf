@@ -32,7 +32,7 @@
     command: [35mb[m
     
     [34mC[m
-    command: [35mc[m
+    command: [35mc[m (default)
     
     [34mD[m
     command: [35md[m
@@ -48,7 +48,7 @@
   [35msub[m [34mcommand with subcommands[m
       [35ma[m [34mA[m
       [35mb[m [34mB[m
-      [35mc[m [34mC[m
+      [35mc[m (default) [34mC[m
       [35md[m [34mD[m
 
 [36mEnvironment Variables[m:
