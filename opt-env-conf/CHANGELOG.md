@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1.1] - 2024-08-08
+
+### Changed
+
+* Fixed a bug in which a `setting` with only a default `value` was considered invalid.
+
 ## [0.5.1.0] - 2024-08-08
 
 ### Removed

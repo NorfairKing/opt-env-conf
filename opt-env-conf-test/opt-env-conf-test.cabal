@@ -188,6 +188,20 @@ extra-source-files:
     test_resources/docs/sub-settings/reference.txt
     test_resources/docs/sub-settings/show.txt
     test_resources/docs/sub-settings/version.txt
+    test_resources/docs/sum-type/config-docs.txt
+    test_resources/docs/sum-type/config.txt
+    test_resources/docs/sum-type/docs.txt
+    test_resources/docs/sum-type/env-docs.txt
+    test_resources/docs/sum-type/env.txt
+    test_resources/docs/sum-type/help.txt
+    test_resources/docs/sum-type/man.txt
+    test_resources/docs/sum-type/nix-options.nix
+    test_resources/docs/sum-type/opt-docs.txt
+    test_resources/docs/sum-type/opt-long.txt
+    test_resources/docs/sum-type/opt-short.txt
+    test_resources/docs/sum-type/reference.txt
+    test_resources/docs/sum-type/show.txt
+    test_resources/docs/sum-type/version.txt
     test_resources/docs/three-commands/config-docs.txt
     test_resources/docs/three-commands/config.txt
     test_resources/docs/three-commands/docs.txt

@@ -1,0 +1,13 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      ConfDoc
+        { confDocKeys =
+            ( "sum-type" :| []
+            , AnyOfSchema (NullSchema :| [ StringSchema ])
+            ) :|
+              []
+        , confDocDefault = Nothing
+        , confDocExamples = []
+        , confDocHelp = Just "example"
+        }
+  ]

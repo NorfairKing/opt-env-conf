@@ -21,13 +21,6 @@ spec = do
         ]
     )
   goldenLintTest
-    "only-default"
-    ( setting
-        [ help "Only a default value",
-          value ()
-        ]
-    )
-  goldenLintTest
     "dash-in-short"
     ( setting
         [ help "Dash in a 'short'",

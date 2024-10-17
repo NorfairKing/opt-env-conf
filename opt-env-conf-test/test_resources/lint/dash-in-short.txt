@@ -3,4 +3,4 @@
   [31mInvalid Setting:[m
   [33mshort[m may not contain a '-'.
   Found [33mshort[m '-'.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:32:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:25:7 in main:OptEnvConf.LintSpec[m

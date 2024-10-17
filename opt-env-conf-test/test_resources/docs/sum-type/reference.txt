@@ -1,0 +1,37 @@
+[36mUsage: [m[33msum-type[m [36m[[m[37m-a[m [36m|[m [37m-b[m[36m][m
+
+[36mAll settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information[m
+  switch: [37m--version[m
+
+  [34ma[m
+  switch: [37m-a[m
+
+  [34mb[m
+  switch: [37m-b[m
+
+  [34mexample[m
+  env: [37msum-type[m [33mSUM_TYPE[m
+  config:
+    [37msum-type[m: # [32mor null[m
+      [33m<string>[m
+  default: [33ma[m
+
+[36mOptions[m:
+  [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m       
+  [37m--version[m [34mOutput version information[m
+  [37m-a[m        [34ma[m                         
+  [37m-b[m        [34mb[m                         
+
+[36mEnvironment Variables[m:
+  [37msum-type[m [33mSUM_TYPE[m   [34mexample[m
+
+[36mConfiguration Values[m:
+  [34mexample[m
+  [37msum-type[m:
+    # [32mor null[m
+    [33m<string>[m
+

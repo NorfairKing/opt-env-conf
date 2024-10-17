@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -30,6 +31,7 @@ spec = do
   exampleParserSpec "yes-no-optional" "yesNoSwitch' example" yesNoParser'
   exampleParserSpec "verbose" "verbosity example" verboseParser
   exampleParserSpec "same-help" "example where multiple options use the same help string" sameHelpParser
+  exampleParserSpec "sum-type" "Sum type example" sumTypeParser
   exampleParserSpec "greet" "hello world example" greetParser
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
   exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
@@ -137,6 +139,56 @@ sameHelpParser =
               name "other",
               value True
             ]
+
+data SumType
+  = SumTypeA
+  | SumTypeB
+  deriving (Show)
+
+instance HasCodec SumType where
+  codec = bimapCodec parseSumType renderSumType codec
+
+parseSumType :: String -> Either String SumType
+parseSumType = \case
+  "a" -> pure SumTypeA
+  "b" -> pure SumTypeB
+  s -> Left $ unwords ["Unknown 'SumType':", s]
+
+renderSumType :: SumType -> String
+renderSumType = \case
+  SumTypeA -> "a"
+  SumTypeB -> "b"
+
+sumTypeParser :: Parser SumType
+sumTypeParser =
+  withoutConfig $
+    let h = help "example"
+     in choice
+          [ setting
+              [ help "a",
+                switch SumTypeA,
+                short 'a'
+              ],
+            setting
+              [ help "b",
+                switch SumTypeB,
+                short 'b'
+              ],
+            setting
+              [ h,
+                reader $ eitherReader parseSumType,
+                env "sum-type",
+                metavar "SUM_TYPE"
+              ],
+            setting
+              [ h,
+                conf "sum-type"
+              ],
+            setting
+              [ h,
+                valueWithShown SumTypeA "a"
+              ]
+          ]
 
 data Greet = Greet !String !String !Bool
 

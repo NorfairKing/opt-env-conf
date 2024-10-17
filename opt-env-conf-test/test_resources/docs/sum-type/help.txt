@@ -1,0 +1,24 @@
+[36mUsage: [m[33msum-type[m [36m[[m[37m-a[m [36m|[m [37m-b[m[36m][m
+
+Sum type example
+
+[36mAvailable settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34ma[m
+  switch: [37m-a[m
+
+  [34mb[m
+  switch: [37m-b[m
+
+  [34mexample[m
+  env: [37msum-type[m [33mSUM_TYPE[m
+  config:
+    [37msum-type[m: # [32mor null[m
+      [33m<string>[m
+  default: [33ma[m
+

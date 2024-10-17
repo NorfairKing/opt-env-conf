@@ -1,0 +1,10 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      EnvDoc
+        { envDocVars = "sum-type" :| []
+        , envDocDefault = Nothing
+        , envDocExamples = []
+        , envDocMetavar = Just "SUM_TYPE"
+        , envDocHelp = Just "example"
+        }
+  ]

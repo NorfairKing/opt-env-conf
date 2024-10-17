@@ -1,0 +1,45 @@
+.Dd $Mdocdate$
+.Dt sum-type 1
+.Os
+.Sh NAME
+.Nm sum-type
+.Nd Sum type example
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+sum-type [-a | -b]
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  a
+  switch: -a
+
+  b
+  switch: -b
+
+  example
+  env: sum-type SUM_TYPE
+  config:
+    sum-type: # or null
+      <string>
+  default: a
+
+.Sh OPTIONS
+  -h|--help Show this help text              
+  --version Output version information: 0.0.0
+  -a        a                                
+  -b        b                                
+
+.Sh ENVIRONMENT VARIABLES
+  sum-type SUM_TYPE   example
+
+.Sh CONFIGURATION VALUES
+  example
+  sum-type:
+    # or null
+    <string>
+

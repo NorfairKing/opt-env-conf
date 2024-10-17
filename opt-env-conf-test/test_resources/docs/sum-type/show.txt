@@ -1,0 +1,83 @@
+WithConfig
+  _
+  Nothing
+  (Pure _)
+  (Alt
+     (Setting
+        Nothing
+        (Setting
+           [ DashedShort 'a' ]
+           []
+           False
+           (Just _)
+           False
+           Nothing
+           Nothing
+           Nothing
+           Nothing
+           (Just "a")))
+     (Alt
+        (Setting
+           Nothing
+           (Setting
+              [ DashedShort 'b' ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              Nothing
+              (Just "b")))
+        (Alt
+           (Setting
+              Nothing
+              (Setting
+                 []
+                 [ _ ]
+                 False
+                 Nothing
+                 False
+                 (Just ("sum-type" :| []))
+                 Nothing
+                 Nothing
+                 (Just "SUM_TYPE")
+                 (Just "example")))
+           (Alt
+              (Setting
+                 Nothing
+                 (Setting
+                    []
+                    []
+                    False
+                    Nothing
+                    False
+                    Nothing
+                    (Just
+                       (ConfigValSetting
+                          ("sum-type" :| [])
+                          BimapCodec
+                          _
+                          _
+                          (EitherCodec
+                             PossiblyJointUnion
+                             NullCodec
+                             (BimapCodec _ _ (StringCodec Nothing))) :|
+                          []))
+                    Nothing
+                    Nothing
+                    (Just "example")))
+              (Setting
+                 Nothing
+                 (Setting
+                    []
+                    []
+                    False
+                    Nothing
+                    False
+                    Nothing
+                    Nothing
+                    (Just _)
+                    Nothing
+                    (Just "example")))))))

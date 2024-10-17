@@ -1,0 +1,80 @@
+AnyDocsAnd
+  [ AnyDocsSingle Nothing
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = True
+               , setDocTryOption = False
+               , setDocDasheds = [ DashedShort 'a' ]
+               , setDocEnvVars = Nothing
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp = Just "a"
+               })
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = True
+               , setDocTryOption = False
+               , setDocDasheds = [ DashedShort 'b' ]
+               , setDocEnvVars = Nothing
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp = Just "b"
+               })
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Just ("sum-type" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "SUM_TYPE"
+               , setDocHelp = Just "example"
+               })
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Nothing
+               , setDocConfKeys =
+                   Just
+                     (( "sum-type" :| []
+                      , AnyOfSchema (NullSchema :| [ StringSchema ])
+                      ) :|
+                        [])
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp = Just "example"
+               })
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Nothing
+               , setDocConfKeys = Nothing
+               , setDocDefault = Just "a"
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp = Just "example"
+               })
+      ]
+  ]

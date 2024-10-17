@@ -2,4 +2,4 @@
   
   [31mInvalid Setting:[m
   [33mcommands[m was called with an empty list.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:128:6 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:121:6 in main:OptEnvConf.LintSpec[m

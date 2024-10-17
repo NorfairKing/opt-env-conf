@@ -288,7 +288,8 @@ lintParser =
                 isNothing settingSwitchValue,
                 not settingTryOption,
                 isNothing settingEnvVars,
-                isNothing settingConfigVals
+                isNothing settingConfigVals,
+                isNothing settingDefaultValue
               ]
           )
           $ validationTFailure LintErrorEmptySetting

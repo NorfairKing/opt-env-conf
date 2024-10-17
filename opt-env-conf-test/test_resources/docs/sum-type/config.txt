@@ -1,0 +1,4 @@
+  [34mexample[m
+  [37msum-type[m:
+    # [32mor null[m
+    [33m<string>[m

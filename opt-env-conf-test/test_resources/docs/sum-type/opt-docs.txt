@@ -1,0 +1,29 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedShort 'a' ]
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Nothing
+           , optDocHelp = Just "a"
+           })
+  , AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedShort 'b' ]
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Nothing
+           , optDocHelp = Just "b"
+           })
+  , AnyDocsSingle Nothing
+  , AnyDocsSingle Nothing
+  , AnyDocsSingle Nothing
+  ]
