@@ -100,6 +100,7 @@ module OptEnvConf
     -- *** Secrets
     readSecretTextFile,
     secretTextFileSetting,
+    secretTextFileOrBareSetting,
 
     -- *** Migration
     strOption,

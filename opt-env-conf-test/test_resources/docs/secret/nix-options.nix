@@ -1,8 +1,18 @@
 { lib }:
 {
-  example-secret-file = lib.mkOption {
+  first-secret-file = lib.mkOption {
     default = null;
-    description = "example text file";
+    description = "First example secret";
+    type = lib.types.nullOr lib.types.str;
+  };
+  second-secret = lib.mkOption {
+    default = null;
+    description = "Second example secret, bare or in a file";
+    type = lib.types.nullOr lib.types.str;
+  };
+  second-secret-file = lib.mkOption {
+    default = null;
+    description = "Second example secret, bare or in a file";
     type = lib.types.nullOr lib.types.str;
   };
 }

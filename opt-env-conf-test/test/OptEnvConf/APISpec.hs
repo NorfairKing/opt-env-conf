@@ -191,13 +191,18 @@ sumTypeParser =
               ]
           ]
 
-secretParser :: Parser Text
+secretParser :: Parser (Text, Text)
 secretParser =
   withoutConfig $
-    secretTextFileSetting
-      [ help "example text file",
-        name "example-secret-file"
-      ]
+    (,)
+      <$> secretTextFileSetting
+        [ help "First example secret",
+          name "first-secret-file"
+        ]
+      <*> secretTextFileOrBareSetting
+        [ help "Second example secret, bare or in a file",
+          name "second-secret"
+        ]
 
 data Greet = Greet !String !String !Bool
 

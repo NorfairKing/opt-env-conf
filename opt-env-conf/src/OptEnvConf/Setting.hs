@@ -35,10 +35,12 @@ module OptEnvConf.Setting
     -- * Internal
     showSettingABit,
     completeBuilder,
+    mapMaybeBuilder,
     emptySetting,
     Metavar,
     Help,
     prefixConfigValSetting,
+    suffixConfigValSettingKey,
   )
 where
 
@@ -95,6 +97,14 @@ data ConfigValSetting a = forall void.
 
 prefixConfigValSetting :: String -> ConfigValSetting a -> ConfigValSetting a
 prefixConfigValSetting prefix c = c {configValSettingPath = prefix NE.<| configValSettingPath c}
+
+suffixConfigValSettingKey :: String -> ConfigValSetting a -> ConfigValSetting a
+suffixConfigValSettingKey suffix c = c {configValSettingPath = suffixPath $ configValSettingPath c}
+  where
+    suffixPath :: NonEmpty String -> NonEmpty String
+    suffixPath (f :| rest) = case NE.nonEmpty rest of
+      Nothing -> (f <> suffix) :| []
+      Just ne -> f NE.<| suffixPath ne
 
 -- | A 'mempty' 'Setting' to build up a setting from.
 emptySetting :: Setting a
@@ -204,6 +214,9 @@ instance Monoid (Builder f) where
 -- | Complete a 'Builder' into a 'Setting'
 completeBuilder :: Builder a -> Setting a
 completeBuilder b = applyBuildInstructions (unBuilder b) emptySetting
+
+mapMaybeBuilder :: (BuildInstruction a -> Maybe (BuildInstruction b)) -> Builder a -> Builder b
+mapMaybeBuilder func = Builder . mapMaybe func . unBuilder
 
 -- | Document a setting
 --

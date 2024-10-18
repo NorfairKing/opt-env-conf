@@ -5,6 +5,7 @@
 ### Added
 
 * `secretTextFileSetting`
+* `secretTextFileOrBareSetting`
 
 ## [0.6.0.0] - 2024-10-18
 

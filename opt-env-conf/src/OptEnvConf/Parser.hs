@@ -53,6 +53,7 @@ module OptEnvConf.Parser
     makeDoubleSwitch,
     readSecretTextFile,
     secretTextFileSetting,
+    secretTextFileOrBareSetting,
 
     -- * Parser implementation
     Parser (..),
@@ -914,8 +915,71 @@ readSecretTextFile :: Path Abs File -> IO Text
 readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 
 -- | Load a secret from a text file, with 'readSecretTextFile'
-secretTextFileSetting :: [Builder FilePath] -> Parser Text
-secretTextFileSetting = mapIO readSecretTextFile . filePathSetting
+secretTextFileSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
+secretTextFileSetting bs = withFrozenCallStack $ mapIO readSecretTextFile $ filePathSetting bs
+
+-- | Load a secret from a text file, with 'readSecretTextFile', or specify it
+-- directly
+secretTextFileOrBareSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
+secretTextFileOrBareSetting bs =
+  withFrozenCallStack $
+    let b = mconcat $ bs ++ [reader str]
+        bareSetting f = T.pack <$> setting [mapMaybeBuilder f b, metavar "SECRET"]
+        fileSetting f = secretTextFileSetting [mapMaybeBuilder f b]
+     in choice
+          [ bareSetting $ \case
+              BuildTryArgument -> Nothing
+              BuildAddShort s -> Just $ BuildAddShort s
+              BuildAddLong l -> Just $ BuildAddLong l
+              BuildAddEnv _ -> Nothing
+              BuildAddConf _ -> Nothing
+              BuildSetDefault _ _ -> Nothing
+              i -> Just i,
+            fileSetting $ \case
+              BuildTryArgument -> Nothing
+              BuildAddShort _ -> Nothing
+              BuildAddLong l -> Just $ BuildAddLong (l <> NE.fromList "-file")
+              BuildAddEnv _ -> Nothing
+              BuildAddConf _ -> Nothing
+              BuildSetDefault _ _ -> Nothing
+              i -> Just i,
+            bareSetting $ \case
+              BuildTryArgument -> Nothing
+              BuildTryOption -> Nothing
+              BuildAddShort _ -> Nothing
+              BuildAddLong _ -> Nothing
+              BuildAddEnv v -> Just $ BuildAddEnv v
+              BuildAddConf _ -> Nothing
+              BuildSetDefault _ _ -> Nothing
+              i -> Just i,
+            fileSetting $ \case
+              BuildTryArgument -> Nothing
+              BuildTryOption -> Nothing
+              BuildAddShort _ -> Nothing
+              BuildAddLong _ -> Nothing
+              BuildAddEnv e -> Just $ BuildAddEnv $ e ++ "_FILE"
+              BuildAddConf _ -> Nothing
+              BuildSetDefault _ _ -> Nothing
+              i -> Just i,
+            bareSetting $ \case
+              BuildTryArgument -> Nothing
+              BuildTryOption -> Nothing
+              BuildAddShort _ -> Nothing
+              BuildAddLong _ -> Nothing
+              BuildAddEnv _ -> Nothing
+              BuildAddConf k -> Just $ BuildAddConf k
+              BuildSetDefault _ _ -> Nothing
+              i -> Just i,
+            fileSetting $ \case
+              BuildTryArgument -> Nothing
+              BuildTryOption -> Nothing
+              BuildAddShort _ -> Nothing
+              BuildAddLong _ -> Nothing
+              BuildAddEnv _ -> Nothing
+              BuildAddConf k -> Just $ BuildAddConf $ suffixConfigValSettingKey "-file" k
+              BuildSetDefault _ _ -> Nothing
+              i -> Just i
+          ]
 
 -- | Prefix all 'long's and 'short's with a given 'String'.
 {-# ANN subArgs ("NOCOVER" :: String) #-}
