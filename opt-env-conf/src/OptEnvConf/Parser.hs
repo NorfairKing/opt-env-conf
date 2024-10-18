@@ -52,6 +52,7 @@ module OptEnvConf.Parser
     yesNoSwitch,
     makeDoubleSwitch,
     readSecretTextFile,
+    secretTextFileSetting,
 
     -- * Parser implementation
     Parser (..),
@@ -911,6 +912,10 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
 -- that messes with line endings.
 readSecretTextFile :: Path Abs File -> IO Text
 readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
+
+-- | Load a secret from a text file, with 'readSecretTextFile'
+secretTextFileSetting :: [Builder FilePath] -> Parser Text
+secretTextFileSetting = mapIO readSecretTextFile . filePathSetting
 
 -- | Prefix all 'long's and 'short's with a given 'String'.
 {-# ANN subArgs ("NOCOVER" :: String) #-}

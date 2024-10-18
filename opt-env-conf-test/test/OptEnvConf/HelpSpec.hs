@@ -134,12 +134,11 @@ instance HasParser PaymentSettings where
           metavar "PUBLIC_KEY"
         ]
     paymentSetSecretKey <-
-      mapIO readSecretTextFile $
-        filePathSetting
-          [ help "Secret key",
-            name "secret-key",
-            metavar "SECRET_KEY_FILE"
-          ]
+      secretTextFileSetting
+        [ help "Secret key",
+          name "secret-key",
+          metavar "SECRET_KEY_FILE"
+        ]
     paymentSetCurrency <-
       optional $
         setting

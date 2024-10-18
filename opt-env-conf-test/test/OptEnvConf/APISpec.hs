@@ -32,6 +32,7 @@ spec = do
   exampleParserSpec "verbose" "verbosity example" verboseParser
   exampleParserSpec "same-help" "example where multiple options use the same help string" sameHelpParser
   exampleParserSpec "sum-type" "Sum type example" sumTypeParser
+  exampleParserSpec "secret" "Secrets example" secretParser
   exampleParserSpec "greet" "hello world example" greetParser
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
   exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
@@ -189,6 +190,14 @@ sumTypeParser =
                 valueWithShown SumTypeA "a"
               ]
           ]
+
+secretParser :: Parser Text
+secretParser =
+  withoutConfig $
+    secretTextFileSetting
+      [ help "example text file",
+        name "example-secret-file"
+      ]
 
 data Greet = Greet !String !String !Bool
 

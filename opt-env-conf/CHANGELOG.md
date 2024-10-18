@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+* `secretTextFileSetting`
+
 ## [0.6.0.0] - 2024-10-18
 
 ### Added

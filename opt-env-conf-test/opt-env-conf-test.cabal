@@ -146,6 +146,20 @@ extra-source-files:
     test_resources/docs/same-help/reference.txt
     test_resources/docs/same-help/show.txt
     test_resources/docs/same-help/version.txt
+    test_resources/docs/secret/config-docs.txt
+    test_resources/docs/secret/config.txt
+    test_resources/docs/secret/docs.txt
+    test_resources/docs/secret/env-docs.txt
+    test_resources/docs/secret/env.txt
+    test_resources/docs/secret/help.txt
+    test_resources/docs/secret/man.txt
+    test_resources/docs/secret/nix-options.nix
+    test_resources/docs/secret/opt-docs.txt
+    test_resources/docs/secret/opt-long.txt
+    test_resources/docs/secret/opt-short.txt
+    test_resources/docs/secret/reference.txt
+    test_resources/docs/secret/show.txt
+    test_resources/docs/secret/version.txt
     test_resources/docs/some-args/config-docs.txt
     test_resources/docs/some-args/config.txt
     test_resources/docs/some-args/docs.txt
