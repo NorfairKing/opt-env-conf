@@ -113,7 +113,7 @@ renderError ParseError {..} =
         ParseErrorConfigRead md s ->
           ["Failed to parse configuration: "]
             : maybe [] renderConfDoc md
-            ++ [[chunk $ T.pack $ show s]]
+            ++ [[chunk $ T.pack s]]
         ParseErrorMissingCommand cs ->
           ["Missing command, available commands:"]
             : availableCommandsLines cs

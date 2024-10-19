@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0.2] - 2024-10-20
+
+### Changed
+
+* Fixed that configuration parsing errors were double-`show`n.
+
 ## [0.6.0.1] - 2024-10-18
 
 ### Added
