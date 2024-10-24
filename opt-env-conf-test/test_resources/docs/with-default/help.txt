@@ -1,0 +1,18 @@
+[36mUsage: [m[33mwith-default[m [36m[[m[37m-f[m[36m|[m[37m--first[m [36m|[m [36m[[m[37m-s[m[36m|[m[37m--second[m[36m][m[36m][m
+
+withDefault example
+
+[36mAvailable settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mfirst[m
+  switch: [37m-f[m[36m|[m[37m--first[m
+
+  [34msecond[m
+  switch: [37m-s[m[36m|[m[37m--second[m
+  default: [33mSecond[m
+

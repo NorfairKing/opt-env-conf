@@ -33,6 +33,7 @@ spec = do
   exampleParserSpec "same-help" "example where multiple options use the same help string" sameHelpParser
   exampleParserSpec "sum-type" "Sum type example" sumTypeParser
   exampleParserSpec "secret" "Secrets example" secretParser
+  exampleParserSpec "with-default" "withDefault example" withDefaultParser
   exampleParserSpec "greet" "hello world example" greetParser
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
   exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
@@ -203,6 +204,30 @@ secretParser =
         [ help "Second example secret, bare or in a file",
           name "second-secret"
         ]
+
+data FirstOrSecond = First | Second
+  deriving (Show)
+
+instance HasParser FirstOrSecond where
+  settingsParser =
+    -- This version has no default value, so we can add one with 'withDefault'
+    choice
+      [ setting
+          [ help "first",
+            switch First,
+            short 'f',
+            long "first"
+          ],
+        setting
+          [ help "second",
+            switch Second,
+            short 's',
+            long "second"
+          ]
+      ]
+
+withDefaultParser :: Parser FirstOrSecond
+withDefaultParser = withDefault Second settingsParser
 
 data Greet = Greet !String !String !Bool
 

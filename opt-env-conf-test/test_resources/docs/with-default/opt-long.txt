@@ -1,0 +1,2 @@
+  [37m-f[m[36m|[m[37m--first[m  [34mfirst[m                 
+  [37m-s[m[36m|[m[37m--second[m [34msecond[m default: [33mSecond[m

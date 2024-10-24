@@ -1,0 +1,30 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = True
+           , setDocTryOption = False
+           , setDocDasheds = [ DashedShort 'f' , DashedLong ('f' :| "irst") ]
+           , setDocEnvVars = Nothing
+           , setDocConfKeys = Nothing
+           , setDocDefault = Nothing
+           , setDocExamples = []
+           , setDocMetavar = Nothing
+           , setDocHelp = Just "first"
+           })
+  , AnyDocsSingle
+      (Just
+         SetDoc
+           { setDocTryArgument = False
+           , setDocTrySwitch = True
+           , setDocTryOption = False
+           , setDocDasheds = [ DashedShort 's' , DashedLong ('s' :| "econd") ]
+           , setDocEnvVars = Nothing
+           , setDocConfKeys = Nothing
+           , setDocDefault = Just "Second"
+           , setDocExamples = []
+           , setDocMetavar = Nothing
+           , setDocHelp = Just "second"
+           })
+  ]

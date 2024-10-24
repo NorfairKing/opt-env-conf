@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0.3] - 2024-10-24
+
+### Added
+
+* `withDefault` and `withShownDefault`.
+
 ## [0.6.0.2] - 2024-10-20
 
 ### Changed

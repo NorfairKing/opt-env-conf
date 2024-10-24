@@ -1,0 +1,26 @@
+AnyDocsOr
+  [ AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedShort 'f' , DashedLong ('f' :| "irst") ]
+           , optDocDefault = Nothing
+           , optDocExamples = []
+           , optDocMetavar = Nothing
+           , optDocHelp = Just "first"
+           })
+  , AnyDocsSingle
+      (Just
+         OptDoc
+           { optDocTryArgument = False
+           , optDocTrySwitch = True
+           , optDocTryOption = False
+           , optDocDasheds = [ DashedShort 's' , DashedLong ('s' :| "econd") ]
+           , optDocDefault = Just "Second"
+           , optDocExamples = []
+           , optDocMetavar = Nothing
+           , optDocHelp = Just "second"
+           })
+  ]

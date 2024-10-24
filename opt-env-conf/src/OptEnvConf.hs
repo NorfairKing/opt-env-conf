@@ -78,6 +78,8 @@ module OptEnvConf
     checkMapMaybe,
     mapIO,
     choice,
+    withDefault,
+    withShownDefault,
 
     -- ** Loading configuration files
     withConfig,

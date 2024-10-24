@@ -1,0 +1,27 @@
+Alt
+  (Setting
+     Nothing
+     (Setting
+        [ DashedShort 'f' , DashedLong ('f' :| "irst") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        (Just "first")))
+  (Setting
+     Nothing
+     (Setting
+        [ DashedShort 's' , DashedLong ('s' :| "econd") ]
+        []
+        False
+        (Just _)
+        False
+        Nothing
+        Nothing
+        (Just _)
+        Nothing
+        (Just "second")))

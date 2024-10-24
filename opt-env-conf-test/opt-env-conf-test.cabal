@@ -244,6 +244,20 @@ extra-source-files:
     test_resources/docs/verbose/reference.txt
     test_resources/docs/verbose/show.txt
     test_resources/docs/verbose/version.txt
+    test_resources/docs/with-default/config-docs.txt
+    test_resources/docs/with-default/config.txt
+    test_resources/docs/with-default/docs.txt
+    test_resources/docs/with-default/env-docs.txt
+    test_resources/docs/with-default/env.txt
+    test_resources/docs/with-default/help.txt
+    test_resources/docs/with-default/man.txt
+    test_resources/docs/with-default/nix-options.nix
+    test_resources/docs/with-default/opt-docs.txt
+    test_resources/docs/with-default/opt-long.txt
+    test_resources/docs/with-default/opt-short.txt
+    test_resources/docs/with-default/reference.txt
+    test_resources/docs/with-default/show.txt
+    test_resources/docs/with-default/version.txt
     test_resources/docs/yes-no-optional/config-docs.txt
     test_resources/docs/yes-no-optional/config.txt
     test_resources/docs/yes-no-optional/docs.txt

@@ -37,6 +37,8 @@ module OptEnvConf.Parser
     subAll,
     subSettings,
     someNonEmpty,
+    withDefault,
+    withShownDefault,
     withConfig,
     withYamlConfig,
     withFirstYamlConfig,
@@ -507,6 +509,39 @@ strArgument builders =
 -- | Like 'some' but with a more accurate type
 someNonEmpty :: Parser a -> Parser (NonEmpty a)
 someNonEmpty = ParserSome
+
+-- | Give a parser a default value.
+--
+-- This is morally equal to @(<|> pure a)@ but will give
+-- you better documentation of the default value in many
+-- cases.
+--
+-- This does nothing if the parser already has a default value.
+withDefault :: (Show a) => a -> Parser a -> Parser a
+withDefault defaultValue = withShownDefault defaultValue (show defaultValue)
+
+-- | Like 'withDefault' but lets you specfiy how to show the default value
+-- yourself.
+withShownDefault :: a -> String -> Parser a -> Parser a
+withShownDefault defaultValue shownDefault = go
+  where
+    go p =
+      let p' = p <|> pure defaultValue
+       in case p of
+            ParserPure a -> ParserPure a
+            ParserAp {} -> p'
+            ParserSelect {} -> p'
+            ParserEmpty _ -> ParserPure defaultValue
+            ParserAlt p1 p2 -> ParserAlt p1 (go p2)
+            ParserMany {} -> p'
+            ParserSome {} -> p'
+            ParserAllOrNothing {} -> p'
+            ParserCheck {} -> p'
+            ParserCommands {} -> p'
+            ParserWithConfig {} -> p'
+            ParserSetting mLoc s -> case settingDefaultValue s of
+              Nothing -> ParserSetting mLoc $ s {settingDefaultValue = Just (defaultValue, shownDefault)}
+              Just _ -> p
 
 -- | Try a list of parsers in order
 choice :: (HasCallStack) => [Parser a] -> Parser a

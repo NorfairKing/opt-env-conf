@@ -1,0 +1,30 @@
+.Dd $Mdocdate$
+.Dt with-default 1
+.Os
+.Sh NAME
+.Nm with-default
+.Nd withDefault example
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+with-default [-f|--first | [-s|--second]]
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  first
+  switch: -f|--first
+
+  second
+  switch: -s|--second
+  default: Second
+
+.Sh OPTIONS
+  -h|--help   Show this help text                              
+  --version   Output version information: 0.0.0                
+  -f|--first  first                                            
+  -s|--second second                            default: Second
+
