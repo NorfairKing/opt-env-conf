@@ -13,6 +13,7 @@ value:
   - put a metavar inside a reader?
   - helpers for parsing tests
   - 'errors: if the env var would fail to parse, fail, even if something before parses'
+  - Default settings for xdg env vars
   - entry: Refactors
     forest:
     - set up weeder
@@ -43,4 +44,5 @@ value:
     - when parsing two of the same config values, show them with an or instead of
       showing the schema twice
     - no need for the extra indent in the settings part of the manpage
+    - Have 'renderCommandHelpPage' also gather global options on the way
   - get rid of all todos
