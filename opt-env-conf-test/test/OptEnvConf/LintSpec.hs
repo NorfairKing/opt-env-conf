@@ -180,6 +180,13 @@ spec = do
             ] ::
         Parser [Int]
     )
+  goldenLintTest
+    "unknown-default-command"
+    ( commands
+        [ command "a" "a" $ pure 'a',
+          defaultCommand "b"
+        ]
+    )
 
 goldenLintTest :: (HasCallStack) => FilePath -> Parser a -> Spec
 goldenLintTest fp parser = withFrozenCallStack $

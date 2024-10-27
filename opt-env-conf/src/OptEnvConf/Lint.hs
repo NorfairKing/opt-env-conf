@@ -20,10 +20,10 @@ import Data.Foldable
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Stack (SrcLoc, prettySrcLoc)
 import OptEnvConf.Args
+import OptEnvConf.Output
 import OptEnvConf.Parser
 import qualified OptEnvConf.Reader as OptEnvConf
 import OptEnvConf.Setting
@@ -50,6 +50,7 @@ data LintErrorMessage
   | LintErrorNoReaderForEnvVar
   | LintErrorNoMetavarForEnvVar
   | LintErrorNoCommands
+  | LintErrorUnknownDefaultCommand !String
   | LintErrorUnreadableExample !String
   | LintErrorConfigWithoutLoad
   | LintErrorManyInfinite
@@ -196,6 +197,12 @@ renderLintError LintError {..} =
               " was called with an empty list."
             ]
           ]
+        LintErrorUnknownDefaultCommand c ->
+          [ [ functionChunk "defaultCommand",
+              " was called with an unknown command: ",
+              commandChunk c
+            ]
+          ]
         LintErrorUnreadableExample e ->
           [ [functionChunk "example", " was called with an example that none of the ", functionChunk "reader", "s succeed in reading."],
             ["Example: ", chunk $ T.pack e]
@@ -223,9 +230,6 @@ renderLintError LintError {..} =
           ],
       maybe [] (pure . ("Defined at: " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) lintErrorSrcLoc
     ]
-
-functionChunk :: Text -> Chunk
-functionChunk = fore yellow . chunk
 
 lintParser :: Parser a -> Maybe (NonEmpty LintError)
 lintParser =
@@ -268,10 +272,16 @@ lintParser =
         pure c
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
-      ParserCommands mLoc _ ls -> do
-        if null ls
+      ParserCommands mLoc mDefault cs -> do
+        if null cs
           then validationTFailure $ LintError mLoc LintErrorNoCommands
-          else and <$> traverse (go . commandParser) ls -- TODO is this right?
+          else do
+            for_ mDefault $ \d ->
+              when (isNothing (find ((== d) . commandArg) cs)) $
+                validationTFailure $
+                  LintError mLoc $
+                    LintErrorUnknownDefaultCommand d
+            and <$> traverse (go . commandParser) cs -- TODO is this right?
       ParserWithConfig _ p1 p2 -> do
         c1 <- go p1
         c2 <- local (const True) (go p2)

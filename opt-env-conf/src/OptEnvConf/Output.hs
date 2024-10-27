@@ -32,6 +32,9 @@ usageChunk = fore cyan "Usage: "
 commandChunk :: String -> Chunk
 commandChunk = fore magenta . chunk . T.pack
 
+functionChunk :: Text -> Chunk
+functionChunk = fore yellow . chunk
+
 mMetavarChunk :: Maybe Metavar -> Chunk
 mMetavarChunk = metavarChunk . fromMaybe "METAVAR"
 

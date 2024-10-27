@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0.4] - 2024-10-24
+
+### Added
+
+* Added a lint for an unknown default command.
+
 ## [0.6.0.3] - 2024-10-24
 
 ### Added
