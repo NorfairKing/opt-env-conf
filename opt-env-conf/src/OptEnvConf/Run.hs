@@ -26,9 +26,9 @@ import qualified Data.Aeson.Types as JSON
 import Data.List (find)
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Maybe
-import Data.Set (Set)
-import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Traversable
 import Data.Version
@@ -325,7 +325,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
-            ppStateParsedSettings = S.empty
+            ppStateParsedSettings = M.empty
           }
   let ppEnv =
         PPEnv
@@ -421,19 +421,19 @@ runParserOn mDebugMode parser args envVars mConfig = do
                 then ppErrors' errs
                 else do
                   -- Settings available below
-                  let settingsSet = parserSettingsSet p'
+                  let settingsMap = parserSettingsMap p'
                   -- Settings that have been parsed
-                  parsedSet <- gets ppStateParsedSettings
+                  parsedMap <- gets ppStateParsedSettings
                   -- Settings that have been parsed below
-                  let parsedSettingsSet = settingsSet `S.intersection` parsedSet
+                  let parsedSettingsMap = settingsMap `M.intersection` parsedMap
                   -- If any settings have been parsed below, and parsing still failed
                   -- (this is the case because we're in the failure branch)
                   -- with only forgivable errors
                   -- (this is the case because we're in the branch where that's been checked)
                   -- then this should be an unforgivable error.
-                  if not (null parsedSettingsSet)
-                    then ppErrors' $ errs <> (ParseError mLoc ParseErrorAllOrNothing :| [])
-                    else ppErrors' errs
+                  if null parsedSettingsMap
+                    then ppErrors' errs
+                    else ppErrors' $ errs <> (ParseError mLoc (ParseErrorAllOrNothing parsedSettingsMap) :| [])
       ParserCheck mLoc forgivable f p' -> do
         debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
@@ -490,8 +490,9 @@ runParserOn mDebugMode parser args envVars mConfig = do
                   ( \loc -> modify' $ \s ->
                       s
                         { ppStateParsedSettings =
-                            S.insert
+                            M.insert
                               (hashSrcLoc loc)
+                              loc
                               (ppStateParsedSettings s)
                         }
                   )
@@ -725,7 +726,7 @@ runHelpParser mDebugMode args parser = do
   let ppState =
         PPState
           { ppStateArgs = args,
-            ppStateParsedSettings = S.empty
+            ppStateParsedSettings = M.empty
           }
   let ppEnv =
         PPEnv
@@ -866,7 +867,7 @@ ppNonDetList = ppNonDet . liftNonDetTList
 
 data PPState = PPState
   { ppStateArgs :: !Args,
-    ppStateParsedSettings :: !(Set SrcLocHash)
+    ppStateParsedSettings :: !(Map SrcLocHash SrcLoc)
   }
 
 data PPEnv = PPEnv

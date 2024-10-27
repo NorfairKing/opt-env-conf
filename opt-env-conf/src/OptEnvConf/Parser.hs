@@ -71,7 +71,7 @@ module OptEnvConf.Parser
     commandTraverseSetting,
 
     -- ** All or nothing implementation
-    parserSettingsSet,
+    parserSettingsMap,
     SrcLocHash (..),
     hashSrcLoc,
 
@@ -93,9 +93,9 @@ import Data.Functor.Identity
 import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Maybe
-import Data.Set (Set)
-import qualified Data.Set as S
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -1138,28 +1138,28 @@ commandTraverseSetting func c = do
   (\p -> c {commandParser = p})
     <$> parserTraverseSetting func (commandParser c)
 
-parserSettingsSet :: Parser a -> Set SrcLocHash
-parserSettingsSet = go
+parserSettingsMap :: Parser a -> Map SrcLocHash SrcLoc
+parserSettingsMap = go
   where
-    go :: Parser a -> Set SrcLocHash
+    go :: Parser a -> Map SrcLocHash SrcLoc
     go = \case
-      ParserPure _ -> S.empty
-      ParserAp p1 p2 -> S.union (go p1) (go p2)
-      ParserSelect p1 p2 -> S.union (go p1) (go p2)
-      ParserEmpty _ -> S.empty
-      ParserAlt p1 p2 -> S.union (go p1) (go p2)
+      ParserPure _ -> M.empty
+      ParserAp p1 p2 -> M.union (go p1) (go p2)
+      ParserSelect p1 p2 -> M.union (go p1) (go p2)
+      ParserEmpty _ -> M.empty
+      ParserAlt p1 p2 -> M.union (go p1) (go p2)
       ParserMany p -> go p
       ParserSome p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheck _ _ _ p -> go p
-      ParserCommands _ _ cs -> S.unions $ map (go . commandParser) cs
-      ParserWithConfig _ p1 p2 -> S.union (go p1) (go p2)
+      ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs
+      ParserWithConfig _ p1 p2 -> M.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't
-      ParserSetting mLoc _ -> maybe S.empty (S.singleton . hashSrcLoc) mLoc
+      ParserSetting mLoc _ -> maybe M.empty (\loc -> M.singleton (hashSrcLoc loc) loc) mLoc
 
 -- An 'Ord'-able SrcLoc
 newtype SrcLocHash = SrcLocHash Int
-  deriving (Eq, Ord)
+  deriving (Show, Eq, Ord)
 
 hashSrcLoc :: SrcLoc -> SrcLocHash
 hashSrcLoc = SrcLocHash . hash . prettySrcLoc

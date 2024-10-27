@@ -1,6 +1,12 @@
 # Changelog
 
-## [0.6.0.4] - 2024-10-24
+## [0.7.0.0] - 2024-10-27
+
+### Added
+
+* The `allOrNothing` error now shows which settings were defined.
+
+## [0.6.0.4] - 2024-10-26
 
 ### Added
 

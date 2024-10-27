@@ -6,10 +6,13 @@ module OptEnvConf.Error where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
+import Data.Map (Map)
+import qualified Data.Map as M
 import qualified Data.Text as T
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Doc
 import OptEnvConf.Output
+import OptEnvConf.Parser
 import Text.Colour
 
 data ParseError = ParseError
@@ -34,7 +37,7 @@ data ParseErrorMessage
   | ParseErrorConfigRead !(Maybe ConfDoc) !String
   | ParseErrorMissingCommand ![CommandDoc ()]
   | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
-  | ParseErrorAllOrNothing
+  | ParseErrorAllOrNothing !(Map SrcLocHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
   deriving (Show)
 
@@ -59,7 +62,7 @@ errorMessageIsForgivable = \case
   ParseErrorConfigRead _ _ -> False
   ParseErrorMissingCommand cs -> not $ null cs
   ParseErrorUnrecognisedCommand _ _ -> False
-  ParseErrorAllOrNothing -> False
+  ParseErrorAllOrNothing _ -> False
   ParseErrorUnrecognised _ -> False
 
 eraseErrorSrcLocs :: (Functor f) => f ParseError -> f ParseError
@@ -122,9 +125,11 @@ renderError ParseError {..} =
             [fore blue "available commands:"]
           ]
             ++ availableCommandsLines cs
-        ParseErrorAllOrNothing ->
-          [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing (or subSettings) parser have been defined."]
+        ParseErrorAllOrNothing locs ->
+          [ ["You are seeing this error because at least one, but not all, of the settings in an allOrNothing (or subSettings) parser have been defined."],
+            ["The following settings have been parsed:"]
           ]
+            ++ map (pure . srcLocChunk) (M.elems locs)
         ParseErrorUnrecognised leftovers ->
           ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
       maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
