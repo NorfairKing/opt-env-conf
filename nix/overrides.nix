@@ -95,7 +95,7 @@ let
 
   # Note to reader: If you find code while debugging a build failure, please
   # contribute a more accurate version of this function:
-  addSettingsCheckToService = service: service // {
+  addSettingsCheckToService = service: lib.recursiveUpdate service {
     documentation =
       let
         path = service.path or [ ];
@@ -110,7 +110,21 @@ let
       (service.documentation or [ ]) ++ [ "${check}" ];
   };
   # For home-manager:
-  addSettingsCheckToUserService = service: service // { };
+  addSettingsCheckToUserService = service: lib.recursiveUpdate service
+    {
+      Unit.Documentation =
+        let
+          path = service.path or [ ];
+          pathVar = makeSearchPath "bin" path;
+          environment = ((service.environment or { }) // { PATH = pathVar; });
+          check = makeSettingsCheck
+            (service.name or "settings-check")
+            service.Service.ExecStart
+            [ ] # TODO is this right?
+            environment;
+        in
+        (service.Unit.Documentation or [ ]) ++ [ "${check}" ];
+    };
   opt-env-conf = overrideCabal (optEnvConfPkg "opt-env-conf") (old: {
     passthru = {
       inherit
