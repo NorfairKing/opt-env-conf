@@ -122,8 +122,17 @@ parseArgs args = Args {argsBefore = [], argsAfter = map (Live . parseArg) args}
 -- The result are all possible results
 consumeArgument :: Args -> [(Maybe String, Args)]
 consumeArgument as = do
-  case argsAfter as of
-    [] -> [(Nothing, as)]
+  -- There's always the last-ditch option of consuming nothing in case of
+  -- things like a default command.
+  let addConsumeNothing = \case
+        [] -> [(Nothing, as)]
+        r@(t@(mA, _) : rest) -> case mA of
+          -- If not consuming anything is already an option, don't add it to the end.
+          Nothing -> r
+          Just _ -> t : addConsumeNothing rest
+
+  addConsumeNothing $ case argsAfter as of
+    [] -> []
     (firstArg : afters) ->
       let befores = argsBefore as
           consumed = Args (befores ++ [Dead]) afters

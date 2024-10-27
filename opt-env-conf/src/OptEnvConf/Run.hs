@@ -453,15 +453,14 @@ runParserOn mDebugMode parser args envVars mConfig = do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]
         ppIndent $ do
-          stateBefore <- get
           mS <- ppArg
           let docsForErrors = map (void . commandParserDocs) cs
-          let mDefaultCommand = do
-                d <- mDefault
-                find ((== d) . commandArg) cs
           case mS of
             Nothing -> do
               debug ["No argument found for choosing a command."]
+              let mDefaultCommand = do
+                    d <- mDefault
+                    find ((== d) . commandArg) cs
               case mDefaultCommand of
                 Nothing -> ppError mLoc $ ParseErrorMissingCommand docsForErrors
                 Just dc -> do
@@ -469,17 +468,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
                   go $ commandParser dc
             Just s -> do
               case find ((== s) . commandArg) cs of
-                Nothing -> do
-                  debug ["Argument found, but no matching command: ", chunk $ T.pack $ show s]
-                  case mDefaultCommand of
-                    Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s docsForErrors
-                    Just dc -> do
-                      debug ["Choosing default command instead: ", commandChunk (commandArg dc)]
-                      -- Put the state back to before we parsed 'ppArg' above
-                      -- Maintainer note: We could try to un-parse this arg
-                      -- somehow but that sounds more complicated to me.
-                      put stateBefore
-                      go $ commandParser dc
+                Nothing -> ppError mLoc $ ParseErrorUnrecognisedCommand s docsForErrors
                 Just c -> do
                   debug ["Set command to ", commandChunk (commandArg c)]
                   go $ commandParser c

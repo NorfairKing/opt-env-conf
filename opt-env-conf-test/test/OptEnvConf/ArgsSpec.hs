@@ -46,16 +46,25 @@ spec = do
       consumeArgument [] `shouldBe` [(Nothing, emptyArgs)]
     it "consumes a plain argument when there is one" $
       forAllValid $ \s ->
-        consumeArgument [Live (ArgPlain s)] `shouldBe` [(Just s, Args [Dead] [])]
+        let as = [Live (ArgPlain s)]
+         in consumeArgument as
+              `shouldBe` [(Just s, Args [Dead] []), (Nothing, as)]
     it "consumes a bare double-dash if it's the last argument" $
       forAllValid $ \befores ->
-        consumeArgument (Args befores [Live ArgBareDoubleDash]) `shouldBe` [(Just "--", Args (befores ++ [Dead]) [])]
+        let as = Args befores [Live ArgBareDoubleDash]
+         in consumeArgument as
+              `shouldBe` [ (Just "--", Args (befores ++ [Dead]) []),
+                           (Nothing, as)
+                         ]
     it "consumes any argument after a double-dash as an argument" $
       forAllValid $ \befores ->
         forAllValid $ \bareArg ->
           forAllValid $ \rest ->
-            consumeArgument (Args befores (Live ArgBareDoubleDash : Live bareArg : rest))
-              `shouldBe` [(Just (renderArg bareArg), Args befores (Live ArgBareDoubleDash : Dead : rest))]
+            let as = Args befores (Live ArgBareDoubleDash : Live bareArg : rest)
+             in consumeArgument as
+                  `shouldBe` [ (Just (renderArg bareArg), Args befores (Live ArgBareDoubleDash : Dead : rest)),
+                               (Nothing, as)
+                             ]
     it "skips dead arguments" $
       forAllValid $ \befores ->
         forAllValid $ \afters ->
