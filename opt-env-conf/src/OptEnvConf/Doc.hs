@@ -14,11 +14,14 @@ module OptEnvConf.Doc
     renderManPage,
     renderReferenceDocumentation,
     parserOptDocs,
+    docsToOptDocs,
     renderLongOptDocs,
     renderShortOptDocs,
     parserEnvDocs,
+    docsToEnvDocs,
     renderEnvDocs,
     parserConfDocs,
+    docsToConfDocs,
     renderConfDocs,
 
     -- * Internal
