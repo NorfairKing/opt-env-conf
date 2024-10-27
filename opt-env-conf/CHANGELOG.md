@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0.1] - 2024-10-27
+
+### Changed
+
+* Fixed a bug in which `allOrNothing` (and `subSettings`) could malfunction
+  when using a common library setting multiple times.
+
 ## [0.7.0.0] - 2024-10-27
 
 ### Added

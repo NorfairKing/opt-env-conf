@@ -72,8 +72,6 @@ module OptEnvConf.Parser
 
     -- ** All or nothing implementation
     parserSettingsMap,
-    SrcLocHash (..),
-    hashSrcLoc,
 
     -- ** Re-exports
     Functor (..),
@@ -90,7 +88,6 @@ import Control.Selective
 import Data.Aeson as JSON
 import qualified Data.Aeson.KeyMap as KM
 import Data.Functor.Identity
-import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
@@ -100,7 +97,7 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, prettySrcLoc, withFrozenCallStack)
+import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
@@ -1138,10 +1135,10 @@ commandTraverseSetting func c = do
   (\p -> c {commandParser = p})
     <$> parserTraverseSetting func (commandParser c)
 
-parserSettingsMap :: Parser a -> Map SrcLocHash SrcLoc
+parserSettingsMap :: Parser a -> Map SettingHash SrcLoc
 parserSettingsMap = go
   where
-    go :: Parser a -> Map SrcLocHash SrcLoc
+    go :: Parser a -> Map SettingHash SrcLoc
     go = \case
       ParserPure _ -> M.empty
       ParserAp p1 p2 -> M.union (go p1) (go p2)
@@ -1155,11 +1152,4 @@ parserSettingsMap = go
       ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs
       ParserWithConfig _ p1 p2 -> M.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't
-      ParserSetting mLoc _ -> maybe M.empty (\loc -> M.singleton (hashSrcLoc loc) loc) mLoc
-
--- An 'Ord'-able SrcLoc
-newtype SrcLocHash = SrcLocHash Int
-  deriving (Show, Eq, Ord)
-
-hashSrcLoc :: SrcLoc -> SrcLocHash
-hashSrcLoc = SrcLocHash . hash . prettySrcLoc
+      ParserSetting mLoc s -> maybe M.empty (M.singleton (hashSetting s)) mLoc

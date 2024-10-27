@@ -491,7 +491,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
                       s
                         { ppStateParsedSettings =
                             M.insert
-                              (hashSrcLoc loc)
+                              (hashSetting set)
                               loc
                               (ppStateParsedSettings s)
                         }
@@ -867,7 +867,7 @@ ppNonDetList = ppNonDet . liftNonDetTList
 
 data PPState = PPState
   { ppStateArgs :: !Args,
-    ppStateParsedSettings :: !(Map SrcLocHash SrcLoc)
+    ppStateParsedSettings :: !(Map SettingHash SrcLoc)
   }
 
 data PPEnv = PPEnv

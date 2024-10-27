@@ -34,6 +34,8 @@ module OptEnvConf.Setting
 
     -- * Internal
     showSettingABit,
+    SettingHash (..),
+    hashSetting,
     completeBuilder,
     mapMaybeBuilder,
     emptySetting,
@@ -45,10 +47,11 @@ module OptEnvConf.Setting
 where
 
 import Autodocodec
+import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
-import OptEnvConf.Args (Dashed (..))
+import OptEnvConf.Args (Dashed (..), renderDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Reader
 import Text.Show
@@ -88,6 +91,26 @@ data Setting a = Setting
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String)
   }
+
+-- An 'Ord'-able Setting without giving 'Setting' an 'Eq' instance
+newtype SettingHash = SettingHash Int
+  deriving (Show, Eq, Ord)
+
+-- We hash only the parts of the setting that have anything to do with how the
+-- setting is parsed, not the parts that are for documentation.
+hashSetting :: Setting a -> SettingHash
+hashSetting Setting {..} =
+  SettingHash
+    ( 42
+        `hashWithSalt` map renderDashed settingDasheds
+        `hashWithSalt` settingTryArgument
+        `hashWithSalt` length settingReaders
+        `hashWithSalt` isJust settingSwitchValue
+        `hashWithSalt` settingTryOption
+        `hashWithSalt` settingEnvVars
+        `hashWithSalt` (NE.map configValSettingPath <$> settingConfigVals)
+        `hashWithSalt` (snd <$> settingDefaultValue)
+    )
 
 data ConfigValSetting a = forall void.
   ConfigValSetting

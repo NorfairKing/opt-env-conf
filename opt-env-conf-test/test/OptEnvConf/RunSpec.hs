@@ -728,6 +728,7 @@ spec = do
         [ ([], Nothing),
           (["--foo", "foo"], Just ("foo", Nothing))
         ]
+
       -- Default values should not count as parsed:
       argParseSpecs
         ( choice
@@ -754,6 +755,29 @@ spec = do
             Parser (Char, Maybe (Char, Char))
         )
         [ (["--before", "'m'"], ('m', Nothing))
+        ]
+
+      -- source location does not matter
+      argParseSpecs
+        ( optional
+            ( let foo = setting [reader str, option, long "foo"]
+               in (,)
+                    <$> foo
+                    <*> optional
+                      ( subAll
+                          "bar"
+                          ( allOrNothing
+                              ( (,)
+                                  <$> foo
+                                  <*> setting [reader str, option, long "bar"]
+                              )
+                          )
+                      )
+            ) ::
+            Parser (Maybe (String, Maybe (String, String)))
+        )
+        [ ([], Nothing),
+          (["--foo", "foo"], Just ("foo", Nothing))
         ]
 
       -- Failing after consuming args leaves the args unconsumed

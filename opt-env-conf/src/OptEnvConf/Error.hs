@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Doc
 import OptEnvConf.Output
-import OptEnvConf.Parser
+import OptEnvConf.Setting
 import Text.Colour
 
 data ParseError = ParseError
@@ -37,7 +37,7 @@ data ParseErrorMessage
   | ParseErrorConfigRead !(Maybe ConfDoc) !String
   | ParseErrorMissingCommand ![CommandDoc ()]
   | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
-  | ParseErrorAllOrNothing !(Map SrcLocHash SrcLoc)
+  | ParseErrorAllOrNothing !(Map SettingHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
   deriving (Show)
 
