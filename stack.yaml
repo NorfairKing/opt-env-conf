@@ -22,7 +22,7 @@ extra-deps:
     - autodocodec-schema
     - autodocodec-nix
 
-# system-ghc: true
-# nix:
-#   enable: false
-# with-hpack: hpack
+system-ghc: true
+nix:
+  enable: false
+with-hpack: hpack
