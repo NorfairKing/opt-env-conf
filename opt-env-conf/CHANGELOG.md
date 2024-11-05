@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.0.0] - 2024-11-05
+
+* Change `withShownDefault` and `valueWithShown` to accept a function to use in
+  place of `show` rather than a pre-rendered `String`.
+
 ## [0.7.0.1] - 2024-10-27
 
 ### Changed

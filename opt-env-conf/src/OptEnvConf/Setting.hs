@@ -349,11 +349,11 @@ name s =
 -- API Note: @default@ is not a valid identifier in Haskell.
 -- I'd also have preferred @default@ instead.
 value :: (Show a) => a -> Builder a
-value a = valueWithShown a (show a)
+value = valueWithShown show
 
--- | Set the default value, along with a shown version of it.
-valueWithShown :: a -> String -> Builder a
-valueWithShown a shown = Builder [BuildSetDefault a shown]
+-- | Set the default value, along with version of it shown by a custom function.
+valueWithShown :: (a -> String) -> a -> Builder a
+valueWithShown show' a = Builder [BuildSetDefault a (show' a)]
 
 -- | Provide an example value for documentation.
 --

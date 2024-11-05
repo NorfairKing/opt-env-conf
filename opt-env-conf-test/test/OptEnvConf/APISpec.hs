@@ -188,7 +188,7 @@ sumTypeParser =
               ],
             setting
               [ h,
-                valueWithShown SumTypeA "a"
+                valueWithShown renderSumType SumTypeA
               ]
           ]
 

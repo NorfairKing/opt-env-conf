@@ -515,12 +515,12 @@ someNonEmpty = ParserSome
 --
 -- This does nothing if the parser already has a default value.
 withDefault :: (Show a) => a -> Parser a -> Parser a
-withDefault defaultValue = withShownDefault defaultValue (show defaultValue)
+withDefault = withShownDefault show
 
 -- | Like 'withDefault' but lets you specfiy how to show the default value
 -- yourself.
-withShownDefault :: a -> String -> Parser a -> Parser a
-withShownDefault defaultValue shownDefault = go
+withShownDefault :: (a -> String) -> a -> Parser a -> Parser a
+withShownDefault showDefault defaultValue = go
   where
     go p =
       let p' = p <|> pure defaultValue
@@ -537,7 +537,7 @@ withShownDefault defaultValue shownDefault = go
             ParserCommands {} -> p'
             ParserWithConfig {} -> p'
             ParserSetting mLoc s -> case settingDefaultValue s of
-              Nothing -> ParserSetting mLoc $ s {settingDefaultValue = Just (defaultValue, shownDefault)}
+              Nothing -> ParserSetting mLoc $ s {settingDefaultValue = Just (defaultValue, showDefault defaultValue)}
               Just _ -> p
 
 -- | Try a list of parsers in order
