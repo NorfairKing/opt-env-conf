@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.0.1] - 2024-12-22
+
+* Fixed that `secretTextFileOrBareSetting` would not pass the linter without
+  `name`.
+
 ## [0.8.0.0] - 2024-11-05
 
 * Change `withShownDefault` and `valueWithShown` to accept a function to use in

@@ -192,10 +192,10 @@ sumTypeParser =
               ]
           ]
 
-secretParser :: Parser (Text, Text)
+secretParser :: Parser (Text, Text, Text, Text, Text)
 secretParser =
   withoutConfig $
-    (,)
+    (,,,,)
       <$> secretTextFileSetting
         [ help "First example secret",
           name "first-secret-file"
@@ -203,6 +203,19 @@ secretParser =
       <*> secretTextFileOrBareSetting
         [ help "Second example secret, bare or in a file",
           name "second-secret"
+        ]
+      <*> secretTextFileOrBareSetting
+        [ help "Second example secret, bare or in a file, only option",
+          option,
+          long "second-secret"
+        ]
+      <*> secretTextFileOrBareSetting
+        [ help "Second example secret, bare or in a file, only env",
+          env "second-secret"
+        ]
+      <*> secretTextFileOrBareSetting
+        [ help "Second example secret, bare or in a file, only conf",
+          conf "second-secret"
         ]
 
 data FirstOrSecond = First | Second
