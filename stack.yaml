@@ -1,4 +1,4 @@
-snapshot: lts-22.22
+snapshot: lts-22.39
 packages: 
 - opt-env-conf
 - opt-env-conf-test
