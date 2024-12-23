@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.36.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           opt-env-conf
-version:        0.8.0.0
+version:        0.8.0.1
 synopsis:       Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.
 homepage:       https://github.com/NorfairKing/opt-env-conf#readme
 bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
