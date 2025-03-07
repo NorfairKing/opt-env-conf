@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module OptEnvConf.CompletionSpec (spec) where
@@ -26,12 +27,12 @@ spec = do
   describe "pureCompletionQuery" $ do
     it "can complete a short switch from a single dash" $
       pureCompletionQuery (setting [short 'e']) 1 ["-"]
-        `shouldBe` [Completion "-e" Nothing]
+        `shouldBe` ["-e"]
     it "can complete a long switch from a single dash" $
       pureCompletionQuery (setting [long "example"]) 1 ["-"]
-        `shouldBe` [Completion "--example" Nothing]
+        `shouldBe` ["--example"]
     it "can complete a long switch from a double dash" $
       pureCompletionQuery (setting [long "example"]) 1 ["--"]
-        `shouldBe` [Completion "--example" Nothing]
+        `shouldBe` ["--example"]
 
     pending "can complete a long switch with an equals sign"

@@ -19,6 +19,7 @@ import Control.Monad.State
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.String
 import OptEnvConf.Args as Args
 import OptEnvConf.Casing
 import OptEnvConf.Parser
@@ -142,11 +143,11 @@ runCompletionQuery parser enriched index ws = do
         unlines $
           map
             ( \Completion {..} -> case completionDescription of
-                Nothing -> completionSuggestion
-                Just d -> completionSuggestion <> "\t" <> d
+                Nothing -> describeSuggestion completionSuggestion
+                Just d -> describeSuggestion completionSuggestion <> "\t" <> d
             )
             completions
-    else putStr $ unlines $ map completionSuggestion completions
+    else putStr $ unlines $ concatMap (evalSuggestion . completionSuggestion) completions
   pure ()
 
 selectArgs :: Int -> [String] -> (Args, Maybe String)
@@ -156,11 +157,33 @@ selectArgs _ix args =
 
 data Completion = Completion
   { -- | Completion
-    completionSuggestion :: String,
+    completionSuggestion :: !Suggestion,
     -- | Description
     completionDescription :: !(Maybe String)
   }
   deriving (Show, Eq)
+
+instance IsString Completion where
+  fromString s =
+    Completion
+      { completionSuggestion = fromString s,
+        completionDescription = Nothing
+      }
+
+data Suggestion = SuggestionBare !String
+  deriving (Show, Eq)
+
+-- For tidier tests
+instance IsString Suggestion where
+  fromString = SuggestionBare
+
+describeSuggestion :: Suggestion -> String
+describeSuggestion = \case
+  SuggestionBare s -> s
+
+evalSuggestion :: Suggestion -> [String]
+evalSuggestion = \case
+  SuggestionBare s -> [s]
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion]
 pureCompletionQuery parser ix args =
@@ -171,7 +194,7 @@ pureCompletionQuery parser ix args =
     goCommand :: Command a -> State Args (Maybe [Completion])
     goCommand = go . commandParser -- TODO complete with the command
     -- Nothing means "this branch was not valid"
-    -- Just means "no completions"
+    -- Just [] means "no completions"
     go :: Parser a -> State Args (Maybe [Completion])
     go = \case
       ParserPure _ -> pure $ Just []
@@ -223,9 +246,11 @@ pureCompletionQuery parser ix args =
                 let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
                 let completions =
                       map
-                        ( \completionSuggestion ->
-                            let completionDescription = settingHelp
-                             in Completion {..}
+                        ( ( \completionSuggestion ->
+                              let completionDescription = settingHelp
+                               in Completion {..}
+                          )
+                            . SuggestionBare
                         )
                         suggestions
                 pure $ Just completions
