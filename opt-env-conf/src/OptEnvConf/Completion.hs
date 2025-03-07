@@ -264,30 +264,19 @@ pureCompletionQuery parser ix args =
           case mArg of
             Nothing -> do
               if argsAtEnd rest
-                then case mCursorArg of
-                  Nothing ->
-                    pure $
-                      Just $
-                        map
-                          ( \Command {..} ->
-                              Completion
-                                { completionSuggestion = SuggestionBare commandArg,
-                                  completionDescription = Just commandHelp
-                                }
-                          )
-                          cs
-                  Just arg -> do
-                    let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
-                    pure $
-                      Just $
-                        map
-                          ( \Command {..} ->
-                              Completion
-                                { completionSuggestion = SuggestionBare commandArg,
-                                  completionDescription = Just commandHelp
-                                }
-                          )
-                          matchingCommands
+                then do
+                  let arg = fromMaybe "" mCursorArg
+                  let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
+                  pure $
+                    Just $
+                      map
+                        ( \Command {..} ->
+                            Completion
+                              { completionSuggestion = SuggestionBare commandArg,
+                                completionDescription = Just commandHelp
+                              }
+                        )
+                        matchingCommands
                 else pure Nothing -- TODO: What does this mean?
             Just arg ->
               case find ((== arg) . commandArg) cs of
@@ -308,20 +297,18 @@ pureCompletionQuery parser ix args =
             as <- get
             if argsAtEnd as
               then do
-                case mCursorArg of
-                  Nothing -> pure $ Just []
-                  Just arg -> do
-                    let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
-                    let completions =
-                          map
-                            ( ( \completionSuggestion ->
-                                  let completionDescription = settingHelp
-                                   in Completion {..}
-                              )
-                                . SuggestionBare
-                            )
-                            suggestions
-                    pure $ Just completions
+                let arg = fromMaybe "" mCursorArg
+                let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
+                let completions =
+                      map
+                        ( ( \completionSuggestion ->
+                              let completionDescription = settingHelp
+                               in Completion {..}
+                          )
+                            . SuggestionBare
+                        )
+                        suggestions
+                pure $ Just completions
               else do
                 -- Try to parse the setting to throw it away and advance if possible
                 pure Nothing
