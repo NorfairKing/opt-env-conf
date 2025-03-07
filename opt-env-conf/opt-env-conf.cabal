@@ -5,13 +5,13 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           opt-env-conf
-version:        0.8.0.1
+version:        0.9.0.0
 synopsis:       Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.
 homepage:       https://github.com/NorfairKing/opt-env-conf#readme
 bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
 author:         Tom Sydney Kerckhove
 maintainer:     syd@cs-syd.eu
-copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
+copyright:      Copyright: (c) 2024-2025 Tom Sydney Kerckhove
 license:        LGPL-3
 license-file:   LICENSE
 build-type:     Simple
@@ -27,6 +27,7 @@ library
       OptEnvConf
       OptEnvConf.Args
       OptEnvConf.Casing
+      OptEnvConf.Completer
       OptEnvConf.Completion
       OptEnvConf.Doc
       OptEnvConf.EnvMap

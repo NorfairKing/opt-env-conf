@@ -32,6 +32,7 @@ module OptEnvConf
     value,
     hidden,
     metavar,
+    completer,
 
     -- ** Commands
     commands,
@@ -46,6 +47,10 @@ module OptEnvConf
     many,
     some,
     select,
+
+    -- ** Completers
+    filePath,
+    directoryPath,
 
     -- ** Prefixing parsers
     subArgs,
@@ -129,6 +134,7 @@ module OptEnvConf
     module OptEnvConf.Doc,
     module OptEnvConf.Nix,
     module OptEnvConf.Parser,
+    module OptEnvConf.Completer,
     module OptEnvConf.Reader,
     module OptEnvConf.Run,
     module OptEnvConf.Setting,
@@ -138,6 +144,7 @@ where
 
 import Control.Applicative
 import OptEnvConf.Casing
+import OptEnvConf.Completer
 import OptEnvConf.Doc
 import OptEnvConf.Nix
 import OptEnvConf.Parser

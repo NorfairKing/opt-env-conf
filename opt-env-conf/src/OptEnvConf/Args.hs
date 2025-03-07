@@ -12,6 +12,7 @@ module OptEnvConf.Args
     consumeOption,
     consumeSwitch,
     recogniseLeftovers,
+    argsAtEnd,
 
     -- ** Internals
     Tomb (..),
@@ -112,6 +113,9 @@ emptyArgs = parseArgs []
 
 rebuildArgs :: Args -> [Tomb Arg]
 rebuildArgs Args {..} = argsBefore ++ argsAfter
+
+argsAtEnd :: Args -> Bool
+argsAtEnd = all (== Dead) . argsAfter
 
 -- | Create 'Args' with all-live arguments and cursor at the start.
 parseArgs :: [String] -> Args

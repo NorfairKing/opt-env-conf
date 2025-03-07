@@ -1,11 +1,21 @@
 # Changelog
 
+## [0.9.0.0] - 2025-03-12
+
+### Added
+
+* Completions
+
 ## [0.8.0.1] - 2024-12-22
+
+### Changed
 
 * Fixed that `secretTextFileOrBareSetting` would not pass the linter without
   `name`.
 
 ## [0.8.0.0] - 2024-11-05
+
+### Changed
 
 * Change `withShownDefault` and `valueWithShown` to accept a function to use in
   place of `show` rather than a pre-rendered `String`.

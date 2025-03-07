@@ -1,4 +1,4 @@
-[36mUsage: [m[33mopt-env-conf-example[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m [36m[[m[37m--log-level[m [33mLOG_LEVEL[m[36m][m [36m[[m[37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [36m[[m[37m--payment-currency[m [33mCURRENCY[m[36m][m[36m][m COMMAND
+[36mUsage: [m[33mopt-env-conf-example[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m COMMAND [36m[[m[37m--log-level[m [33mLOG_LEVEL[m[36m][m [36m[[m[37m-b[m[36m|[m[37m--base[m [33mDIRECTORY_PATH[m[36m][m [36m[[m[37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [36m[[m[37m--payment-currency[m [33mCURRENCY[m[36m][m[36m][m
 
 [36mAll settings[m:
   [34mShow this help text[m
@@ -18,6 +18,9 @@
     [37mlog-level[m: # [32mor null[m
       [33m<string>[m
   default: [33m"DEBUG"[m
+
+  [34mbase directory for items[m
+  option: [37m-b[m[36m|[m[37m--base[m [33mDIRECTORY_PATH[m
 
   [34mPublic key[m
   option: [37m--payment-public-key[m [33mPUBLIC_KEY[m
@@ -46,6 +49,9 @@
     [34mThe item to create[m
     argument: [33mSTR[m
     
+    [34mfile to create the item in[m
+    option: [37m-f[m[36m|[m[37m--file[m [33mFILE_PATH[m
+    
   
   [34mRead[m
   command: [35mread[m
@@ -67,17 +73,19 @@
   [37m-h[m[36m|[m[37m--help[m [34mShow this help text[m
   [37m--version[m [34mOutput version information[m
   [37m--config-file[m [34mPath to the configuration file[m
-  [37m--log-level[m [34mminimal severity of log messages[m default: [33m"DEBUG"[m
-  [37m--payment-public-key[m [34mPublic key[m
-  [37m--payment-secret-key[m [34mSecret key[m
-  [37m--payment-currency[m   [34mCurrency[m  
   [35mcreate[m [34mCreate[m
-      [33mSTR[m [34mThe item to create[m
+      [33mSTR[m       [34mThe item to create[m        
+      [37m-f[m[36m|[m[37m--file[m [34mfile to create the item in[m
   [35mread[m [34mRead[m
   [35mupdate[m [34mUpdate[m
       [33mSTR[m [34mThe item identifier of the item to update[m
       [33mSTR[m [34mThe contents of the item to update[m       
   [35mdelete[m [34mDelete[m
+  [37m--log-level[m [34mminimal severity of log messages[m default: [33m"DEBUG"[m
+  [37m-b[m[36m|[m[37m--base[m [34mbase directory for items[m
+  [37m--payment-public-key[m [34mPublic key[m
+  [37m--payment-secret-key[m [34mSecret key[m
+  [37m--payment-currency[m   [34mCurrency[m  
 
 [36mEnvironment Variables[m:
   [37mCONFIG_FILE[m [33mFILE_PATH[m           [34mPath to the configuration file[m                     

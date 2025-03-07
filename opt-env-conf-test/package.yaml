@@ -1,7 +1,7 @@
 name: opt-env-conf-test
-version: '0.0.0.0'
+version: '0.0.0.2'
 github: "NorfairKing/opt-env-conf"
-copyright: ! 'Copyright: (c) 2024 Tom Sydney Kerckhove'
+copyright: ! 'Copyright: (c) 2024-2025 Tom Sydney Kerckhove'
 license: OtherLicense
 license-file: LICENSE.md
 synopsis: A testing companion package for opt-env-conf
@@ -23,7 +23,7 @@ library:
   - aeson
   - genvalidity
   - genvalidity-containers
-  - opt-env-conf
+  - opt-env-conf >= 0.9.0.0
   - safe-coloured-text
   - sydtest
   - text
@@ -50,6 +50,7 @@ tests:
     - opt-env-conf
     - opt-env-conf-test
     - path
+    - path-io
     - pretty-show
     - safe-coloured-text
     - sydtest

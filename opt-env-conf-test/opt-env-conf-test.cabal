@@ -5,13 +5,13 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           opt-env-conf-test
-version:        0.0.0.0
+version:        0.0.0.2
 synopsis:       A testing companion package for opt-env-conf
 homepage:       https://github.com/NorfairKing/opt-env-conf#readme
 bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
 author:         Tom Sydney Kerckhove
 maintainer:     syd@cs-syd.eu
-copyright:      Copyright: (c) 2024 Tom Sydney Kerckhove
+copyright:      Copyright: (c) 2024-2025 Tom Sydney Kerckhove
 license:        OtherLicense
 license-file:   LICENSE.md
 build-type:     Simple
@@ -366,7 +366,7 @@ library
     , base <5
     , genvalidity
     , genvalidity-containers
-    , opt-env-conf
+    , opt-env-conf >=0.9.0.0
     , safe-coloured-text
     , sydtest
     , text
@@ -378,6 +378,7 @@ test-suite opt-env-conf-test
   other-modules:
       OptEnvConf.APISpec
       OptEnvConf.ArgsSpec
+      OptEnvConf.CompleterSpec
       OptEnvConf.CompletionSpec
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
@@ -407,6 +408,7 @@ test-suite opt-env-conf-test
     , opt-env-conf
     , opt-env-conf-test
     , path
+    , path-io
     , pretty-show
     , safe-coloured-text
     , sydtest

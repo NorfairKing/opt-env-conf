@@ -10,7 +10,6 @@ _opt_env_conf_completion_example_executable()
     done
 
     COMPREPLY=( $(/usr/bin/example-executable "${CMDLINE[@]}") )
-    echo "${COMPREPLY[@]}" > hm.log
 }
 
 complete -o filenames -F _opt_env_conf_completion_example_executable example-executable

@@ -1,11 +1,12 @@
 { mkDerivation, aeson, autodocodec, base, containers, genvalidity
 , genvalidity-aeson, genvalidity-containers, genvalidity-sydtest
-, genvalidity-text, lib, mtl, opt-env-conf, path, pretty-show
-, QuickCheck, safe-coloured-text, sydtest, sydtest-discover, text
+, genvalidity-text, lib, mtl, opt-env-conf, path, path-io
+, pretty-show, QuickCheck, safe-coloured-text, sydtest
+, sydtest-discover, text
 }:
 mkDerivation {
   pname = "opt-env-conf-test";
-  version = "0.0.0.0";
+  version = "0.0.0.2";
   src = ./.;
   libraryHaskellDepends = [
     aeson base genvalidity genvalidity-containers opt-env-conf
@@ -13,7 +14,7 @@ mkDerivation {
   ];
   testHaskellDepends = [
     aeson autodocodec base containers genvalidity-aeson
-    genvalidity-sydtest genvalidity-text mtl opt-env-conf path
+    genvalidity-sydtest genvalidity-text mtl opt-env-conf path path-io
     pretty-show QuickCheck safe-coloured-text sydtest text
   ];
   testToolDepends = [ sydtest-discover ];

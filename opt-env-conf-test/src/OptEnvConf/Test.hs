@@ -18,6 +18,12 @@ module OptEnvConf.Test
     settingsParserTest,
     parserTest,
 
+    -- * Completion tests
+    settingsParserCompletionTest,
+    settingsParserCompletionDescriptionTest,
+    parserCompletionTest,
+    parserCompletionDescriptionTest,
+
     -- * Reference documentation
     goldenSettingsReferenceDocumentationSpec,
     goldenParserReferenceDocumentationSpec,
@@ -32,11 +38,13 @@ module OptEnvConf.Test
 where
 
 import Data.Aeson as JSON
+import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf
 import OptEnvConf.Args
+import OptEnvConf.Completion
 import OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
 import OptEnvConf.Lint
@@ -86,6 +94,24 @@ parserTest parser args envVars mObject expected = do
   case errOrActual of
     Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected
+
+settingsParserCompletionTest :: forall a. (HasParser a) => Int -> [String] -> [Completion String] -> IO ()
+settingsParserCompletionTest = parserCompletionTest (settingsParser @a)
+
+settingsParserCompletionDescriptionTest :: forall a. (HasParser a) => Int -> [String] -> [String] -> IO ()
+settingsParserCompletionDescriptionTest = parserCompletionDescriptionTest (settingsParser @a)
+
+parserCompletionTest :: Parser a -> Int -> [String] -> [Completion String] -> IO ()
+parserCompletionTest p ix ws expected = do
+  let arg = fromMaybe "" $ listToMaybe $ drop ix ws
+  let completions = pureCompletionQuery p ix ws
+  evaluatedCompletions <- evalCompletions arg completions
+  evaluatedCompletions `shouldBe` expected
+
+parserCompletionDescriptionTest :: Parser a -> Int -> [String] -> [String] -> IO ()
+parserCompletionDescriptionTest p ix ws descriptions = do
+  let completions = pureCompletionQuery p ix ws
+  map completionDescription completions `shouldBe` map Just descriptions
 
 goldenSettingsReferenceDocumentationSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> String -> Spec
 goldenSettingsReferenceDocumentationSpec path progname = withFrozenCallStack $ goldenParserReferenceDocumentationSpec (settingsParser @a) path progname

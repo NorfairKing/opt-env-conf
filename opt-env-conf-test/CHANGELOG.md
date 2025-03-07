@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.0.2] - 2025-03-12
+
+### Added
+
+* Completions test helpers
+
+
 ## [0.0.0.1] - 2024-08-08
 
 ### Added

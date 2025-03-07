@@ -23,6 +23,7 @@ library
   build-depends:
       base <5
     , opt-env-conf
+    , path
     , text
   default-language: Haskell2010
 
@@ -50,6 +51,7 @@ test-suite opt-env-conf-example-test
       sydtest-discover:sydtest-discover
   build-depends:
       base <5
+    , opt-env-conf
     , opt-env-conf-example
     , opt-env-conf-test
     , sydtest

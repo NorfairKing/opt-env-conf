@@ -12,15 +12,22 @@ module OptEnvConf.Completion
     runCompletionQuery,
     pureCompletionQuery,
     Completion (..),
+    evalCompletions,
+    evalCompletion,
+    Suggestion (..),
+    evalSuggestion,
   )
 where
 
+import Control.Monad
 import Control.Monad.State
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.String
 import OptEnvConf.Args as Args
 import OptEnvConf.Casing
+import OptEnvConf.Completer
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
@@ -45,7 +52,6 @@ bashCompletionScript progPath progname =
           "    done",
           "",
           "    COMPREPLY=( $(" ++ fromAbsFile progPath ++ " \"${CMDLINE[@]}\") )",
-          "    echo \"${COMPREPLY[@]}\" > hm.log",
           "}",
           "",
           "complete -o filenames -F " ++ functionName ++ " " ++ progname
@@ -129,13 +135,31 @@ runCompletionQuery ::
   Parser a ->
   -- | Enriched
   Bool ->
-  -- Where completion is invoked (inbetween arguments)
+  -- | Where completion is invoked (inbetween arguments)
   Int ->
   -- Provider arguments
   [String] ->
   IO ()
-runCompletionQuery parser enriched index ws = do
+runCompletionQuery parser enriched index' ws' = do
+  -- Which index and args are passed here is a bit tricky.
+  -- Some examples:
+  --
+  -- progname <tab>      -> (1, ["progname"])
+  -- progname <tab>-     -> (1, ["progname", "-"])
+  -- progname -<tab>     -> (1, ["progname", "-"])
+  -- progname -<tab>-    -> (1, ["progname", "--"])
+  -- progname - <tab>    -> (2, ["progname", "-"])
+  --
+  -- We use 'drop 1' here because we don't care about the progname anymore.
+  let index = pred index'
+  let ws = drop 1 ws'
+  let arg = fromMaybe "" $ listToMaybe $ drop index ws
   let completions = pureCompletionQuery parser index ws
+  evaluatedCompletions <- evalCompletions arg completions
+  -- You can use this for debugging inputs:
+  -- import System.IO
+  -- hPutStrLn stderr $ show (enriched, index, ws)
+  -- hPutStrLn stderr $ show evaluatedCompletions
   if enriched
     then
       putStr $
@@ -145,52 +169,109 @@ runCompletionQuery parser enriched index ws = do
                 Nothing -> completionSuggestion
                 Just d -> completionSuggestion <> "\t" <> d
             )
-            completions
-    else putStr $ unlines $ map completionSuggestion completions
+            evaluatedCompletions
+    else putStr $ unlines $ map completionSuggestion evaluatedCompletions
   pure ()
 
+-- Because the first arg has already been skipped we get input like this here:
+--
+-- progname <tab>      -> (0, [])
+-- progname <tab>-     -> (0, ["-"])
+-- progname -<tab>     -> (0, ["-"])
+-- progname -<tab>-    -> (0, ["--"])
+-- progname - <tab>    -> (1, ["-"])
 selectArgs :: Int -> [String] -> (Args, Maybe String)
-selectArgs _ix args =
-  let selectedArgs = args -- take ix args
-   in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
+selectArgs ix args =
+  ( parseArgs $ take ix args,
+    NE.head <$> NE.nonEmpty (drop ix args)
+  )
 
-data Completion = Completion
+data Completion a = Completion
   { -- | Completion
-    completionSuggestion :: String,
+    completionSuggestion :: !a,
     -- | Description
     completionDescription :: !(Maybe String)
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
-pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion]
+instance (IsString str) => IsString (Completion str) where
+  fromString s =
+    Completion
+      { completionSuggestion = fromString s,
+        completionDescription = Nothing
+      }
+
+evalCompletions :: String -> [Completion Suggestion] -> IO [Completion String]
+evalCompletions arg = fmap concat . mapM (evalCompletion arg)
+
+evalCompletion :: String -> Completion Suggestion -> IO [Completion String]
+evalCompletion arg c = do
+  ss <- evalSuggestion arg (completionSuggestion c)
+  pure $ map (\s -> c {completionSuggestion = s}) ss
+
+data Suggestion
+  = SuggestionBare !String
+  | SuggestionCompleter !Completer
+
+-- For tidier tests
+instance IsString Suggestion where
+  fromString = SuggestionBare
+
+evalSuggestion :: String -> Suggestion -> IO [String]
+evalSuggestion arg = \case
+  SuggestionBare s -> pure $ filter (arg `isPrefixOf`) [s]
+  SuggestionCompleter (Completer act) -> act arg
+
+pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion Suggestion]
 pureCompletionQuery parser ix args =
-  -- TODO use the index properly (?)
   fromMaybe [] $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
-    goCommand :: Command a -> State Args (Maybe [Completion])
+    goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
     goCommand = go . commandParser -- TODO complete with the command
+    combineOptions = Just . concat . catMaybes
+
+    tryOrRestore :: State Args (Maybe a) -> State Args (Maybe a)
+    tryOrRestore func = do
+      before <- get
+      mA <- func
+      case mA of
+        Nothing -> do
+          put before
+          pure Nothing
+        Just a -> pure (Just a)
+
+    orCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
+    orCompletions p1 p2 = do
+      p1s <- tryOrRestore $ go p1
+      p2s <- tryOrRestore $ go p2
+      pure $ case (p1s, p2s) of
+        (Nothing, Nothing) -> Nothing
+        (Just cs, Nothing) -> Just cs
+        (Nothing, Just cs) -> Just cs
+        (Just cs1, Just cs2) -> Just $ cs1 ++ cs2
+
+    andCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
+    andCompletions p1 p2 = do
+      p1s <- tryOrRestore $ go p1
+      case p1s of
+        Nothing -> pure Nothing
+        Just cs1 -> do
+          p2s <- tryOrRestore $ go p2
+          pure $ case p2s of
+            Nothing -> Nothing
+            Just cs2 -> pure $ cs1 ++ cs2
+
     -- Nothing means "this branch was not valid"
-    -- Just means "no completions"
-    go :: Parser a -> State Args (Maybe [Completion])
+    -- Just [] means "no completions"
+    go :: Parser a -> State Args (Maybe [Completion Suggestion])
     go = \case
       ParserPure _ -> pure $ Just []
-      ParserAp p1 p2 -> do
-        c1 <- go p1
-        case c1 of
-          Just [] -> go p2
-          Just ss -> pure $ Just ss
-          Nothing -> pure $ Just []
-      ParserAlt p1 p2 -> do
-        s1s <- go p1
-        s2s <- go p2
-        pure $ (++) <$> s1s <*> s2s
-      ParserSelect p1 p2 -> do
-        c1 <- go p1
-        case c1 of
-          Just [] -> go p2
-          Just ss -> pure $ Just ss
-          Nothing -> pure $ Just []
+      -- Parse both and combine the result
+      ParserAp p1 p2 -> andCompletions p1 p2
+      -- Parse either: either completions are valid
+      ParserAlt p1 p2 -> orCompletions p1 p2
+      ParserSelect p1 p2 -> andCompletions p1 p2
       ParserEmpty _ -> pure Nothing
       ParserMany p -> do
         mR <- go p
@@ -204,31 +285,119 @@ pureCompletionQuery parser ix args =
           Just os -> fmap (os ++) <$> go p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
+      ParserWithConfig _ p1 p2 ->
+        -- The config-file auto-completion is probably less important, we put it second.
+        andCompletions p2 p1
       ParserCommands _ _ cs -> do
-        -- Don't re-use the state accross commands
-        Just . concat . catMaybes <$> mapM goCommand cs
-      ParserWithConfig _ p1 p2 -> do
-        c1 <- go p1
-        case c1 of
-          Just [] -> go p2
-          Just ss -> pure $ Just ss
-          Nothing -> pure $ Just []
-      ParserSetting _ Setting {..} ->
+        as <- get
+        let possibilities = Args.consumeArgument as
+        fmap combineOptions $ forM possibilities $ \(mArg, rest) -> do
+          case mArg of
+            Nothing -> do
+              if argsAtEnd rest
+                then do
+                  let arg = fromMaybe "" mCursorArg
+                  let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
+                  pure $
+                    Just $
+                      map
+                        ( \Command {..} ->
+                            Completion
+                              { completionSuggestion = SuggestionBare commandArg,
+                                completionDescription = Just commandHelp
+                              }
+                        )
+                        matchingCommands
+                else pure Nothing -- TODO: What does this mean?
+            Just arg ->
+              case find ((== arg) . commandArg) cs of
+                Just c -> do
+                  put rest
+                  goCommand c
+                Nothing -> pure Nothing -- Invalid command
+      ParserSetting _ Setting {..} -> do
+        let arg = fromMaybe "" mCursorArg
+        let completionDescription = settingHelp
+        let completeWithCompleter = pure $ Just $ maybeToList $ do
+              c <- settingCompleter
+              let completionSuggestion = SuggestionCompleter c
+              pure Completion {..}
+        let completeWithCompleterAtEnd = do
+              as <- get
+              if argsAtEnd as then completeWithCompleter else pure $ Just []
+        let completeWithDasheds = do
+              let isLong = \case
+                    DashedLong _ -> True
+                    DashedShort _ -> False
+              let favorableDasheds = if any isLong settingDasheds then filter isLong settingDasheds else settingDasheds
+              let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed favorableDasheds)
+              let completions =
+                    map
+                      ( ( \completionSuggestion ->
+                            Completion {..}
+                        )
+                          . SuggestionBare
+                      )
+                      suggestions
+              pure $ Just completions
         if settingHidden
           then pure $ Just []
           else do
-            case mCursorArg of
-              Nothing -> pure $ Just []
-              Just arg -> do
-                let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
-                let completions =
-                      map
-                        ( \completionSuggestion ->
-                            let completionDescription = settingHelp
-                             in Completion {..}
-                        )
-                        suggestions
-                pure $ Just completions
-
--- ParserAp p1 p2 -> do
---   s1s <- go p1 |> go p2
+            as <- get
+            if settingTryArgument
+              then do
+                case Args.consumeArgument as of
+                  [] -> completeWithCompleterAtEnd
+                  -- TODO in theory we really need to try all possible consumptions of an argument.
+                  -- This would complicate this function quite a bit, so we
+                  -- just try the first option and leave it there for now.
+                  (mConsumed, as') : _ -> do
+                    put as'
+                    case mConsumed of
+                      Nothing -> completeWithCompleterAtEnd
+                      Just _ -> pure $ Just []
+              else
+                if isJust settingSwitchValue
+                  then do
+                    -- Try to parse the switch first, so we don't suggest it if
+                    -- it's already been parsed.
+                    case Args.consumeSwitch settingDasheds as of
+                      Nothing ->
+                        -- A switch can be anywhere, doesn't need to be at the end.
+                        completeWithDasheds
+                      Just as' -> do
+                        put as'
+                        pure $ Just []
+                  else do
+                    if settingTryOption
+                      then do
+                        -- First we try to consume the option so we don't suggest it if it's already been parsed
+                        case Args.consumeOption settingDasheds as of
+                          Just (_, as') -> do
+                            put as'
+                            pure $ Just []
+                          Nothing -> do
+                            if argsAtEnd as
+                              then completeWithDasheds
+                              else do
+                                -- If we're not at the end, we may be between an option's
+                                -- dashed an the option value being tab-completed In that case
+                                -- we need to parse the dashed as normal and check if that
+                                -- brings us to the end.
+                                --
+                                -- We use 'consumeSwitch' to consume the dashed part of
+                                -- the option because consumeOption would try to
+                                -- consume the option argument too.
+                                case Args.consumeSwitch settingDasheds as of
+                                  Nothing -> pure $ Just []
+                                  Just as' -> do
+                                    put as'
+                                    completeWithCompleterAtEnd
+                      else do
+                        -- We can't auto-complete settings parsed from env vars
+                        -- or config values, but this path is still valid.
+                        --
+                        -- TODO consider checking if env vars or config vals
+                        -- are parsed, then this path may still be invalid
+                        -- afteral.
+                        pure $ Just []
