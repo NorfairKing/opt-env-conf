@@ -35,6 +35,10 @@ spec = do
       pureCompletionQuery (setting [long "example"]) 1 ["--"]
         `shouldBe` ["--example"]
 
+    pending "can complete a short option"
+    pending "can complete a long option"
+    pending "can complete a long option with equals sign"
+
     describe "commands" $ do
       let p =
             commands
@@ -46,9 +50,43 @@ spec = do
       it "can complete a command argument" $
         pureCompletionQuery p 0 []
           `shouldBe` [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
-      it "can complete a command argument" $
+
+      it "can complete a command argument when it's been partially provided" $
         pureCompletionQuery p 1 ["b"]
-          `shouldBe` [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          `shouldBe` [Completion "bar" (Just "2"), Completion "baz" (Just "3"), Completion "foo" (Just "1")]
+
+    describe "completion after a command" $ do
+      it "can complete a command with a switch" $
+        pureCompletionQuery
+          (commands [command "foo" "1" $ setting [short 'e', long "example"]])
+          1
+          ["foo"]
+          `shouldBe` ["-e", "--example"]
+
+      it "can complete a command's short switch" $
+        pureCompletionQuery
+          (commands [command "foo" "1" $ setting [short 'e']])
+          2
+          ["foo", "-"]
+          `shouldBe` ["-e", Completion "foo" (Just "1")]
+
+      it "can complete a command's long switch from a single dash" $
+        pureCompletionQuery
+          (commands [command "foo" "1" $ setting [long "example"]])
+          2
+          ["foo", "-"]
+          `shouldBe` ["--example", Completion "foo" (Just "1")]
+
+      it "can complete a command's long switch from a double dash" $
+        pureCompletionQuery
+          (commands [command "foo" "1" $ setting [long "example"]])
+          2
+          ["foo", "--"]
+          `shouldBe` ["--example", Completion "foo" (Just "1")]
+
+      pending "can complete a command's short option"
+      pending "can complete a command's long option"
+      pending "can complete a command's long option with equals sign"
 
     pending "can complete a file argument"
     pending "can complete a file option"

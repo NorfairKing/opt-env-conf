@@ -17,6 +17,7 @@ where
 
 import Control.Monad
 import Control.Monad.State
+import Data.Containers.ListUtils (nubOrd)
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
@@ -156,8 +157,8 @@ runCompletionQuery parser enriched index ws = do
   pure ()
 
 selectArgs :: Int -> [String] -> (Args, Maybe String)
-selectArgs _ix args =
-  let selectedArgs = args -- take ix args
+selectArgs ix args =
+  let selectedArgs = take ix args
    in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
 data Completion a = Completion
@@ -166,7 +167,7 @@ data Completion a = Completion
     -- | Description
     completionDescription :: !(Maybe String)
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 instance (IsString str) => IsString (Completion str) where
   fromString s =
@@ -178,7 +179,7 @@ instance (IsString str) => IsString (Completion str) where
 data Suggestion
   = SuggestionBare !String
   | SuggestionFile
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 -- For tidier tests
 instance IsString Suggestion where
@@ -194,7 +195,7 @@ evalSuggestion = \case
 pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion Suggestion]
 pureCompletionQuery parser ix args =
   -- TODO use the index properly (?)
-  fromMaybe [] $ evalState (go parser) selectedArgs
+  maybe [] nubOrd $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
@@ -234,21 +235,38 @@ pureCompletionQuery parser ix args =
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ _ cs -> do
-        case mCursorArg of
-          Nothing ->
-            pure $
-              Just $
-                map
-                  ( \Command {..} ->
-                      Completion
-                        { completionSuggestion = SuggestionBare commandArg,
-                          completionDescription = Just commandHelp
-                        }
-                  )
-                  cs
-          Just _ -> do
-            -- Don't re-use the state accross commands
-            Just . concat . catMaybes <$> mapM goCommand cs
+        as <- get
+        let possibilities = Args.consumeArgument as
+        fmap (Just . concat . catMaybes) $ forM possibilities $ \(mArg, rest) -> do
+          case mArg of
+            Nothing ->
+              pure $
+                Just $
+                  map
+                    ( \Command {..} ->
+                        Completion
+                          { completionSuggestion = SuggestionBare commandArg,
+                            completionDescription = Just commandHelp
+                          }
+                    )
+                    cs
+            Just arg ->
+              case find ((== arg) . commandArg) cs of
+                Just c -> do
+                  put rest
+                  goCommand c
+                Nothing -> do
+                  let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
+                  pure $
+                    Just $
+                      map
+                        ( \Command {..} ->
+                            Completion
+                              { completionSuggestion = SuggestionBare commandArg,
+                                completionDescription = Just commandHelp
+                              }
+                        )
+                        matchingCommands
       ParserWithConfig _ p1 p2 -> do
         c1 <- go p1
         case c1 of
