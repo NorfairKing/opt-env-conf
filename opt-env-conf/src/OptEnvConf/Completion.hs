@@ -158,8 +158,9 @@ runCompletionQuery parser enriched index ws = do
 
 selectArgs :: Int -> [String] -> (Args, Maybe String)
 selectArgs ix args =
-  let selectedArgs = take ix args
-   in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
+  ( parseArgs $ take ix args,
+    NE.head <$> NE.nonEmpty (drop ix args)
+  )
 
 data Completion a = Completion
   { -- | Completion
