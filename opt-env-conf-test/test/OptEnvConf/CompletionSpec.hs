@@ -35,4 +35,9 @@ spec = do
       pureCompletionQuery (setting [long "example"]) 1 ["--"]
         `shouldBe` ["--example"]
 
-    pending "can complete a long switch with an equals sign"
+    pending "can complete a command argument"
+
+    pending "can complete a file argument"
+    pending "can complete a file option"
+    pending "can complete a director argument"
+    pending "can complete a director option"

@@ -15,6 +15,7 @@ module OptEnvConf.Completion
   )
 where
 
+import Control.Monad
 import Control.Monad.State
 import Data.List
 import qualified Data.List.NonEmpty as NE
@@ -25,6 +26,7 @@ import OptEnvConf.Casing
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
+import Path.IO
 
 generateBashCompletionScript :: Path Abs File -> String -> IO ()
 generateBashCompletionScript progPath progname = putStrLn $ bashCompletionScript progPath progname
@@ -137,17 +139,20 @@ runCompletionQuery ::
   IO ()
 runCompletionQuery parser enriched index ws = do
   let completions = pureCompletionQuery parser index ws
+  evaluatedCompletions <- fmap concat $ forM completions $ \c -> do
+    ss <- evalSuggestion (completionSuggestion c)
+    pure $ map (\s -> c {completionSuggestion = s}) ss
   if enriched
     then
       putStr $
         unlines $
           map
             ( \Completion {..} -> case completionDescription of
-                Nothing -> describeSuggestion completionSuggestion
-                Just d -> describeSuggestion completionSuggestion <> "\t" <> d
+                Nothing -> completionSuggestion
+                Just d -> completionSuggestion <> "\t" <> d
             )
-            completions
-    else putStr $ unlines $ concatMap (evalSuggestion . completionSuggestion) completions
+            evaluatedCompletions
+    else putStr $ unlines $ map completionSuggestion evaluatedCompletions
   pure ()
 
 selectArgs :: Int -> [String] -> (Args, Maybe String)
@@ -155,47 +160,48 @@ selectArgs _ix args =
   let selectedArgs = args -- take ix args
    in (parseArgs selectedArgs, NE.last <$> NE.nonEmpty selectedArgs)
 
-data Completion = Completion
+data Completion a = Completion
   { -- | Completion
-    completionSuggestion :: !Suggestion,
+    completionSuggestion :: !a,
     -- | Description
     completionDescription :: !(Maybe String)
   }
   deriving (Show, Eq)
 
-instance IsString Completion where
+instance (IsString str) => IsString (Completion str) where
   fromString s =
     Completion
       { completionSuggestion = fromString s,
         completionDescription = Nothing
       }
 
-data Suggestion = SuggestionBare !String
+data Suggestion
+  = SuggestionBare !String
+  | SuggestionFile
   deriving (Show, Eq)
 
 -- For tidier tests
 instance IsString Suggestion where
   fromString = SuggestionBare
 
-describeSuggestion :: Suggestion -> String
-describeSuggestion = \case
-  SuggestionBare s -> s
-
-evalSuggestion :: Suggestion -> [String]
+evalSuggestion :: Suggestion -> IO [String]
 evalSuggestion = \case
-  SuggestionBare s -> [s]
+  SuggestionBare s -> pure [s]
+  SuggestionFile -> do
+    here <- getCurrentDir
+    map fromAbsFile . snd <$> listDir here
 
-pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion]
+pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion Suggestion]
 pureCompletionQuery parser ix args =
   -- TODO use the index properly (?)
   fromMaybe [] $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
-    goCommand :: Command a -> State Args (Maybe [Completion])
+    goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
     goCommand = go . commandParser -- TODO complete with the command
     -- Nothing means "this branch was not valid"
     -- Just [] means "no completions"
-    go :: Parser a -> State Args (Maybe [Completion])
+    go :: Parser a -> State Args (Maybe [Completion Suggestion])
     go = \case
       ParserPure _ -> pure $ Just []
       ParserAp p1 p2 -> do
