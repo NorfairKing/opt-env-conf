@@ -61,10 +61,10 @@ spec = do
     describe "completion after a command" $ do
       it "can complete a command with a switch" $
         pureCompletionQuery
-          (commands [command "foo" "1" $ setting [short 'e', long "example"]])
+          (commands [command "foo" "1" $ setting [help "ex", short 'e', long "example"]])
           1
           ["foo"]
-          `shouldBe` ["-e", "--example"]
+          `shouldBe` [Completion "-e" (Just "ex"), Completion "--example" (Just "ex")]
 
       it "can complete a command's short switch" $
         pureCompletionQuery
@@ -91,7 +91,11 @@ spec = do
       pending "can complete a command's long option"
       pending "can complete a command's long option with equals sign"
 
-    pending "can complete a file argument"
+    it "can complete a file argument" $
+      pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 []
+        `shouldBe` [Completion SuggestionFile (Just "file arg")]
+
     pending "can complete a file option"
+
     pending "can complete a director argument"
     pending "can complete a director option"

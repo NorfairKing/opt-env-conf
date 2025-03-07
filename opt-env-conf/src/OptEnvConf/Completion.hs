@@ -12,6 +12,7 @@ module OptEnvConf.Completion
     runCompletionQuery,
     pureCompletionQuery,
     Completion (..),
+    Suggestion (..),
   )
 where
 
