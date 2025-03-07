@@ -246,38 +246,29 @@ internalParser p =
           help "Render Nix options"
         ],
       BashCompletionScript
-        <$> mapIO
-          parseAbsFile
-          ( setting
-              [ option,
-                reader str,
-                long "bash-completion-script",
-                hidden,
-                help "Render the bash completion script"
-              ]
-          ),
+        <$> setting
+          [ option,
+            reader $ maybeReader parseAbsFile,
+            long "bash-completion-script",
+            hidden,
+            help "Render the bash completion script"
+          ],
       ZshCompletionScript
-        <$> mapIO
-          parseAbsFile
-          ( setting
-              [ option,
-                reader str,
-                long "zsh-completion-script",
-                hidden,
-                help "Render the zsh completion script"
-              ]
-          ),
+        <$> setting
+          [ option,
+            reader $ maybeReader parseAbsFile,
+            long "zsh-completion-script",
+            hidden,
+            help "Render the zsh completion script"
+          ],
       ZshCompletionScript
-        <$> mapIO
-          parseAbsFile
-          ( setting
-              [ option,
-                reader str,
-                long "fish-completion-script",
-                hidden,
-                help "Render the fish completion script"
-              ]
-          ),
+        <$> setting
+          [ option,
+            reader $ maybeReader parseAbsFile,
+            long "fish-completion-script",
+            hidden,
+            help "Render the fish completion script"
+          ],
       setting
         [ help "Query completion",
           switch CompletionQuery,

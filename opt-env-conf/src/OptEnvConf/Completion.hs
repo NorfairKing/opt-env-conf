@@ -133,13 +133,27 @@ runCompletionQuery ::
   Parser a ->
   -- | Enriched
   Bool ->
-  -- Where completion is invoked (inbetween arguments)
+  -- | Where completion is invoked (inbetween arguments)
   Int ->
   -- Provider arguments
   [String] ->
   IO ()
 runCompletionQuery parser enriched index ws = do
-  let completions = pureCompletionQuery parser index ws
+  -- Which index and args are passed here is a bit tricky.
+  -- Some examples:
+  --
+  -- progname <tab>      -> (1, ["progname"])
+  -- progname <tab>-     -> (1, ["progname", "-"])
+  -- progname -<tab>     -> (1, ["progname", "-"])
+  -- progname -<tab>-    -> (1, ["progname", "--"])
+  -- progname - <tab>    -> (2, ["progname", "-"])
+  --
+  -- You can use this for debugging inputs:
+  -- import System.IO
+  -- hPutStrLn stderr $ show (enriched, index, ws)
+  --
+  -- We use 'drop 1' here because we don't care about the progname anymore.
+  let completions = pureCompletionQuery parser (pred index) (drop 1 ws)
   evaluatedCompletions <- fmap concat $ forM completions $ \c -> do
     ss <- evalSuggestion (completionSuggestion c)
     pure $ map (\s -> c {completionSuggestion = s}) ss
@@ -156,6 +170,13 @@ runCompletionQuery parser enriched index ws = do
     else putStr $ unlines $ map completionSuggestion evaluatedCompletions
   pure ()
 
+-- Because the first arg has already been skipped we get input like this here:
+--
+-- progname <tab>      -> (0, [])
+-- progname <tab>-     -> (0, ["-"])
+-- progname -<tab>     -> (0, ["-"])
+-- progname -<tab>-    -> (0, ["--"])
+-- progname - <tab>    -> (1, ["-"])
 selectArgs :: Int -> [String] -> (Args, Maybe String)
 selectArgs ix args =
   ( parseArgs $ take ix args,
@@ -201,6 +222,7 @@ pureCompletionQuery parser ix args =
     (selectedArgs, mCursorArg) = selectArgs ix args
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
     goCommand = go . commandParser -- TODO complete with the command
+    combineOptions = Just . concat . catMaybes
     -- Nothing means "this branch was not valid"
     -- Just [] means "no completions"
     go :: Parser a -> State Args (Maybe [Completion Suggestion])
@@ -238,60 +260,68 @@ pureCompletionQuery parser ix args =
       ParserCommands _ _ cs -> do
         as <- get
         let possibilities = Args.consumeArgument as
-        fmap (Just . concat . catMaybes) $ forM possibilities $ \(mArg, rest) -> do
+        fmap combineOptions $ forM possibilities $ \(mArg, rest) -> do
           case mArg of
-            Nothing ->
-              pure $
-                Just $
-                  map
-                    ( \Command {..} ->
-                        Completion
-                          { completionSuggestion = SuggestionBare commandArg,
-                            completionDescription = Just commandHelp
-                          }
-                    )
-                    cs
+            Nothing -> do
+              if argsAtEnd rest
+                then case mCursorArg of
+                  Nothing ->
+                    pure $
+                      Just $
+                        map
+                          ( \Command {..} ->
+                              Completion
+                                { completionSuggestion = SuggestionBare commandArg,
+                                  completionDescription = Just commandHelp
+                                }
+                          )
+                          cs
+                  Just arg -> do
+                    let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
+                    pure $
+                      Just $
+                        map
+                          ( \Command {..} ->
+                              Completion
+                                { completionSuggestion = SuggestionBare commandArg,
+                                  completionDescription = Just commandHelp
+                                }
+                          )
+                          matchingCommands
+                else pure Nothing -- TODO: What does this mean?
             Just arg ->
               case find ((== arg) . commandArg) cs of
                 Just c -> do
                   put rest
                   goCommand c
-                Nothing -> do
-                  let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
-                  pure $
-                    Just $
-                      map
-                        ( \Command {..} ->
-                            Completion
-                              { completionSuggestion = SuggestionBare commandArg,
-                                completionDescription = Just commandHelp
-                              }
-                        )
-                        matchingCommands
+                Nothing -> pure Nothing -- Invalid command
       ParserWithConfig _ p1 p2 -> do
         c1 <- go p1
         case c1 of
           Just [] -> go p2
           Just ss -> pure $ Just ss
           Nothing -> pure $ Just []
-      ParserSetting _ Setting {..} ->
+      ParserSetting _ Setting {..} -> do
         if settingHidden
           then pure $ Just []
           else do
-            case mCursorArg of
-              Nothing -> pure $ Just []
-              Just arg -> do
-                let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
-                let completions =
-                      map
-                        ( ( \completionSuggestion ->
-                              let completionDescription = settingHelp
-                               in Completion {..}
-                          )
-                            . SuggestionBare
-                        )
-                        suggestions
-                pure $ Just completions
-
--- ParserAp p1 p2 -> do
---   s1s <- go p1 |> go p2
+            as <- get
+            if argsAtEnd as
+              then do
+                case mCursorArg of
+                  Nothing -> pure $ Just []
+                  Just arg -> do
+                    let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
+                    let completions =
+                          map
+                            ( ( \completionSuggestion ->
+                                  let completionDescription = settingHelp
+                                   in Completion {..}
+                              )
+                                . SuggestionBare
+                            )
+                            suggestions
+                    pure $ Just completions
+              else do
+                -- Try to parse the setting to throw it away and advance if possible
+                pure Nothing
