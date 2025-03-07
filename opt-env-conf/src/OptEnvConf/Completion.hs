@@ -234,8 +234,21 @@ pureCompletionQuery parser ix args =
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ _ cs -> do
-        -- Don't re-use the state accross commands
-        Just . concat . catMaybes <$> mapM goCommand cs
+        case mCursorArg of
+          Nothing ->
+            pure $
+              Just $
+                map
+                  ( \Command {..} ->
+                      Completion
+                        { completionSuggestion = SuggestionBare commandArg,
+                          completionDescription = Just commandHelp
+                        }
+                  )
+                  cs
+          Just _ -> do
+            -- Don't re-use the state accross commands
+            Just . concat . catMaybes <$> mapM goCommand cs
       ParserWithConfig _ p1 p2 -> do
         c1 <- go p1
         case c1 of

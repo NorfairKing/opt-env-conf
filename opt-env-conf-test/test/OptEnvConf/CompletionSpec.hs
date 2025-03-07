@@ -38,16 +38,17 @@ spec = do
     describe "commands" $ do
       let p =
             commands
-              [ command "foo" "foo" $ pure (),
-                command "bar" "bar" $ pure ()
+              [ command "foo" "1" $ pure (),
+                command "bar" "2" $ pure (),
+                command "baz" "3" $ pure ()
               ]
 
       it "can complete a command argument" $
         pureCompletionQuery p 0 []
-          `shouldBe` ["foo", "bar"]
+          `shouldBe` [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
       it "can complete a command argument" $
-        pureCompletionQuery p 1 ["f"]
-          `shouldBe` ["foo"]
+        pureCompletionQuery p 1 ["b"]
+          `shouldBe` [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
 
     pending "can complete a file argument"
     pending "can complete a file option"
