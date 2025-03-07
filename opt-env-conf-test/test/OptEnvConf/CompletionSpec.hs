@@ -35,7 +35,19 @@ spec = do
       pureCompletionQuery (setting [long "example"]) 1 ["--"]
         `shouldBe` ["--example"]
 
-    pending "can complete a command argument"
+    describe "commands" $ do
+      let p =
+            commands
+              [ command "foo" "foo" $ pure (),
+                command "bar" "bar" $ pure ()
+              ]
+
+      it "can complete a command argument" $
+        pureCompletionQuery p 0 []
+          `shouldBe` ["foo", "bar"]
+      it "can complete a command argument" $
+        pureCompletionQuery p 1 ["f"]
+          `shouldBe` ["foo"]
 
     pending "can complete a file argument"
     pending "can complete a file option"
