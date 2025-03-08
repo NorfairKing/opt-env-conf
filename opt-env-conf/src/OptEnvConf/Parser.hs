@@ -100,6 +100,7 @@ import qualified Data.Text.IO as T
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
+import OptEnvConf.Completer
 import OptEnvConf.Reader
 import OptEnvConf.Setting
 import Path
@@ -461,7 +462,8 @@ filePathSetting builders =
     withFrozenCallStack $
       setting $
         [ reader str,
-          metavar "FILE_PATH" -- TODO file completer
+          metavar "FILE_PATH",
+          completer filePath
         ]
           ++ builders
 
@@ -477,7 +479,8 @@ directoryPathSetting builders =
     withFrozenCallStack $
       setting $
         [ reader str,
-          metavar "DIRECTORY_PATH" -- TODO directory completer
+          metavar "DIRECTORY_PATH",
+          completer directoryPath
         ]
           ++ builders
 
@@ -861,7 +864,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingExamples = [],
             settingHidden = True,
             settingMetavar = Nothing,
-            settingHelp = Nothing
+            settingHelp = Nothing,
+            settingCompleter = Nothing
           }
     parseDisableSwitch :: Parser Bool
     parseDisableSwitch =
@@ -878,7 +882,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingExamples = [],
             settingHidden = True,
             settingMetavar = Nothing,
-            settingHelp = Nothing
+            settingHelp = Nothing,
+            settingCompleter = Nothing
           }
 
     parseEnv :: Maybe (Parser Bool)
@@ -898,7 +903,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingExamples = [],
               settingHidden = False,
               settingMetavar = Just "BOOL",
-              settingHelp = settingHelp s
+              settingHelp = settingHelp s,
+              settingCompleter = Nothing
             }
     parseConfigVal :: Maybe (Parser Bool)
     parseConfigVal = do
@@ -917,7 +923,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingExamples = [],
               settingHidden = False,
               settingMetavar = Nothing,
-              settingHelp = settingHelp s
+              settingHelp = settingHelp s,
+              settingCompleter = Nothing
             }
     parseDummy :: Parser Bool
     parseDummy =
@@ -934,7 +941,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingExamples = [],
             settingHidden = False,
             settingMetavar = Nothing,
-            settingHelp = settingHelp s
+            settingHelp = settingHelp s,
+            settingCompleter = Nothing
           }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed
     prefixDashedLong prefix = \case

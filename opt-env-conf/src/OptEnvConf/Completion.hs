@@ -12,23 +12,25 @@ module OptEnvConf.Completion
     runCompletionQuery,
     pureCompletionQuery,
     Completion (..),
+    evalCompletions,
+    evalCompletion,
     Suggestion (..),
+    evalSuggestion,
   )
 where
 
 import Control.Monad
 import Control.Monad.State
-import Data.Containers.ListUtils (nubOrd)
 import Data.List
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.String
 import OptEnvConf.Args as Args
 import OptEnvConf.Casing
+import OptEnvConf.Completer
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
-import Path.IO
 
 generateBashCompletionScript :: Path Abs File -> String -> IO ()
 generateBashCompletionScript progPath progname = putStrLn $ bashCompletionScript progPath progname
@@ -155,9 +157,7 @@ runCompletionQuery parser enriched index ws = do
   --
   -- We use 'drop 1' here because we don't care about the progname anymore.
   let completions = pureCompletionQuery parser (pred index) (drop 1 ws)
-  evaluatedCompletions <- fmap concat $ forM completions $ \c -> do
-    ss <- evalSuggestion (completionSuggestion c)
-    pure $ map (\s -> c {completionSuggestion = s}) ss
+  evaluatedCompletions <- evalCompletions completions
   if enriched
     then
       putStr $
@@ -199,10 +199,17 @@ instance (IsString str) => IsString (Completion str) where
         completionDescription = Nothing
       }
 
+evalCompletions :: [Completion Suggestion] -> IO [Completion String]
+evalCompletions = fmap concat . mapM evalCompletion
+
+evalCompletion :: Completion Suggestion -> IO [Completion String]
+evalCompletion c = do
+  ss <- evalSuggestion (completionSuggestion c)
+  pure $ map (\s -> c {completionSuggestion = s}) ss
+
 data Suggestion
   = SuggestionBare !String
-  | SuggestionFile
-  deriving (Show, Eq, Ord)
+  | SuggestionCompleter !Completer
 
 -- For tidier tests
 instance IsString Suggestion where
@@ -211,14 +218,11 @@ instance IsString Suggestion where
 evalSuggestion :: Suggestion -> IO [String]
 evalSuggestion = \case
   SuggestionBare s -> pure [s]
-  SuggestionFile -> do
-    here <- getCurrentDir
-    map fromAbsFile . snd <$> listDir here
+  SuggestionCompleter (Completer act) -> act
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion Suggestion]
 pureCompletionQuery parser ix args =
-  -- TODO use the index properly (?)
-  maybe [] nubOrd $ evalState (go parser) selectedArgs
+  fromMaybe [] $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])

@@ -29,6 +29,7 @@ module OptEnvConf.Setting
     example,
     shownExample,
     hidden,
+    completer,
     Builder (..),
     BuildInstruction (..),
 
@@ -53,6 +54,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import OptEnvConf.Args (Dashed (..), renderDashed)
 import OptEnvConf.Casing
+import OptEnvConf.Completer
 import OptEnvConf.Reader
 import Text.Show
 
@@ -89,7 +91,8 @@ data Setting a = Setting
     settingHidden :: !Bool,
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
-    settingHelp :: !(Maybe String)
+    settingHelp :: !(Maybe String),
+    settingCompleter :: !(Maybe Completer)
   }
 
 -- An 'Ord'-able Setting without giving 'Setting' an 'Eq' instance
@@ -144,7 +147,8 @@ emptySetting =
       settingHelp = Nothing,
       settingExamples = [],
       settingHidden = False,
-      settingDefaultValue = Nothing
+      settingDefaultValue = Nothing,
+      settingCompleter = Nothing
     }
 
 -- | Show a 'Setting' as much as possible, for debugging
@@ -207,6 +211,7 @@ data BuildInstruction a
   | BuildSetDefault !a !String
   | BuildAddExample !String
   | BuildSetHidden
+  | BuildSetCompleter !Completer
 
 applyBuildInstructions :: [BuildInstruction a] -> Setting a -> Setting a
 applyBuildInstructions is s = foldr applyBuildInstruction s is
@@ -226,6 +231,7 @@ applyBuildInstruction bi s = case bi of
   BuildSetDefault a shown -> s {settingDefaultValue = Just (a, shown)}
   BuildAddExample e -> s {settingExamples = e : settingExamples s}
   BuildSetHidden -> s {settingHidden = True}
+  BuildSetCompleter c -> s {settingCompleter = Just c}
 
 instance Semigroup (Builder f) where
   (<>) (Builder f1) (Builder f2) = Builder (f1 <> f2)
@@ -374,3 +380,9 @@ shownExample = example . show
 -- Multiple 'hidden's are redundant.
 hidden :: Builder a
 hidden = Builder [BuildSetHidden]
+
+-- | Set the setting to tab-complete with the given completer
+--
+-- Multiple 'completer's are redundant.
+completer :: Completer -> Builder a
+completer c = Builder [BuildSetCompleter c]

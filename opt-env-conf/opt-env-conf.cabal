@@ -27,6 +27,7 @@ library
       OptEnvConf
       OptEnvConf.Args
       OptEnvConf.Casing
+      OptEnvConf.Completer
       OptEnvConf.Completion
       OptEnvConf.Doc
       OptEnvConf.EnvMap

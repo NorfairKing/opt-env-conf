@@ -3,6 +3,7 @@
 
 module OptEnvConf.CompletionSpec (spec) where
 
+import OptEnvConf.Completer
 import OptEnvConf.Completion
 import OptEnvConf.Parser
 import OptEnvConf.Setting
@@ -27,16 +28,19 @@ spec = do
   describe "pureCompletionQuery" $ do
     it "can complete a switch from nothing" $
       pureCompletionQuery (setting [short 'e', long "example"]) 0 []
-        `shouldBe` ["-e", "--example"]
+        `shouldSuggest` ["-e", "--example"]
+
     it "can complete a short switch from a single dash" $
       pureCompletionQuery (setting [short 'e']) 0 ["-"]
-        `shouldBe` ["-e"]
+        `shouldSuggest` ["-e"]
+
     it "can complete a long switch from a single dash" $
       pureCompletionQuery (setting [long "example"]) 0 ["-"]
-        `shouldBe` ["--example"]
+        `shouldSuggest` ["--example"]
+
     it "can complete a long switch from a double dash" $
       pureCompletionQuery (setting [long "example"]) 0 ["--"]
-        `shouldBe` ["--example"]
+        `shouldSuggest` ["--example"]
 
     pending "can complete a short option"
     pending "can complete a long option"
@@ -52,11 +56,11 @@ spec = do
 
       it "can complete a command argument" $
         pureCompletionQuery p 0 []
-          `shouldBe` [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          `shouldSuggest` [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
 
       it "can complete a command argument when it's been partially provided" $
         pureCompletionQuery p 0 ["b"]
-          `shouldBe` [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          `shouldSuggest` [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
 
     describe "completion after a command" $ do
       it "can complete a command with a switch" $
@@ -64,38 +68,46 @@ spec = do
           (commands [command "foo" "1" $ setting [help "ex", short 'e', long "example"]])
           1
           ["foo"]
-          `shouldBe` [Completion "-e" (Just "ex"), Completion "--example" (Just "ex")]
+          `shouldSuggest` [Completion "-e" (Just "ex"), Completion "--example" (Just "ex")]
 
       it "can complete a command's short switch" $
         pureCompletionQuery
           (commands [command "foo" "1" $ setting [short 'e']])
           1
           ["foo", "-"]
-          `shouldBe` ["-e"]
+          `shouldSuggest` ["-e"]
 
       it "can complete a command's long switch from a single dash" $
         pureCompletionQuery
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "-"]
-          `shouldBe` ["--example"]
+          `shouldSuggest` ["--example"]
 
       it "can complete a command's long switch from a double dash" $
         pureCompletionQuery
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "--"]
-          `shouldBe` ["--example"]
+          `shouldSuggest` ["--example"]
 
       pending "can complete a command's short option"
       pending "can complete a command's long option"
       pending "can complete a command's long option with equals sign"
 
-    it "can complete a file argument" $
-      pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 []
-        `shouldBe` [Completion SuggestionFile (Just "file arg")]
+    it "can complete a file argument" $ do
+      case pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 [] of
+        [] -> expectationFailure "Expected only a file completion, got none"
+        [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` []
+        _ -> expectationFailure "Expected only a file completion, got more"
 
     pending "can complete a file option"
 
     pending "can complete a director argument"
     pending "can complete a director option"
+
+shouldSuggest :: [Completion Suggestion] -> [Completion Suggestion] -> IO ()
+shouldSuggest cs1 cs2 = do
+  s1s <- evalCompletions cs1
+  s2s <- evalCompletions cs2
+  s1s `shouldBe` s2s
