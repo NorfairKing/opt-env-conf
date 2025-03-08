@@ -407,6 +407,7 @@ test-suite opt-env-conf-test
     , opt-env-conf
     , opt-env-conf-test
     , path
+    , path-io
     , pretty-show
     , safe-coloured-text
     , sydtest

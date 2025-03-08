@@ -296,24 +296,30 @@ pureCompletionQuery parser ix args =
           Just ss -> pure $ Just ss
           Nothing -> pure $ Just []
       ParserSetting _ Setting {..} -> do
+        let completionDescription = settingHelp
         if settingHidden
           then pure $ Just []
           else do
             as <- get
             if argsAtEnd as
-              then do
-                let arg = fromMaybe "" mCursorArg
-                let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
-                let completions =
-                      map
-                        ( ( \completionSuggestion ->
-                              let completionDescription = settingHelp
-                               in Completion {..}
-                          )
-                            . SuggestionBare
-                        )
-                        suggestions
-                pure $ Just completions
+              then
+                if settingTryArgument
+                  then pure $ Just $ maybeToList $ do
+                    c <- settingCompleter
+                    let completionSuggestion = SuggestionCompleter c
+                    pure Completion {..}
+                  else do
+                    let arg = fromMaybe "" mCursorArg
+                    let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
+                    let completions =
+                          map
+                            ( ( \completionSuggestion ->
+                                  Completion {..}
+                              )
+                                . SuggestionBare
+                            )
+                            suggestions
+                    pure $ Just completions
               else do
                 -- Try to parse the setting to throw it away and advance if possible
                 pure Nothing

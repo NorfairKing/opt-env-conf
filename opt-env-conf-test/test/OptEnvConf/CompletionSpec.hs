@@ -8,7 +8,9 @@ import OptEnvConf.Completion
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
+import Path.IO
 import Test.Syd
+import Test.Syd.Path
 
 spec :: Spec
 spec = do
@@ -95,11 +97,15 @@ spec = do
       pending "can complete a command's long option"
       pending "can complete a command's long option with equals sign"
 
-    it "can complete a file argument" $ do
-      case pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 [] of
-        [] -> expectationFailure "Expected only a file completion, got none"
-        [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` []
-        _ -> expectationFailure "Expected only a file completion, got more"
+    -- We have to set the working dir here
+    sequential $
+      tempDirSpec "opt-env-conf" $
+        it "can complete a file argument" $ \tdir ->
+          withCurrentDir tdir $
+            case pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 [] of
+              [] -> expectationFailure "Expected only a file completion, got none"
+              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` []
+              _ -> expectationFailure "Expected only a file completion, got more"
 
     pending "can complete a file option"
 
