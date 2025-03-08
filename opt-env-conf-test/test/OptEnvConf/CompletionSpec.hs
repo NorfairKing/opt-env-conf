@@ -44,9 +44,19 @@ spec = do
       pureCompletionQuery (setting [long "example"]) 0 ["--"]
         `shouldSuggest` ["--example"]
 
-    pending "can complete a short option"
-    pending "can complete a long option"
-    pending "can complete a long option with equals sign"
+    it "can complete a short option with a separate arg" $
+      pureCompletionQuery (setting [option, short 'e', completer $ Completer $ pure ["hi"]]) 1 ["-e"]
+        `shouldSuggest` ["hi"]
+
+    -- Don't think we want to support this.
+    -- pending "can complete a short option in short-hand mode.
+
+    it "can complete a long option" $
+      pureCompletionQuery (setting [option, long "example", completer $ Completer $ pure ["hi"]]) 1 ["--example"]
+        `shouldSuggest` ["hi"]
+
+    -- Don't think we want to support this
+    -- pending "can complete a long option with equals sign"
 
     describe "commands" $ do
       let p =

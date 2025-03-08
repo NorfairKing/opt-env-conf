@@ -297,6 +297,10 @@ pureCompletionQuery parser ix args =
           Nothing -> pure $ Just []
       ParserSetting _ Setting {..} -> do
         let completionDescription = settingHelp
+        let completeWithCompleter = pure $ Just $ maybeToList $ do
+              c <- settingCompleter
+              let completionSuggestion = SuggestionCompleter c
+              pure Completion {..}
         if settingHidden
           then pure $ Just []
           else do
@@ -304,10 +308,7 @@ pureCompletionQuery parser ix args =
             if argsAtEnd as
               then
                 if settingTryArgument
-                  then pure $ Just $ maybeToList $ do
-                    c <- settingCompleter
-                    let completionSuggestion = SuggestionCompleter c
-                    pure Completion {..}
+                  then completeWithCompleter
                   else do
                     let arg = fromMaybe "" mCursorArg
                     let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
@@ -320,6 +321,18 @@ pureCompletionQuery parser ix args =
                             )
                             suggestions
                     pure $ Just completions
-              else do
-                -- Try to parse the setting to throw it away and advance if possible
-                pure Nothing
+              else
+                if settingTryOption
+                  then do
+                    -- If we're not at the end, we may be between an option's
+                    -- dashed an the option value being tab-completed In that case
+                    -- we need to parse the dashed as normal and check if that
+                    -- brings us to the end.
+                    case Args.consumeSwitch settingDasheds as of
+                      Nothing -> pure Nothing
+                      Just as' -> do
+                        if argsAtEnd as'
+                          then completeWithCompleter
+                          else pure Nothing
+                  else do
+                    pure Nothing
