@@ -103,9 +103,19 @@ spec = do
           ["foo", "--"]
           `shouldSuggest` ["--example"]
 
-      pending "can complete a command's short option"
-      pending "can complete a command's long option"
-      pending "can complete a command's long option with equals sign"
+      it "can complete a command's short option" $
+        pureCompletionQuery
+          (commands [command "foo" "1" $ setting [option, short 'e', completer $ Completer $ pure ["hi"]]])
+          2
+          ["foo", "-e"]
+          `shouldSuggest` ["hi"]
+
+      it "can complete a command's long option" $
+        pureCompletionQuery
+          (commands [command "foo" "1" $ setting [option, long "example", completer $ Completer $ pure ["hi"]]])
+          2
+          ["foo", "--example"]
+          `shouldSuggest` ["hi"]
 
     -- We have to set the working dir here
     sequential $
