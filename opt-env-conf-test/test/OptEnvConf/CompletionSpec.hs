@@ -119,15 +119,36 @@ spec = do
 
     -- We have to set the working dir here
     sequential $
-      tempDirSpec "opt-env-conf" $
+      tempDirSpec "opt-env-conf" $ do
         it "can complete a file argument" $ \tdir ->
-          withCurrentDir tdir $
+          withCurrentDir tdir $ do
+            -- Setup dir
+            exampleFile1 <- resolveFile tdir "foo.txt"
+            writeFile (fromAbsFile exampleFile1) ""
+            exampleDir <- resolveDir tdir "bar"
+            createDir exampleDir
+            exampleFile2 <- resolveFile exampleDir "quux.txt"
+            writeFile (fromAbsFile exampleFile2) ""
+
             case pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 [] of
               [] -> expectationFailure "Expected only a file completion, got none"
-              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` []
+              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` ["foo.txt", "bar/"]
               _ -> expectationFailure "Expected only a file completion, got more"
 
-    pending "can complete a file option"
+        it "can complete a file option" $ \tdir ->
+          withCurrentDir tdir $ do
+            -- Setup dir
+            exampleFile1 <- resolveFile tdir "example.txt"
+            writeFile (fromAbsFile exampleFile1) ""
+            exampleDir <- resolveDir tdir "bar"
+            createDir exampleDir
+            exampleFile2 <- resolveFile exampleDir "quux.txt"
+            writeFile (fromAbsFile exampleFile2) ""
+
+            case pureCompletionQuery (filePathSetting [help "file arg", option, long "file"]) 1 ["--file"] of
+              [] -> expectationFailure "Expected only a file completion, got none"
+              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` ["example.txt", "bar/"]
+              _ -> expectationFailure "Expected only a file completion, got more"
 
     pending "can complete a director argument"
     pending "can complete a director option"

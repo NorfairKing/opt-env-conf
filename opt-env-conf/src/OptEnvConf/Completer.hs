@@ -13,9 +13,10 @@ newtype Completer = Completer {unCompleter :: IO [String]}
 filePath :: Completer
 filePath = Completer $ do
   here <- getCurrentDir
-  map fromAbsFile . snd <$> listDir here
+  (ds, fs) <- listDirRel here
+  pure $ map fromRelFile fs ++ map fromRelDir ds
 
 directoryPath :: Completer
 directoryPath = Completer $ do
   here <- getCurrentDir
-  map fromAbsDir . fst <$> listDir here
+  map fromRelDir . fst <$> listDirRel here
