@@ -9,7 +9,9 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [ base opt-env-conf path text ];
   executableHaskellDepends = [ base ];
-  testHaskellDepends = [ base opt-env-conf-test sydtest ];
+  testHaskellDepends = [
+    base opt-env-conf opt-env-conf-test sydtest
+  ];
   testToolDepends = [ sydtest-discover ];
   license = "unknown";
   mainProgram = "opt-env-conf-example";
