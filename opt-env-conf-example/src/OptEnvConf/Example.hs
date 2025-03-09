@@ -22,7 +22,7 @@ exampleMain = do
       "Example opt-env-conf-based application"
   print (s :: Instructions)
 
-data Instructions = Instructions !Settings !Dispatch
+data Instructions = Instructions !Dispatch !Settings
   deriving (Show)
 
 instance HasParser Instructions where

@@ -30,8 +30,7 @@ spec = do
   describe "pureCompletionQuery" $ do
     it "can complete a switch from nothing" $
       pureCompletionQuery (setting [short 'e', long "example"]) 0 []
-        `shouldSuggest` ["-e", "--example"]
-
+        `shouldSuggest` ["--example"] -- Only the long version
     it "can complete a short switch from a single dash" $
       pureCompletionQuery (setting [short 'e']) 0 ["-"]
         `shouldSuggest` ["-e"]
@@ -80,8 +79,7 @@ spec = do
           (commands [command "foo" "1" $ setting [help "ex", short 'e', long "example"]])
           1
           ["foo"]
-          `shouldSuggest` [Completion "-e" (Just "ex"), Completion "--example" (Just "ex")]
-
+          `shouldSuggest` [Completion "--example" (Just "ex")] -- Only the long version
       it "can complete a command's short switch" $
         pureCompletionQuery
           (commands [command "foo" "1" $ setting [short 'e']])

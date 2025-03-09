@@ -228,27 +228,32 @@ pureCompletionQuery parser ix args =
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
     goCommand = go . commandParser -- TODO complete with the command
     combineOptions = Just . concat . catMaybes
+    andCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
+    andCompletions p1 p2 = do
+      os1 <- go p1
+      os2 <- go p2
+      pure $ combineOptions [os1, os2]
+    orCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
+    orCompletions p1 p2 = do
+      stateBefore <- get
+      c1 <- go p1
+      case c1 of
+        Just _ -> do
+          c2 <- go p2
+          pure $ combineOptions [c1, c2]
+        Nothing -> do
+          put stateBefore
+          go p2
     -- Nothing means "this branch was not valid"
     -- Just [] means "no completions"
     go :: Parser a -> State Args (Maybe [Completion Suggestion])
     go = \case
       ParserPure _ -> pure $ Just []
-      ParserAp p1 p2 -> do
-        c1 <- go p1
-        case c1 of
-          Just [] -> go p2
-          Just ss -> pure $ Just ss
-          Nothing -> pure $ Just []
-      ParserAlt p1 p2 -> do
-        s1s <- go p1
-        s2s <- go p2
-        pure $ (++) <$> s1s <*> s2s
-      ParserSelect p1 p2 -> do
-        c1 <- go p1
-        case c1 of
-          Just [] -> go p2
-          Just ss -> pure $ Just ss
-          Nothing -> pure $ Just []
+      -- Parse both and combine the result
+      ParserAp p1 p2 -> andCompletions p1 p2
+      -- Parse either: either completions are valid
+      ParserAlt p1 p2 -> orCompletions p1 p2
+      ParserSelect p1 p2 -> andCompletions p1 p2
       ParserEmpty _ -> pure Nothing
       ParserMany p -> do
         mR <- go p
@@ -289,12 +294,9 @@ pureCompletionQuery parser ix args =
                   put rest
                   goCommand c
                 Nothing -> pure Nothing -- Invalid command
-      ParserWithConfig _ p1 p2 -> do
-        c1 <- go p1
-        case c1 of
-          Just [] -> go p2
-          Just ss -> pure $ Just ss
-          Nothing -> pure $ Just []
+      ParserWithConfig _ p1 p2 ->
+        -- The config-file auto-completion is probably less important, we put it second.
+        andCompletions p2 p1
       ParserSetting _ Setting {..} -> do
         let completionDescription = settingHelp
         let completeWithCompleter = pure $ Just $ maybeToList $ do
@@ -311,7 +313,11 @@ pureCompletionQuery parser ix args =
                   then completeWithCompleter
                   else do
                     let arg = fromMaybe "" mCursorArg
-                    let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed settingDasheds)
+                    let isLong = \case
+                          DashedLong _ -> True
+                          DashedShort _ -> False
+                    let favorableDasheds = if any isLong settingDasheds then filter isLong settingDasheds else settingDasheds
+                    let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed favorableDasheds)
                     let completions =
                           map
                             ( ( \completionSuggestion ->

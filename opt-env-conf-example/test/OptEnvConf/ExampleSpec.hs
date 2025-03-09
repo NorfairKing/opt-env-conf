@@ -49,13 +49,32 @@ spec = do
     let p = settingsParser @Instructions
     it "auto-completes the commands and top-level settings" $
       pureCompletionQuery p 0 []
-        `shouldSuggest` ["create", "read", "update", "delete", "--config-file"]
+        `shouldSuggest` [ Completion "create" $ Just "Create",
+                          Completion "read" $ Just "Read",
+                          Completion "update" $ Just "Update",
+                          Completion "delete" $ Just "Delete",
+                          Completion "--log-level" $ Just "minimal severity of log messages",
+                          Completion "--base" $ Just "base directory for items",
+                          Completion "--payment-public-key" $ Just "Public key",
+                          Completion "--payment-secret-key" $ Just "Secret key",
+                          Completion "--payment-currency" $ Just "Currency",
+                          Completion "--config-file" $ Just "Path to the configuration file"
+                        ]
     it "auto-completes the create file option dashed" $
       pureCompletionQuery p 1 ["create", "-"]
-        `shouldSuggest` ["-f", "--file"]
+        `shouldSuggest` [ Completion "--file" $ Just "file to create the item in",
+                          Completion "--log-level" $ Just "minimal severity of log messages",
+                          Completion "--base" $ Just "base directory for items",
+                          Completion "--payment-public-key" $ Just "Public key",
+                          Completion "--payment-secret-key" $ Just "Secret key",
+                          Completion "--payment-currency" $ Just "Currency",
+                          Completion "--config-file" $ Just "Path to the configuration file"
+                        ]
     it "auto-completes the create file option files" $
-      pureCompletionQuery p 2 ["create", "--file"]
-        `shouldSuggest` []
+      case pureCompletionQuery p 2 ["create", "--file"] of
+        [] -> expectationFailure "Expected only a file completion, got none"
+        [Completion (SuggestionCompleter (Completer _)) (Just "file to create the item in")] -> pure () -- We assume that it's the file completer so we don't have to run this in a temp dir.
+        cs -> expectationFailure $ "Expected only a file completion, got more: " <> show (length cs)
 
 shouldSuggest :: [Completion Suggestion] -> [Completion Suggestion] -> IO ()
 shouldSuggest cs1 cs2 = do
