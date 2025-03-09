@@ -3,6 +3,7 @@
 
 module OptEnvConf.CompletionSpec (spec) where
 
+import Control.Monad
 import OptEnvConf.Completer
 import OptEnvConf.Completion
 import OptEnvConf.Parser
@@ -30,18 +31,18 @@ spec = do
   describe "pureCompletionQuery" $ do
     it "can complete a switch from nothing" $
       pureCompletionQuery (setting [short 'e', long "example"]) 0 []
-        `shouldSuggest` ["--example"] -- Only the long version
+        `shouldSuggestPure` ["--example"] -- Only the long version
     it "can complete a short switch from a single dash" $
       pureCompletionQuery (setting [short 'e']) 0 ["-"]
-        `shouldSuggest` ["-e"]
+        `shouldSuggestPure` ["-e"]
 
     it "can complete a long switch from a single dash" $
       pureCompletionQuery (setting [long "example"]) 0 ["-"]
-        `shouldSuggest` ["--example"]
+        `shouldSuggestPure` ["--example"]
 
     it "can complete a long switch from a double dash" $
       pureCompletionQuery (setting [long "example"]) 0 ["--"]
-        `shouldSuggest` ["--example"]
+        `shouldSuggestPure` ["--example"]
 
     it "can complete a short option with a separate arg" $
       pureCompletionQuery (setting [option, short 'e', completer $ Completer $ pure ["hi"]]) 1 ["-e"]
@@ -85,21 +86,21 @@ spec = do
           (commands [command "foo" "1" $ setting [short 'e']])
           1
           ["foo", "-"]
-          `shouldSuggest` ["-e"]
+          `shouldSuggestPure` ["-e"]
 
       it "can complete a command's long switch from a single dash" $
         pureCompletionQuery
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "-"]
-          `shouldSuggest` ["--example"]
+          `shouldSuggestPure` ["--example"]
 
       it "can complete a command's long switch from a double dash" $
         pureCompletionQuery
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "--"]
-          `shouldSuggest` ["--example"]
+          `shouldSuggestPure` ["--example"]
 
       it "can complete a command's short option" $
         pureCompletionQuery
@@ -115,63 +116,34 @@ spec = do
           ["foo", "--example"]
           `shouldSuggest` ["hi"]
 
-    -- We have to set the working dir here
-    sequential $
-      tempDirSpec "opt-env-conf" $ do
-        let setupExampleDir tdir = do
-              -- File
-              exampleFile1 <- resolveFile tdir "foo.txt"
-              writeFile (fromAbsFile exampleFile1) ""
-              -- File in dir
-              exampleDir <- resolveDir tdir "bar"
-              createDir exampleDir
-              exampleFile2 <- resolveFile exampleDir "quux.txt"
-              writeFile (fromAbsFile exampleFile2) ""
-              -- Hidden file
-              hiddenFile <- resolveFile tdir ".hidden.txt"
-              writeFile (fromAbsFile hiddenFile) ""
-              -- Hidden dir
-              hiddenDir <- resolveDir tdir ".hidden"
-              createDir hiddenDir
+    it "can complete a file argument" $
+      pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 []
+        `shouldSuggestDesc` ["file arg"]
 
-        it "can complete a file argument" $ \tdir ->
-          withCurrentDir tdir $ do
-            setupExampleDir tdir
+    it "can complete a file option" $
+      pureCompletionQuery (filePathSetting [help "file arg", option, long "file"]) 1 ["--file"]
+        `shouldSuggestDesc` ["file arg"]
 
-            case pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 [] of
-              [] -> expectationFailure "Expected only a file completion, got none"
-              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` ["foo.txt", "bar"]
-              _ -> expectationFailure "Expected only a file completion, got more"
+    it "can complete a directory argument" $
+      pureCompletionQuery (directoryPathSetting [help "dir arg", argument]) 0 []
+        `shouldSuggestDesc` ["dir arg"]
 
-        it "can complete a file option" $ \tdir ->
-          withCurrentDir tdir $ do
-            setupExampleDir tdir
-
-            case pureCompletionQuery (filePathSetting [help "file arg", option, long "file"]) 1 ["--file"] of
-              [] -> expectationFailure "Expected only a file completion, got none"
-              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` ["foo.txt", "bar"]
-              _ -> expectationFailure "Expected only a file completion, got more"
-
-        it "can complete a directory argument" $ \tdir ->
-          withCurrentDir tdir $ do
-            setupExampleDir tdir
-
-            case pureCompletionQuery (directoryPathSetting [help "file arg", argument]) 0 [] of
-              [] -> expectationFailure "Expected only a file completion, got none"
-              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` ["bar"]
-              _ -> expectationFailure "Expected only a file completion, got more"
-
-        it "can complete a directory option" $ \tdir ->
-          withCurrentDir tdir $ do
-            setupExampleDir tdir
-
-            case pureCompletionQuery (directoryPathSetting [help "file arg", option, long "file"]) 1 ["--file"] of
-              [] -> expectationFailure "Expected only a file completion, got none"
-              [Completion (SuggestionCompleter (Completer act)) (Just "file arg")] -> act `shouldReturn` ["bar"]
-              _ -> expectationFailure "Expected only a file completion, got more"
+    it "can complete a directory option" $
+      pureCompletionQuery (directoryPathSetting [help "dir arg", option, long "file"]) 1 ["--file"]
+        `shouldSuggestDesc` ["dir arg"]
 
 shouldSuggest :: [Completion Suggestion] -> [Completion Suggestion] -> IO ()
 shouldSuggest cs1 cs2 = do
   s1s <- evalCompletions cs1
   s2s <- evalCompletions cs2
   s1s `shouldBe` s2s
+
+shouldSuggestPure :: [Completion Suggestion] -> [String] -> IO ()
+shouldSuggestPure completions bareSuggestions = do
+  pureSuggestions <- forM completions $ \completion -> case completionSuggestion completion of
+    SuggestionBare s -> pure s
+    SuggestionCompleter _ -> expectationFailure "Expected a bare suggestion."
+  pureSuggestions `shouldBe` bareSuggestions
+
+shouldSuggestDesc :: [Completion Suggestion] -> [String] -> IO ()
+shouldSuggestDesc completions descriptions = map completionDescription completions `shouldBe` map Just descriptions

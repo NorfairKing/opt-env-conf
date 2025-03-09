@@ -378,6 +378,7 @@ test-suite opt-env-conf-test
   other-modules:
       OptEnvConf.APISpec
       OptEnvConf.ArgsSpec
+      OptEnvConf.CompleterSpec
       OptEnvConf.CompletionSpec
       OptEnvConf.EnvMapSpec
       OptEnvConf.ErrorSpec
