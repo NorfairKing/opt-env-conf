@@ -17,10 +17,14 @@ filePath = Completer $ do
   here <- getCurrentDir
   (ds, fs) <- listDirRel here
   pure $
-    filter (not . ("." `isPrefixOf`)) (map fromRelFile fs)
-      ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
+    hideHidden $
+      map fromRelFile fs
+        ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
 
 directoryPath :: Completer
 directoryPath = Completer $ do
   here <- getCurrentDir
-  map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
+  hideHidden . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
+
+hideHidden :: [FilePath] -> [FilePath]
+hideHidden = filter (not . ("." `isPrefixOf`))

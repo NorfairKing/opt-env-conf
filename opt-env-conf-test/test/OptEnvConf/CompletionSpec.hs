@@ -121,14 +121,21 @@ spec = do
     sequential $
       tempDirSpec "opt-env-conf" $ do
         let setupExampleDir tdir = do
+              -- File
               exampleFile1 <- resolveFile tdir "foo.txt"
               writeFile (fromAbsFile exampleFile1) ""
-              hiddenFile <- resolveFile tdir ".hidden.txt"
-              writeFile (fromAbsFile hiddenFile) ""
+              -- File in dir
               exampleDir <- resolveDir tdir "bar"
               createDir exampleDir
               exampleFile2 <- resolveFile exampleDir "quux.txt"
               writeFile (fromAbsFile exampleFile2) ""
+              -- Hidden file
+              hiddenFile <- resolveFile tdir ".hidden.txt"
+              writeFile (fromAbsFile hiddenFile) ""
+              -- Hidden dir
+              hiddenDir <- resolveDir tdir ".hidden"
+              createDir hiddenDir
+
         it "can complete a file argument" $ \tdir ->
           withCurrentDir tdir $ do
             setupExampleDir tdir
