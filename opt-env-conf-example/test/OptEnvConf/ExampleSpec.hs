@@ -50,6 +50,12 @@ spec = do
     it "auto-completes the commands and top-level settings" $
       pureCompletionQuery p 0 []
         `shouldSuggest` ["create", "read", "update", "delete", "--config-file"]
+    it "auto-completes the create file option dashed" $
+      pureCompletionQuery p 1 ["create", "-"]
+        `shouldSuggest` ["-f", "--file"]
+    it "auto-completes the create file option files" $
+      pureCompletionQuery p 2 ["create", "--file"]
+        `shouldSuggest` []
 
 shouldSuggest :: [Completion Suggestion] -> [Completion Suggestion] -> IO ()
 shouldSuggest cs1 cs2 = do
