@@ -19,6 +19,7 @@ spec = do
       []
       Settings
         { settingLogLevel = "DEBUG",
+          settingBaseDir = Nothing,
           settingPaymentSettings = Nothing
         }
   it "can parse default settings from an empty config variables" $
@@ -26,6 +27,7 @@ spec = do
       []
       Settings
         { settingLogLevel = "DEBUG",
+          settingBaseDir = Nothing,
           settingPaymentSettings = Nothing
         }
   it "can parse default settings from an empty everything" $
@@ -35,5 +37,6 @@ spec = do
       Nothing
       Settings
         { settingLogLevel = "DEBUG",
+          settingBaseDir = Nothing,
           settingPaymentSettings = Nothing
         }

@@ -11,6 +11,7 @@ where
 
 import Data.Text (Text)
 import OptEnvConf
+import Path
 import Paths_opt_env_conf_example (version)
 
 exampleMain :: IO ()
@@ -32,7 +33,7 @@ instance HasParser Instructions where
         <*> settingsParser
 
 data Dispatch
-  = DispatchCreate !String
+  = DispatchCreate !String !(Maybe (Path Abs File))
   | DispatchRead
   | DispatchUpdate !String !String
   | DispatchDelete
@@ -48,7 +49,15 @@ instance HasParser Dispatch where
                 reader str,
                 argument,
                 metavar "STR"
-              ],
+              ]
+            <*> optional
+              ( filePathSetting
+                  [ help "file to create the item in",
+                    option,
+                    short 'f',
+                    long "file"
+                  ]
+              ),
         command "read" "Read" $ pure DispatchRead,
         command "update" "Update" $
           DispatchUpdate
@@ -69,6 +78,7 @@ instance HasParser Dispatch where
 
 data Settings = Settings
   { settingLogLevel :: String,
+    settingBaseDir :: !(Maybe (Path Abs Dir)),
     settingPaymentSettings :: Maybe PaymentSettings
   }
   deriving (Show, Eq)
@@ -83,6 +93,14 @@ instance HasParser Settings where
           name "log-level",
           value "DEBUG"
         ]
+    settingBaseDir <-
+      optional $
+        directoryPathSetting
+          [ help "base directory for items",
+            option,
+            short 'b',
+            long "base"
+          ]
     settingPaymentSettings <- optional $ subSettings "payment"
     pure Settings {..}
 

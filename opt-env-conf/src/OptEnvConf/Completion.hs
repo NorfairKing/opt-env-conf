@@ -151,13 +151,13 @@ runCompletionQuery parser enriched index ws = do
   -- progname -<tab>-    -> (1, ["progname", "--"])
   -- progname - <tab>    -> (2, ["progname", "-"])
   --
-  -- You can use this for debugging inputs:
-  -- import System.IO
-  -- hPutStrLn stderr $ show (enriched, index, ws)
-  --
   -- We use 'drop 1' here because we don't care about the progname anymore.
   let completions = pureCompletionQuery parser (pred index) (drop 1 ws)
   evaluatedCompletions <- evalCompletions completions
+  -- You can use this for debugging inputs:
+  -- import System.IO
+  -- hPutStrLn stderr $ show (enriched, index, ws)
+  -- hPutStrLn stderr $ show evaluatedCompletions
   if enriched
     then
       putStr $

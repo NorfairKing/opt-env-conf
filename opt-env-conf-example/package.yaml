@@ -15,6 +15,7 @@ library:
   ghc-options: -Wall
   dependencies:
   - opt-env-conf
+  - path
   - text
 
 executables:

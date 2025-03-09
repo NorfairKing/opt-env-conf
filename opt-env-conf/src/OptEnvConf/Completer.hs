@@ -5,8 +5,10 @@ module OptEnvConf.Completer
   )
 where
 
+import Data.List
 import Path
 import Path.IO
+import qualified System.FilePath as FP
 
 newtype Completer = Completer {unCompleter :: IO [String]}
 
@@ -14,9 +16,11 @@ filePath :: Completer
 filePath = Completer $ do
   here <- getCurrentDir
   (ds, fs) <- listDirRel here
-  pure $ map fromRelFile fs ++ map fromRelDir ds
+  pure $
+    filter (not . ("." `isPrefixOf`)) (map fromRelFile fs)
+      ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
 
 directoryPath :: Completer
 directoryPath = Completer $ do
   here <- getCurrentDir
-  map fromRelDir . fst <$> listDirRel here
+  map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
