@@ -30,7 +30,7 @@ Used in production in all my products and some companies.
         - [x] Per-command `--help` page
     - [x] Generated `--version` command
     - [x] Generated manpage
-- [ ] Completion
+- [x] Completion
     - [x] Bash completion
     - [x] Zsh completion
     - [x] Fish completion
@@ -60,9 +60,9 @@ Used in production in all my products and some companies.
 | Coloured parse errors                | ✔️              | ✖️                      | ✖️          | ✖️             |
 | Generated manpage                    | ✔️              | ✖️                      | ✖️          | ✖️             |
 | Typo suggestions                     | 🚧             | ✖️                      | ✖️          | ✖️             |
-| Bash completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
-| Zsh completion                       | 🚧             | ✔️                      | ✖️          | ✖️             |
-| Fish completion                      | 🚧             | ✔️                      | ✖️          | ✖️             |
+| Bash completion                      | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Zsh completion                       | ✔️              | ✔️                      | ✖️          | ✖️             |
+| Fish completion                      | ✔️              | ✔️                      | ✖️          | ✖️             |
 | Static settings check                | ✔️              | ✖️                      | ✖️          | ✖️             |
 
 
