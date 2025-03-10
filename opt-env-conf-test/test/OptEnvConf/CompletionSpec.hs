@@ -4,6 +4,7 @@
 module OptEnvConf.CompletionSpec (spec) where
 
 import Control.Monad
+import Data.Maybe
 import OptEnvConf.Completer
 import OptEnvConf.Completion
 import OptEnvConf.Parser
@@ -30,30 +31,48 @@ spec = do
 
   describe "pureCompletionQuery" $ do
     it "can complete a switch from nothing" $
-      pureCompletionQuery (setting [short 'e', long "example"]) 0 []
-        `shouldSuggestPure` ["--example"] -- Only the long version
+      shouldSuggest
+        (setting [short 'e', long "example"])
+        0
+        []
+        ["--example"] -- Only the long version
     it "can complete a short switch from a single dash" $
-      pureCompletionQuery (setting [short 'e']) 0 ["-"]
-        `shouldSuggestPure` ["-e"]
+      shouldSuggest
+        (setting [short 'e'])
+        0
+        ["-"]
+        ["-e"]
 
     it "can complete a long switch from a single dash" $
-      pureCompletionQuery (setting [long "example"]) 0 ["-"]
-        `shouldSuggestPure` ["--example"]
+      shouldSuggest
+        (setting [long "example"])
+        0
+        ["-"]
+        ["--example"]
 
     it "can complete a long switch from a double dash" $
-      pureCompletionQuery (setting [long "example"]) 0 ["--"]
-        `shouldSuggestPure` ["--example"]
+      shouldSuggest
+        (setting [long "example"])
+        0
+        ["--"]
+        ["--example"]
 
     it "can complete a short option with a separate arg" $
-      pureCompletionQuery (setting [option, short 'e', completer $ Completer $ pure ["hi"]]) 1 ["-e"]
-        `shouldSuggest` ["hi"]
+      shouldSuggest
+        (setting [option, short 'e', completer $ listCompleter ["hi"]])
+        1
+        ["-e"]
+        ["hi"]
 
     -- Don't think we want to support this.
     -- pending "can complete a short option in short-hand mode.
 
     it "can complete a long option" $
-      pureCompletionQuery (setting [option, long "example", completer $ Completer $ pure ["hi"]]) 1 ["--example"]
-        `shouldSuggest` ["hi"]
+      shouldSuggest
+        (setting [option, long "example", completer $ listCompleter ["hi"]])
+        1
+        ["--example"]
+        ["hi"]
 
     -- Don't think we want to support this
     -- pending "can complete a long option with equals sign"
@@ -67,83 +86,98 @@ spec = do
               ]
 
       it "can complete a command argument" $
-        pureCompletionQuery p 0 []
-          `shouldSuggest` [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+        shouldSuggest
+          p
+          0
+          []
+          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
 
       it "can complete a command argument when it's been partially provided" $
-        pureCompletionQuery p 0 ["b"]
-          `shouldSuggest` [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+        shouldSuggest
+          p
+          0
+          ["b"]
+          [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
 
     describe "completion after a command" $ do
       it "can complete a command with a switch" $
-        pureCompletionQuery
+        shouldSuggest
           (commands [command "foo" "1" $ setting [help "ex", short 'e', long "example"]])
           1
           ["foo"]
-          `shouldSuggest` [Completion "--example" (Just "ex")] -- Only the long version
+          [Completion "--example" (Just "ex")] -- Only the long version
       it "can complete a command's short switch" $
-        pureCompletionQuery
+        shouldSuggest
           (commands [command "foo" "1" $ setting [short 'e']])
           1
           ["foo", "-"]
-          `shouldSuggestPure` ["-e"]
+          ["-e"]
 
       it "can complete a command's long switch from a single dash" $
-        pureCompletionQuery
+        shouldSuggest
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "-"]
-          `shouldSuggestPure` ["--example"]
+          ["--example"]
 
       it "can complete a command's long switch from a double dash" $
-        pureCompletionQuery
+        shouldSuggest
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "--"]
-          `shouldSuggestPure` ["--example"]
+          ["--example"]
 
       it "can complete a command's short option" $
-        pureCompletionQuery
-          (commands [command "foo" "1" $ setting [option, short 'e', completer $ Completer $ pure ["hi"]]])
+        shouldSuggest
+          (commands [command "foo" "1" $ setting [option, short 'e', completer $ listCompleter ["hi"]]])
           2
           ["foo", "-e"]
-          `shouldSuggest` ["hi"]
+          ["hi"]
 
       it "can complete a command's long option" $
-        pureCompletionQuery
-          (commands [command "foo" "1" $ setting [option, long "example", completer $ Completer $ pure ["hi"]]])
+        shouldSuggest
+          (commands [command "foo" "1" $ setting [option, long "example", completer $ listCompleter ["hi"]]])
           2
           ["foo", "--example"]
-          `shouldSuggest` ["hi"]
+          ["hi"]
 
     it "can complete a file argument" $
-      pureCompletionQuery (filePathSetting [help "file arg", argument]) 0 []
-        `shouldSuggestDesc` ["file arg"]
+      shouldSuggestDesc
+        (filePathSetting [help "file arg", argument])
+        0
+        []
+        ["file arg"]
 
     it "can complete a file option" $
-      pureCompletionQuery (filePathSetting [help "file arg", option, long "file"]) 1 ["--file"]
-        `shouldSuggestDesc` ["file arg"]
+      shouldSuggestDesc
+        (filePathSetting [help "file arg", option, long "file"])
+        1
+        ["--file"]
+        ["file arg"]
 
     it "can complete a directory argument" $
-      pureCompletionQuery (directoryPathSetting [help "dir arg", argument]) 0 []
-        `shouldSuggestDesc` ["dir arg"]
+      shouldSuggestDesc
+        (directoryPathSetting [help "dir arg", argument])
+        0
+        []
+        ["dir arg"]
 
     it "can complete a directory option" $
-      pureCompletionQuery (directoryPathSetting [help "dir arg", option, long "file"]) 1 ["--file"]
-        `shouldSuggestDesc` ["dir arg"]
+      shouldSuggestDesc
+        (directoryPathSetting [help "dir arg", option, long "file"])
+        1
+        ["--file"]
+        ["dir arg"]
 
-shouldSuggest :: [Completion Suggestion] -> [Completion Suggestion] -> IO ()
-shouldSuggest cs1 cs2 = do
-  s1s <- evalCompletions cs1
-  s2s <- evalCompletions cs2
-  s1s `shouldBe` s2s
+shouldSuggest :: Parser a -> Int -> [String] -> [Completion String] -> IO ()
+shouldSuggest p ix ws expected = do
+  let arg = fromMaybe "" $ listToMaybe $ drop ix ws
+  let completions = pureCompletionQuery p ix ws
+  evaluatedCompletions <- evalCompletions arg completions
+  evaluatedCompletions `shouldBe` expected
 
-shouldSuggestPure :: [Completion Suggestion] -> [String] -> IO ()
-shouldSuggestPure completions bareSuggestions = do
-  pureSuggestions <- forM completions $ \completion -> case completionSuggestion completion of
-    SuggestionBare s -> pure s
-    SuggestionCompleter _ -> expectationFailure "Expected a bare suggestion."
-  pureSuggestions `shouldBe` bareSuggestions
-
-shouldSuggestDesc :: [Completion Suggestion] -> [String] -> IO ()
-shouldSuggestDesc completions descriptions = map completionDescription completions `shouldBe` map Just descriptions
+shouldSuggestDesc :: Parser a -> Int -> [String] -> [String] -> IO ()
+shouldSuggestDesc p ix ws descriptions = do
+  let arg = fromMaybe "" $ listToMaybe $ drop ix ws
+  let completions = pureCompletionQuery p ix ws
+  map completionDescription completions `shouldBe` map Just descriptions

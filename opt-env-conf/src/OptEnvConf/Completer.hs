@@ -1,5 +1,7 @@
 module OptEnvConf.Completer
   ( Completer (..),
+    listCompleter,
+    listIOCompleter,
     filePath,
     directoryPath,
   )
@@ -10,10 +12,20 @@ import Path
 import Path.IO
 import qualified System.FilePath as FP
 
-newtype Completer = Completer {unCompleter :: IO [String]}
+newtype Completer = Completer {unCompleter :: String -> IO [String]}
+
+-- Forward-compatible synonym for the 'Completer' constructor
+mkCompleter :: (String -> IO [String]) -> Completer
+mkCompleter = Completer
+
+listCompleter :: [String] -> Completer
+listCompleter ss = listIOCompleter $ pure ss
+
+listIOCompleter :: IO [String] -> Completer
+listIOCompleter act = Completer $ \s -> filter (s `isPrefixOf`) <$> act
 
 filePath :: Completer
-filePath = Completer $ do
+filePath = listIOCompleter $ do
   here <- getCurrentDir
   (ds, fs) <- listDirRel here
   pure $
@@ -22,7 +34,7 @@ filePath = Completer $ do
         ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
 
 directoryPath :: Completer
-directoryPath = Completer $ do
+directoryPath = listIOCompleter $ do
   here <- getCurrentDir
   hideHidden . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
 

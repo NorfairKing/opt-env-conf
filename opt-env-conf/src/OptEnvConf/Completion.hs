@@ -141,7 +141,7 @@ runCompletionQuery ::
   -- Provider arguments
   [String] ->
   IO ()
-runCompletionQuery parser enriched index ws = do
+runCompletionQuery parser enriched index' ws' = do
   -- Which index and args are passed here is a bit tricky.
   -- Some examples:
   --
@@ -152,8 +152,11 @@ runCompletionQuery parser enriched index ws = do
   -- progname - <tab>    -> (2, ["progname", "-"])
   --
   -- We use 'drop 1' here because we don't care about the progname anymore.
-  let completions = pureCompletionQuery parser (pred index) (drop 1 ws)
-  evaluatedCompletions <- evalCompletions completions
+  let index = pred index'
+  let ws = drop 1 ws'
+  let arg = fromMaybe "" $ listToMaybe $ drop index ws
+  let completions = pureCompletionQuery parser index ws
+  evaluatedCompletions <- evalCompletions arg completions
   -- You can use this for debugging inputs:
   -- import System.IO
   -- hPutStrLn stderr $ show (enriched, index, ws)
@@ -199,12 +202,12 @@ instance (IsString str) => IsString (Completion str) where
         completionDescription = Nothing
       }
 
-evalCompletions :: [Completion Suggestion] -> IO [Completion String]
-evalCompletions = fmap concat . mapM evalCompletion
+evalCompletions :: String -> [Completion Suggestion] -> IO [Completion String]
+evalCompletions arg = fmap concat . mapM (evalCompletion arg)
 
-evalCompletion :: Completion Suggestion -> IO [Completion String]
-evalCompletion c = do
-  ss <- evalSuggestion (completionSuggestion c)
+evalCompletion :: String -> Completion Suggestion -> IO [Completion String]
+evalCompletion arg c = do
+  ss <- evalSuggestion arg (completionSuggestion c)
   pure $ map (\s -> c {completionSuggestion = s}) ss
 
 data Suggestion
@@ -215,10 +218,10 @@ data Suggestion
 instance IsString Suggestion where
   fromString = SuggestionBare
 
-evalSuggestion :: Suggestion -> IO [String]
-evalSuggestion = \case
-  SuggestionBare s -> pure [s]
-  SuggestionCompleter (Completer act) -> act
+evalSuggestion :: String -> Suggestion -> IO [String]
+evalSuggestion arg = \case
+  SuggestionBare s -> pure $ filter (arg `isPrefixOf`) [s]
+  SuggestionCompleter (Completer act) -> act arg
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion Suggestion]
 pureCompletionQuery parser ix args =
