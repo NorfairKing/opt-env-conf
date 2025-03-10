@@ -3,8 +3,6 @@
 module OptEnvConf.CompleterSpec (spec) where
 
 import OptEnvConf.Completer
-import OptEnvConf.Parser
-import OptEnvConf.Setting
 import Path
 import Path.IO
 import Test.Syd

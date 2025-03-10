@@ -1,5 +1,6 @@
 module OptEnvConf.Completer
   ( Completer (..),
+    mkCompleter,
     listCompleter,
     listIOCompleter,
     filePath,

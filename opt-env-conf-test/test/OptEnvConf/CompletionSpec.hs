@@ -3,16 +3,13 @@
 
 module OptEnvConf.CompletionSpec (spec) where
 
-import Control.Monad
 import Data.Maybe
 import OptEnvConf.Completer
 import OptEnvConf.Completion
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Path
-import Path.IO
 import Test.Syd
-import Test.Syd.Path
 
 spec :: Spec
 spec = do
@@ -178,6 +175,5 @@ shouldSuggest p ix ws expected = do
 
 shouldSuggestDesc :: Parser a -> Int -> [String] -> [String] -> IO ()
 shouldSuggestDesc p ix ws descriptions = do
-  let arg = fromMaybe "" $ listToMaybe $ drop ix ws
   let completions = pureCompletionQuery p ix ws
   map completionDescription completions `shouldBe` map Just descriptions
