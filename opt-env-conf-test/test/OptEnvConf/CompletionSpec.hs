@@ -3,6 +3,7 @@
 
 module OptEnvConf.CompletionSpec (spec) where
 
+import Control.Applicative
 import Data.Maybe
 import OptEnvConf.Completer
 import OptEnvConf.Completion
@@ -73,6 +74,34 @@ spec = do
 
     -- Don't think we want to support this
     -- pending "can complete a long option with equals sign"
+
+    it "can complete both switches of a tuple" $
+      shouldSuggest
+        ((,) <$> setting [switch (), long "foo"] <*> setting [switch (), long "bar"])
+        0
+        []
+        ["--foo", "--bar"]
+
+    it "can complete both switches of a tuple, with a prefix" $
+      shouldSuggest
+        ((,) <$> setting [switch (), long "bar"] <*> setting [switch (), long "baz"])
+        0
+        ["--b"]
+        ["--bar", "--baz"]
+
+    it "can complete both switches of an either" $
+      shouldSuggest
+        (setting [switch (), long "foo"] <|> setting [switch (), long "bar"])
+        0
+        []
+        ["--foo", "--bar"]
+
+    it "can complete both switches of an either wrapped in optionals" $
+      shouldSuggest
+        (optional (setting [switch (), long "foo"]) <|> optional (setting [switch (), long "bar"]))
+        0
+        []
+        ["--foo", "--bar"]
 
     describe "commands" $ do
       let p =
