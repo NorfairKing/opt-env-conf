@@ -52,7 +52,6 @@ bashCompletionScript progPath progname =
           "    done",
           "",
           "    COMPREPLY=( $(" ++ fromAbsFile progPath ++ " \"${CMDLINE[@]}\") )",
-          "    echo \"${COMPREPLY[@]}\" > hm.log",
           "}",
           "",
           "complete -o filenames -F " ++ functionName ++ " " ++ progname
