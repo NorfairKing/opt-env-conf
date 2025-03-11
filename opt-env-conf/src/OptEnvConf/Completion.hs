@@ -230,22 +230,38 @@ pureCompletionQuery parser ix args =
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
     goCommand = go . commandParser -- TODO complete with the command
     combineOptions = Just . concat . catMaybes
-    andCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
-    andCompletions p1 p2 = do
-      os1 <- go p1
-      os2 <- go p2
-      pure $ combineOptions [os1, os2]
+
+    tryOrRestore :: State Args (Maybe a) -> State Args (Maybe a)
+    tryOrRestore func = do
+      before <- get
+      mA <- func
+      case mA of
+        Nothing -> do
+          put before
+          pure Nothing
+        Just a -> pure (Just a)
+
     orCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
     orCompletions p1 p2 = do
-      stateBefore <- get
-      c1 <- go p1
-      case c1 of
-        Just _ -> do
-          c2 <- go p2
-          pure $ combineOptions [c1, c2]
-        Nothing -> do
-          put stateBefore
-          go p2
+      p1s <- tryOrRestore $ go p1
+      p2s <- tryOrRestore $ go p2
+      pure $ case (p1s, p2s) of
+        (Nothing, Nothing) -> Nothing
+        (Just cs, Nothing) -> Just cs
+        (Nothing, Just cs) -> Just cs
+        (Just cs1, Just cs2) -> Just $ cs1 ++ cs2
+
+    andCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
+    andCompletions p1 p2 = do
+      p1s <- tryOrRestore $ go p1
+      case p1s of
+        Nothing -> pure Nothing
+        Just cs1 -> do
+          p2s <- tryOrRestore $ go p2
+          pure $ case p2s of
+            Nothing -> Nothing
+            Just cs2 -> pure $ cs1 ++ cs2
+
     -- Nothing means "this branch was not valid"
     -- Just [] means "no completions"
     go :: Parser a -> State Args (Maybe [Completion Suggestion])
@@ -269,6 +285,9 @@ pureCompletionQuery parser ix args =
           Just os -> fmap (os ++) <$> go p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
+      ParserWithConfig _ p1 p2 ->
+        -- The config-file auto-completion is probably less important, we put it second.
+        andCompletions p2 p1
       ParserCommands _ _ cs -> do
         as <- get
         let possibilities = Args.consumeArgument as
@@ -296,9 +315,6 @@ pureCompletionQuery parser ix args =
                   put rest
                   goCommand c
                 Nothing -> pure Nothing -- Invalid command
-      ParserWithConfig _ p1 p2 ->
-        -- The config-file auto-completion is probably less important, we put it second.
-        andCompletions p2 p1
       ParserSetting _ Setting {..} -> do
         let completionDescription = settingHelp
         let completeWithCompleter = pure $ Just $ maybeToList $ do
@@ -330,17 +346,21 @@ pureCompletionQuery parser ix args =
                             suggestions
                     pure $ Just completions
               else
-                if settingTryOption
+                if isJust settingSwitchValue
                   then do
-                    -- If we're not at the end, we may be between an option's
-                    -- dashed an the option value being tab-completed In that case
-                    -- we need to parse the dashed as normal and check if that
-                    -- brings us to the end.
-                    case Args.consumeSwitch settingDasheds as of
-                      Nothing -> pure Nothing
-                      Just as' -> do
-                        if argsAtEnd as'
-                          then completeWithCompleter
-                          else pure Nothing
-                  else do
-                    pure Nothing
+                    pure $ Just []
+                  else
+                    if settingTryOption
+                      then do
+                        -- If we're not at the end, we may be between an option's
+                        -- dashed an the option value being tab-completed In that case
+                        -- we need to parse the dashed as normal and check if that
+                        -- brings us to the end.
+                        case Args.consumeSwitch settingDasheds as of
+                          Nothing -> pure $ Just []
+                          Just as' -> do
+                            if argsAtEnd as'
+                              then completeWithCompleter
+                              else pure $ Just []
+                      else do
+                        pure $ Just []
