@@ -4,7 +4,6 @@
 
 module OptEnvConf.ExampleSpec where
 
-import Data.Maybe
 import OptEnvConf.Completion
 import OptEnvConf.Example
 import OptEnvConf.Test
@@ -49,7 +48,7 @@ spec = do
   describe "Completion" $ do
     let p = settingsParser @Instructions
     it "auto-completes the commands and top-level settings" $
-      shouldSuggest
+      settingsParserCompletionTest @Instructions
         0
         []
         [ Completion "create" $ Just "Create",
@@ -64,7 +63,7 @@ spec = do
           Completion "--config-file" $ Just "Path to the configuration file"
         ]
     it "auto-completes the create file option dashed" $
-      shouldSuggest
+      settingsParserCompletionTest @Instructions
         1
         ["create", "-"]
         [ Completion "--file" $ Just "file to create the item in",
@@ -80,15 +79,3 @@ spec = do
         [] -> expectationFailure "Expected only a file completion, got none"
         [Completion (SuggestionCompleter (Completer _)) (Just "file to create the item in")] -> pure () -- We assume that it's the file completer so we don't have to run this in a temp dir.
         cs -> expectationFailure $ "Expected only a file completion, got more: " <> show (length cs)
-
-shouldSuggest :: Int -> [String] -> [Completion String] -> IO ()
-shouldSuggest ix ws expected = do
-  let arg = fromMaybe "" $ listToMaybe $ drop ix ws
-  let completions = pureCompletionQuery (settingsParser @Instructions) ix ws
-  evaluatedCompletions <- evalCompletions arg completions
-  evaluatedCompletions `shouldBe` expected
-
-shouldSuggestDesc :: Int -> [String] -> [String] -> IO ()
-shouldSuggestDesc ix ws descriptions = do
-  let completions = pureCompletionQuery (settingsParser @Instructions) ix ws
-  map completionDescription completions `shouldBe` map Just descriptions

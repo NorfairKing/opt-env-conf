@@ -29,34 +29,34 @@ spec = do
 
   describe "pureCompletionQuery" $ do
     it "can complete a switch from nothing" $
-      shouldSuggest
+      completionTest
         (setting [short 'e', long "example"])
         0
         []
         ["--example"] -- Only the long version
     it "can complete a short switch from a single dash" $
-      shouldSuggest
+      completionTest
         (setting [short 'e'])
         0
         ["-"]
         ["-e"]
 
     it "can complete a long switch from a single dash" $
-      shouldSuggest
+      completionTest
         (setting [long "example"])
         0
         ["-"]
         ["--example"]
 
     it "can complete a long switch from a double dash" $
-      shouldSuggest
+      completionTest
         (setting [long "example"])
         0
         ["--"]
         ["--example"]
 
     it "can complete a short option with a separate arg" $
-      shouldSuggest
+      completionTest
         (setting [option, short 'e', completer $ listCompleter ["hi"]])
         1
         ["-e"]
@@ -66,7 +66,7 @@ spec = do
     -- pending "can complete a short option in short-hand mode.
 
     it "can complete a long option" $
-      shouldSuggest
+      completionTest
         (setting [option, long "example", completer $ listCompleter ["hi"]])
         1
         ["--example"]
@@ -76,28 +76,28 @@ spec = do
     -- pending "can complete a long option with equals sign"
 
     it "can complete both switches of a tuple" $
-      shouldSuggest
+      completionTest
         ((,) <$> setting [switch (), long "foo"] <*> setting [switch (), long "bar"])
         0
         []
         ["--foo", "--bar"]
 
     it "can complete both switches of a tuple, with a prefix" $
-      shouldSuggest
+      completionTest
         ((,) <$> setting [switch (), long "bar"] <*> setting [switch (), long "baz"])
         0
         ["--b"]
         ["--bar", "--baz"]
 
     it "can complete both switches of an either" $
-      shouldSuggest
+      completionTest
         (setting [switch (), long "foo"] <|> setting [switch (), long "bar"])
         0
         []
         ["--foo", "--bar"]
 
     it "can complete both switches of an either wrapped in optionals" $
-      shouldSuggest
+      completionTest
         (optional (setting [switch (), long "foo"]) <|> optional (setting [switch (), long "bar"]))
         0
         []
@@ -112,14 +112,14 @@ spec = do
               ]
 
       it "can complete a command argument" $
-        shouldSuggest
+        completionTest
           p
           0
           []
           [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
 
       it "can complete a command argument when it's been partially provided" $
-        shouldSuggest
+        completionTest
           p
           0
           ["b"]
@@ -127,82 +127,82 @@ spec = do
 
     describe "completion after a command" $ do
       it "can complete a command with a switch" $
-        shouldSuggest
+        completionTest
           (commands [command "foo" "1" $ setting [help "ex", short 'e', long "example"]])
           1
           ["foo"]
           [Completion "--example" (Just "ex")] -- Only the long version
       it "can complete a command's short switch" $
-        shouldSuggest
+        completionTest
           (commands [command "foo" "1" $ setting [short 'e']])
           1
           ["foo", "-"]
           ["-e"]
 
       it "can complete a command's long switch from a single dash" $
-        shouldSuggest
+        completionTest
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "-"]
           ["--example"]
 
       it "can complete a command's long switch from a double dash" $
-        shouldSuggest
+        completionTest
           (commands [command "foo" "1" $ setting [long "example"]])
           1
           ["foo", "--"]
           ["--example"]
 
       it "can complete a command's short option" $
-        shouldSuggest
+        completionTest
           (commands [command "foo" "1" $ setting [option, short 'e', completer $ listCompleter ["hi"]]])
           2
           ["foo", "-e"]
           ["hi"]
 
       it "can complete a command's long option" $
-        shouldSuggest
+        completionTest
           (commands [command "foo" "1" $ setting [option, long "example", completer $ listCompleter ["hi"]]])
           2
           ["foo", "--example"]
           ["hi"]
 
     it "can complete a file argument" $
-      shouldSuggestDesc
+      completionDescriptionTest
         (filePathSetting [help "file arg", argument])
         0
         []
         ["file arg"]
 
     it "can complete a file option" $
-      shouldSuggestDesc
+      completionDescriptionTest
         (filePathSetting [help "file arg", option, long "file"])
         1
         ["--file"]
         ["file arg"]
 
     it "can complete a directory argument" $
-      shouldSuggestDesc
+      completionDescriptionTest
         (directoryPathSetting [help "dir arg", argument])
         0
         []
         ["dir arg"]
 
     it "can complete a directory option" $
-      shouldSuggestDesc
+      completionDescriptionTest
         (directoryPathSetting [help "dir arg", option, long "file"])
         1
         ["--file"]
         ["dir arg"]
 
-shouldSuggest :: Parser a -> Int -> [String] -> [Completion String] -> IO ()
-shouldSuggest p ix ws expected = do
+completionTest :: Parser a -> Int -> [String] -> [Completion String] -> IO ()
+completionTest p ix ws expected = do
   let arg = fromMaybe "" $ listToMaybe $ drop ix ws
   let completions = pureCompletionQuery p ix ws
   evaluatedCompletions <- evalCompletions arg completions
   evaluatedCompletions `shouldBe` expected
 
-shouldSuggestDesc :: Parser a -> Int -> [String] -> [String] -> IO ()
-shouldSuggestDesc p ix ws descriptions = do
+completionDescriptionTest :: Parser a -> Int -> [String] -> [String] -> IO ()
+completionDescriptionTest p ix ws descriptions = do
   let completions = pureCompletionQuery p ix ws
   map completionDescription completions `shouldBe` map Just descriptions
