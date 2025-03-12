@@ -30,25 +30,23 @@ listIOCompleter :: IO [String] -> Completer
 listIOCompleter act = Completer $ \s -> filterPrefix s <$> act
 
 filePath :: Completer
-filePath = Completer $ \fp -> do
+filePath = Completer $ \fp' -> do
   putStrLn ""
-  print fp
   here <- getCurrentDir
-  print here
-
-  let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
 
   -- An empty string is not a valid relative file or dir, but it is the most
   -- common option so we special case it here
-  fmap (filterPrefix fp) $ do
-    print (parseSomeDir fp :: Maybe (SomeBase Dir))
+  let (prefix, fp) = stripCurDir fp'
+  fmap (filterPrefix fp' . map (prefix <>)) $ do
+    let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
     (dirsFromDirListing, filesFromDirListing) <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
-          -- This is not a valid rel dir but still a prefix of a valid rel dir
+          -- This is not a valid rel dir but still a prefix of a valid rel dir:
+          -- the current dir
           (ds, fs) <- listDirRel here
-          pure $
-            ( map (fromRelDir) $ filter (not . hiddenRel) ds,
+          pure
+            ( map fromRelDir $ filter (not . hiddenRel) ds,
               map fromRelFile $ filter (not . hiddenRel) fs
             )
         _ -> pure ([], [])
@@ -64,12 +62,7 @@ filePath = Completer $ \fp -> do
           ( map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds,
             map (fromRelFile . (rd </>)) $ filter (not . hiddenRel) fs
           )
-    print
-      ( dirsFromDirListing,
-        filesFromDirListing
-      )
 
-    print (parseSomeFile fp :: Maybe (SomeBase File))
     (dirsFromFileListing, filesFromFileListing) <- case parseSomeFile fp of
       Nothing ->
         -- This is not a valid rel file but still a prefix of a valid
@@ -98,10 +91,6 @@ filePath = Completer $ \fp -> do
           ( map (fromRelDir . (dir </>)) $ filterHidden ds,
             map (fromRelFile . (dir </>)) $ filterHidden fs
           )
-    print
-      ( dirsFromFileListing,
-        filesFromFileListing
-      )
 
     pure $
       concat
@@ -117,7 +106,7 @@ both f (a1, a2) = (f a1, f a2)
 directoryPath :: Completer
 directoryPath = Completer $ \fp -> do
   here <- getCurrentDir
-  filterCurDirPrefix fp . map (fromRelDir) . fst <$> listDirRel here
+  filterCurDirPrefix fp . map fromRelDir . fst <$> listDirRel here
 
 hideHiddenIfNoDot :: FilePath -> [FilePath] -> [FilePath]
 hideHiddenIfNoDot f = case f of
@@ -136,10 +125,13 @@ filterCurDirPrefix :: FilePath -> [FilePath] -> [FilePath]
 filterCurDirPrefix fp' =
   let (fp, prefix) = stripCurDir fp'
    in map (prefix <>) . filterPrefix fp . hideHiddenIfNoDot fp
-  where
-    stripCurDir = \case
-      '.' : '/' : rest -> (rest, "./")
-      p -> (p, "")
+
+stripCurDir :: FilePath -> (FilePath, FilePath)
+stripCurDir = \case
+  '.' : '/' : rest' ->
+    let (pf, rest) = stripCurDir rest'
+     in ("./" <> pf, rest)
+  p -> ("", p)
 
 filterPrefix :: String -> [String] -> [String]
 filterPrefix s = filter (s `isPrefixOf`)

@@ -1,7 +1,9 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.CompleterSpec (spec) where
 
+import GHC.Stack (HasCallStack, withFrozenCallStack)
 import OptEnvConf.Completer
 import Path
 import Path.IO
@@ -42,9 +44,11 @@ spec = do
       )
     $ do
       describe "filePath" $ do
-        let c s l =
-              it (unwords ["can complete", show s, "to", show l]) $
-                unCompleter filePath s `shouldReturn` l
+        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+            c s l =
+              withFrozenCallStack $
+                it (unwords ["can complete", show s, "to", show l]) $
+                  unCompleter filePath s `shouldReturn` l
 
         c "" ["foo.txt", "bar/"]
         c "f" ["foo.txt"]
@@ -53,12 +57,14 @@ spec = do
         c "bar" ["bar/quux.txt", "bar/", "bar/deep/"]
         c "q" []
         c "." [".hidden.txt", ".hidden/"]
-        c "./" ["./foo.txt", "./bar"]
+        c "./" ["./foo.txt", "./bar/"]
+        c "././" ["././foo.txt", "././bar/"]
         c "./." ["./.hidden.txt", "./.hidden/"]
-        c "./bar" ["./bar/quux.txt"]
+        c "./bar" ["./bar/quux.txt", "./bar/", "./bar/deep/"]
 
       describe "directoryPath" $ do
-        let c s l =
+        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+            c s l = withFrozenCallStack $
               it (unwords ["can complete", show s, "to", show l]) $ do
                 unCompleter directoryPath s `shouldReturn` l
 
