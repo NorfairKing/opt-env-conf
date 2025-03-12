@@ -30,29 +30,43 @@ spec = do
   describe "pureCompletionQuery" $ do
     it "can complete a switch from nothing" $
       parserCompletionTest
-        (setting [short 'e', long "example"])
+        (setting [switch (), short 'e', long "example"])
         0
         []
         ["--example"] -- Only the long version
     it "can complete a short switch from a single dash" $
       parserCompletionTest
-        (setting [short 'e'])
+        (setting [switch (), short 'e'])
         0
         ["-"]
         ["-e"]
 
     it "can complete a long switch from a single dash" $
       parserCompletionTest
-        (setting [long "example"])
+        (setting [switch (), long "example"])
         0
         ["-"]
         ["--example"]
 
     it "can complete a long switch from a double dash" $
       parserCompletionTest
-        (setting [long "example"])
+        (setting [switch (), long "example"])
         0
         ["--"]
+        ["--example"]
+
+    it "can complete a short option's dashed" $
+      parserCompletionTest
+        (setting [option, short 'e', completer $ listCompleter ["hi"]])
+        0
+        []
+        ["-e"]
+
+    it "can complete a long option's dashed" $
+      parserCompletionTest
+        (setting [option, long "example", completer $ listCompleter ["hi"]])
+        0
+        []
         ["--example"]
 
     it "can complete a short option with a separate arg" $
@@ -128,27 +142,27 @@ spec = do
     describe "completion after a command" $ do
       it "can complete a command with a switch" $
         parserCompletionTest
-          (commands [command "foo" "1" $ setting [help "ex", short 'e', long "example"]])
+          (commands [command "foo" "1" $ setting [help "ex", switch (), short 'e', long "example"]])
           1
           ["foo"]
           [Completion "--example" (Just "ex")] -- Only the long version
       it "can complete a command's short switch" $
         parserCompletionTest
-          (commands [command "foo" "1" $ setting [short 'e']])
+          (commands [command "foo" "1" $ setting [switch (), short 'e']])
           1
           ["foo", "-"]
           ["-e"]
 
       it "can complete a command's long switch from a single dash" $
         parserCompletionTest
-          (commands [command "foo" "1" $ setting [long "example"]])
+          (commands [command "foo" "1" $ setting [switch (), long "example"]])
           1
           ["foo", "-"]
           ["--example"]
 
       it "can complete a command's long switch from a double dash" $
         parserCompletionTest
-          (commands [command "foo" "1" $ setting [long "example"]])
+          (commands [command "foo" "1" $ setting [switch (), long "example"]])
           1
           ["foo", "--"]
           ["--example"]
@@ -194,3 +208,32 @@ spec = do
         1
         ["--file"]
         ["dir arg"]
+
+    it "no longer suggests a switch that has already been parsed" $
+      parserCompletionTest
+        ((,) <$> setting [switch (), long "foo"] <*> setting [switch (), long "bar"])
+        1
+        ["--foo"]
+        ["--bar"]
+
+    it "no longer suggests an option that has already been parsed" $
+      parserCompletionTest
+        ( (,,)
+            <$> setting [option, reader (str :: Reader String), long "foo"]
+            <*> setting [option, reader (str :: Reader String), long "bar"]
+            <*> setting [switch (), long "quux"]
+        )
+        2
+        ["--foo", "foo"]
+        ["--bar", "--quux"]
+
+    it "no longer suggests an argument that has already been parsed" $
+      parserCompletionDescriptionTest
+        ( (,,)
+            <$> setting [argument, reader (str :: Reader String), help "hi", completer $ listCompleter ["hi"]]
+            <*> setting [argument, reader (str :: Reader String), help "ho", completer $ listCompleter ["ho"]]
+            <*> setting [switch (), long "bar", help "hu"]
+        )
+        1
+        ["foo"]
+        ["ho", "hu"]

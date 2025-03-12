@@ -46,7 +46,6 @@ spec = do
           }
 
   describe "Completion" $ do
-    let p = settingsParser @Instructions
     it "auto-completes the commands and top-level settings" $
       settingsParserCompletionTest @Instructions
         0
@@ -75,7 +74,14 @@ spec = do
           Completion "--config-file" $ Just "Path to the configuration file"
         ]
     it "auto-completes the create file option files" $
-      case pureCompletionQuery p 2 ["create", "--file"] of
-        [] -> expectationFailure "Expected only a file completion, got none"
-        [Completion (SuggestionCompleter (Completer _)) (Just "file to create the item in")] -> pure () -- We assume that it's the file completer so we don't have to run this in a temp dir.
-        cs -> expectationFailure $ "Expected only a file completion, got more: " <> show (length cs)
+      settingsParserCompletionDescriptionTest @Instructions
+        2
+        ["create", "--file"]
+        [ "file to create the item in",
+          "minimal severity of log messages",
+          "base directory for items",
+          "Public key",
+          "Secret key",
+          "Currency",
+          "Path to the configuration file"
+        ]

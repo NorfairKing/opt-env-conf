@@ -316,51 +316,88 @@ pureCompletionQuery parser ix args =
                   goCommand c
                 Nothing -> pure Nothing -- Invalid command
       ParserSetting _ Setting {..} -> do
+        let arg = fromMaybe "" mCursorArg
         let completionDescription = settingHelp
         let completeWithCompleter = pure $ Just $ maybeToList $ do
               c <- settingCompleter
               let completionSuggestion = SuggestionCompleter c
               pure Completion {..}
+        let completeWithCompleterAtEnd = do
+              as <- get
+              if argsAtEnd as then completeWithCompleter else pure $ Just []
+        let completeWithDasheds = do
+              let isLong = \case
+                    DashedLong _ -> True
+                    DashedShort _ -> False
+              let favorableDasheds = if any isLong settingDasheds then filter isLong settingDasheds else settingDasheds
+              let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed favorableDasheds)
+              let completions =
+                    map
+                      ( ( \completionSuggestion ->
+                            Completion {..}
+                        )
+                          . SuggestionBare
+                      )
+                      suggestions
+              pure $ Just completions
         if settingHidden
           then pure $ Just []
           else do
             as <- get
-            if argsAtEnd as
-              then
-                if settingTryArgument
-                  then completeWithCompleter
-                  else do
-                    let arg = fromMaybe "" mCursorArg
-                    let isLong = \case
-                          DashedLong _ -> True
-                          DashedShort _ -> False
-                    let favorableDasheds = if any isLong settingDasheds then filter isLong settingDasheds else settingDasheds
-                    let suggestions = filter (arg `isPrefixOf`) (map Args.renderDashed favorableDasheds)
-                    let completions =
-                          map
-                            ( ( \completionSuggestion ->
-                                  Completion {..}
-                              )
-                                . SuggestionBare
-                            )
-                            suggestions
-                    pure $ Just completions
+            if settingTryArgument
+              then do
+                case Args.consumeArgument as of
+                  [] -> completeWithCompleterAtEnd
+                  -- TODO in theory we really need to try all possible consumptions of an argument.
+                  -- This would complicate this function quite a bit, so we
+                  -- just try the first option and leave it there for now.
+                  (mConsumed, as') : _ -> do
+                    put as'
+                    case mConsumed of
+                      Nothing -> completeWithCompleterAtEnd
+                      Just _ -> pure $ Just []
               else
                 if isJust settingSwitchValue
                   then do
-                    pure $ Just []
-                  else
+                    -- Try to parse the switch first, so we don't suggest it if
+                    -- it's already been parsed.
+                    case Args.consumeSwitch settingDasheds as of
+                      Nothing ->
+                        -- A switch can be anywhere, doesn't need to be at the end.
+                        completeWithDasheds
+                      Just as' -> do
+                        put as'
+                        pure $ Just []
+                  else do
                     if settingTryOption
                       then do
-                        -- If we're not at the end, we may be between an option's
-                        -- dashed an the option value being tab-completed In that case
-                        -- we need to parse the dashed as normal and check if that
-                        -- brings us to the end.
-                        case Args.consumeSwitch settingDasheds as of
-                          Nothing -> pure $ Just []
-                          Just as' -> do
-                            if argsAtEnd as'
-                              then completeWithCompleter
-                              else pure $ Just []
+                        -- First we try to consume the option so we don't suggest it if it's already been parsed
+                        case Args.consumeOption settingDasheds as of
+                          Just (_, as') -> do
+                            put as'
+                            pure $ Just []
+                          Nothing -> do
+                            if argsAtEnd as
+                              then completeWithDasheds
+                              else do
+                                -- If we're not at the end, we may be between an option's
+                                -- dashed an the option value being tab-completed In that case
+                                -- we need to parse the dashed as normal and check if that
+                                -- brings us to the end.
+                                --
+                                -- We use 'consumeSwitch' to consume the dashed part of
+                                -- the option because consumeOption would try to
+                                -- consume the option argument too.
+                                case Args.consumeSwitch settingDasheds as of
+                                  Nothing -> pure $ Just []
+                                  Just as' -> do
+                                    put as'
+                                    completeWithCompleterAtEnd
                       else do
+                        -- We can't auto-complete settings parsed from env vars
+                        -- or config values, but this path is still valid.
+                        --
+                        -- TODO consider checking if env vars or config vals
+                        -- are parsed, then this path may still be invalid
+                        -- afteral.
                         pure $ Just []
