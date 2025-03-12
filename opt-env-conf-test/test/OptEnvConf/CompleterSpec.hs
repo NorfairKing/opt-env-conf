@@ -38,6 +38,8 @@ spec = do
         c "b" ["bar"]
         c "q" []
         c "." [".hidden.txt", ".hidden"]
+        c "./" ["./foo.txt", "./bar"]
+        c "./." ["./.hidden.txt", "./.hidden"]
 
     it "can complete a directory argument" $ \tdir ->
       withCurrentDir tdir $ do
@@ -48,3 +50,5 @@ spec = do
         c "" ["bar"]
         c "f" []
         c "." [".hidden"]
+        c "./" ["./bar"]
+        c "./." ["./.hidden"]

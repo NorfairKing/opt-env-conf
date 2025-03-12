@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module OptEnvConf.Completer
   ( Completer (..),
     mkCompleter,
@@ -30,18 +32,14 @@ filePath = Completer $ \fp -> do
   here <- getCurrentDir
   (ds, fs) <- listDirRel here
   pure $
-    filterPrefix fp $
-      hideHiddenIfNoDot fp $
-        map fromRelFile fs
-          ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
+    filterCurDirPrefix fp $
+      map fromRelFile fs
+        ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
 
 directoryPath :: Completer
 directoryPath = Completer $ \fp -> do
   here <- getCurrentDir
-  filterPrefix fp . hideHiddenIfNoDot fp . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
-
-filterPrefix :: String -> [String] -> [String]
-filterPrefix s = filter (s `isPrefixOf`)
+  filterCurDirPrefix fp . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
 
 hideHiddenIfNoDot :: FilePath -> [FilePath] -> [FilePath]
 hideHiddenIfNoDot f = case f of
@@ -50,3 +48,15 @@ hideHiddenIfNoDot f = case f of
 
 hideHidden :: [FilePath] -> [FilePath]
 hideHidden = filter (not . ("." `isPrefixOf`))
+
+filterCurDirPrefix :: FilePath -> [FilePath] -> [FilePath]
+filterCurDirPrefix fp' =
+  let (fp, prefix) = stripCurDir fp'
+   in map (prefix <>) . filterPrefix fp . hideHiddenIfNoDot fp
+  where
+    stripCurDir = \case
+      '.' : '/' : rest -> (rest, "./")
+      p -> (p, "")
+
+filterPrefix :: String -> [String] -> [String]
+filterPrefix s = filter (s `isPrefixOf`)
