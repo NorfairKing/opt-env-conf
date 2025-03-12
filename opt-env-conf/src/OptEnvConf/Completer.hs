@@ -15,7 +15,6 @@ import Data.Maybe
 import Path
 import Path.IO
 import Path.Internal.Posix (Path (..))
-import qualified System.FilePath as FP
 
 newtype Completer = Completer {unCompleter :: String -> IO [String]}
 
@@ -31,7 +30,6 @@ listIOCompleter act = Completer $ \s -> filterPrefix s <$> act
 
 filePath :: Completer
 filePath = Completer $ \fp' -> do
-  putStrLn ""
   here <- getCurrentDir
 
   -- An empty string is not a valid relative file or dir, but it is the most
@@ -100,31 +98,38 @@ filePath = Completer $ \fp' -> do
           dirsFromDirListing
         ]
 
-both :: (a -> b) -> (a, a) -> (b, b)
-both f (a1, a2) = (f a1, f a2)
-
 directoryPath :: Completer
-directoryPath = Completer $ \fp -> do
+directoryPath = Completer $ \fp' -> do
   here <- getCurrentDir
-  filterCurDirPrefix fp . map fromRelDir . fst <$> listDirRel here
 
-hideHiddenIfNoDot :: FilePath -> [FilePath] -> [FilePath]
-hideHiddenIfNoDot f = case f of
-  '.' : _ -> id
-  _ -> hideHidden
+  let (prefix, fp) = stripCurDir fp'
+  fmap (filterPrefix fp' . map (prefix <>)) $ do
+    let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
+    dirsFromDirListing <- case parseSomeDir fp of
+      Nothing -> case fp of
+        [] -> do
+          -- This is not a valid rel dir but still a prefix of a valid rel dir:
+          -- the current dir
+          (ds, _) <- listDirRel here
+          pure (map fromRelDir $ filter (not . hiddenRel) ds)
+        _ -> pure []
+      Just (Abs ad) -> do
+        (ds, _) <- listDirForgiving ad
+        pure (map (fromAbsDir . (ad </>)) $ filter (not . hiddenRel) ds)
+      Just (Rel rd) -> case fp of
+        "." -> do
+          (ds, _) <- listDirRel here
+          pure (map fromRelDir ds)
+        _ -> do
+          (ds, _) <- listDirForgiving rd
+          pure (map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds)
 
-hideHidden :: [FilePath] -> [FilePath]
-hideHidden = filter (not . ("." `isPrefixOf`))
+    pure dirsFromDirListing
 
 hiddenRel :: Path Rel f -> Bool
 hiddenRel (Path s) = case s of
   ('.' : _) -> True
   _ -> False
-
-filterCurDirPrefix :: FilePath -> [FilePath] -> [FilePath]
-filterCurDirPrefix fp' =
-  let (fp, prefix) = stripCurDir fp'
-   in map (prefix <>) . filterPrefix fp . hideHiddenIfNoDot fp
 
 stripCurDir :: FilePath -> (FilePath, FilePath)
 stripCurDir = \case

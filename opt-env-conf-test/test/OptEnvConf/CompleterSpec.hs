@@ -69,10 +69,11 @@ spec = do
                 unCompleter directoryPath s `shouldReturn` l
 
         c "" ["bar/"]
+        c "b" ["bar/"]
         c "f" []
         c "." [".hidden/"]
         c "./" ["./bar/"]
         c "./." ["./.hidden/"]
         c "././" ["././bar/"]
         c "./." ["./.hidden/"]
-        c "./bar" ["./bar/", "./bar/deep/"]
+        c "./bar" ["./bar/deep/"]
