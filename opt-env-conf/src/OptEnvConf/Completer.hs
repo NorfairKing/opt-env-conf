@@ -11,8 +11,10 @@ module OptEnvConf.Completer
 where
 
 import Data.List
+import Data.Maybe
 import Path
 import Path.IO
+import Path.Internal.Posix (Path (..))
 import qualified System.FilePath as FP
 
 newtype Completer = Completer {unCompleter :: String -> IO [String]}
@@ -29,17 +31,93 @@ listIOCompleter act = Completer $ \s -> filterPrefix s <$> act
 
 filePath :: Completer
 filePath = Completer $ \fp -> do
+  putStrLn ""
+  print fp
   here <- getCurrentDir
-  (ds, fs) <- listDirRel here
-  pure $
-    filterCurDirPrefix fp $
-      map fromRelFile fs
-        ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
+  print here
+
+  let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
+
+  -- An empty string is not a valid relative file or dir, but it is the most
+  -- common option so we special case it here
+  fmap (filterPrefix fp) $ do
+    print (parseSomeDir fp :: Maybe (SomeBase Dir))
+    (dirsFromDirListing, filesFromDirListing) <- case parseSomeDir fp of
+      Nothing -> case fp of
+        [] -> do
+          -- This is not a valid rel dir but still a prefix of a valid rel dir
+          (ds, fs) <- listDirRel here
+          pure $
+            ( map (fromRelDir) $ filter (not . hiddenRel) ds,
+              map fromRelFile $ filter (not . hiddenRel) fs
+            )
+        _ -> pure ([], [])
+      Just (Abs ad) -> do
+        (ds, fs) <- listDirForgiving ad
+        pure
+          ( map (fromAbsDir . (ad </>)) $ filter (not . hiddenRel) ds,
+            map (fromAbsFile . (ad </>)) $ filter (not . hiddenRel) fs
+          )
+      Just (Rel rd) -> do
+        (ds, fs) <- listDirForgiving rd
+        pure
+          ( map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds,
+            map (fromRelFile . (rd </>)) $ filter (not . hiddenRel) fs
+          )
+    print
+      ( dirsFromDirListing,
+        filesFromDirListing
+      )
+
+    print (parseSomeFile fp :: Maybe (SomeBase File))
+    (dirsFromFileListing, filesFromFileListing) <- case parseSomeFile fp of
+      Nothing ->
+        -- This is not a valid rel file but still a prefix of a valid
+        -- (hidden) rel file.
+        if fp == "."
+          then do
+            (ds, fs) <- listDirRel here
+            pure
+              ( map fromRelDir ds,
+                map fromRelFile fs
+              )
+          else pure ([], [])
+      Just (Abs af) -> do
+        let dir = parent af
+        let filterHidden = if hiddenRel (filename af) then id else filter (not . hiddenRel)
+        (ds, fs) <- listDirForgiving dir
+        pure
+          ( map (fromAbsDir . (dir </>)) $ filterHidden ds,
+            map (fromAbsFile . (dir </>)) $ filterHidden fs
+          )
+      Just (Rel rf) -> do
+        let dir = parent rf
+        let filterHidden = if hiddenRel rf then id else filter (not . hiddenRel)
+        (ds, fs) <- listDirForgiving dir
+        pure
+          ( map (fromRelDir . (dir </>)) $ filterHidden ds,
+            map (fromRelFile . (dir </>)) $ filterHidden fs
+          )
+    print
+      ( dirsFromFileListing,
+        filesFromFileListing
+      )
+
+    pure $
+      concat
+        [ filesFromFileListing,
+          filesFromDirListing,
+          dirsFromFileListing,
+          dirsFromDirListing
+        ]
+
+both :: (a -> b) -> (a, a) -> (b, b)
+both f (a1, a2) = (f a1, f a2)
 
 directoryPath :: Completer
 directoryPath = Completer $ \fp -> do
   here <- getCurrentDir
-  filterCurDirPrefix fp . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
+  filterCurDirPrefix fp . map (fromRelDir) . fst <$> listDirRel here
 
 hideHiddenIfNoDot :: FilePath -> [FilePath] -> [FilePath]
 hideHiddenIfNoDot f = case f of
@@ -48,6 +126,11 @@ hideHiddenIfNoDot f = case f of
 
 hideHidden :: [FilePath] -> [FilePath]
 hideHidden = filter (not . ("." `isPrefixOf`))
+
+hiddenRel :: Path Rel f -> Bool
+hiddenRel (Path s) = case s of
+  ('.' : _) -> True
+  _ -> False
 
 filterCurDirPrefix :: FilePath -> [FilePath] -> [FilePath]
 filterCurDirPrefix fp' =

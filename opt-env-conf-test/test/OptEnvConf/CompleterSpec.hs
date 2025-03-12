@@ -6,49 +6,64 @@ import OptEnvConf.Completer
 import Path
 import Path.IO
 import Test.Syd
-import Test.Syd.Path
 
 spec :: Spec
 spec = do
-  sequential $ tempDirSpec "opt-env-conf" $ do
-    let setupExampleDir tdir = do
-          -- File
-          exampleFile1 <- resolveFile tdir "foo.txt"
-          writeFile (fromAbsFile exampleFile1) ""
-          -- File in dir
-          exampleDir <- resolveDir tdir "bar"
-          createDir exampleDir
-          exampleFile2 <- resolveFile exampleDir "quux.txt"
-          writeFile (fromAbsFile exampleFile2) ""
-          -- Hidden file
-          hiddenFile <- resolveFile tdir ".hidden.txt"
-          writeFile (fromAbsFile hiddenFile) ""
-          -- Hidden dir
-          hiddenDir <- resolveDir tdir ".hidden"
-          createDir hiddenDir
+  let setupExampleDir tdir = do
+        -- File
+        exampleFile1 <- resolveFile tdir "foo.txt"
+        writeFile (fromAbsFile exampleFile1) ""
+        -- Dir here
+        exampleDir <- resolveDir tdir "bar"
+        createDir exampleDir
+        -- File in dir
+        exampleFile2 <- resolveFile exampleDir "quux.txt"
+        writeFile (fromAbsFile exampleFile2) ""
+        -- Dir in dir
+        deeperDir <- resolveDir exampleDir "deep"
+        createDir deeperDir
+        -- File in dir in dir
+        exampleFile3 <- resolveFile deeperDir "gold.txt"
+        writeFile (fromAbsFile exampleFile3) ""
+        -- Hidden file
+        hiddenFile <- resolveFile tdir ".hidden.txt"
+        writeFile (fromAbsFile hiddenFile) ""
+        -- Hidden dir
+        hiddenDir <- resolveDir tdir ".hidden"
+        createDir hiddenDir
 
-    it "can complete a file argument" $ \tdir ->
-      withCurrentDir tdir $ do
-        setupExampleDir tdir
+  -- These are read-only tests so we only need one dir for all of them
+  sequential
+    $ aroundAll
+      ( \func -> withSystemTempDir "opt-env-conf-test" $ \tdir ->
+          withCurrentDir tdir $ do
+            setupExampleDir tdir
+            func tdir
+      )
+    $ do
+      describe "filePath" $ do
+        let c s l =
+              it (unwords ["can complete", show s, "to", show l]) $
+                unCompleter filePath s `shouldReturn` l
 
-        let c s l = unCompleter filePath s `shouldReturn` l
-
-        c "" ["foo.txt", "bar"]
+        c "" ["foo.txt", "bar/"]
         c "f" ["foo.txt"]
-        c "b" ["bar"]
+        c "b" ["bar/"]
+        -- c "bar" ["bar/"] -- Do we want this?
+        c "bar" ["bar/quux.txt", "bar/", "bar/deep/"]
         c "q" []
-        c "." [".hidden.txt", ".hidden"]
+        c "." [".hidden.txt", ".hidden/"]
         c "./" ["./foo.txt", "./bar"]
-        c "./." ["./.hidden.txt", "./.hidden"]
+        c "./." ["./.hidden.txt", "./.hidden/"]
+        c "./bar" ["./bar/quux.txt"]
 
-    it "can complete a directory argument" $ \tdir ->
-      withCurrentDir tdir $ do
-        setupExampleDir tdir
+      describe "directoryPath" $ do
+        let c s l =
+              it (unwords ["can complete", show s, "to", show l]) $ do
+                unCompleter directoryPath s `shouldReturn` l
 
-        let c s l = unCompleter directoryPath s `shouldReturn` l
-
-        c "" ["bar"]
+        c "" ["bar/"]
         c "f" []
-        c "." [".hidden"]
-        c "./" ["./bar"]
-        c "./." ["./.hidden"]
+        c "." [".hidden/"]
+        c "./" ["./bar/"]
+        c "./." ["./.hidden/"]
