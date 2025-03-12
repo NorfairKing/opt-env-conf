@@ -37,7 +37,7 @@ filePath = Completer $ \fp' -> do
   let (prefix, fp) = stripCurDir fp'
   fmap (filterPrefix fp' . map (prefix <>)) $ do
     let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
-    (dirsFromDirListing, filesFromDirListing) <- case parseSomeDir fp of
+    (dirsFromParentListing, filesFromParentListing) <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
           -- This is not a valid rel dir but still a prefix of a valid rel dir:
@@ -61,7 +61,7 @@ filePath = Completer $ \fp' -> do
             map (fromRelFile . (rd </>)) $ filter (not . hiddenRel) fs
           )
 
-    (dirsFromFileListing, filesFromFileListing) <- case parseSomeFile fp of
+    (dirsFromPartialListing, filesFromPartialListing) <- case parseSomeFile fp of
       Nothing ->
         -- This is not a valid rel file but still a prefix of a valid
         -- (hidden) rel file.
@@ -92,20 +92,22 @@ filePath = Completer $ \fp' -> do
 
     pure $
       concat
-        [ filesFromFileListing,
-          filesFromDirListing,
-          dirsFromFileListing,
-          dirsFromDirListing
+        [ filesFromPartialListing,
+          filesFromParentListing,
+          dirsFromPartialListing,
+          dirsFromParentListing
         ]
 
 directoryPath :: Completer
 directoryPath = Completer $ \fp' -> do
   here <- getCurrentDir
 
+  -- An empty string is not a valid relative file or dir, but it is the most
+  -- common option so we special case it here
   let (prefix, fp) = stripCurDir fp'
   fmap (filterPrefix fp' . map (prefix <>)) $ do
     let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
-    dirsFromDirListing <- case parseSomeDir fp of
+    dirsFromParentListing <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
           -- This is not a valid rel dir but still a prefix of a valid rel dir:
@@ -116,15 +118,35 @@ directoryPath = Completer $ \fp' -> do
       Just (Abs ad) -> do
         (ds, _) <- listDirForgiving ad
         pure (map (fromAbsDir . (ad </>)) $ filter (not . hiddenRel) ds)
-      Just (Rel rd) -> case fp of
-        "." -> do
-          (ds, _) <- listDirRel here
-          pure (map fromRelDir ds)
-        _ -> do
-          (ds, _) <- listDirForgiving rd
-          pure (map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds)
+      Just (Rel rd) -> do
+        (ds, _) <- listDirForgiving rd
+        pure (map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds)
 
-    pure dirsFromDirListing
+    dirsFromPartialListing <- case parseSomeDir fp of
+      Nothing -> pure []
+      Just (Abs af) -> do
+        let dir = parent af
+        let filterHidden = if hiddenRel (dirname af) then id else filter (not . hiddenRel)
+        (ds, _) <- listDirForgiving dir
+        pure (map (fromAbsDir . (dir </>)) $ filterHidden ds)
+      Just (Rel rf) ->
+        -- This is not a valid rel dir but still a prefix of a valid
+        -- (hidden) rel dir.
+        if fp == "."
+          then do
+            (ds, _) <- listDirRel here
+            pure (map fromRelDir ds)
+          else do
+            let dir = parent rf
+            let filterHidden = if hiddenRel rf then id else filter (not . hiddenRel)
+            (ds, _) <- listDirForgiving dir
+            pure (map (fromRelDir . (dir </>)) $ filterHidden ds)
+
+    pure $
+      concat
+        [ dirsFromPartialListing,
+          dirsFromParentListing
+        ]
 
 hiddenRel :: Path Rel f -> Bool
 hiddenRel (Path s) = case s of

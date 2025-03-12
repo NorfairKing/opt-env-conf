@@ -76,4 +76,4 @@ spec = do
         c "./." ["./.hidden/"]
         c "././" ["././bar/"]
         c "./." ["./.hidden/"]
-        c "./bar" ["./bar/deep/"]
+        c "./bar" ["./bar/", "./bar/deep/"]
