@@ -23,21 +23,30 @@ listCompleter :: [String] -> Completer
 listCompleter ss = listIOCompleter $ pure ss
 
 listIOCompleter :: IO [String] -> Completer
-listIOCompleter act = Completer $ \s -> filter (s `isPrefixOf`) <$> act
+listIOCompleter act = Completer $ \s -> filterPrefix s <$> act
 
 filePath :: Completer
-filePath = listIOCompleter $ do
+filePath = Completer $ \fp -> do
   here <- getCurrentDir
   (ds, fs) <- listDirRel here
   pure $
-    hideHidden $
-      map fromRelFile fs
-        ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
+    filterPrefix fp $
+      hideHiddenIfNoDot fp $
+        map fromRelFile fs
+          ++ map (FP.dropTrailingPathSeparator . fromRelDir) ds
 
 directoryPath :: Completer
-directoryPath = listIOCompleter $ do
+directoryPath = Completer $ \fp -> do
   here <- getCurrentDir
-  hideHidden . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
+  filterPrefix fp . hideHiddenIfNoDot fp . map (FP.dropTrailingPathSeparator . fromRelDir) . fst <$> listDirRel here
+
+filterPrefix :: String -> [String] -> [String]
+filterPrefix s = filter (s `isPrefixOf`)
+
+hideHiddenIfNoDot :: FilePath -> [FilePath] -> [FilePath]
+hideHiddenIfNoDot f = case f of
+  '.' : _ -> id
+  _ -> hideHidden
 
 hideHidden :: [FilePath] -> [FilePath]
 hideHidden = filter (not . ("." `isPrefixOf`))

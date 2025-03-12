@@ -31,14 +31,20 @@ spec = do
       withCurrentDir tdir $ do
         setupExampleDir tdir
 
-        unCompleter filePath "" `shouldReturn` ["foo.txt", "bar"]
-        unCompleter filePath "f" `shouldReturn` ["foo.txt"]
-        unCompleter filePath "b" `shouldReturn` ["bar"]
-        unCompleter filePath "q" `shouldReturn` []
+        let c s l = unCompleter filePath s `shouldReturn` l
+
+        c "" ["foo.txt", "bar"]
+        c "f" ["foo.txt"]
+        c "b" ["bar"]
+        c "q" []
+        c "." [".hidden.txt", ".hidden"]
 
     it "can complete a directory argument" $ \tdir ->
       withCurrentDir tdir $ do
         setupExampleDir tdir
 
-        unCompleter directoryPath "" `shouldReturn` ["bar"]
-        unCompleter directoryPath "f" `shouldReturn` []
+        let c s l = unCompleter directoryPath s `shouldReturn` l
+
+        c "" ["bar"]
+        c "f" []
+        c "." [".hidden"]
