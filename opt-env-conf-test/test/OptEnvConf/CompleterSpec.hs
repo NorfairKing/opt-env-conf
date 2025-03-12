@@ -35,25 +35,24 @@ spec = do
         createDir hiddenDir
 
   -- These are read-only tests so we only need one dir for all of them
-  sequential
+  sequential . doNotRandomiseExecutionOrder
     $ aroundAll
-      ( \func -> withSystemTempDir "opt-env-conf-test" $ \tdir ->
-          withCurrentDir tdir $ do
-            setupExampleDir tdir
-            func tdir
+      ( \func -> withSystemTempDir "opt-env-conf-test" $ \tdir -> do
+          setupExampleDir tdir
+          func tdir
       )
     $ do
       describe "filePath" $ do
         let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
             c s l =
               withFrozenCallStack $
-                it (unwords ["can complete", show s, "to", show l]) $
-                  unCompleter filePath s `shouldReturn` l
+                itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+                  withCurrentDir tdir $
+                    unCompleter filePath s `shouldReturn` l
 
         c "" ["foo.txt", "bar/"]
         c "f" ["foo.txt"]
         c "b" ["bar/"]
-        -- c "bar" ["bar/"] -- Do we want this?
         c "bar" ["bar/quux.txt", "bar/", "bar/deep/"]
         c "q" []
         c "." [".hidden.txt", ".hidden/"]
@@ -65,8 +64,9 @@ spec = do
       describe "directoryPath" $ do
         let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
             c s l = withFrozenCallStack $
-              it (unwords ["can complete", show s, "to", show l]) $ do
-                unCompleter directoryPath s `shouldReturn` l
+              itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+                withCurrentDir tdir $
+                  unCompleter directoryPath s `shouldReturn` l
 
         c "" ["bar/"]
         c "b" ["bar/"]
