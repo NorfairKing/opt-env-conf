@@ -28,9 +28,6 @@ let
       doBenchmark = true;
       doCoverage = false;
       doCheck = false; # Only for coverage
-      # Ugly hack because we can't just add flags to the 'test' invocation.
-      # Show test output as we go, instead of all at once afterwards.
-      testTarget = (old.testTarget or "") + " --show-details=direct";
     }));
 
   installManpage = exeName: drv: overrideCabal drv (old: {
