@@ -18,7 +18,7 @@ Used in production in all my products and some companies.
     - [x] Argument: `progname hello`
     - [x] Option: `progname --file foo.txt`
         - [x] Long Option: `progname --file foo.txt`
-        - [x] Short Option: `progname --file foo.txt`
+        - [x] Short Option: `progname -f foo.txt`
         - [x] Equals-version of long option: `progname --file=foo.txt`
         - [x] Shorthand-version of short option: `progname -ffoo.txt`
     - [x] Switch: `progname --verbose`
