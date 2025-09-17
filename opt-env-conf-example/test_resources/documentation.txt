@@ -13,34 +13,40 @@
 
   [34mminimal severity of log messages[m
   option: [37m--log-level[m [33mLOG_LEVEL[m
-  env: [37mLOG_LEVEL[m [33mLOG_LEVEL[m
+  env: [37mEXAMPLE_LOG_LEVEL[m [33mLOG_LEVEL[m
   config:
-    [37mlog-level[m: # [32mor null[m
+    [37mexample.log-level[m: # [32mor null[m
       [33m<string>[m
   default: [33m"DEBUG"[m
 
   [34mbase directory for items[m
   option: [37m-b[m[36m|[m[37m--base[m [33mDIRECTORY_PATH[m
 
+  [34mcache directory[m
+  env: [37mCACHE_DIRECTORY[m [33mDIRECTORY_PATH[m
+  config:
+    [37mcache-directory[m: # [32mor null[m
+      [33m<string>[m
+
   [34mPublic key[m
   option: [37m--payment-public-key[m [33mPUBLIC_KEY[m
-  env: [37mPAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m
+  env: [37mEXAMPLE_PAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m
   config:
-    [37mpayment.public-key[m: # [32mor null[m
+    [37mexample.payment.public-key[m: # [32mor null[m
       [33m<string>[m
 
   [34mSecret key[m
   option: [37m--payment-secret-key[m [33mFILE_PATH[m
-  env: [37mPAYMENT_SECRET_KEY[m [33mFILE_PATH[m
+  env: [37mEXAMPLE_PAYMENT_SECRET_KEY[m [33mFILE_PATH[m
   config:
-    [37mpayment.secret-key[m: # [32mor null[m
+    [37mexample.payment.secret-key[m: # [32mor null[m
       [33m<string>[m
 
   [34mCurrency[m
   option: [37m--payment-currency[m [33mCURRENCY[m
-  env: [37mPAYMENT_CURRENCY[m [33mCURRENCY[m
+  env: [37mEXAMPLE_PAYMENT_CURRENCY[m [33mCURRENCY[m
   config:
-    [37mpayment.currency[m: # [32mor null[m
+    [37mexample.payment.currency[m: # [32mor null[m
       [33m<string>[m
 
 [36mAll commands[m:
@@ -88,28 +94,33 @@
   [37m--payment-currency[m   [34mCurrency[m  
 
 [36mEnvironment Variables[m:
-  [37mCONFIG_FILE[m [33mFILE_PATH[m           [34mPath to the configuration file[m                     
-  [37mLOG_LEVEL[m [33mLOG_LEVEL[m             [34mminimal severity of log messages[m   default: [33m"DEBUG"[m
-  [37mPAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m   [34mPublic key[m                                         
-  [37mPAYMENT_SECRET_KEY[m [33mFILE_PATH[m    [34mSecret key[m                                         
-  [37mPAYMENT_CURRENCY[m [33mCURRENCY[m       [34mCurrency[m                                           
+  [37mCONFIG_FILE[m [33mFILE_PATH[m                   [34mPath to the configuration file[m                     
+  [37mEXAMPLE_LOG_LEVEL[m [33mLOG_LEVEL[m             [34mminimal severity of log messages[m   default: [33m"DEBUG"[m
+  [37mCACHE_DIRECTORY[m [33mDIRECTORY_PATH[m          [34mcache directory[m                                    
+  [37mEXAMPLE_PAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m   [34mPublic key[m                                         
+  [37mEXAMPLE_PAYMENT_SECRET_KEY[m [33mFILE_PATH[m    [34mSecret key[m                                         
+  [37mEXAMPLE_PAYMENT_CURRENCY[m [33mCURRENCY[m       [34mCurrency[m                                           
 
 [36mConfiguration Values[m:
   [34mminimal severity of log messages[m
   default: [33m"DEBUG"[m
-  [37mlog-level[m:
+  [37mexample.log-level[m:
+    # [32mor null[m
+    [33m<string>[m
+  [34mcache directory[m
+  [37mcache-directory[m:
     # [32mor null[m
     [33m<string>[m
   [34mPublic key[m
-  [37mpayment.public-key[m:
+  [37mexample.payment.public-key[m:
     # [32mor null[m
     [33m<string>[m
   [34mSecret key[m
-  [37mpayment.secret-key[m:
+  [37mexample.payment.secret-key[m:
     # [32mor null[m
     [33m<string>[m
   [34mCurrency[m
-  [37mpayment.currency[m:
+  [37mexample.payment.currency[m:
     # [32mor null[m
     [33m<string>[m
 

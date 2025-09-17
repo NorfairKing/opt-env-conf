@@ -39,7 +39,12 @@ WithConfig
                  False
                  Nothing
                  False
-                 (Just ("sum-type" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "sum-type"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
                  Nothing
                  Nothing
                  (Just "SUM_TYPE")

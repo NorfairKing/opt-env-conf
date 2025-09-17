@@ -6,6 +6,7 @@
 
 module OptEnvConf.Setting
   ( Setting (..),
+    EnvVarSetting (..),
     ConfigValSetting (..),
 
     -- * Builders
@@ -20,9 +21,13 @@ module OptEnvConf.Setting
     long,
     short,
     env,
+    unprefixedEnv,
     conf,
     confWith,
     confWith',
+    unprefixedConf,
+    unprefixedConfWith,
+    unprefixedConfWith',
     name,
     value,
     valueWithShown,
@@ -42,6 +47,8 @@ module OptEnvConf.Setting
     emptySetting,
     Metavar,
     Help,
+    prefixEnvVarSetting,
+    suffixEnvVarSetting,
     prefixConfigValSetting,
     suffixConfigValSettingKey,
   )
@@ -80,7 +87,7 @@ data Setting a = Setting
     -- options.
     settingTryOption :: !Bool,
     -- | Which env vars can be read.
-    settingEnvVars :: !(Maybe (NonEmpty String)),
+    settingEnvVars :: !(Maybe (NonEmpty EnvVarSetting)),
     -- | Which and how to parse config values
     settingConfigVals :: !(Maybe (NonEmpty (ConfigValSetting a))),
     -- | Default value, if none of the above find the setting.
@@ -115,14 +122,39 @@ hashSetting Setting {..} =
         `hashWithSalt` (snd <$> settingDefaultValue)
     )
 
+data EnvVarSetting = EnvVarSetting
+  { envVarSettingVar :: !String,
+    envVarSettingAllowPrefix :: !Bool
+  }
+  deriving (Show, Eq)
+
+instance Hashable EnvVarSetting where
+  hashWithSalt salt EnvVarSetting {..} =
+    salt
+      `hashWithSalt` envVarSettingVar
+      `hashWithSalt` envVarSettingAllowPrefix
+
+prefixEnvVarSetting :: String -> EnvVarSetting -> EnvVarSetting
+prefixEnvVarSetting prefix e =
+  if envVarSettingAllowPrefix e
+    then e {envVarSettingVar = prefix <> envVarSettingVar e}
+    else e
+
+suffixEnvVarSetting :: String -> EnvVarSetting -> EnvVarSetting
+suffixEnvVarSetting suffix e = e {envVarSettingVar = envVarSettingVar e <> suffix}
+
 data ConfigValSetting a = forall void.
   ConfigValSetting
   { configValSettingPath :: !(NonEmpty String),
+    configValSettingAllowPrefix :: !Bool,
     configValSettingCodec :: !(ValueCodec void (Maybe a))
   }
 
 prefixConfigValSetting :: String -> ConfigValSetting a -> ConfigValSetting a
-prefixConfigValSetting prefix c = c {configValSettingPath = prefix NE.<| configValSettingPath c}
+prefixConfigValSetting prefix c =
+  if configValSettingAllowPrefix c
+    then c {configValSettingPath = prefix NE.<| configValSettingPath c}
+    else c
 
 suffixConfigValSettingKey :: String -> ConfigValSetting a -> ConfigValSetting a
 suffixConfigValSettingKey suffix c = c {configValSettingPath = suffixPath $ configValSettingPath c}
@@ -206,7 +238,7 @@ data BuildInstruction a
   | BuildAddReader !(Reader a)
   | BuildAddLong !(NonEmpty Char)
   | BuildAddShort !Char
-  | BuildAddEnv !String
+  | BuildAddEnv !EnvVarSetting
   | BuildAddConf !(ConfigValSetting a)
   | BuildSetDefault !a !String
   | BuildAddExample !String
@@ -318,7 +350,11 @@ short c = Builder [BuildAddShort c]
 --
 -- Multiple 'env's will be tried in order.
 env :: String -> Builder a
-env v = Builder [BuildAddEnv v]
+env v = Builder [BuildAddEnv (EnvVarSetting v True)]
+
+-- | Like 'env' but ignores any 'subEnv', 'subEnv_', or 'subAll'.
+unprefixedEnv :: String -> Builder a
+unprefixedEnv v = Builder [BuildAddEnv (EnvVarSetting v False)]
 
 -- | Try to parse a configuration value at the given key.
 --
@@ -333,7 +369,31 @@ confWith k c = confWith' k (maybeCodec c)
 -- | Like 'confWith' but allows interpreting 'Null' as a value other than "Not found".
 confWith' :: String -> ValueCodec void (Maybe a) -> Builder a
 confWith' k c =
-  let t = ConfigValSetting {configValSettingPath = k :| [], configValSettingCodec = c}
+  let t =
+        ConfigValSetting
+          { configValSettingPath = k :| [],
+            configValSettingAllowPrefix = True,
+            configValSettingCodec = c
+          }
+   in Builder [BuildAddConf t]
+
+-- | Like 'conf' but ignores any 'subConf', 'subConf_', or 'subAll'.
+unprefixedConf :: (HasCodec a) => String -> Builder a
+unprefixedConf k = unprefixedConfWith k codec
+
+-- | Like 'confWith' but ignores any 'subConf', 'subConf_', or 'subAll'.
+unprefixedConfWith :: String -> ValueCodec void a -> Builder a
+unprefixedConfWith k c = unprefixedConfWith' k (maybeCodec c)
+
+-- | Like 'confWith'' but ignores any 'subConf', 'subConf_', or 'subAll'.
+unprefixedConfWith' :: String -> ValueCodec void (Maybe a) -> Builder a
+unprefixedConfWith' k c =
+  let t =
+        ConfigValSetting
+          { configValSettingPath = k :| [],
+            configValSettingAllowPrefix = False,
+            configValSettingCodec = c
+          }
    in Builder [BuildAddConf t]
 
 -- | Short-hand function for 'option', 'long', 'env', and 'conf' at the same time.

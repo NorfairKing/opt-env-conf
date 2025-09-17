@@ -195,7 +195,7 @@ settingSetDoc Setting {..} = do
   let setDocTryArgument = settingTryArgument
   let setDocTrySwitch = isJust settingSwitchValue
   let setDocTryOption = settingTryOption
-  let setDocEnvVars = settingEnvVars
+  let setDocEnvVars = NE.map envVarSettingVar <$> settingEnvVars
   let setDocConfKeys =
         NE.map
           ( \ConfigValSetting {..} ->

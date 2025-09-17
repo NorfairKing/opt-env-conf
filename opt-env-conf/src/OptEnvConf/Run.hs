@@ -574,7 +574,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
                           -- always fails if it's missing a reader.
                           rs <- requireReaders settingReaders
                           es <- asks ppEnvEnv
-                          let founds = mapMaybe (`EnvMap.lookup` es) (NE.toList ne)
+                          let founds = mapMaybe ((`EnvMap.lookup` es) . envVarSettingVar) (NE.toList ne)
                           -- Run the parser on all specified env vars before
                           -- returning the first because we want to fail if any
                           -- of them fail, even if they wouldn't be the parse

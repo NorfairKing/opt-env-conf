@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.0.0] - 2025-09-17
+
+This is technically a breaking change, but if you don't use any `opt-env-conf`
+internals, nothing should break for you.
+
+### Added
+
+* `unprefixedEnv`
+* `unprefixedConf`
+
 ## [0.9.0.0] - 2025-03-12
 
 ### Added

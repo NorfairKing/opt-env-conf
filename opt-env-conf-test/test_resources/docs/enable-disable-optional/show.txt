@@ -70,7 +70,12 @@ WithConfig
                           False
                           Nothing
                           False
-                          (Just ("EXAMPLE" :| []))
+                          (Just
+                             (EnvVarSetting
+                                { envVarSettingVar = "EXAMPLE"
+                                , envVarSettingAllowPrefix = True
+                                } :|
+                                []))
                           Nothing
                           Nothing
                           (Just "BOOL")

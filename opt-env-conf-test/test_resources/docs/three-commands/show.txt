@@ -41,7 +41,12 @@ WithConfig
                      False
                      Nothing
                      True
-                     (Just ("NUMBER" :| []))
+                     (Just
+                        (EnvVarSetting
+                           { envVarSettingVar = "NUMBER"
+                           , envVarSettingAllowPrefix = True
+                           } :|
+                           []))
                      (Just
                         (ConfigValSetting
                            ("number" :| [])
@@ -115,7 +120,12 @@ WithConfig
                               False
                               Nothing
                               False
-                              (Just ("ENABLE" :| []))
+                              (Just
+                                 (EnvVarSetting
+                                    { envVarSettingVar = "ENABLE"
+                                    , envVarSettingAllowPrefix = True
+                                    } :|
+                                    []))
                               Nothing
                               Nothing
                               (Just "BOOL")

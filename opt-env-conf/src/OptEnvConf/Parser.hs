@@ -1014,7 +1014,10 @@ secretTextFileOrBareSetting bs =
       BuildTryOption -> Nothing
       BuildAddShort _ -> Nothing
       BuildAddLong _ -> Nothing
-      BuildAddEnv e -> Just $ BuildAddEnv $ e ++ "_FILE"
+      BuildAddEnv e ->
+        Just $
+          BuildAddEnv $
+            suffixEnvVarSetting "_FILE" e
       BuildAddConf _ -> Nothing
       BuildSetDefault _ _ -> Nothing
       i -> Just i
@@ -1053,7 +1056,7 @@ subArgs_ s = subArgs (toArgCase s <> "-")
 {-# ANN subEnv ("NOCOVER" :: String) #-}
 subEnv :: String -> Parser a -> Parser a
 subEnv prefix = parserMapSetting $ \s ->
-  s {settingEnvVars = NE.map (prefix <>) <$> settingEnvVars s}
+  s {settingEnvVars = NE.map (prefixEnvVarSetting prefix) <$> settingEnvVars s}
 
 -- | Helper function for calling 'subEnv' with 'toEnvCase' and a @'_'@ appended.
 --
