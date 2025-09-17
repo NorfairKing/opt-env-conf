@@ -79,12 +79,13 @@ instance HasParser Dispatch where
 data Settings = Settings
   { settingLogLevel :: String,
     settingBaseDir :: !(Maybe (Path Abs Dir)),
+    settingCacheDir :: !(Maybe (Path Abs Dir)),
     settingPaymentSettings :: Maybe PaymentSettings
   }
   deriving (Show, Eq)
 
 instance HasParser Settings where
-  settingsParser = do
+  settingsParser = subEnv "EXAMPLE_" $ subConfig "example" $ do
     settingLogLevel <-
       setting
         [ help "minimal severity of log messages",
@@ -100,6 +101,13 @@ instance HasParser Settings where
             option,
             short 'b',
             long "base"
+          ]
+    settingCacheDir <-
+      optional $
+        directoryPathSetting
+          [ help "cache directory",
+            unprefixedEnv "CACHE_DIRECTORY",
+            unprefixedConf "cache-directory"
           ]
     settingPaymentSettings <- optional $ subSettings "payment"
     pure Settings {..}

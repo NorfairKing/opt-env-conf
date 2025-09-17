@@ -18,7 +18,12 @@ WithConfig
                  False
                  Nothing
                  True
-                 (Just ("CONFIG_FILE" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "CONFIG_FILE"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
                  Nothing
                  Nothing
                  (Just "FILE_PATH")

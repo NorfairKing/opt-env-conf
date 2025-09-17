@@ -16,7 +16,10 @@ WithConfig
                  False
                  Nothing
                  True
-                 (Just ("INT" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "INT" , envVarSettingAllowPrefix = True } :|
+                       []))
                  (Just
                     (ConfigValSetting
                        ("int" :| [])
@@ -51,7 +54,12 @@ WithConfig
                  False
                  Nothing
                  True
-                 (Just ("STRING" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "STRING"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
                  (Just
                     (ConfigValSetting
                        ("string" :| [])
@@ -117,7 +125,10 @@ WithConfig
                        False
                        Nothing
                        False
-                       (Just ("OTHER" :| []))
+                       (Just
+                          (EnvVarSetting
+                             { envVarSettingVar = "OTHER" , envVarSettingAllowPrefix = True } :|
+                             []))
                        Nothing
                        Nothing
                        (Just "BOOL")

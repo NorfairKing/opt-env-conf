@@ -18,7 +18,12 @@ WithConfig
                  False
                  Nothing
                  True
-                 (Just ("GREET_CONFIG_FILE" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "GREET_CONFIG_FILE"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
                  Nothing
                  Nothing
                  (Just "FILE_PATH")
@@ -38,7 +43,12 @@ WithConfig
                  False
                  Nothing
                  True
-                 (Just ("GREET_GREETING" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "GREET_GREETING"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
                  (Just
                     (ConfigValSetting
                        ("greeting" :| [])
@@ -74,7 +84,12 @@ WithConfig
            False
            (Just _)
            False
-           (Just ("GREET_POLITE" :| []))
+           (Just
+              (EnvVarSetting
+                 { envVarSettingVar = "GREET_POLITE"
+                 , envVarSettingAllowPrefix = True
+                 } :|
+                 []))
            (Just
               (ConfigValSetting
                  ("polite" :| [])

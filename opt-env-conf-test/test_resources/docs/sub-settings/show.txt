@@ -18,7 +18,12 @@ WithConfig
                  False
                  Nothing
                  True
-                 (Just ("CONFIG_FILE" :| []))
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "CONFIG_FILE"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
                  Nothing
                  Nothing
                  (Just "FILE_PATH")
@@ -32,7 +37,12 @@ WithConfig
         False
         Nothing
         True
-        (Just ("FOO_BAR_QUUX" :| []))
+        (Just
+           (EnvVarSetting
+              { envVarSettingVar = "FOO_BAR_QUUX"
+              , envVarSettingAllowPrefix = True
+              } :|
+              []))
         (Just
            (ConfigValSetting
               ("foo" :| [ "bar" , "quux" ])
