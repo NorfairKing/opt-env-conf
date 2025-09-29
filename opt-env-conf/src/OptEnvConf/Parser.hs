@@ -175,9 +175,11 @@ data Parser a where
     !(Parser a) ->
     Parser a
   ParserMany ::
+    !(Maybe SrcLoc) ->
     !(Parser a) ->
     Parser [a]
   ParserSome ::
+    !(Maybe SrcLoc) ->
     !(Parser a) ->
     Parser (NonEmpty a)
   ParserAllOrNothing ::
@@ -245,8 +247,8 @@ instance Alternative Parser where
           ParserSelect pe pf -> isEmpty pe && isEmpty pf
           ParserEmpty _ -> True
           ParserAlt _ _ -> False
-          ParserMany p -> isEmpty p
-          ParserSome p -> isEmpty p
+          ParserMany _ p -> isEmpty p
+          ParserSome _ p -> isEmpty p
           ParserAllOrNothing _ p -> isEmpty p
           ParserCheck _ _ _ p -> isEmpty p
           ParserCommands _ _ cs -> null cs
@@ -278,8 +280,8 @@ instance Alternative Parser where
                     ParserCommands (mLoc1 <|> mLoc2) (mDefault1 <|> mDefault2) (cs1 ++ cs2)
                   _ -> ParserAlt p1' p2'
              in go p1 p2
-  many = ParserMany
-  some = fmap NE.toList . ParserSome
+  many = ParserMany Nothing
+  some = fmap NE.toList . ParserSome Nothing
 
 showParserABit :: Parser a -> String
 showParserABit = ($ "") . showParserPrec 0
@@ -311,13 +313,17 @@ showParserPrec = go
             . go 11 p1
             . showString " "
             . go 11 p2
-      ParserMany p ->
+      ParserMany mLoc p ->
         showParen (d > 10) $
           showString "Many "
+            . showsPrec 11 mLoc
+            . showString " "
             . go 11 p
-      ParserSome p ->
+      ParserSome mLoc p ->
         showParen (d > 10) $
           showString "Some "
+            . showsPrec 11 mLoc
+            . showString " "
             . go 11 p
       ParserAllOrNothing mLoc p ->
         showParen (d > 10) $
@@ -507,8 +513,10 @@ strArgument builders =
       argument : reader str : metavar "STR" : builders
 
 -- | Like 'some' but with a more accurate type
-someNonEmpty :: Parser a -> Parser (NonEmpty a)
-someNonEmpty = ParserSome
+someNonEmpty :: (HasCallStack) => Parser a -> Parser (NonEmpty a)
+someNonEmpty = ParserSome mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Give a parser a default value.
 --
@@ -1106,8 +1114,8 @@ parserEraseSrcLocs = go
       ParserSelect p1 p2 -> ParserSelect (go p1) (go p2)
       ParserEmpty _ -> ParserEmpty Nothing
       ParserAlt p1 p2 -> ParserAlt (go p1) (go p2)
-      ParserMany p -> ParserMany (go p)
-      ParserSome p -> ParserSome (go p)
+      ParserMany _ p -> ParserMany Nothing (go p)
+      ParserSome _ p -> ParserSome Nothing (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
       ParserCommands _ mDefault cs -> ParserCommands Nothing mDefault $ map commandEraseSrcLocs cs
@@ -1143,8 +1151,8 @@ parserTraverseSetting func = go
       ParserSelect p1 p2 -> ParserSelect <$> go p1 <*> go p2
       ParserEmpty mLoc -> pure $ ParserEmpty mLoc
       ParserAlt p1 p2 -> ParserAlt <$> go p1 <*> go p2
-      ParserMany p -> ParserMany <$> go p
-      ParserSome p -> ParserSome <$> go p
+      ParserMany mLoc p -> ParserMany mLoc <$> go p
+      ParserSome mLoc p -> ParserSome mLoc <$> go p
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
       ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault <$> traverse (commandTraverseSetting func) cs
@@ -1172,8 +1180,8 @@ parserSettingsMap = go
       ParserSelect p1 p2 -> M.union (go p1) (go p2)
       ParserEmpty _ -> M.empty
       ParserAlt p1 p2 -> M.union (go p1) (go p2)
-      ParserMany p -> go p
-      ParserSome p -> go p
+      ParserMany _ p -> go p
+      ParserSome _ p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheck _ _ _ p -> go p
       ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs

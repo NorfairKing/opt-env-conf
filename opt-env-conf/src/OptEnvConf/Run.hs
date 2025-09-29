@@ -381,21 +381,21 @@ runParserOn mDebugMode parser args envVars mConfig = do
             Nothing -> do
               debug ["Left side failed, trying right side."]
               ppIndent $ go p2
-      ParserMany p' -> do
-        debug [syntaxChunk "Many"]
+      ParserMany mLoc p' -> do
+        debug [syntaxChunk "Many", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           eor <- tryPP $ go p'
           case eor of
             Nothing -> pure []
             Just a -> do
-              as <- go (ParserMany p')
+              as <- go (ParserMany mLoc p')
               pure (a : as)
-      ParserSome p' -> do
-        debug [syntaxChunk "Some"]
+      ParserSome mLoc p' -> do
+        debug [syntaxChunk "Some", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           a <- go p'
           debug ["First element of some succeeded, continuing with Many"]
-          as <- go (ParserMany p')
+          as <- go (ParserMany mLoc p')
           pure (a :| as)
       ParserAllOrNothing mLoc p' -> do
         debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
@@ -769,11 +769,11 @@ runHelpParser mDebugMode args parser = do
                   Nothing -> do
                     debug ["Left side failed, trying right side."]
                     ppIndent $ go p2
-            ParserMany p' -> do
-              debug [syntaxChunk "Many"]
+            ParserMany mLoc p' -> do
+              debug [syntaxChunk "Many", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
-            ParserSome p' -> do
-              debug [syntaxChunk "Some"]
+            ParserSome mLoc p' -> do
+              debug [syntaxChunk "Some", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
             ParserAllOrNothing mLoc p' -> do
               debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]

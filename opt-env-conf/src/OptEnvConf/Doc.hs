@@ -169,8 +169,8 @@ parserDocs = simplifyAnyDocs . go
       ParserSelect p1 p2 -> AnyDocsAnd [go p1, go p2]
       ParserEmpty _ -> AnyDocsOr []
       ParserAlt p1 p2 -> AnyDocsOr [go p1, go p2]
-      ParserMany p -> AnyDocsOr [go p, AnyDocsSingle Nothing]
-      ParserSome p -> AnyDocsAnd [go p, go (ParserMany p)] -- TODO: is this right?
+      ParserMany _ p -> AnyDocsOr [go p, AnyDocsSingle Nothing]
+      ParserSome mLoc p -> AnyDocsAnd [go p, go (ParserMany mLoc p)] -- TODO: is this right?
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ p -> go p
       ParserCommands _ mDefault cs -> AnyDocsCommands mDefault $ map commandParserDocs cs

@@ -273,12 +273,12 @@ pureCompletionQuery parser ix args =
       ParserAlt p1 p2 -> orCompletions p1 p2
       ParserSelect p1 p2 -> andCompletions p1 p2
       ParserEmpty _ -> pure Nothing
-      ParserMany p -> do
+      ParserMany _ p -> do
         mR <- go p
         case mR of
           Nothing -> pure Nothing
           Just os -> fmap (os ++) <$> go p
-      ParserSome p -> do
+      ParserSome _ p -> do
         mR <- go p
         case mR of
           Nothing -> pure Nothing

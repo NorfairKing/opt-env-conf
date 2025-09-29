@@ -3,6 +3,7 @@ Check
   True
   _
   (Some
+     Nothing
      (Setting
         Nothing
         (Setting

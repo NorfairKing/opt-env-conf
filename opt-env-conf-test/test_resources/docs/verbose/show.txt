@@ -3,6 +3,7 @@ Check
   True
   _
   (Many
+     Nothing
      (Setting
         Nothing
         (Setting

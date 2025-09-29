@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0.0] - 2025-09-29
+
+This is technically a breaking change, but if you don't use any `opt-env-conf`
+internals, nothing should break for you.
+
+### Changed
+
+* `ParserMany` and `ParserSome` can now carry source locations.
+  This is not likely to happen often because the `Alternative` class does not
+  have a `HasCallStack` super class, but could still happen when using
+  `someNonEmpty`.
+
 ## [0.10.0.0] - 2025-09-17
 
 This is technically a breaking change, but if you don't use any `opt-env-conf`
