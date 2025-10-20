@@ -40,6 +40,7 @@ library
       OptEnvConf.Reader
       OptEnvConf.Run
       OptEnvConf.Setting
+      OptEnvConf.Terminal
       OptEnvConf.Validation
   other-modules:
       Paths_opt_env_conf
@@ -60,9 +61,11 @@ library
     , path-io
     , safe-coloured-text >=0.3.0.2
     , safe-coloured-text-layout >=0.2.0.0
-    , safe-coloured-text-terminfo
     , selective
     , text
     , validity
     , validity-containers
   default-language: Haskell2010
+  if !os(windows)
+    build-depends:
+        safe-coloured-text-terminfo

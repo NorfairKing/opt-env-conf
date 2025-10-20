@@ -46,13 +46,13 @@ import OptEnvConf.Output
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Setting
+import OptEnvConf.Terminal (getTerminalCapabilitiesFromHandle)
 import OptEnvConf.Validation
 import Path
 import System.Environment (getArgs, getEnvironment, getProgName)
 import System.Exit
 import System.IO
 import Text.Colour
-import Text.Colour.Capabilities.FromEnv
 
 -- | Run 'runParser' on your @Settings@' type's 'settingsParser'.
 --

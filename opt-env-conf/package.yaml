@@ -31,8 +31,11 @@ library:
   - path-io
   - safe-coloured-text >= 0.3.0.2
   - safe-coloured-text-layout >= 0.2.0.0
-  - safe-coloured-text-terminfo # TODO Don't depend on this on windows
   - selective
   - text
   - validity
   - validity-containers
+  when:
+    - condition: "!os(windows)"
+      dependencies:
+        - safe-coloured-text-terminfo
