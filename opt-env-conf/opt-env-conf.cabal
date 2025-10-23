@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           opt-env-conf
-version:        0.11.0.0
+version:        0.11.1.0
 synopsis:       Settings parsing for Haskell: command-line arguments, environment variables, and configuration values.
 homepage:       https://github.com/NorfairKing/opt-env-conf#readme
 bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
@@ -40,6 +40,7 @@ library
       OptEnvConf.Reader
       OptEnvConf.Run
       OptEnvConf.Setting
+      OptEnvConf.Terminal
       OptEnvConf.Validation
   other-modules:
       Paths_opt_env_conf
@@ -60,9 +61,11 @@ library
     , path-io
     , safe-coloured-text >=0.3.0.2
     , safe-coloured-text-layout >=0.2.0.0
-    , safe-coloured-text-terminfo
     , selective
     , text
     , validity
     , validity-containers
   default-language: Haskell2010
+  if !os(windows)
+    build-depends:
+        safe-coloured-text-terminfo

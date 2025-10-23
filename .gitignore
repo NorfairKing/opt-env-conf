@@ -1,2 +1,5 @@
 stack.yaml.lock
 .stack-work/
+.direnv
+.pre-commit-config.yaml
+result

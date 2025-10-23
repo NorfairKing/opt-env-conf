@@ -14,7 +14,6 @@ import Data.List
 import Data.Maybe
 import Path
 import Path.IO
-import Path.Internal.Posix (Path (..))
 
 newtype Completer = Completer {unCompleter :: String -> IO [String]}
 
@@ -149,7 +148,7 @@ directoryPath = Completer $ \fp' -> do
         ]
 
 hiddenRel :: Path Rel f -> Bool
-hiddenRel (Path s) = case s of
+hiddenRel p = case toFilePath p of
   ('.' : _) -> True
   _ -> False
 

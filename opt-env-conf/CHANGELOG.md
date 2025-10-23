@@ -1,5 +1,12 @@
 # Changelog
 
+
+## [0.11.1.0] - 2025-10-23
+
+### Added
+
+* Windows support by isolating platform-specific terminal code.
+
 ## [0.11.0.0] - 2025-09-29
 
 This is technically a breaking change, but if you don't use any `opt-env-conf`
