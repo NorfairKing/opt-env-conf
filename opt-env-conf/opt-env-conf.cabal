@@ -27,12 +27,14 @@ library
       OptEnvConf
       OptEnvConf.Args
       OptEnvConf.Casing
+      OptEnvConf.Check
       OptEnvConf.Completer
       OptEnvConf.Completion
       OptEnvConf.Doc
       OptEnvConf.EnvMap
       OptEnvConf.Error
       OptEnvConf.Lint
+      OptEnvConf.Main
       OptEnvConf.Nix
       OptEnvConf.NonDet
       OptEnvConf.Output
