@@ -150,6 +150,7 @@ import Control.Applicative
 import OptEnvConf.Casing
 import OptEnvConf.Completer
 import OptEnvConf.Doc
+import OptEnvConf.Main
 import OptEnvConf.Nix
 import OptEnvConf.Parser
 import OptEnvConf.Reader

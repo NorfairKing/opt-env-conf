@@ -63,14 +63,24 @@ let
   installManpagesAndCompletions = exeNames: drv:
     installManpages exeNames (installCompletions exeNames drv);
 
-  makeSettingsCheckScript = name: exe: args: env: writeShellApplication {
+  makeSettingsCheckScript = name: capabilities: exe: args: env: writeShellApplication {
     inherit name;
     runtimeEnv = env;
     # Because we set PATH sometimes
     excludeShellChecks = [ "SC2123" ];
-    text = ''
-      ${exe} --run-settings-check ${concatStringsSep " " args}
-    '';
+    text =
+      let
+        capabilityArgs = lib.mapAttrsToList
+          (cap: bool:
+            if bool
+            then "--settings-capabilities-enable-" + cap
+            else "--settings-capabilities-disable-" + cap)
+          capabilities;
+        capabilityArgsStr = concatStringsSep " " capabilityArgs;
+      in
+      ''
+        ${exe} --run-settings-check ${capabilityArgsStr} ${concatStringsSep " " args}
+      '';
   };
 
   # A nix build that does a settings check.
@@ -78,21 +88,21 @@ let
   # files not available in the nix build sandbox.
   # If it does, you'll need to use 'makeSettingsCheckScript' and run it outside
   # of the build sandbox, for example in an activation script.
-  makeSettingsCheck = name: exe: args: env: runCommand name env ''
-    ${makeSettingsCheckScript name exe args env}/bin/${name} > "$out"
+  makeSettingsCheck = name: capabilities: exe: args: env: runCommand name env ''
+    ${makeSettingsCheckScript name capabilities exe args env}/bin/${name} > "$out" 2>&1
   '';
 
-  makeSettingsCheckHomeManagerActivationScript = name: exe: args: env: {
+  makeSettingsCheckHomeManagerActivationScript = name: capabilities: exe: args: env: {
     after = [ "writeBoundary" ];
     before = [ ];
     data = ''
-      run ${makeSettingsCheckScript name exe args env}/bin/${name}
+      run ${makeSettingsCheckScript name capabilities exe args env}/bin/${name}
     '';
   };
 
   # Note to reader: If you find code while debugging a build failure, please
   # contribute a more accurate version of this function:
-  addSettingsCheckToService = service: lib.recursiveUpdate service {
+  addSettingsCheckToService = capabilities: service: lib.recursiveUpdate service {
     documentation =
       let
         path = service.path or [ ];
@@ -100,14 +110,16 @@ let
         environment = ((service.environment or { }) // { PATH = pathVar; });
         check = makeSettingsCheck
           (service.name or "settings-check")
+          capabilities
           (last (init (splitString "\n" service.script)))
           (service.scriptArgs or [ ]) # TODO is this right?
           environment;
       in
       (service.documentation or [ ]) ++ [ "${check}" ];
   };
+
   # For home-manager:
-  addSettingsCheckToUserService = service: lib.recursiveUpdate service
+  addSettingsCheckToUserService = capabilities: service: lib.recursiveUpdate service
     {
       Unit.Documentation =
         let
@@ -116,12 +128,14 @@ let
           environment = ((service.environment or { }) // { PATH = pathVar; });
           check = makeSettingsCheck
             (service.name or "settings-check")
+            capabilities
             service.Service.ExecStart
             [ ] # TODO is this right?
             environment;
         in
         (service.Unit.Documentation or [ ]) ++ [ "${check}" ];
     };
+
   opt-env-conf = overrideCabal (optEnvConfPkg "opt-env-conf") (old: {
     passthru = {
       inherit

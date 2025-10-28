@@ -6,6 +6,8 @@ import Data.List (intercalate, intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Version
@@ -79,6 +81,14 @@ headerChunks t = [fore cyan (chunk t), ":"]
 
 syntaxChunk :: String -> Chunk
 syntaxChunk = fore blue . chunk . T.pack
+
+capabilitiesChunks :: Set Capability -> [Chunk]
+capabilitiesChunks caps = case Set.toList caps of
+  [] -> []
+  cs -> intersperse ", " (map capabilityChunk cs)
+
+capabilityChunk :: Capability -> Chunk
+capabilityChunk = fore green . chunk . unCapability
 
 mSrcLocChunk :: Maybe SrcLoc -> Chunk
 mSrcLocChunk = maybe "without srcLoc" srcLocChunk

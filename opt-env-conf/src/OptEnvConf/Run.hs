@@ -1,15 +1,20 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Run
-  ( runSettingsParser,
-    runParser,
+  ( Capabilities (..),
+    allCapabilities,
+    enableCapability,
+    disableCapability,
     runParserOn,
     runHelpParser,
-    internalParser,
   )
 where
 
@@ -29,282 +34,52 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import Data.Traversable
-import Data.Version
+import Data.Validity (Validity)
+import GHC.Generics (Generic)
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
-import OptEnvConf.Completion
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.Error
-import OptEnvConf.Lint
-import OptEnvConf.Nix
 import OptEnvConf.NonDet
 import OptEnvConf.Output
 import OptEnvConf.Parser
 import OptEnvConf.Reader
 import OptEnvConf.Setting
-import OptEnvConf.Terminal (getTerminalCapabilitiesFromHandle)
 import OptEnvConf.Validation
-import Path
-import System.Environment (getArgs, getEnvironment, getProgName)
-import System.Exit
 import System.IO
 import Text.Colour
 
--- | Run 'runParser' on your @Settings@' type's 'settingsParser'.
---
--- __This is most likely the function you want to be using.__
-runSettingsParser ::
-  (HasParser a) =>
-  -- | Program version, get this from Paths_your_package_name
-  Version ->
-  -- | Program description
-  String ->
-  IO a
-runSettingsParser version progDesc =
-  runParser version progDesc settingsParser
+-- Set of disabled capabilities
+newtype Capabilities = Capabilities {unCapabilities :: Set Capability}
+  deriving (Show, Generic)
 
--- | Run a parser
---
--- This function with exit on:
---
---     * Parse failure: show a nice error message.
---     * @-h|--help@: Show help text
---     * @--version@: Show version information
---     * @--render-man-page@: Render a man page
---     * @--bash-completion-script@: Render a bash completion script
---     * @--zsh-completion-script@: Render a zsh completion script
---     * @--fish-completion-script@: Render a fish completion script
---     * @query-opt-env-conf-completion@: Perform a completion query
---
--- This gets the arguments and environment variables from the current process.
-runParser ::
-  -- | Program version, get this from Paths_your_package_name
-  Version ->
-  -- | Program description
-  String ->
-  Parser a ->
-  IO a
-runParser version progDesc p = do
-  allArgs <- getArgs
-  let argMap' = parseArgs allArgs
-  let mArgMap = consumeSwitch ["--debug-optparse"] argMap'
-  let (debugMode, argMap) = case mArgMap of
-        Nothing -> (False, argMap')
-        Just am -> (True, am)
+instance Validity Capabilities
 
-  completeEnv <- getEnvironment
-  let envVars = EnvMap.parse completeEnv
+allCapabilities :: Capabilities
+allCapabilities = Capabilities {unCapabilities = Set.empty}
 
-  case lintParser p of
-    Just errs -> do
-      tc <- getTerminalCapabilitiesFromHandle stderr
-      hPutChunksLocaleWith tc stderr $ renderLintErrors errs
-      exitFailure
-    Nothing -> do
-      let docs = parserDocs p
+enableCapability :: Capability -> Capabilities -> Capabilities
+enableCapability cap (Capabilities caps) =
+  Capabilities (Set.delete cap caps)
 
-      mDebugMode <-
-        if debugMode
-          then Just <$> getTerminalCapabilitiesFromHandle stderr
-          else pure Nothing
+disableCapability :: Capability -> Capabilities -> Capabilities
+disableCapability cap (Capabilities caps) =
+  Capabilities (Set.insert cap caps)
 
-      let mHelpConsumed = consumeSwitch ["-h", "--help"] argMap
-      let (helpMode, args') = case mHelpConsumed of
-            Nothing -> (False, argMap)
-            Just am -> (True, am)
-
-      if helpMode
-        then do
-          progname <- getProgName
-          errOrDocs <- runHelpParser mDebugMode args' p
-          case errOrDocs of
-            Left errs -> do
-              stderrTc <- getTerminalCapabilitiesFromHandle stderr
-              hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
-              exitFailure
-            Right mCommandDoc -> do
-              tc <- getTerminalCapabilitiesFromHandle stdout
-              hPutChunksLocaleWith tc stdout $ case mCommandDoc of
-                Nothing -> renderHelpPage progname version progDesc docs
-                Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
-              exitSuccess
-        else do
-          let mCheckConsumed = consumeSwitch ["--run-settings-check"] args'
-          let (checkMode, args) = case mCheckConsumed of
-                Nothing -> (False, args')
-                Just am -> (True, am)
-
-          if checkMode
-            then do
-              stderrTc <- getTerminalCapabilitiesFromHandle stderr
-              errOrSets <- runParserOn (Just stderrTc) p args envVars Nothing
-              case errOrSets of
-                Left errs -> do
-                  hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
-                  exitFailure
-                Right _ -> do
-                  tc <- getTerminalCapabilitiesFromHandle stdout
-                  hPutChunksLocaleWith tc stdout ["Settings parsed successfully."]
-                  exitSuccess
-            else do
-              let p' = internalParser p
-              errOrResult <-
-                runParserOn
-                  mDebugMode
-                  p'
-                  args
-                  envVars
-                  Nothing
-              case errOrResult of
-                Left errs -> do
-                  tc <- getTerminalCapabilitiesFromHandle stderr
-                  hPutChunksLocaleWith tc stderr $ renderErrors errs
-                  exitFailure
-                Right i -> case i of
-                  ShowVersion -> do
-                    progname <- getProgName
-                    tc <- getTerminalCapabilitiesFromHandle stdout
-                    hPutChunksLocaleWith tc stdout $ renderVersionPage progname version
-                    exitSuccess
-                  RenderMan -> do
-                    progname <- getProgName
-                    tc <- getTerminalCapabilitiesFromHandle stdout
-                    hPutChunksLocaleWith tc stdout $ renderManPage progname version progDesc docs
-                    exitSuccess
-                  RenderDocumentation -> do
-                    progname <- getProgName
-                    tc <- getTerminalCapabilitiesFromHandle stdout
-                    hPutChunksLocaleWith tc stdout $ renderReferenceDocumentation progname docs
-                    exitSuccess
-                  RenderNixosOptions -> do
-                    putStrLn $ T.unpack $ renderParserNixOptions p'
-                    exitSuccess
-                  BashCompletionScript progPath -> do
-                    progname <- getProgName
-                    generateBashCompletionScript progPath progname
-                    exitSuccess
-                  ZshCompletionScript progPath -> do
-                    progname <- getProgName
-                    generateZshCompletionScript progPath progname
-                    exitSuccess
-                  FishCompletionScript progPath -> do
-                    progname <- getProgName
-                    generateFishCompletionScript progPath progname
-                    exitSuccess
-                  CompletionQuery enriched index ws -> do
-                    runCompletionQuery p' enriched index ws
-                    exitSuccess
-                  ParsedNormally a -> pure a
-
--- Internal structure to help us do what the framework
--- is supposed to.
-data Internal a
-  = ShowVersion
-  | RenderMan
-  | RenderDocumentation
-  | RenderNixosOptions
-  | BashCompletionScript (Path Abs File)
-  | ZshCompletionScript (Path Abs File)
-  | FishCompletionScript (Path Abs File)
-  | CompletionQuery
-      -- Enriched
-      !Bool
-      -- Index
-      !Int
-      -- Args
-      ![String]
-  | ParsedNormally !a
-
-internalParser :: Parser a -> Parser (Internal a)
-internalParser p =
-  choice
-    [ setting
-        [ switch ShowVersion,
-          long "version",
-          hidden
-        ],
-      setting
-        [ switch RenderMan,
-          long "render-man-page",
-          hidden,
-          help "Render a manpage"
-        ],
-      setting
-        [ switch RenderDocumentation,
-          long "render-reference-documentation",
-          hidden,
-          help "Render reference documentation"
-        ],
-      setting
-        [ switch RenderNixosOptions,
-          long "render-nix-options",
-          hidden,
-          help "Render Nix options"
-        ],
-      BashCompletionScript
-        <$> setting
-          [ option,
-            reader $ maybeReader parseAbsFile,
-            long "bash-completion-script",
-            hidden,
-            help "Render the bash completion script"
-          ],
-      ZshCompletionScript
-        <$> setting
-          [ option,
-            reader $ maybeReader parseAbsFile,
-            long "zsh-completion-script",
-            hidden,
-            help "Render the zsh completion script"
-          ],
-      ZshCompletionScript
-        <$> setting
-          [ option,
-            reader $ maybeReader parseAbsFile,
-            long "fish-completion-script",
-            hidden,
-            help "Render the fish completion script"
-          ],
-      setting
-        [ help "Query completion",
-          switch CompletionQuery,
-          -- Long string that no normal user would ever use.
-          long "query-opt-env-conf-completion",
-          hidden
-        ]
-        <*> setting
-          [ switch True,
-            long "completion-enriched",
-            value False,
-            hidden,
-            help "Whether to enable enriched completion"
-          ]
-        <*> setting
-          [ option,
-            reader auto,
-            long "completion-index",
-            hidden,
-            help "The index between the arguments where completion was invoked."
-          ]
-        <*> many
-          ( setting
-              [ option,
-                reader str,
-                long "completion-word",
-                hidden,
-                help "The words (arguments) that have already been typed"
-              ]
-          ),
-      ParsedNormally <$> p
-    ]
+missingCapabilities :: Capabilities -> Set Capability -> Maybe (NonEmpty Capability)
+missingCapabilities (Capabilities caps) requiredCapabilities =
+  NE.nonEmpty (Set.toList (Set.intersection requiredCapabilities caps))
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
 runParserOn ::
+  Capabilities ->
   -- DebugMode
   Maybe TerminalCapabilities ->
   Parser a ->
@@ -312,7 +87,7 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn mDebugMode parser args envVars mConfig = do
+runParserOn capabilities mDebugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
@@ -344,6 +119,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
                 Nothing ->
                   pure $
                     Left $
+                      -- Only show source locations in debug mode.
                       let f = case mDebugMode of
                             Nothing -> eraseErrorSrcLocs
                             Just _ -> id
@@ -425,21 +201,30 @@ runParserOn mDebugMode parser args envVars mConfig = do
                   if null parsedSettingsMap
                     then ppErrors' errs
                     else ppErrors' $ errs <> (ParseError mLoc (ParseErrorAllOrNothing parsedSettingsMap) :| [])
-      ParserCheck mLoc forgivable f p' -> do
+      ParserCheck mLoc forgivable requiredCapabilities f p' -> do
         debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
+        when (not (Set.null requiredCapabilities)) $
+          debug $
+            "Requires capabilities: "
+              : capabilitiesChunks requiredCapabilities
+
         ppIndent $ do
           debug ["parser"]
+          -- Definitely parse below
           a <- ppIndent $ go p'
           debug ["check"]
-          ppIndent $ do
-            errOrB <- liftIO $ f a
-            case errOrB of
-              Left err -> do
-                debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
-                ppError mLoc $ ParseErrorCheckFailed forgivable err
-              Right b -> do
-                debug ["succeeded"]
-                pure b
+          -- Only perform the check (IO) if capabilities are sufficient
+          ppIndent $ case missingCapabilities capabilities requiredCapabilities of
+            Just missings -> ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
+            Nothing -> do
+              errOrB <- liftIO $ f a
+              case errOrB of
+                Left err -> do
+                  debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
+                  ppError mLoc $ ParseErrorCheckFailed forgivable err
+                Right b -> do
+                  debug ["succeeded"]
+                  pure b
       ParserCommands mLoc mDefault cs -> do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]
@@ -778,7 +563,7 @@ runHelpParser mDebugMode args parser = do
             ParserAllOrNothing mLoc p' -> do
               debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
-            ParserCheck mLoc _ _ p' -> do
+            ParserCheck mLoc _ _ _ p' -> do
               debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
             ParserWithConfig mLoc pc pa -> do
@@ -811,14 +596,23 @@ runHelpParser mDebugMode args parser = do
                           Nothing -> Just (reverse path, commandParserDocs c)
                           Just res -> pure res
 
-type PP a = ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a
+newtype PP a = PP (ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a)
+  deriving
+    ( Functor,
+      Applicative,
+      Selective,
+      Monad,
+      MonadIO,
+      MonadReader PPEnv,
+      MonadState PPState
+    )
 
 runPP ::
   PP a ->
   PPState ->
   PPEnv ->
   IO [(Validation ParseError a, PPState)]
-runPP p args envVars =
+runPP (PP p) args envVars =
   runNonDetT (runStateT (runValidationT (runReaderT p envVars)) args)
 
 runPPLazy ::
@@ -831,7 +625,7 @@ runPPLazy ::
           NonDetT IO (Validation ParseError a, PPState)
         )
     )
-runPPLazy p args envVars =
+runPPLazy (PP p) args envVars =
   runNonDetTLazy (runStateT (runValidationT (runReaderT p envVars)) args)
 
 tryPP :: PP a -> PP (Maybe a)
@@ -851,7 +645,7 @@ tryPP pp = do
       pure $ Just a
 
 ppNonDet :: NonDetT IO a -> PP a
-ppNonDet = lift . lift . lift
+ppNonDet = PP . lift . lift . lift
 
 ppNonDetList :: [a] -> PP a
 ppNonDetList = ppNonDet . liftNonDetTList
@@ -923,7 +717,7 @@ ppSwitch ds = do
       pure (Just ())
 
 ppErrors' :: NonEmpty ParseError -> PP a
-ppErrors' = lift . ValidationT . lift . pure . Failure
+ppErrors' = PP . lift . ValidationT . lift . pure . Failure
 
 ppErrors :: Maybe SrcLoc -> NonEmpty ParseErrorMessage -> PP a
 ppErrors mLoc = ppErrors' . NE.map (ParseError mLoc)

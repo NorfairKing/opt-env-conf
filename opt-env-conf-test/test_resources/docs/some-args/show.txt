@@ -1,6 +1,7 @@
 Check
   Nothing
   True
+  (fromList [])
   _
   (Some
      Nothing

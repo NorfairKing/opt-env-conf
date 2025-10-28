@@ -4,11 +4,13 @@ WithConfig
   (Check
      Nothing
      False
+     (fromList [])
      _
      (Alt
         (Check
            Nothing
            False
+           (fromList [])
            _
            (Setting
               Nothing
@@ -28,12 +30,13 @@ WithConfig
                  Nothing
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
-        (Check Nothing False _ (Pure _))))
+        (Check Nothing False (fromList []) _ (Pure _))))
   (Ap
      (Ap
         (Check
            Nothing
            True
+           (fromList [])
            _
            (Setting
               Nothing

@@ -1,5 +1,8 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -25,6 +28,7 @@ module OptEnvConf.Parser
     checkMapIOForgivable,
     checkMapMaybeForgivable,
     allOrNothing,
+    requireCapability,
     commands,
     command,
     defaultCommand,
@@ -56,9 +60,11 @@ module OptEnvConf.Parser
     readSecretTextFile,
     secretTextFileSetting,
     secretTextFileOrBareSetting,
+    readSecretCapability,
 
     -- * Parser implementation
     Parser (..),
+    Capability (..),
     HasParser (..),
     Command (..),
     CommandsBuilder (..),
@@ -93,10 +99,14 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Data.Validity
+import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
@@ -191,6 +201,9 @@ data Parser a where
     !(Maybe SrcLoc) ->
     -- | Forgivable
     !Bool ->
+    -- | Necessary capabilities
+    !(Set Capability) ->
+    -- | Check function
     !(a -> IO (Either String b)) ->
     !(Parser a) ->
     Parser b
@@ -213,6 +226,20 @@ data Parser a where
     !(Setting a) ->
     Parser a
 
+newtype Capability = Capability {unCapability :: Text}
+  deriving stock (Generic)
+  deriving newtype (Show, Eq, Ord, IsString)
+
+instance Validity Capability
+
+-- | The annotation for any setting reading secrets.
+--
+-- We add these so that we can disable them in settings checks, to avoid
+-- failing settings checks when secrets are read at runtime instead of
+-- build-time.
+readSecretCapability :: String
+readSecretCapability = "read-secret"
+
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
   fmap f = \case
@@ -221,11 +248,11 @@ instance Functor Parser where
     ParserSelect pe pf -> ParserSelect (fmap (fmap f) pe) (fmap (fmap f) pf)
     ParserEmpty mLoc -> ParserEmpty mLoc
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
-    ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
+    ParserCheck mLoc forgivable caps g p -> ParserCheck mLoc forgivable caps (fmap (fmap f) . g) p
     ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault $ map (fmap f) cs
     ParserWithConfig mLoc pc pa -> ParserWithConfig mLoc pc (fmap f pa)
-    -- TODO: make setting a functor and fmap here
-    p -> ParserCheck Nothing True (pure . Right . f) p
+    -- If we ever make Setting a functor, then we need to fmap here
+    p -> ParserCheck Nothing True Set.empty (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -250,7 +277,7 @@ instance Alternative Parser where
           ParserMany _ p -> isEmpty p
           ParserSome _ p -> isEmpty p
           ParserAllOrNothing _ p -> isEmpty p
-          ParserCheck _ _ _ p -> isEmpty p
+          ParserCheck _ _ _ _ p -> isEmpty p
           ParserCommands _ _ cs -> null cs
           ParserWithConfig _ pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
@@ -331,12 +358,14 @@ showParserPrec = go
             . showsPrec 11 mLoc
             . showString " "
             . go 11 p
-      ParserCheck mLoc forgivable _ p ->
+      ParserCheck mLoc forgivable caps _ p ->
         showParen (d > 10) $
           showString "Check "
             . showsPrec 11 mLoc
             . showString " "
             . showsPrec 11 forgivable
+            . showString " "
+            . showsPrec 11 caps
             . showString " _ "
             . go 11 p
       ParserCommands mLoc mDefault cs ->
@@ -599,11 +628,11 @@ checkEither func p = withFrozenCallStack $ checkMapEither func p
 
 -- | Check a 'Parser' after the fact, purely.
 checkMapEither :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
-checkMapEither func p = withFrozenCallStack $ checkMapIO (pure . func) p
+checkMapEither f = withFrozenCallStack $ checkMapIO (pure . f)
 
 -- | Check a 'Parser' after the fact, allowing IO.
 checkMapIO :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheck mLoc False
+checkMapIO = ParserCheck mLoc False Set.empty
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -634,6 +663,26 @@ allOrNothing = ParserAllOrNothing mLoc
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
+-- | Require the given capability for running the given parser.
+--
+-- This lets us annotate a parser with a power that it needs to be executed so
+-- that we can run a settings check without that power to still check the rest
+-- of the parser.
+--
+-- This only makes sense when used with a 'checkMap', 'checkEither', 'mapIO',
+-- 'runIO', or similar function because the capability requirement is attached
+-- to the Check node in the parser tree.
+-- When used without such a node, this will attach a no-op Check node to the
+-- parser tree and as such still try to do all the parsing below but not above.
+requireCapability :: (HasCallStack) => String -> Parser a -> Parser a
+requireCapability capName = \case
+  ParserCheck mLoc' forgivable caps f p ->
+    ParserCheck mLoc' forgivable (Set.insert cap caps) f p
+  p -> ParserCheck mLoc False (Set.singleton cap) (pure . Right) p
+  where
+    cap = Capability (T.pack capName)
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
+
 -- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
 checkMapMaybeForgivable :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
 checkMapMaybeForgivable func p =
@@ -647,12 +696,11 @@ checkMapMaybeForgivable func p =
 
 -- | Like 'checkMapEither', but allow trying the other side of any alternative if the result is Nothing.
 checkMapEitherForgivable :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
-checkMapEitherForgivable func p = withFrozenCallStack $ checkMapIOForgivable (pure . func) p
+checkMapEitherForgivable f = withFrozenCallStack $ checkMapIOForgivable (pure . f)
 
 -- | Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
--- TODO add a SRCLoc here
 checkMapIOForgivable :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIOForgivable = ParserCheck mLoc True
+checkMapIOForgivable = ParserCheck mLoc True Set.empty
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -964,7 +1012,11 @@ readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 
 -- | Load a secret from a text file, with 'readSecretTextFile'
 secretTextFileSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
-secretTextFileSetting bs = withFrozenCallStack $ mapIO readSecretTextFile $ filePathSetting bs
+secretTextFileSetting bs =
+  withFrozenCallStack $
+    requireCapability readSecretCapability $
+      mapIO readSecretTextFile $
+        filePathSetting bs
 
 -- | Load a secret from a text file, with 'readSecretTextFile', or specify it
 -- directly
@@ -990,7 +1042,13 @@ secretTextFileOrBareSetting bs =
     fileSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "FILE_PATH"]
       guard $ p s
-      pure $ mapIO (resolveFile' >=> readSecretTextFile) $ ParserSetting mLoc s
+      pure $
+        requireCapability readSecretCapability $
+          -- These two mapIOs are not combined because the capability should
+          -- only apply to the reading, not the resolving.
+          mapIO readSecretTextFile $
+            mapIO resolveFile' $
+              ParserSetting mLoc s
 
     bareOption = bareSetting settingTryOption $ \case
       BuildTryArgument -> Nothing
@@ -1117,7 +1175,7 @@ parserEraseSrcLocs = go
       ParserMany _ p -> ParserMany Nothing (go p)
       ParserSome _ p -> ParserSome Nothing (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
-      ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
+      ParserCheck _ forgivable caps f p -> ParserCheck Nothing forgivable caps f (go p)
       ParserCommands _ mDefault cs -> ParserCommands Nothing mDefault $ map commandEraseSrcLocs cs
       ParserWithConfig _ p1 p2 -> ParserWithConfig Nothing (go p1) (go p2)
       ParserSetting _ s -> ParserSetting Nothing s
@@ -1154,7 +1212,7 @@ parserTraverseSetting func = go
       ParserMany mLoc p -> ParserMany mLoc <$> go p
       ParserSome mLoc p -> ParserSome mLoc <$> go p
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
-      ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
+      ParserCheck mLoc forgivable caps f p -> ParserCheck mLoc forgivable caps f <$> go p
       ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig mLoc p1 p2 -> ParserWithConfig mLoc <$> go p1 <*> go p2
       ParserSetting mLoc s -> ParserSetting mLoc <$> func s
@@ -1183,7 +1241,7 @@ parserSettingsMap = go
       ParserMany _ p -> go p
       ParserSome _ p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
-      ParserCheck _ _ _ p -> go p
+      ParserCheck _ _ _ _ p -> go p
       ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs
       ParserWithConfig _ p1 p2 -> M.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't

@@ -112,8 +112,18 @@
           example-settings-check =
             haskellPackages.opt-env-conf.makeSettingsCheck
               "example-settings-check"
+              { }
               "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
               [ "read" ]
+              { };
+          # [tag:CapabilityCheck]
+          # This only passes because the 'exit' capability is turned off.
+          example-settings-check-without-capability =
+            haskellPackages.opt-env-conf.makeSettingsCheck
+              "example-settings-check-without-capability"
+              { exit = false; }
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              [ "delete" ]
               { };
           pre-commit = pre-commit-hooks.lib.${system}.run {
             src = ./.;

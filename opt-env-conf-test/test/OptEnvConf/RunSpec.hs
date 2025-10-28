@@ -1,11 +1,13 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module OptEnvConf.RunSpec (spec) where
 
 import Autodocodec
 import Control.Applicative
+import Control.Concurrent
 import Data.Aeson as JSON (Object, Value (Null), toJSON)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KeyMap
@@ -135,6 +137,52 @@ spec = do
               let p = mapIO (pure . succ) (pure (i :: Int))
               let expected = succ i
               shouldParse p Args.emptyArgs e mConf expected
+
+    describe "RequireCapability" $ do
+      it "can run the parser if the capability is available" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \result ->
+                forAllValid $ \capName -> do
+                  let p = requireCapability capName (pure (result :: Int))
+                  let cap = Capability (T.pack capName)
+                  let capabilities = enableCapability cap capabilitiesPrototype
+                  shouldParse' p capabilities Args.emptyArgs e mConf result
+
+      it "cannot run the parser if the capability is not available" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \result ->
+                forAllValid $ \capName -> do
+                  let p = requireCapability capName (pure (result :: Int))
+                  let cap = Capability (T.pack capName)
+                  let capabilities = disableCapability cap capabilitiesPrototype
+                  shouldFail' p capabilities Args.emptyArgs e mConf $ \case
+                    ParseErrorMissingCapability _ :| [] -> True
+                    _ -> False
+
+      it "still runs the below parser when a capability is missing" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \capName ->
+            forAllValid $ \result ->
+              forAllValid $ \e ->
+                forAllValid $ \mConf -> do
+                  var <- newMVar 0
+                  let p = requireCapability capName (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
+                  let cap = Capability (T.pack capName)
+                  let capabilities = disableCapability cap capabilitiesPrototype
+                  errOrRes <- runParserOn capabilities Nothing p Args.emptyArgs e mConf
+                  case errOrRes of
+                    Left errs -> do
+                      NE.map parseErrorMessage errs
+                        `shouldSatisfy` ( \case
+                                            ParseErrorMissingCapability c :| [] | c == cap -> True
+                                            _ -> False
+                                        )
+                      readMVar var `shouldReturn` result -- instead of 1
+                    Right _ -> expectationFailure "The parser should not have succeeded."
 
     describe "WithConfig" $ do
       it "can replace the config object" $
@@ -870,7 +918,7 @@ argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a ->
 argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses args", show args, "as", show expected]) $ do
     let argMap = parseArgs args
-    errOrRes <- runParserOn Nothing p argMap EnvMap.empty Nothing
+    errOrRes <- runParserOn allCapabilities Nothing p argMap EnvMap.empty Nothing
     context (showParserABit p) $
       case errOrRes of
         Left errs ->
@@ -888,7 +936,7 @@ envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser
 envParseSpec envVars p expected = withFrozenCallStack $ do
   it (unwords ["parses environment", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
-    errOrRes <- runParserOn Nothing p emptyArgs envMap Nothing
+    errOrRes <- runParserOn allCapabilities Nothing p emptyArgs envMap Nothing
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -899,7 +947,7 @@ confParseSpecs p table = withFrozenCallStack $ mapM_ (\(mConf, result) -> confPa
 confParseSpec :: (HasCallStack) => (Show a, Eq a) => Maybe JSON.Object -> Parser a -> a -> Spec
 confParseSpec mConf p expected = withFrozenCallStack $ do
   it (unwords ["parses configuration", show mConf, "as", show expected]) $ do
-    errOrRes <- runParserOn Nothing p emptyArgs EnvMap.empty mConf
+    errOrRes <- runParserOn allCapabilities Nothing p emptyArgs EnvMap.empty mConf
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -912,8 +960,19 @@ shouldParse ::
   Maybe JSON.Object ->
   a ->
   IO ()
-shouldParse p args e mConf expected = do
-  errOrRes <- runParserOn Nothing p args e mConf
+shouldParse p = shouldParse' p allCapabilities
+
+shouldParse' ::
+  (Show a, Eq a) =>
+  Parser a ->
+  Capabilities ->
+  Args ->
+  EnvMap ->
+  Maybe JSON.Object ->
+  a ->
+  IO ()
+shouldParse' p capabilities args e mConf expected = do
+  errOrRes <- runParserOn capabilities Nothing p args e mConf
   context (showParserABit p) $ case errOrRes of
     Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected
@@ -926,8 +985,23 @@ shouldFail ::
   Maybe JSON.Object ->
   (NonEmpty ParseErrorMessage -> Bool) ->
   IO ()
-shouldFail p args e mConf isExpected = do
-  errOrRes <- runParserOn Nothing p args e mConf
+shouldFail p = shouldFail' p allCapabilities
+
+shouldFail' ::
+  (Show a) =>
+  Parser a ->
+  Capabilities ->
+  Args ->
+  EnvMap ->
+  Maybe JSON.Object ->
+  (NonEmpty ParseErrorMessage -> Bool) ->
+  IO ()
+shouldFail' p capabilities args e mConf isExpected = do
+  errOrRes <- runParserOn capabilities Nothing p args e mConf
   case errOrRes of
     Left errs -> NE.map parseErrorMessage errs `shouldSatisfy` isExpected
     Right actual -> expectationFailure $ show actual
+
+instance GenValid Capabilities
+
+instance GenValid Capability

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.12.0.0] - 2025-11-25
+
+### Added
+
+* Support for capabilities during settings parsing, and disabling them in the
+  settings check.
+
+This is technically a breaking change, but if you don't use any `opt-env-conf`
+internals, nothing should break for you.
 
 ## [0.11.1.0] - 2025-10-23
 

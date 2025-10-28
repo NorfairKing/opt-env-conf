@@ -12,30 +12,6 @@ Used in production in all my products and some companies.
 * Best-in-class errors
 * Formatter-friendly API
 
-## Features
-
-- [x] Parsing
-    - [x] Argument: `progname hello`
-    - [x] Option: `progname --file foo.txt`
-        - [x] Long Option: `progname --file foo.txt`
-        - [x] Short Option: `progname -f foo.txt`
-        - [x] Equals-version of long option: `progname --file=foo.txt`
-        - [x] Shorthand-version of short option: `progname -ffoo.txt`
-    - [x] Switch: `progname --verbose`
-        - [x] Long switch: `progname --verbose`
-        - [x] Short switch: `progname -v`
-- [x] Documentation
-    - [x] `--help`
-        - [x] Global `--help` page
-        - [x] Per-command `--help` page
-    - [x] Generated `--version` command
-    - [x] Generated manpage
-- [x] Completion
-    - [x] Bash completion
-    - [x] Zsh completion
-    - [x] Fish completion
-- [x] Static settings check
-
 ## Comparison to similar projects
 
 |                                      | `opt-env-conf` | `optparse-applicative` | `envparse` | `autodocodec` |
@@ -65,6 +41,18 @@ Used in production in all my products and some companies.
 | Fish completion                      | ✔️              | ✔️                      | ✖️          | ✖️             |
 | Static settings check                | ✔️              | ✖️                      | ✖️          | ✖️             |
 
+## Parsers and Interpreters
+
+The essence of `opt-env-conf` is the concept of a *Parser*.
+Parsers are a tree of settings that can be interpreted in different ways.
+Currently, the following interpreters are provided:
+
+* Parse the settings
+* Lint the parser for common issues at runtime that were inconvenient to catch at the type level.
+* Run a settings check (possibly with limited capabilities)
+* Generate documentation, including a man page, a `--help` page, and documentation for each command recursively as well.
+* Generate shell completions for Bash, Zsh, and Fish
+* Generate a NixOS Option type
 
 ## Example
 

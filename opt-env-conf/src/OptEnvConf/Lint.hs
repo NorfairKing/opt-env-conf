@@ -271,7 +271,7 @@ lintParser =
             validationTFailure LintErrorManyInfinite
         pure c
       ParserAllOrNothing _ p -> go p
-      ParserCheck _ _ _ p -> go p
+      ParserCheck _ _ _ _ p -> go p
       ParserCommands mLoc mDefault cs -> do
         if null cs
           then validationTFailure $ LintError mLoc LintErrorNoCommands

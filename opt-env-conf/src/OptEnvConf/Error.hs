@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Doc
 import OptEnvConf.Output
+import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Text.Colour
 
@@ -39,6 +40,7 @@ data ParseErrorMessage
   | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
   | ParseErrorAllOrNothing !(Map SettingHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
+  | ParseErrorMissingCapability !Capability
   deriving (Show)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
@@ -64,6 +66,7 @@ errorMessageIsForgivable = \case
   ParseErrorUnrecognisedCommand _ _ -> False
   ParseErrorAllOrNothing _ -> False
   ParseErrorUnrecognised _ -> False
+  ParseErrorMissingCapability _ -> False
 
 eraseErrorSrcLocs :: (Functor f) => f ParseError -> f ParseError
 eraseErrorSrcLocs = fmap eraseErrorSrcLoc
@@ -131,7 +134,9 @@ renderError ParseError {..} =
           ]
             ++ map (pure . srcLocChunk) (M.elems locs)
         ParseErrorUnrecognised leftovers ->
-          ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
+          ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))]
+        ParseErrorMissingCapability cap ->
+          ["Missing capability: " : [chunk $ T.pack $ show cap]],
       maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
     ]
 
