@@ -71,7 +71,7 @@ data SetDoc = SetDoc
     setDocMetavar :: !(Maybe Metavar),
     setDocHelp :: !(Maybe String)
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 data OptDoc = OptDoc
   { optDocTryArgument :: !Bool,
@@ -83,7 +83,7 @@ data OptDoc = OptDoc
     optDocMetavar :: !(Maybe Metavar),
     optDocHelp :: !(Maybe String)
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 data EnvDoc = EnvDoc
   { envDocVars :: !(NonEmpty String),
@@ -92,7 +92,7 @@ data EnvDoc = EnvDoc
     envDocMetavar :: !(Maybe Metavar),
     envDocHelp :: !(Maybe String)
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 data ConfDoc = ConfDoc
   { confDocKeys :: !(NonEmpty (NonEmpty String, JSONSchema)),
@@ -100,21 +100,21 @@ data ConfDoc = ConfDoc
     confDocExamples :: ![String],
     confDocHelp :: !(Maybe String)
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 data AnyDocs a
   = AnyDocsCommands !(Maybe String) [CommandDoc a]
   | AnyDocsAnd ![AnyDocs a]
   | AnyDocsOr ![AnyDocs a]
   | AnyDocsSingle !a
-  deriving (Show, Functor)
+  deriving (Show, Eq, Functor)
 
 data CommandDoc a = CommandDoc
   { commandDocArgument :: String,
     commandDocHelp :: Help,
     commandDocs :: AnyDocs a
   }
-  deriving (Show, Functor)
+  deriving (Show, Eq, Functor)
 
 mapMaybeDocs :: (a -> Maybe b) -> AnyDocs a -> AnyDocs b
 mapMaybeDocs func = simplifyAnyDocs . mapMaybeDocs' func

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module OptEnvConf.EnvMap
   ( EnvMap (..),
@@ -14,6 +15,7 @@ import qualified Data.Map as M
 import Data.Validity
 import Data.Validity.Containers ()
 import GHC.Generics (Generic)
+import GHC.IsList
 import Prelude hiding (lookup)
 
 -- | Abstraction for storing and looking up environment variables
@@ -22,6 +24,11 @@ import Prelude hiding (lookup)
 -- duplicate keys.
 newtype EnvMap = EnvMap {unEnvMap :: Map String String}
   deriving (Show, Generic)
+
+instance IsList EnvMap where
+  type Item EnvMap = (String, String)
+  fromList = parse
+  toList = M.toList . unEnvMap
 
 instance Validity EnvMap
 

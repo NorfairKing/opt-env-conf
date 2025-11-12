@@ -19,7 +19,7 @@ data ParseError = ParseError
   { parseErrorSrcLoc :: !(Maybe SrcLoc),
     parseErrorMessage :: !ParseErrorMessage
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 data ParseErrorMessage
   = ParseErrorEmpty
@@ -39,7 +39,7 @@ data ParseErrorMessage
   | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
   | ParseErrorAllOrNothing !(Map SettingHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
-  deriving (Show)
+  deriving (Show, Eq)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
 errorIsForgivable :: ParseError -> Bool

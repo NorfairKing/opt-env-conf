@@ -2,6 +2,7 @@
 
 module OptEnvConf.Check
   ( runSettingsCheck,
+    runSettingsCheckOn,
   )
 where
 
