@@ -11,7 +11,6 @@ import OptEnvConf.Args.Gen ()
 import OptEnvConf.Check
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
-import OptEnvConf.Parser
 import Test.Syd
 import Test.Syd.Validity
 
@@ -88,50 +87,70 @@ spec = modifyMaxSuccess (`div` 10) . modifyMaxSize (* 10) $ do
 
       pure ()
 
+  describe "ap" $
+    describe "two strings" $ do
+      let p :: Parser (String, String)
+          p =
+            (,)
+              <$> setting
+                [ argument,
+                  reader str
+                ]
+              <*> setting
+                [ option,
+                  long "foo",
+                  reader str
+                ]
+      checkMatchesRunArgsSpec p ["arg", "--foo", "foo"]
+      checkMatchesRunArgsSpec p ["arg"]
+      checkMatchesRunArgsSpec p ["--foo", "foo"]
+      checkMatchesRunArgsSpec p []
+      checkMatchesRunProp p
+
   pure ()
 
 checkMatchesRunProp :: Parser a -> Spec
 checkMatchesRunProp p = do
   it "matches run" $
     forAllValid $ \args ->
-      forAllValid $ \env ->
+      forAllValid $ \envMap ->
         forAllValid $ \mConf ->
-          checkMatchesRunTest p args env mConf
+          checkMatchesRunTest p args envMap mConf
 
 checkMatchesRunArgsProp :: Parser a -> Args -> Spec
 checkMatchesRunArgsProp p args = do
   it "matches run" $
-    forAllValid $ \env ->
+    forAllValid $ \envMap ->
       forAllValid $ \mConf ->
-        checkMatchesRunTest p args env mConf
+        checkMatchesRunTest p args envMap mConf
 
 checkMatchesRunEnvProp :: Parser a -> EnvMap.EnvMap -> Spec
-checkMatchesRunEnvProp p env = do
+checkMatchesRunEnvProp p envMap = do
   it "matches run" $
     forAllValid $ \args ->
       forAllValid $ \mConf ->
-        checkMatchesRunTest p args env mConf
+        checkMatchesRunTest p args envMap mConf
 
 checkMatchesRunConfProp :: Parser a -> Maybe JSON.Object -> Spec
 checkMatchesRunConfProp p mConf = do
   it "matches run" $
     forAllValid $ \args ->
-      forAllValid $ \env ->
-        checkMatchesRunTest p args env mConf
+      forAllValid $ \envMap ->
+        checkMatchesRunTest p args envMap mConf
 
 checkMatchesRunArgsSpec :: Parser a -> Args -> Spec
 checkMatchesRunArgsSpec p args = do
   checkMatchesRunSpec p args EnvMap.empty Nothing
 
 checkMatchesRunSpec :: Parser a -> Args -> EnvMap.EnvMap -> Maybe JSON.Object -> Spec
-checkMatchesRunSpec p args env mConf =
+checkMatchesRunSpec p args envMap mConf =
   it "matches run" $
-    checkMatchesRunTest p args env mConf
+    checkMatchesRunTest p args envMap mConf
 
 checkMatchesRunTest :: Parser a -> Args -> EnvMap.EnvMap -> Maybe JSON.Object -> IO ()
-checkMatchesRunTest p args env mConf = do
-  runResult <- runParserOn Nothing p args env mConf
-  checkResult <- runSettingsCheckOn Nothing p args env mConf
+checkMatchesRunTest p args envMap mConf = do
+  runResult <- runParserOn Nothing p args envMap mConf
+  checkResult <- runSettingsCheckOn Nothing p args envMap mConf
 
   case (checkResult, runResult) of
     (Nothing, Right _) -> pure ()
