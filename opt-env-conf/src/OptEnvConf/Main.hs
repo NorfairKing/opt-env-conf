@@ -107,12 +107,12 @@ runParser version progDesc p = do
                 Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
               exitSuccess
         else do
-          let mCheckConsumed = consumeSwitch ["--run-settings-check"] args'
-          let (checkMode, args) = case mCheckConsumed of
+          let (capabilities, args'') = case consumeSwitch ["--settings-capabilities-disable-io"] args' of
+                Nothing -> (allCapabilities, args')
+                Just am -> (Capabilities {capabilitiesAllowIO = False}, am)
+          let (checkMode, args) = case consumeSwitch ["--run-settings-check"] args'' of
                 Nothing -> (False, args')
                 Just am -> (True, am)
-
-          let capabilities = allCapabilities
 
           if checkMode
             then runSettingsCheck capabilities p args envVars

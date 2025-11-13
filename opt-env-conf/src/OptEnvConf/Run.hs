@@ -99,6 +99,7 @@ runParserOn Capabilities {..} mDebugMode parser args envVars mConfig = do
                 Nothing ->
                   pure $
                     Left $
+                      -- Only show source locations in debug mode.
                       let f = case mDebugMode of
                             Nothing -> eraseErrorSrcLocs
                             Just _ -> id
