@@ -15,10 +15,10 @@ import System.Exit
 import System.IO (stderr, stdout)
 import Text.Colour
 
-runSettingsCheck :: Parser a -> Args -> EnvMap -> IO void
-runSettingsCheck p args envVars = do
+runSettingsCheck :: Capabilities -> Parser a -> Args -> EnvMap -> IO void
+runSettingsCheck capabilities p args envVars = do
   stderrTc <- getTerminalCapabilitiesFromHandle stderr
-  errOrSets <- runParserOn (Just stderrTc) p args envVars Nothing
+  errOrSets <- runParserOn capabilities (Just stderrTc) p args envVars Nothing
   case errOrSets of
     Left errs -> do
       hPutChunksLocaleWith stderrTc stderr $ renderErrors errs

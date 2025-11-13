@@ -5,7 +5,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Run
-  ( runParserOn,
+  ( Capabilities (..),
+    allCapabilities,
+    runParserOn,
     runHelpParser,
   )
 where
@@ -43,9 +45,15 @@ import OptEnvConf.Validation
 import System.IO
 import Text.Colour
 
+data Capabilities = Capabilities {capabilitiesAllowIO :: !Bool}
+
+allCapabilities :: Capabilities
+allCapabilities = Capabilities {capabilitiesAllowIO = True}
+
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
 runParserOn ::
+  Capabilities ->
   -- DebugMode
   Maybe TerminalCapabilities ->
   Parser a ->
@@ -53,7 +61,7 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn mDebugMode parser args envVars mConfig = do
+runParserOn capabilities mDebugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,

@@ -90,7 +90,7 @@ settingsParserTest = parserTest settingsParser
 
 parserTest :: (Show a, Eq a) => Parser a -> [String] -> [(String, String)] -> Maybe JSON.Object -> a -> IO ()
 parserTest parser args envVars mObject expected = do
-  errOrActual <- runParserOn Nothing parser (parseArgs args) (EnvMap.parse envVars) mObject
+  errOrActual <- runParserOn allCapabilities Nothing parser (parseArgs args) (EnvMap.parse envVars) mObject
   case errOrActual of
     Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected

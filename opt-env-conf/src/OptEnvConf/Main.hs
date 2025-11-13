@@ -112,12 +112,15 @@ runParser version progDesc p = do
                 Nothing -> (False, args')
                 Just am -> (True, am)
 
+          let capabilities = allCapabilities
+
           if checkMode
-            then runSettingsCheck p args envVars
+            then runSettingsCheck capabilities p args envVars
             else do
               let p' = internalParser p
               errOrResult <-
                 runParserOn
+                  capabilities
                   mDebugMode
                   p'
                   args

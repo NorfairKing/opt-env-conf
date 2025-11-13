@@ -870,7 +870,7 @@ argParseSpec :: (HasCallStack) => (Show a, Eq a) => [String] -> Parser a -> a ->
 argParseSpec args p expected = withFrozenCallStack $ do
   it (unwords ["parses args", show args, "as", show expected]) $ do
     let argMap = parseArgs args
-    errOrRes <- runParserOn Nothing p argMap EnvMap.empty Nothing
+    errOrRes <- runParserOn allCapabilities Nothing p argMap EnvMap.empty Nothing
     context (showParserABit p) $
       case errOrRes of
         Left errs ->
@@ -888,7 +888,7 @@ envParseSpec :: (HasCallStack) => (Show a, Eq a) => [(String, String)] -> Parser
 envParseSpec envVars p expected = withFrozenCallStack $ do
   it (unwords ["parses environment", show envVars, "as", show expected]) $ do
     let envMap = EnvMap.parse envVars
-    errOrRes <- runParserOn Nothing p emptyArgs envMap Nothing
+    errOrRes <- runParserOn allCapabilities Nothing p emptyArgs envMap Nothing
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -899,7 +899,7 @@ confParseSpecs p table = withFrozenCallStack $ mapM_ (\(mConf, result) -> confPa
 confParseSpec :: (HasCallStack) => (Show a, Eq a) => Maybe JSON.Object -> Parser a -> a -> Spec
 confParseSpec mConf p expected = withFrozenCallStack $ do
   it (unwords ["parses configuration", show mConf, "as", show expected]) $ do
-    errOrRes <- runParserOn Nothing p emptyArgs EnvMap.empty mConf
+    errOrRes <- runParserOn allCapabilities Nothing p emptyArgs EnvMap.empty mConf
     case errOrRes of
       Left err -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors err
       Right actual -> actual `shouldBe` expected
@@ -913,7 +913,7 @@ shouldParse ::
   a ->
   IO ()
 shouldParse p args e mConf expected = do
-  errOrRes <- runParserOn Nothing p args e mConf
+  errOrRes <- runParserOn allCapabilities Nothing p args e mConf
   context (showParserABit p) $ case errOrRes of
     Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected
@@ -927,7 +927,7 @@ shouldFail ::
   (NonEmpty ParseErrorMessage -> Bool) ->
   IO ()
 shouldFail p args e mConf isExpected = do
-  errOrRes <- runParserOn Nothing p args e mConf
+  errOrRes <- runParserOn allCapabilities Nothing p args e mConf
   case errOrRes of
     Left errs -> NE.map parseErrorMessage errs `shouldSatisfy` isExpected
     Right actual -> expectationFailure $ show actual
