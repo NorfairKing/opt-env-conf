@@ -16,9 +16,11 @@ import Test.Syd.Validity
 
 spec :: Spec
 spec = modifyMaxSuccess (`div` 10) . modifyMaxSize (* 10) $ do
-  -- Pure
   describe "pure" $ do
     checkMatchesRunProp (pure ())
+
+  describe "empty" $ do
+    checkMatchesRunProp (choice [])
 
   describe "single setting" $ do
     describe "argument" $ do

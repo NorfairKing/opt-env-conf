@@ -84,15 +84,11 @@ runParserOn mDebugMode parser args envVars mConfig = do
       Parser a ->
       PP a
     go = \case
-      ParserPure a -> do
-        debug [syntaxChunk "pure value"]
-        pure a
+      ParserPure a -> ppPure a
       ParserAp ff fa -> do
         debug [syntaxChunk "Ap"]
         ppIndent $ go ff <*> go fa
-      ParserEmpty mLoc -> do
-        debug [syntaxChunk "Empty", ": ", mSrcLocChunk mLoc]
-        ppError mLoc ParseErrorEmpty
+      ParserEmpty mLoc -> ppEmpty mLoc
       ParserSelect fe ff -> do
         debug [syntaxChunk "Select"]
         ppIndent $ select (go fe) (go ff)
@@ -200,6 +196,16 @@ runParserOn mDebugMode parser args envVars mConfig = do
             local (\e -> e {ppEnvConf = mNewConfig}) $
               go pa
       ParserSetting mLoc set -> ppSetting mLoc set
+
+ppPure :: a -> PP a
+ppPure a = do
+  debug [syntaxChunk "pure value"]
+  pure a
+
+ppEmpty :: Maybe SrcLoc -> PP a
+ppEmpty mLoc = do
+  debug [syntaxChunk "Empty", ": ", mSrcLocChunk mLoc]
+  ppError mLoc ParseErrorEmpty
 
 ppSetting ::
   Maybe SrcLoc ->

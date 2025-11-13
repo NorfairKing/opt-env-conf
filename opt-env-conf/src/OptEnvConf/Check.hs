@@ -78,7 +78,8 @@ runSettingsCheckOn mDebugMode parser args envVars mConfig = do
   where
     go :: Parser a -> Checker a
     go = \case
-      ParserPure a -> pure a
+      ParserPure a -> liftPP $ ppPure a
+      ParserEmpty mLoc -> liftPP $ ppEmpty mLoc
       ParserSetting mLoc set -> liftPP $ ppSetting mLoc set
 
 newtype Checker a = Checker {unChecker :: PP a}
