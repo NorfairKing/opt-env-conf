@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.Check
@@ -44,3 +46,17 @@ runSettingsCheckOn mDebugMode parser args envVars mConfig = do
   case errsOrResult of
     Left errs -> return (Just errs)
     Right _settings -> return Nothing
+  where
+    go :: Parser a -> Checker a
+    go = \case
+      ParserPure a -> pure a
+
+newtype Checker a = Checker {unChecker :: PP a}
+  deriving
+    ( Functor,
+      Applicative,
+      Monad
+    )
+
+liftPP :: PP a -> Checker a
+liftPP = Checker

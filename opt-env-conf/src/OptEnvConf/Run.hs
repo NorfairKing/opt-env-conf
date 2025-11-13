@@ -4,11 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module OptEnvConf.Run
-  ( runParserOn,
-    runHelpParser,
-  )
-where
+module OptEnvConf.Run where
 
 import Autodocodec
 import Control.Arrow (left)
@@ -455,18 +451,8 @@ runHelpParser ::
   Parser a ->
   IO (Either (NonEmpty ParseError) (Maybe ([String], CommandDoc (Maybe SetDoc))))
 runHelpParser mDebugMode args parser = do
-  let ppState =
-        PPState
-          { ppStateArgs = args,
-            ppStateParsedSettings = M.empty
-          }
-  let ppEnv =
-        PPEnv
-          { ppEnvEnv = EnvMap.empty,
-            ppEnvConf = Nothing,
-            ppEnvDebug = mDebugMode,
-            ppEnvIndent = 0
-          }
+  let ppState = mkPPState args
+  let ppEnv = mkPPEnv EnvMap.empty Nothing mDebugMode
   mResOrNext <- runPPLazy (go' [] parser) ppState ppEnv
   case mResOrNext of
     Nothing -> pure $ Right Nothing
@@ -602,6 +588,13 @@ data PPState = PPState
     ppStateParsedSettings :: !(Map SettingHash SrcLoc)
   }
 
+mkPPState :: Args -> PPState
+mkPPState args =
+  PPState
+    { ppStateArgs = args,
+      ppStateParsedSettings = M.empty
+    }
+
 data PPEnv = PPEnv
   { ppEnvEnv :: !EnvMap,
     ppEnvConf :: !(Maybe JSON.Object),
@@ -609,6 +602,15 @@ data PPEnv = PPEnv
     ppEnvDebug :: !(Maybe TerminalCapabilities),
     ppEnvIndent :: !Int
   }
+
+mkPPEnv :: EnvMap -> Maybe JSON.Object -> Maybe TerminalCapabilities -> PPEnv
+mkPPEnv envVars mConfig mDebugMode =
+  PPEnv
+    { ppEnvEnv = envVars,
+      ppEnvConf = mConfig,
+      ppEnvDebug = mDebugMode,
+      ppEnvIndent = 0
+    }
 
 debug :: [Chunk] -> PP ()
 debug chunks = do
