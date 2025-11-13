@@ -121,6 +121,7 @@
               hlint.enable = true;
               hpack.enable = true;
               ormolu.enable = true;
+              tagref.enable = true;
               nixpkgs-fmt.enable = true;
               nixpkgs-fmt.excludes = [
                 ".*/default.nix"

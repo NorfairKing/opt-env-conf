@@ -17,6 +17,7 @@ import Test.Syd.Validity
 
 spec :: Spec
 spec = modifyMaxSuccess (`div` 10) . modifyMaxSize (* 10) $ do
+  -- [ref:RunParserCheck]
   describe "pure" $ do
     checkMatchesRunProp (pure ())
 

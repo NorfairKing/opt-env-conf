@@ -81,6 +81,7 @@ runParserOn mDebugMode parser args envVars mConfig = do
                   Failure _ -> goNexts ns'
          in goNexts nexts
   where
+    -- [ref:RunParserCheck]
     go ::
       Parser a ->
       PP a

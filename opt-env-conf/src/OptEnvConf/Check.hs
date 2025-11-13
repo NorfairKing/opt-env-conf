@@ -84,6 +84,11 @@ runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
                   Failure _ -> goNexts ns'
          in goNexts nexts
   where
+    -- [tag:RunParserCheck]
+    -- We need to keep the Run-interpreter for parsers in sync with the
+    -- Check-interpreter for parser so that the check parser is useful at all.
+    -- Any time you add or change a branch here or here, make sure to add the
+    -- appropriate tests in CheckSpec.
     go :: Parser a -> Checker a
     go = \case
       ParserPure a -> liftPP $ ppPure a
@@ -106,6 +111,21 @@ runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
                     debug ["succeeded"]
                     pure b
               else error "TODO"
+      ParserSelect fe ff -> do
+        debug [syntaxChunk "Select"]
+        ppIndent $ select (go fe) (go ff)
+      ParserAlt p1 p2 -> do
+        debug [syntaxChunk "Alt"]
+        ppIndent $ do
+          debug ["Trying left side."]
+          eor <- ppIndent $ tryChecker (go p1)
+          case eor of
+            Just a -> do
+              debug ["Left side succeeded."]
+              pure a
+            Nothing -> do
+              debug ["Left side failed, trying right side."]
+              ppIndent $ go p2
       ParserSetting mLoc set -> liftPP $ ppSetting mLoc set
 
 data Capabilities = Capabilities
@@ -119,6 +139,7 @@ newtype Checker a = Checker {unChecker :: PP a}
   deriving
     ( Functor,
       Applicative,
+      Selective,
       Monad,
       MonadIO,
       MonadReader PPEnv,
@@ -127,3 +148,6 @@ newtype Checker a = Checker {unChecker :: PP a}
 
 liftPP :: PP a -> Checker a
 liftPP = Checker
+
+tryChecker :: Checker a -> Checker (Maybe a)
+tryChecker (Checker p) = Checker $ tryPP p
