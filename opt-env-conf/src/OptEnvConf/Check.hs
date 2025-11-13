@@ -1,9 +1,12 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Check
-  ( runSettingsCheck,
+  ( Capabilities (..),
+    runSettingsCheck,
     runSettingsCheckOn,
   )
 where
@@ -13,10 +16,14 @@ import Control.Monad.State
 import qualified Data.Aeson.Types as JSON
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Text as T
+import Data.Validity
+import GHC.Generics (Generic)
 import OptEnvConf.Args as Args
 import OptEnvConf.EnvMap (EnvMap (..))
 import OptEnvConf.Error
 import OptEnvConf.NonDet
+import OptEnvConf.Output
 import OptEnvConf.Parser
 import OptEnvConf.Run
 import OptEnvConf.Terminal (getTerminalCapabilitiesFromHandle)
@@ -25,10 +32,10 @@ import System.Exit
 import System.IO (stderr, stdout)
 import Text.Colour
 
-runSettingsCheck :: Parser a -> Args -> EnvMap -> IO void
-runSettingsCheck p args envVars = do
+runSettingsCheck :: Capabilities -> Parser a -> Args -> EnvMap -> IO void
+runSettingsCheck capabilities p args envVars = do
   stderrTc <- getTerminalCapabilitiesFromHandle stderr
-  errOrSets <- runSettingsCheckOn (Just stderrTc) p args envVars Nothing
+  errOrSets <- runSettingsCheckOn capabilities (Just stderrTc) p args envVars Nothing
   case errOrSets of
     Just errs -> do
       hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
@@ -39,13 +46,14 @@ runSettingsCheck p args envVars = do
       exitSuccess
 
 runSettingsCheckOn ::
+  Capabilities ->
   Maybe TerminalCapabilities ->
   Parser a ->
   Args ->
   EnvMap ->
   Maybe JSON.Object ->
   IO (Maybe (NonEmpty ParseError))
-runSettingsCheckOn mDebugMode parser args envVars mConfig = do
+runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
   let ppState = mkPPState args
   let ppEnv = mkPPEnv envVars mConfig mDebugMode
   let go' = do
@@ -80,13 +88,41 @@ runSettingsCheckOn mDebugMode parser args envVars mConfig = do
     go = \case
       ParserPure a -> liftPP $ ppPure a
       ParserEmpty mLoc -> liftPP $ ppEmpty mLoc
+      ParserCheck mLoc forgivable f p' -> do
+        debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
+        ppIndent $ do
+          debug ["parser"]
+          a <- ppIndent $ go p'
+          debug ["check"]
+          ppIndent $ do
+            if capabilityAllowIO
+              then do
+                errOrB <- liftIO $ f a
+                case errOrB of
+                  Left err -> do
+                    debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
+                    liftPP $ ppError mLoc $ ParseErrorCheckFailed forgivable err
+                  Right b -> do
+                    debug ["succeeded"]
+                    pure b
+              else error "TODO"
       ParserSetting mLoc set -> liftPP $ ppSetting mLoc set
+
+data Capabilities = Capabilities
+  { capabilityAllowIO :: !Bool
+  }
+  deriving (Show, Generic)
+
+instance Validity Capabilities
 
 newtype Checker a = Checker {unChecker :: PP a}
   deriving
     ( Functor,
       Applicative,
-      Monad
+      Monad,
+      MonadIO,
+      MonadReader PPEnv,
+      MonadState PPState
     )
 
 liftPP :: PP a -> Checker a

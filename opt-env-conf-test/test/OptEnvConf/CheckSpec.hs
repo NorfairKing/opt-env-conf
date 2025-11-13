@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module OptEnvConf.CheckSpec (spec) where
 
@@ -114,31 +115,35 @@ spec = modifyMaxSuccess (`div` 10) . modifyMaxSize (* 10) $ do
 checkMatchesRunProp :: Parser a -> Spec
 checkMatchesRunProp p = do
   it "matches run" $
-    forAllValid $ \args ->
-      forAllValid $ \envMap ->
-        forAllValid $ \mConf ->
-          checkMatchesRunTest p args envMap mConf
+    forAllValid $ \capabilities ->
+      forAllValid $ \args ->
+        forAllValid $ \envMap ->
+          forAllValid $ \mConf ->
+            checkMatchesRunTest capabilities p args envMap mConf
 
 checkMatchesRunArgsProp :: Parser a -> Args -> Spec
 checkMatchesRunArgsProp p args = do
   it "matches run" $
-    forAllValid $ \envMap ->
-      forAllValid $ \mConf ->
-        checkMatchesRunTest p args envMap mConf
+    forAllValid $ \capabilities ->
+      forAllValid $ \envMap ->
+        forAllValid $ \mConf ->
+          checkMatchesRunTest capabilities p args envMap mConf
 
 checkMatchesRunEnvProp :: Parser a -> EnvMap.EnvMap -> Spec
 checkMatchesRunEnvProp p envMap = do
   it "matches run" $
-    forAllValid $ \args ->
-      forAllValid $ \mConf ->
-        checkMatchesRunTest p args envMap mConf
+    forAllValid $ \capabilities ->
+      forAllValid $ \args ->
+        forAllValid $ \mConf ->
+          checkMatchesRunTest capabilities p args envMap mConf
 
 checkMatchesRunConfProp :: Parser a -> Maybe JSON.Object -> Spec
 checkMatchesRunConfProp p mConf = do
   it "matches run" $
-    forAllValid $ \args ->
-      forAllValid $ \envMap ->
-        checkMatchesRunTest p args envMap mConf
+    forAllValid $ \capabilities ->
+      forAllValid $ \args ->
+        forAllValid $ \envMap ->
+          checkMatchesRunTest capabilities p args envMap mConf
 
 checkMatchesRunArgsSpec :: Parser a -> Args -> Spec
 checkMatchesRunArgsSpec p args = do
@@ -147,15 +152,18 @@ checkMatchesRunArgsSpec p args = do
 checkMatchesRunSpec :: Parser a -> Args -> EnvMap.EnvMap -> Maybe JSON.Object -> Spec
 checkMatchesRunSpec p args envMap mConf =
   it "matches run" $
-    checkMatchesRunTest p args envMap mConf
+    forAllValid $ \capabilities ->
+      checkMatchesRunTest capabilities p args envMap mConf
 
-checkMatchesRunTest :: Parser a -> Args -> EnvMap.EnvMap -> Maybe JSON.Object -> IO ()
-checkMatchesRunTest p args envMap mConf = do
+checkMatchesRunTest :: Capabilities -> Parser a -> Args -> EnvMap.EnvMap -> Maybe JSON.Object -> IO ()
+checkMatchesRunTest capabilities p args envMap mConf = do
   runResult <- runParserOn Nothing p args envMap mConf
-  checkResult <- runSettingsCheckOn Nothing p args envMap mConf
+  checkResult <- runSettingsCheckOn capabilities Nothing p args envMap mConf
 
   case (checkResult, runResult) of
     (Nothing, Right _) -> pure ()
     (Just checkErrs, Left parseErrs) -> parseErrs `shouldBe` checkErrs
     (Nothing, Left parseErrs) -> expectationFailure $ "Expected success but got parse errors: " ++ show parseErrs
     (Just checkErrs, Right _) -> expectationFailure $ "Expected parse errors but got success: " ++ show checkErrs
+
+instance GenValid Capabilities

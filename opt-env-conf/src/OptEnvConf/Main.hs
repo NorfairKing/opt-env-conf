@@ -113,7 +113,9 @@ runParser version progDesc p = do
                 Just am -> (True, am)
 
           if checkMode
-            then runSettingsCheck p args envVars
+            then do
+              let capabilities = Capabilities {capabilityAllowIO = True}
+              runSettingsCheck capabilities p args envVars
             else do
               let p' = internalParser p
               errOrResult <-

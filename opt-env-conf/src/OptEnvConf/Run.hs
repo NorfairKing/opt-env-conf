@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -614,7 +615,10 @@ mkPPEnv envVars mConfig mDebugMode =
       ppEnvIndent = 0
     }
 
-debug :: [Chunk] -> PP ()
+debug ::
+  (MonadIO m, MonadReader PPEnv m) =>
+  [Chunk] ->
+  m ()
 debug chunks = do
   debugMode <- asks ppEnvDebug
   forM_ debugMode $ \tc -> do
@@ -628,7 +632,10 @@ debug chunks = do
           ++ [ "\n"
              ]
 
-ppIndent :: PP a -> PP a
+ppIndent ::
+  (MonadReader PPEnv m) =>
+  m a ->
+  m a
 ppIndent =
   local
     (\e -> e {ppEnvIndent = succ (ppEnvIndent e)})
