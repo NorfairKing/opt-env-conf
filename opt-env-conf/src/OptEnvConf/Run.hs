@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -30,6 +31,8 @@ import qualified Data.Map as M
 import Data.Maybe
 import qualified Data.Text as T
 import Data.Traversable
+import Data.Validity (Validity)
+import GHC.Generics (Generic)
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
 import OptEnvConf.Doc
@@ -46,6 +49,9 @@ import System.IO
 import Text.Colour
 
 data Capabilities = Capabilities {capabilitiesAllowIO :: !Bool}
+  deriving (Show, Generic)
+
+instance Validity Capabilities
 
 allCapabilities :: Capabilities
 allCapabilities = Capabilities {capabilitiesAllowIO = True}
@@ -61,7 +67,7 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn capabilities mDebugMode parser args envVars mConfig = do
+runParserOn Capabilities {..} mDebugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
@@ -181,14 +187,17 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           a <- ppIndent $ go p'
           debug ["check"]
           ppIndent $ do
-            errOrB <- liftIO $ f a
-            case errOrB of
-              Left err -> do
-                debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
-                ppError mLoc $ ParseErrorCheckFailed forgivable err
-              Right b -> do
-                debug ["succeeded"]
-                pure b
+            if capabilitiesAllowIO
+              then do
+                errOrB <- liftIO $ f a
+                case errOrB of
+                  Left err -> do
+                    debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
+                    ppError mLoc $ ParseErrorCheckFailed forgivable err
+                  Right b -> do
+                    debug ["succeeded"]
+                    pure b
+              else ppError mLoc $ ParseErrorMissingCapability "IO"
       ParserCommands mLoc mDefault cs -> do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]

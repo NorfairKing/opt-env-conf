@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module OptEnvConf.RunSpec (spec) where
 
@@ -135,6 +136,18 @@ spec = do
               let p = mapIO (pure . succ) (pure (i :: Int))
               let expected = succ i
               shouldParse p Args.emptyArgs e mConf expected
+
+      it "cannot run IO without the IO capability" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \i -> do
+                let p = mapIO (pure . succ) (pure (i :: Int))
+                let capabilities = capabilitiesPrototype {capabilitiesAllowIO = False}
+                let expected = succ i
+                shouldFail' p capabilities Args.emptyArgs e mConf $ \case
+                  ParseErrorMissingCapability _ :| [] -> True
+                  _ -> False
 
     describe "WithConfig" $ do
       it "can replace the config object" $
@@ -926,8 +939,21 @@ shouldFail ::
   Maybe JSON.Object ->
   (NonEmpty ParseErrorMessage -> Bool) ->
   IO ()
-shouldFail p args e mConf isExpected = do
-  errOrRes <- runParserOn allCapabilities Nothing p args e mConf
+shouldFail p = shouldFail' p allCapabilities
+
+shouldFail' ::
+  (Show a) =>
+  Parser a ->
+  Capabilities ->
+  Args ->
+  EnvMap ->
+  Maybe JSON.Object ->
+  (NonEmpty ParseErrorMessage -> Bool) ->
+  IO ()
+shouldFail' p capabilities args e mConf isExpected = do
+  errOrRes <- runParserOn capabilities Nothing p args e mConf
   case errOrRes of
     Left errs -> NE.map parseErrorMessage errs `shouldSatisfy` isExpected
     Right actual -> expectationFailure $ show actual
+
+instance GenValid Capabilities
