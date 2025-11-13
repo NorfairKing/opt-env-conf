@@ -39,6 +39,7 @@ data ParseErrorMessage
   | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
   | ParseErrorAllOrNothing !(Map SettingHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
+  | ParseErrorMissingCapability !String
   deriving (Show)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
@@ -64,6 +65,7 @@ errorMessageIsForgivable = \case
   ParseErrorUnrecognisedCommand _ _ -> False
   ParseErrorAllOrNothing _ -> False
   ParseErrorUnrecognised _ -> False
+  ParseErrorMissingCapability _ -> False
 
 eraseErrorSrcLocs :: (Functor f) => f ParseError -> f ParseError
 eraseErrorSrcLocs = fmap eraseErrorSrcLoc
@@ -131,7 +133,9 @@ renderError ParseError {..} =
           ]
             ++ map (pure . srcLocChunk) (M.elems locs)
         ParseErrorUnrecognised leftovers ->
-          ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))],
+          ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))]
+        ParseErrorMissingCapability cap ->
+          ["Missing capability: " : [chunk $ T.pack cap]],
       maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
     ]
 
