@@ -89,9 +89,14 @@ runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
     -- Check-interpreter for parser so that the check parser is useful at all.
     -- Any time you add or change a branch here or here, make sure to add the
     -- appropriate tests in CheckSpec.
+    -- This is a bit of a nasty business, so if we can find a better way to do
+    -- it, I'll happily accept a PR to do so.
     go :: Parser a -> Checker a
     go = \case
       ParserPure a -> liftPP $ ppPure a
+      ParserAp ff fa -> do
+        debug [syntaxChunk "Ap"]
+        ppIndent $ go ff <*> go fa
       ParserEmpty mLoc -> liftPP $ ppEmpty mLoc
       ParserCheck mLoc forgivable f p' -> do
         debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
