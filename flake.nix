@@ -112,8 +112,16 @@
           example-settings-check =
             haskellPackages.opt-env-conf.makeSettingsCheck
               "example-settings-check"
+              { }
               "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
               [ "read" ]
+              { };
+          example-settings-check-without-io =
+            haskellPackages.opt-env-conf.makeSettingsCheck
+              "example-settings-check-without-io"
+              { io = false; }
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              [ "delete" ]
               { };
           pre-commit = pre-commit-hooks.lib.${system}.run {
             src = ./.;
