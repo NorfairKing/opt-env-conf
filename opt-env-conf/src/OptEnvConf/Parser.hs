@@ -244,7 +244,10 @@ instance Validity Capability
 
 -- | The special-case IO capability that is implied to be necessary by ParserCheckIO
 ioCapability :: Capability
-ioCapability = Capability "IO"
+ioCapability = Capability "io"
+
+readSecretCapability :: Capability
+readSecretCapability = Capability "read-secret"
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -1039,7 +1042,11 @@ readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 
 -- | Load a secret from a text file, with 'readSecretTextFile'
 secretTextFileSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
-secretTextFileSetting bs = withFrozenCallStack $ mapIO readSecretTextFile $ filePathSetting bs
+secretTextFileSetting bs =
+  withFrozenCallStack $
+    requireCapability readSecretCapability $
+      mapIO readSecretTextFile $
+        filePathSetting bs
 
 -- | Load a secret from a text file, with 'readSecretTextFile', or specify it
 -- directly
@@ -1065,7 +1072,10 @@ secretTextFileOrBareSetting bs =
     fileSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "FILE_PATH"]
       guard $ p s
-      pure $ mapIO (resolveFile' >=> readSecretTextFile) $ ParserSetting mLoc s
+      pure $
+        requireCapability readSecretCapability $
+          mapIO (resolveFile' >=> readSecretTextFile) $
+            ParserSetting mLoc s
 
     bareOption = bareSetting settingTryOption $ \case
       BuildTryArgument -> Nothing
