@@ -1,6 +1,8 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -542,14 +544,23 @@ runHelpParser mDebugMode args parser = do
                           Nothing -> Just (reverse path, commandParserDocs c)
                           Just res -> pure res
 
-type PP a = ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a
+newtype PP a = PP {unPP :: ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a}
+  deriving
+    ( Functor,
+      Applicative,
+      Selective,
+      Monad,
+      MonadIO,
+      MonadReader PPEnv,
+      MonadState PPState
+    )
 
 runPP ::
   PP a ->
   PPState ->
   PPEnv ->
   IO [(Validation ParseError a, PPState)]
-runPP p args envVars =
+runPP (PP p) args envVars =
   runNonDetT (runStateT (runValidationT (runReaderT p envVars)) args)
 
 runPPLazy ::
@@ -562,7 +573,7 @@ runPPLazy ::
           NonDetT IO (Validation ParseError a, PPState)
         )
     )
-runPPLazy p args envVars =
+runPPLazy (PP p) args envVars =
   runNonDetTLazy (runStateT (runValidationT (runReaderT p envVars)) args)
 
 tryPP :: PP a -> PP (Maybe a)
@@ -582,7 +593,7 @@ tryPP pp = do
       pure $ Just a
 
 ppNonDet :: NonDetT IO a -> PP a
-ppNonDet = lift . lift . lift
+ppNonDet = PP . lift . lift . lift
 
 ppNonDetList :: [a] -> PP a
 ppNonDetList = ppNonDet . liftNonDetTList
@@ -676,7 +687,7 @@ ppSwitch ds = do
       pure (Just ())
 
 ppErrors' :: NonEmpty ParseError -> PP a
-ppErrors' = lift . ValidationT . lift . pure . Failure
+ppErrors' = PP . lift . ValidationT . lift . pure . Failure
 
 ppErrors :: Maybe SrcLoc -> NonEmpty ParseErrorMessage -> PP a
 ppErrors mLoc = ppErrors' . NE.map (ParseError mLoc)
