@@ -59,23 +59,6 @@ instance Validity Capabilities
 allCapabilities :: Capabilities
 allCapabilities = Capabilities {capabilitiesAllowIO = True}
 
-data RunResult a
-  = -- | Run succeeded
-    RunSucceeded a
-  | -- | Run could not be completed because of missing capability
-    RunIncapable (NonEmpty MissingCapability)
-  | -- | Run failed with parse errors
-    RunFailed (NonEmpty ParseError)
-  deriving (Show, Generic, Functor)
-
-data MissingCapability
-  = MissingCapability
-      -- Where the capability was needed
-      !(Maybe SrcLoc)
-      -- Where the capability was needed
-      !Capability
-  deriving (Show, Generic)
-
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
 runParserOn ::
@@ -590,7 +573,7 @@ runHelpParser mDebugMode args parser = do
                           Nothing -> Just (reverse path, commandParserDocs c)
                           Just res -> pure res
 
-newtype PP a = PP {unPP :: ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a}
+newtype PP a = PP (ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDetT IO))) a)
   deriving
     ( Functor,
       Applicative,

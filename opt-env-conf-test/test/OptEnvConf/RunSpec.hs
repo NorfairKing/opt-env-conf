@@ -144,7 +144,6 @@ spec = do
               forAllValid $ \i -> do
                 let p = mapIO (pure . succ) (pure (i :: Int))
                 let capabilities = capabilitiesPrototype {capabilitiesAllowIO = False}
-                let expected = succ i
                 shouldFail' p capabilities Args.emptyArgs e mConf $ \case
                   ParseErrorMissingCapability _ :| [] -> True
                   _ -> False

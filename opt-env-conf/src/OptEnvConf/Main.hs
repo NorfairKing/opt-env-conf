@@ -114,8 +114,9 @@ runParser version progDesc p = do
                 Nothing -> (False, args')
                 Just am -> (True, am)
 
+          let mConfig = Nothing -- We start with no config loaded.
           if checkMode
-            then runSettingsCheck capabilities p args envVars
+            then runSettingsCheck capabilities p args envVars mConfig
             else do
               let p' = internalParser p
               errOrResult <-
@@ -125,7 +126,7 @@ runParser version progDesc p = do
                   p'
                   args
                   envVars
-                  Nothing
+                  mConfig
               case errOrResult of
                 Left errs -> do
                   tc <- getTerminalCapabilitiesFromHandle stderr
