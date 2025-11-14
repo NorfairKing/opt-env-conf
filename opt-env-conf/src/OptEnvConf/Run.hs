@@ -11,6 +11,8 @@
 module OptEnvConf.Run
   ( Capabilities (..),
     allCapabilities,
+    enableCapability,
+    disableCapability,
     runParserOn,
     runHelpParser,
   )
@@ -32,6 +34,8 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import Data.Traversable
 import Data.Validity (Validity)
@@ -51,13 +55,25 @@ import OptEnvConf.Validation
 import System.IO
 import Text.Colour
 
-data Capabilities = Capabilities {capabilitiesAllowIO :: !Bool}
+-- Set of disabled capabilities
+newtype Capabilities = Capabilities {unCapabilities :: Set Capability}
   deriving (Show, Generic)
 
 instance Validity Capabilities
 
 allCapabilities :: Capabilities
-allCapabilities = Capabilities {capabilitiesAllowIO = True}
+allCapabilities = Capabilities {unCapabilities = Set.empty}
+
+enableCapability :: Capability -> Capabilities -> Capabilities
+enableCapability cap (Capabilities caps) =
+  Capabilities (Set.delete cap caps)
+
+disableCapability :: Capability -> Capabilities -> Capabilities
+disableCapability cap (Capabilities caps) =
+  Capabilities (Set.insert cap caps)
+
+hasCapability :: Capabilities -> Capability -> Bool
+hasCapability (Capabilities caps) cap = Set.notMember cap caps
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
@@ -70,7 +86,7 @@ runParserOn ::
   EnvMap ->
   Maybe JSON.Object ->
   IO (Either (NonEmpty ParseError) a)
-runParserOn Capabilities {..} mDebugMode parser args envVars mConfig = do
+runParserOn capabilities mDebugMode parser args envVars mConfig = do
   let ppState =
         PPState
           { ppStateArgs = args,
@@ -205,7 +221,7 @@ runParserOn Capabilities {..} mDebugMode parser args envVars mConfig = do
           a <- ppIndent $ go p'
           debug ["check"]
           ppIndent $ do
-            if capabilitiesAllowIO
+            if hasCapability capabilities ioCapability
               then do
                 errOrB <- liftIO $ f a
                 case errOrB of
@@ -215,11 +231,14 @@ runParserOn Capabilities {..} mDebugMode parser args envVars mConfig = do
                   Right b -> do
                     debug ["succeeded"]
                     pure b
-              else ppError mLoc $ ParseErrorMissingCapability CapabilityAllowIO
+              else ppError mLoc $ ParseErrorMissingCapability ioCapability
       ParserRequireCapability mLoc cap p' -> do
         debug [syntaxChunk "RequireCapability", ": ", mSrcLocChunk mLoc, " ", capabilityChunk cap]
         -- TODO require capability
-        ppIndent $ go p'
+        ppIndent $
+          if hasCapability capabilities cap
+            then go p'
+            else ppError mLoc $ ParseErrorMissingCapability cap
       ParserCommands mLoc mDefault cs -> do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]

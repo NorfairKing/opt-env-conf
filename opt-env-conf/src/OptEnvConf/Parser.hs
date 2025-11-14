@@ -1,5 +1,8 @@
 {-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -25,6 +28,7 @@ module OptEnvConf.Parser
     checkMapIOForgivable,
     checkMapMaybeForgivable,
     allOrNothing,
+    requireCapability,
     commands,
     command,
     defaultCommand,
@@ -60,6 +64,7 @@ module OptEnvConf.Parser
     -- * Parser implementation
     Parser (..),
     Capability (..),
+    ioCapability,
     HasParser (..),
     Command (..),
     CommandsBuilder (..),
@@ -98,6 +103,8 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Data.Validity
+import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
@@ -229,8 +236,15 @@ data Parser a where
     !(Setting a) ->
     Parser a
 
-data Capability = CapabilityAllowIO
-  deriving (Show)
+newtype Capability = Capability {unCapability :: Text}
+  deriving stock (Generic)
+  deriving newtype (Show, Eq, Ord, IsString)
+
+instance Validity Capability
+
+-- | The special-case IO capability that is implied to be necessary by ParserCheckIO
+ioCapability :: Capability
+ioCapability = Capability "IO"
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -681,6 +695,16 @@ checkMapIO = ParserCheckIO mLoc False
 -- > ["--foo", "'a'"]
 allOrNothing :: (HasCallStack) => Parser a -> Parser a
 allOrNothing = ParserAllOrNothing mLoc
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
+
+-- | Require the given capability for running the given parser.
+--
+-- This lets us annotate a parser with a power that it needs to be executed so
+-- that we can run a settings check without that power to still check the rest
+-- of the parser.
+requireCapability :: (HasCallStack) => Capability -> Parser a -> Parser a
+requireCapability = ParserRequireCapability mLoc
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 

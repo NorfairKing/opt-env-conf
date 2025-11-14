@@ -107,9 +107,7 @@ runParser version progDesc p = do
                 Just (path, cDoc) -> renderCommandHelpPage progname path cDoc
               exitSuccess
         else do
-          let (capabilities, args'') = case consumeSwitch ["--settings-capabilities-disable-io"] args' of
-                Nothing -> (allCapabilities, args')
-                Just am -> (Capabilities {capabilitiesAllowIO = False}, am)
+          let (capabilities, args'') = consumeCapabilities args'
           let (checkMode, args) = case consumeSwitch ["--run-settings-check"] args'' of
                 Nothing -> (False, args')
                 Just am -> (True, am)
@@ -167,6 +165,9 @@ runParser version progDesc p = do
                     runCompletionQuery p' enriched index ws
                     exitSuccess
                   ParsedNormally a -> pure a
+
+consumeCapabilities :: Args -> (Capabilities, Args)
+consumeCapabilities argMap = (allCapabilities, argMap)
 
 -- Internal structure to help us do what the framework
 -- is supposed to.

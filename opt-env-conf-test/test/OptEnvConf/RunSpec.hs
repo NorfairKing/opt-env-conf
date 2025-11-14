@@ -143,10 +143,33 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \i -> do
                 let p = mapIO (pure . succ) (pure (i :: Int))
-                let capabilities = capabilitiesPrototype {capabilitiesAllowIO = False}
+                let capabilities = disableCapability ioCapability capabilitiesPrototype
                 shouldFail' p capabilities Args.emptyArgs e mConf $ \case
                   ParseErrorMissingCapability _ :| [] -> True
                   _ -> False
+
+    describe "RequireCapability" $ do
+      it "can run the parser if the capability is available" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \result ->
+                forAllValid $ \custom -> do
+                  let p = requireCapability custom (pure (result :: Int))
+                      capabilities = enableCapability custom capabilitiesPrototype
+                  shouldParse' p capabilities Args.emptyArgs e mConf result
+
+      it "cannot run the parser if the capability is not available" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \result ->
+                forAllValid $ \custom -> do
+                  let p = requireCapability custom (pure (result :: Int))
+                      capabilities = disableCapability custom capabilitiesPrototype
+                  shouldFail' p capabilities Args.emptyArgs e mConf $ \case
+                    ParseErrorMissingCapability _ :| [] -> True
+                    _ -> False
 
     describe "WithConfig" $ do
       it "can replace the config object" $
@@ -924,8 +947,19 @@ shouldParse ::
   Maybe JSON.Object ->
   a ->
   IO ()
-shouldParse p args e mConf expected = do
-  errOrRes <- runParserOn allCapabilities Nothing p args e mConf
+shouldParse p = shouldParse' p allCapabilities
+
+shouldParse' ::
+  (Show a, Eq a) =>
+  Parser a ->
+  Capabilities ->
+  Args ->
+  EnvMap ->
+  Maybe JSON.Object ->
+  a ->
+  IO ()
+shouldParse' p capabilities args e mConf expected = do
+  errOrRes <- runParserOn capabilities Nothing p args e mConf
   context (showParserABit p) $ case errOrRes of
     Left errs -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
     Right actual -> actual `shouldBe` expected
@@ -956,3 +990,5 @@ shouldFail' p capabilities args e mConf isExpected = do
     Right actual -> expectationFailure $ show actual
 
 instance GenValid Capabilities
+
+instance GenValid Capability
