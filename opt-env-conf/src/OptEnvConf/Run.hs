@@ -216,6 +216,10 @@ runParserOn Capabilities {..} mDebugMode parser args envVars mConfig = do
                     debug ["succeeded"]
                     pure b
               else ppError mLoc $ ParseErrorMissingCapability CapabilityAllowIO
+      ParserRequireCapability mLoc cap p' -> do
+        debug [syntaxChunk "RequireCapability", ": ", mSrcLocChunk mLoc, " ", capabilityChunk cap]
+        -- TODO require capability
+        ppIndent $ go p'
       ParserCommands mLoc mDefault cs -> do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]
@@ -569,6 +573,10 @@ runHelpParser mDebugMode args parser = do
             ParserSetting mLoc _ -> do
               debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
               pure Nothing
+            ParserRequireCapability mLoc cap p' -> do
+              debug [syntaxChunk "RequireCapability", ": ", mSrcLocChunk mLoc, " ", capabilityChunk cap]
+              -- TODO require capability
+              ppIndent $ go p'
             ParserCommands mLoc mDefault cs -> do
               debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
               forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]

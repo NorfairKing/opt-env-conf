@@ -80,6 +80,9 @@ headerChunks t = [fore cyan (chunk t), ":"]
 syntaxChunk :: String -> Chunk
 syntaxChunk = fore blue . chunk . T.pack
 
+capabilityChunk :: Capability -> Chunk
+capabilityChunk = fore green . chunk . T.pack . show
+
 mSrcLocChunk :: Maybe SrcLoc -> Chunk
 mSrcLocChunk = maybe "without srcLoc" srcLocChunk
 

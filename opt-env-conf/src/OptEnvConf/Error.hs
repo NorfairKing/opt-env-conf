@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Doc
 import OptEnvConf.Output
+import OptEnvConf.Parser
 import OptEnvConf.Setting
 import Text.Colour
 
@@ -40,9 +41,6 @@ data ParseErrorMessage
   | ParseErrorAllOrNothing !(Map SettingHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
   | ParseErrorMissingCapability !Capability
-  deriving (Show)
-
-data Capability = CapabilityAllowIO
   deriving (Show)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
