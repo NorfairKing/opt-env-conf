@@ -39,7 +39,8 @@ parserNixOptions = go
       ParserMany _ p -> go p
       ParserSome _ p -> go p
       ParserAllOrNothing _ p -> go p
-      ParserCheck _ _ _ p -> go p
+      ParserCheckPure _ _ _ p -> go p
+      ParserCheckIO _ _ _ p -> go p
       ParserCommands _ _ cs -> M.unionsWith combineOption $ map goCommand cs
       ParserWithConfig _ p1 p2 ->
         -- I'm not sure if we need the first as well because you wouldn't use a

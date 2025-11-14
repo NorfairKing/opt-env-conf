@@ -8,7 +8,7 @@ WithConfig
      [ Command
          "one"
          "first"
-         (Check
+         (CheckPure
             Nothing
             True
             _
@@ -29,7 +29,7 @@ WithConfig
          "two"
          "second"
          (Ap
-            (Check
+            (CheckPure
                Nothing
                True
                _

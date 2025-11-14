@@ -1,12 +1,12 @@
 WithConfig
   _
   Nothing
-  (Check
+  (CheckIO
      Nothing
      False
      _
      (Alt
-        (Check
+        (CheckIO
            Nothing
            False
            _
@@ -28,14 +28,14 @@ WithConfig
                  Nothing
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
-        (Check Nothing False _ (Pure _))))
+        (CheckIO Nothing False _ (Pure _))))
   (Commands
      Nothing
      Nothing
      [ Command
          "top"
          "command without subcommands"
-         (Check
+         (CheckPure
             Nothing
             True
             _

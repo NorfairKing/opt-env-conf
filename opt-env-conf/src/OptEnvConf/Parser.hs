@@ -187,7 +187,16 @@ data Parser a where
     !(Parser a) ->
     Parser a
   -- Map, Check, and IO
-  ParserCheck ::
+  -- Prefer this over ParserCheckIO so that more can be checked when IO is turned off.
+  ParserCheckPure ::
+    !(Maybe SrcLoc) ->
+    -- | Forgivable
+    !Bool ->
+    !(a -> Either String b) ->
+    !(Parser a) ->
+    Parser b
+  -- Map, Check, and IO
+  ParserCheckIO ::
     !(Maybe SrcLoc) ->
     -- | Forgivable
     !Bool ->
@@ -221,11 +230,15 @@ instance Functor Parser where
     ParserSelect pe pf -> ParserSelect (fmap (fmap f) pe) (fmap (fmap f) pf)
     ParserEmpty mLoc -> ParserEmpty mLoc
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
-    ParserCheck mLoc forgivable g p -> ParserCheck mLoc forgivable (fmap (fmap f) . g) p
+    ParserCheckPure mLoc forgivable g p -> ParserCheckPure mLoc forgivable (fmap f . g) p
+    ParserCheckIO mLoc forgivable g p ->
+      -- We can move the function into the IO, rather than wrapping with
+      -- another ParserCheckPure, because the IO needs to happen first anyway.
+      ParserCheckIO mLoc forgivable (fmap (fmap f) . g) p
     ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault $ map (fmap f) cs
     ParserWithConfig mLoc pc pa -> ParserWithConfig mLoc pc (fmap f pa)
     -- TODO: make setting a functor and fmap here
-    p -> ParserCheck Nothing True (pure . Right . f) p
+    p -> ParserCheckPure Nothing True (Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -250,7 +263,8 @@ instance Alternative Parser where
           ParserMany _ p -> isEmpty p
           ParserSome _ p -> isEmpty p
           ParserAllOrNothing _ p -> isEmpty p
-          ParserCheck _ _ _ p -> isEmpty p
+          ParserCheckPure _ _ _ p -> isEmpty p
+          ParserCheckIO _ _ _ p -> isEmpty p
           ParserCommands _ _ cs -> null cs
           ParserWithConfig _ pc ps -> isEmpty pc && isEmpty ps
           ParserSetting _ _ -> False
@@ -331,9 +345,17 @@ showParserPrec = go
             . showsPrec 11 mLoc
             . showString " "
             . go 11 p
-      ParserCheck mLoc forgivable _ p ->
+      ParserCheckPure mLoc forgivable _ p ->
         showParen (d > 10) $
-          showString "Check "
+          showString "CheckPure "
+            . showsPrec 11 mLoc
+            . showString " "
+            . showsPrec 11 forgivable
+            . showString " _ "
+            . go 11 p
+      ParserCheckIO mLoc forgivable _ p ->
+        showParen (d > 10) $
+          showString "CheckIO "
             . showsPrec 11 mLoc
             . showString " "
             . showsPrec 11 forgivable
@@ -544,7 +566,8 @@ withShownDefault showDefault defaultValue = go
             ParserMany {} -> p'
             ParserSome {} -> p'
             ParserAllOrNothing {} -> p'
-            ParserCheck {} -> p'
+            ParserCheckPure {} -> p'
+            ParserCheckIO {} -> p'
             ParserCommands {} -> p'
             ParserWithConfig {} -> p'
             ParserSetting mLoc s -> case settingDefaultValue s of
@@ -599,11 +622,13 @@ checkEither func p = withFrozenCallStack $ checkMapEither func p
 
 -- | Check a 'Parser' after the fact, purely.
 checkMapEither :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
-checkMapEither func p = withFrozenCallStack $ checkMapIO (pure . func) p
+checkMapEither = ParserCheckPure mLoc False
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Check a 'Parser' after the fact, allowing IO.
 checkMapIO :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheck mLoc False
+checkMapIO = ParserCheckIO mLoc False
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -647,12 +672,13 @@ checkMapMaybeForgivable func p =
 
 -- | Like 'checkMapEither', but allow trying the other side of any alternative if the result is Nothing.
 checkMapEitherForgivable :: (HasCallStack) => (a -> Either String b) -> Parser a -> Parser b
-checkMapEitherForgivable func p = withFrozenCallStack $ checkMapIOForgivable (pure . func) p
+checkMapEitherForgivable = ParserCheckPure mLoc True
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
--- TODO add a SRCLoc here
 checkMapIOForgivable :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIOForgivable = ParserCheck mLoc True
+checkMapIOForgivable = ParserCheckIO mLoc True
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -1117,7 +1143,8 @@ parserEraseSrcLocs = go
       ParserMany _ p -> ParserMany Nothing (go p)
       ParserSome _ p -> ParserSome Nothing (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
-      ParserCheck _ forgivable f p -> ParserCheck Nothing forgivable f (go p)
+      ParserCheckPure _ forgivable f p -> ParserCheckPure Nothing forgivable f (go p)
+      ParserCheckIO _ forgivable f p -> ParserCheckIO Nothing forgivable f (go p)
       ParserCommands _ mDefault cs -> ParserCommands Nothing mDefault $ map commandEraseSrcLocs cs
       ParserWithConfig _ p1 p2 -> ParserWithConfig Nothing (go p1) (go p2)
       ParserSetting _ s -> ParserSetting Nothing s
@@ -1154,7 +1181,8 @@ parserTraverseSetting func = go
       ParserMany mLoc p -> ParserMany mLoc <$> go p
       ParserSome mLoc p -> ParserSome mLoc <$> go p
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
-      ParserCheck mLoc forgivable f p -> ParserCheck mLoc forgivable f <$> go p
+      ParserCheckPure mLoc forgivable f p -> ParserCheckPure mLoc forgivable f <$> go p
+      ParserCheckIO mLoc forgivable f p -> ParserCheckIO mLoc forgivable f <$> go p
       ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig mLoc p1 p2 -> ParserWithConfig mLoc <$> go p1 <*> go p2
       ParserSetting mLoc s -> ParserSetting mLoc <$> func s
@@ -1183,7 +1211,8 @@ parserSettingsMap = go
       ParserMany _ p -> go p
       ParserSome _ p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
-      ParserCheck _ _ _ p -> go p
+      ParserCheckPure _ _ _ p -> go p
+      ParserCheckIO _ _ _ p -> go p
       ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs
       ParserWithConfig _ p1 p2 -> M.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't

@@ -4,7 +4,7 @@ WithConfig
   (Pure _)
   (Alt
      (Alt
-        (Check
+        (CheckPure
            Nothing
            True
            _
@@ -22,7 +22,7 @@ WithConfig
                  Nothing
                  (Just "Example of an enable/disable switch"))))
         (Alt
-           (Check
+           (CheckPure
               Nothing
               True
               _
@@ -40,7 +40,7 @@ WithConfig
                     Nothing
                     Nothing)))
            (Alt
-              (Check
+              (CheckPure
                  Nothing
                  True
                  _
@@ -58,7 +58,7 @@ WithConfig
                        Nothing
                        Nothing)))
               (Alt
-                 (Check
+                 (CheckPure
                     Nothing
                     True
                     _
@@ -80,7 +80,7 @@ WithConfig
                           Nothing
                           (Just "BOOL")
                           (Just "Example of an enable/disable switch"))))
-                 (Check
+                 (CheckPure
                     Nothing
                     True
                     _

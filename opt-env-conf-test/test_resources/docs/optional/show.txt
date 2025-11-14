@@ -1,5 +1,5 @@
 Alt
-  (Check
+  (CheckPure
      Nothing
      True
      _

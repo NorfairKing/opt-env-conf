@@ -4,7 +4,7 @@ WithConfig
   (Pure _)
   (Ap
      (Alt
-        (Check
+        (CheckPure
            Nothing
            True
            _
@@ -42,7 +42,7 @@ WithConfig
                  Nothing
                  (Just "INT")
                  (Just "int or string"))))
-        (Check
+        (CheckPure
            Nothing
            True
            _
