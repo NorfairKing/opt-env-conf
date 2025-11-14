@@ -1,11 +1,13 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module OptEnvConf.Check
   ( Capabilities (..),
+    CheckResult (..),
     runSettingsCheck,
     runSettingsCheckOn,
   )
@@ -35,12 +37,16 @@ import Text.Colour
 runSettingsCheck :: Capabilities -> Parser a -> Args -> EnvMap -> IO void
 runSettingsCheck capabilities p args envVars = do
   stderrTc <- getTerminalCapabilitiesFromHandle stderr
-  errOrSets <- runSettingsCheckOn capabilities (Just stderrTc) p args envVars Nothing
-  case errOrSets of
-    Just errs -> do
+  result <- runSettingsCheckOn capabilities (Just stderrTc) p args envVars Nothing
+  case result of
+    CheckFailed errs -> do
       hPutChunksLocaleWith stderrTc stderr $ renderErrors errs
       exitFailure
-    Nothing -> do
+    CheckSkipped caps -> do
+      tc <- getTerminalCapabilitiesFromHandle stdout
+      hPutChunksLocaleWith tc stdout ["Settings check skipped due to missing capabilities, no errors found in the meantime."]
+      exitSuccess
+    CheckSucceeded _ -> do
       tc <- getTerminalCapabilitiesFromHandle stdout
       hPutChunksLocaleWith tc stdout ["Settings check successful."]
       exitSuccess
@@ -52,7 +58,7 @@ runSettingsCheckOn ::
   Args ->
   EnvMap ->
   Maybe JSON.Object ->
-  IO (Maybe (NonEmpty ParseError))
+  IO (CheckResult a)
 runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
   let ppState = mkPPState args
   let ppEnv = mkPPEnv envVars mConfig mDebugMode
@@ -65,24 +71,28 @@ runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
   mTup <- runPPLazy (unChecker go') ppState ppEnv
   case mTup of
     Nothing -> error "TODO figure out when this list can be empty"
-    Just ((errOrRes, _), nexts) -> case errOrRes of
-      Success _ -> pure Nothing
-      Failure firstErrors ->
-        let goNexts ns = do
-              -- TODO: Consider keeping around all errors?
-              mNext <- runNonDetTLazy ns
-              case mNext of
-                Nothing ->
-                  pure $
-                    Just $
-                      let f = case mDebugMode of
-                            Nothing -> eraseErrorSrcLocs
-                            Just _ -> id
-                       in f firstErrors
-                Just ((eOR, _), ns') -> case eOR of
-                  Success _ -> pure Nothing
-                  Failure _ -> goNexts ns'
-         in goNexts nexts
+    Just ((errOrRes, _), nexts) ->
+      let success capsOrResult = case capsOrResult of
+            Left missingCaps -> CheckSkipped missingCaps
+            Right a -> CheckSucceeded a
+       in case errOrRes of
+            Success capsOrResult -> pure $ success capsOrResult
+            Failure firstErrors ->
+              let goNexts ns = do
+                    -- TODO: Consider keeping around all errors?
+                    mNext <- runNonDetTLazy ns
+                    case mNext of
+                      Nothing ->
+                        pure $
+                          CheckFailed $
+                            let f = case mDebugMode of
+                                  Nothing -> eraseErrorSrcLocs
+                                  Just _ -> id
+                             in f firstErrors
+                      Just ((eOR, _), ns') -> case eOR of
+                        Success capsOrResult -> pure $ success capsOrResult
+                        Failure _ -> goNexts ns'
+               in goNexts nexts
   where
     -- [tag:RunParserCheck]
     -- We need to keep the Run-interpreter for parsers in sync with the
@@ -133,6 +143,11 @@ runSettingsCheckOn Capabilities {..} mDebugMode parser args envVars mConfig = do
               ppIndent $ go p2
       ParserSetting mLoc set -> liftPP $ ppSetting mLoc set
 
+data CheckResult a
+  = CheckSucceeded a
+  | CheckFailed (NonEmpty ParseError)
+  | CheckSkipped (NonEmpty Capability)
+
 data Capabilities = Capabilities
   { capabilityAllowIO :: !Bool
   }
@@ -140,19 +155,72 @@ data Capabilities = Capabilities
 
 instance Validity Capabilities
 
-newtype Checker a = Checker {unChecker :: PP a}
-  deriving
-    ( Functor,
-      Applicative,
-      Selective,
-      Monad,
-      MonadIO,
-      MonadReader PPEnv,
-      MonadState PPState
-    )
+data Capability = CapabilityAllowIO
+  deriving (Show, Generic)
+
+instance Validity Capability
+
+-- Either missing capabilities or a successful result
+newtype Checker a = Checker {unChecker :: PP (Either (NonEmpty Capability) a)}
+
+instance Functor Checker where
+  fmap f (Checker p) = Checker $ fmap (fmap f) p
+
+instance Applicative Checker where
+  pure = Checker . pure . Right
+
+  -- We try to execute both because we want to gather as many errors as
+  -- possible, within the PP, before we say "fine" because of capabilities.
+  --
+  -- We also want to treat PP as an Applicative here to make sure that all the
+  -- errors are gathered together instead of one by one.
+  Checker pf <*> Checker pa =
+    Checker $
+      let comb ef ea =
+            case (ef, ea) of
+              (Right f, Right a) -> Right (f a)
+              (Left capsF, Left capsA) -> Left (capsF <> capsA)
+              (Left capsF, Right _) -> Left capsF
+              (Right _, Left capsA) -> Left capsA
+       in comb <$> pf <*> pa
+
+instance Selective Checker where
+  -- We try to execute both because we want to gather as many errors as
+  -- possible, within the PP, before we say "fine" because of capabilities.
+  --
+  -- We also want to treat PP as a Selective here to make sure that all the
+  -- errors are gathered together instead of one by one.
+  select (Checker pe) (Checker pf) =
+    Checker $
+      let comb ee ef = case (ee, ef) of
+            (Right (Left a), Right f) -> Right (f a)
+            (Right (Right b), Right _) -> Right b
+            (Left capsE, Left capsF) -> Left (capsE <> capsF)
+            (Left capsE, Right _) -> Left capsE
+            (Right _, Left capsF) -> Left capsF
+       in comb <$> pe <*> pf
+
+instance Monad Checker where
+  Checker p >>= f = Checker $ do
+    eA <- p
+    case eA of
+      Left caps -> pure (Left caps)
+      Right a -> unChecker (f a)
+
+instance MonadIO Checker where
+  liftIO = Checker . fmap Right . liftIO
+
+instance MonadReader PPEnv Checker where
+  ask = Checker $ fmap Right ask
+  local f (Checker p) = Checker (local f p)
 
 liftPP :: PP a -> Checker a
-liftPP = Checker
+liftPP = Checker . fmap Right
 
 tryChecker :: Checker a -> Checker (Maybe a)
-tryChecker (Checker p) = Checker $ tryPP p
+tryChecker (Checker p) = Checker $ do
+  res <- tryPP p
+  case res of
+    Nothing -> pure (Right Nothing)
+    Just (Left caps) -> pure (Left caps)
+    Just (Right a) -> pure (Right (Just a))
