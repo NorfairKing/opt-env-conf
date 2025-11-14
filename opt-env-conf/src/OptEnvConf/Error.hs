@@ -39,7 +39,10 @@ data ParseErrorMessage
   | ParseErrorUnrecognisedCommand !String ![CommandDoc ()]
   | ParseErrorAllOrNothing !(Map SettingHash SrcLoc)
   | ParseErrorUnrecognised !(NonEmpty String)
-  | ParseErrorMissingCapability !String
+  | ParseErrorMissingCapability !Capability
+  deriving (Show)
+
+data Capability = CapabilityAllowIO
   deriving (Show)
 
 -- | Whether the other side of an 'Alt' should be tried if we find this error.
@@ -135,7 +138,7 @@ renderError ParseError {..} =
         ParseErrorUnrecognised leftovers ->
           ["Unrecognised args: " : unwordsChunks (map (pure . chunk . T.pack) (NE.toList leftovers))]
         ParseErrorMissingCapability cap ->
-          ["Missing capability: " : [chunk $ T.pack cap]],
+          ["Missing capability: " : [chunk $ T.pack $ show cap]],
       maybe [] (pure . ("see " :) . pure . srcLocChunk) parseErrorSrcLoc
     ]
 
