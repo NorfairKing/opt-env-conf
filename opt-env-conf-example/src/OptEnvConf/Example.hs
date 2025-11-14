@@ -73,7 +73,8 @@ instance HasParser Dispatch where
                 argument,
                 metavar "STR"
               ],
-        command "delete" "Delete" $ pure DispatchDelete
+        -- We use runIO here as an example, it's definitely not necessary.
+        command "delete" "Delete" $ runIO $ pure DispatchDelete
       ]
 
 data Settings = Settings
