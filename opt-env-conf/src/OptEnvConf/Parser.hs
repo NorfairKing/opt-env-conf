@@ -99,6 +99,8 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -200,7 +202,7 @@ data Parser a where
     -- | Forgivable
     !Bool ->
     -- | Necessary capabilities
-    ![Capability] ->
+    !(Set Capability) ->
     -- | Check function
     !(a -> IO (Either String b)) ->
     !(Parser a) ->
@@ -249,7 +251,7 @@ instance Functor Parser where
     ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault $ map (fmap f) cs
     ParserWithConfig mLoc pc pa -> ParserWithConfig mLoc pc (fmap f pa)
     -- If we ever make Setting a functor, then we need to fmap here
-    p -> ParserCheck Nothing True [] (pure . Right . f) p
+    p -> ParserCheck Nothing True Set.empty (pure . Right . f) p
 
 instance Applicative Parser where
   pure = ParserPure
@@ -629,7 +631,7 @@ checkMapEither f = withFrozenCallStack $ checkMapIO (pure . f)
 
 -- | Check a 'Parser' after the fact, allowing IO.
 checkMapIO :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheck mLoc False []
+checkMapIO = ParserCheck mLoc False Set.empty
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -674,8 +676,8 @@ allOrNothing = ParserAllOrNothing mLoc
 requireCapability :: (HasCallStack) => Capability -> Parser a -> Parser a
 requireCapability cap = \case
   ParserCheck mLoc' forgivable caps f p ->
-    ParserCheck mLoc' forgivable (cap : caps) f p
-  p -> ParserCheck mLoc False [cap] (pure . Right) p
+    ParserCheck mLoc' forgivable (Set.insert cap caps) f p
+  p -> ParserCheck mLoc False (Set.singleton cap) (pure . Right) p
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -696,7 +698,7 @@ checkMapEitherForgivable f = withFrozenCallStack $ checkMapIOForgivable (pure . 
 
 -- | Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
 checkMapIOForgivable :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIOForgivable = ParserCheck mLoc True []
+checkMapIOForgivable = ParserCheck mLoc True Set.empty
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
