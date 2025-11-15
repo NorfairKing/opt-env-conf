@@ -272,7 +272,7 @@ lintParser =
         pure c
       ParserAllOrNothing _ p -> go p
       ParserCheckPure _ _ _ p -> go p
-      ParserCheckIO _ _ _ p -> go p
+      ParserCheckIO _ _ _ _ p -> go p
       ParserRequireCapability _ _ p -> go p
       ParserCommands mLoc mDefault cs -> do
         if null cs

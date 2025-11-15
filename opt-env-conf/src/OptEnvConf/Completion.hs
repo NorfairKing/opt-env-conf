@@ -285,7 +285,7 @@ pureCompletionQuery parser ix args =
           Just os -> fmap (os ++) <$> go p
       ParserAllOrNothing _ p -> go p
       ParserCheckPure _ _ _ p -> go p
-      ParserCheckIO _ _ _ p -> go p
+      ParserCheckIO _ _ _ _ p -> go p
       ParserWithConfig _ p1 p2 ->
         -- The config-file auto-completion is probably less important, we put it second.
         andCompletions p2 p1

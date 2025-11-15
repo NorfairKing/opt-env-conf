@@ -75,6 +75,9 @@ disableCapability cap (Capabilities caps) =
 hasCapability :: Capabilities -> Capability -> Bool
 hasCapability (Capabilities caps) cap = Set.notMember cap caps
 
+hasAllCapability :: Capabilities -> [Capability] -> Bool
+hasAllCapability (Capabilities caps) = all (`Set.notMember` caps)
+
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
 runParserOn ::
@@ -214,14 +217,14 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
               Right b -> do
                 debug ["succeeded"]
                 pure b
-      ParserCheckIO mLoc forgivable f p' -> do
+      ParserCheckIO mLoc forgivable requiredCapabilities f p' -> do
         debug [syntaxChunk "Parser with check (io)", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           debug ["parser"]
           a <- ppIndent $ go p'
           debug ["check"]
           ppIndent $ do
-            if hasCapability capabilities ioCapability
+            if hasAllCapability capabilities requiredCapabilities
               then do
                 errOrB <- liftIO $ f a
                 case errOrB of
@@ -580,7 +583,7 @@ runHelpParser mDebugMode args parser = do
             ParserCheckPure mLoc _ _ p' -> do
               debug [syntaxChunk "Parser with check (pure)", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
-            ParserCheckIO mLoc _ _ p' -> do
+            ParserCheckIO mLoc _ _ _ p' -> do
               debug [syntaxChunk "Parser with check (io)", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
             ParserWithConfig mLoc pc pa -> do

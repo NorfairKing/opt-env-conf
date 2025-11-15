@@ -208,6 +208,9 @@ data Parser a where
     !(Maybe SrcLoc) ->
     -- | Forgivable
     !Bool ->
+    -- | Necessary capabilities
+    ![Capability] ->
+    -- | Check function
     !(a -> IO (Either String b)) ->
     !(Parser a) ->
     Parser b
@@ -258,10 +261,10 @@ instance Functor Parser where
     ParserEmpty mLoc -> ParserEmpty mLoc
     ParserAlt p1 p2 -> ParserAlt (fmap f p1) (fmap f p2)
     ParserCheckPure mLoc forgivable g p -> ParserCheckPure mLoc forgivable (fmap f . g) p
-    ParserCheckIO mLoc forgivable g p ->
+    ParserCheckIO mLoc forgivable caps g p ->
       -- We can move the function into the IO, rather than wrapping with
       -- another ParserCheckPure, because the IO needs to happen first anyway.
-      ParserCheckIO mLoc forgivable (fmap (fmap f) . g) p
+      ParserCheckIO mLoc forgivable caps (fmap (fmap f) . g) p
     ParserRequireCapability mLoc cap p ->
       -- Don't move the function inside the capability, we don't want to run it
       -- if the capability is missing.
@@ -295,7 +298,7 @@ instance Alternative Parser where
           ParserSome _ p -> isEmpty p
           ParserAllOrNothing _ p -> isEmpty p
           ParserCheckPure _ _ _ p -> isEmpty p
-          ParserCheckIO _ _ _ p -> isEmpty p
+          ParserCheckIO _ _ _ _ p -> isEmpty p
           ParserRequireCapability _ _ p -> isEmpty p
           ParserCommands _ _ cs -> null cs
           ParserWithConfig _ pc ps -> isEmpty pc && isEmpty ps
@@ -385,12 +388,14 @@ showParserPrec = go
             . showsPrec 11 forgivable
             . showString " _ "
             . go 11 p
-      ParserCheckIO mLoc forgivable _ p ->
+      ParserCheckIO mLoc forgivable caps _ p ->
         showParen (d > 10) $
           showString "CheckIO "
             . showsPrec 11 mLoc
             . showString " "
             . showsPrec 11 forgivable
+            . showString " "
+            . showsPrec 11 caps
             . showString " _ "
             . go 11 p
       ParserRequireCapability mLoc cap p ->
@@ -670,7 +675,7 @@ checkMapEither = ParserCheckPure mLoc False
 
 -- | Check a 'Parser' after the fact, allowing IO.
 checkMapIO :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIO = ParserCheckIO mLoc False
+checkMapIO = ParserCheckIO mLoc False []
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -730,7 +735,7 @@ checkMapEitherForgivable = ParserCheckPure mLoc True
 
 -- | Like 'checkMapIO', but allow trying the other side of any alternative if the result is Nothing.
 checkMapIOForgivable :: (HasCallStack) => (a -> IO (Either String b)) -> Parser a -> Parser b
-checkMapIOForgivable = ParserCheckIO mLoc True
+checkMapIOForgivable = ParserCheckIO mLoc True []
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -1203,7 +1208,7 @@ parserEraseSrcLocs = go
       ParserSome _ p -> ParserSome Nothing (go p)
       ParserAllOrNothing _ p -> ParserAllOrNothing Nothing (go p)
       ParserCheckPure _ forgivable f p -> ParserCheckPure Nothing forgivable f (go p)
-      ParserCheckIO _ forgivable f p -> ParserCheckIO Nothing forgivable f (go p)
+      ParserCheckIO _ forgivable caps f p -> ParserCheckIO Nothing forgivable caps f (go p)
       ParserRequireCapability _ cap p -> ParserRequireCapability Nothing cap (go p)
       ParserCommands _ mDefault cs -> ParserCommands Nothing mDefault $ map commandEraseSrcLocs cs
       ParserWithConfig _ p1 p2 -> ParserWithConfig Nothing (go p1) (go p2)
@@ -1242,7 +1247,7 @@ parserTraverseSetting func = go
       ParserSome mLoc p -> ParserSome mLoc <$> go p
       ParserAllOrNothing mLoc p -> ParserAllOrNothing mLoc <$> go p
       ParserCheckPure mLoc forgivable f p -> ParserCheckPure mLoc forgivable f <$> go p
-      ParserCheckIO mLoc forgivable f p -> ParserCheckIO mLoc forgivable f <$> go p
+      ParserCheckIO mLoc forgivable caps f p -> ParserCheckIO mLoc forgivable caps f <$> go p
       ParserRequireCapability mLoc cap p -> ParserRequireCapability mLoc cap <$> go p
       ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig mLoc p1 p2 -> ParserWithConfig mLoc <$> go p1 <*> go p2
@@ -1273,7 +1278,7 @@ parserSettingsMap = go
       ParserSome _ p -> go p
       ParserAllOrNothing _ p -> go p -- TODO is this right?
       ParserCheckPure _ _ _ p -> go p
-      ParserCheckIO _ _ _ p -> go p
+      ParserCheckIO _ _ _ _ p -> go p
       ParserRequireCapability _ _ p -> go p
       ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs
       ParserWithConfig _ p1 p2 -> M.union (go p1) (go p2)

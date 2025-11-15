@@ -173,7 +173,7 @@ parserDocs = simplifyAnyDocs . go
       ParserSome mLoc p -> AnyDocsAnd [go p, go (ParserMany mLoc p)] -- TODO: is this right?
       ParserAllOrNothing _ p -> go p
       ParserCheckPure _ _ _ p -> go p
-      ParserCheckIO _ _ _ p -> go p
+      ParserCheckIO _ _ _ _ p -> go p
       ParserRequireCapability _ _ p -> go p
       ParserCommands _ mDefault cs -> AnyDocsCommands mDefault $ map commandParserDocs cs
       ParserWithConfig _ p1 p2 -> AnyDocsAnd [go p1, go p2] -- TODO: is this right? Maybe we want to document that it's not a pure parser?

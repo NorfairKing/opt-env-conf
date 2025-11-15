@@ -4,11 +4,13 @@ WithConfig
   (CheckIO
      Nothing
      False
+     []
      _
      (Alt
         (CheckIO
            Nothing
            False
+           []
            _
            (Setting
               Nothing
@@ -28,7 +30,7 @@ WithConfig
                  Nothing
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file"))))
-        (CheckIO Nothing False _ (Pure _))))
+        (CheckIO Nothing False [] _ (Pure _))))
   (Setting
      Nothing
      (Setting
