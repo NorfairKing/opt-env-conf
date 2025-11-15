@@ -232,6 +232,11 @@ newtype Capability = Capability {unCapability :: Text}
 
 instance Validity Capability
 
+-- | The annotation for any setting reading secrets.
+--
+-- We add these so that we can disable them in settings checks, to avoid
+-- failing settings checks when secrets are read at runtime instead of
+-- build-time.
 readSecretCapability :: String
 readSecretCapability = "read-secret"
 
