@@ -207,7 +207,8 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           a <- ppIndent $ go p'
           debug ["check"]
           ppIndent $ do
-            if hasAllCapability capabilities requiredCapabilities
+            let allRequiredCapabilities = ioCapability : requiredCapabilities
+            if hasAllCapability capabilities allRequiredCapabilities
               then do
                 errOrB <- liftIO $ f a
                 case errOrB of

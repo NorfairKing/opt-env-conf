@@ -665,8 +665,19 @@ allOrNothing = ParserAllOrNothing mLoc
 -- This lets us annotate a parser with a power that it needs to be executed so
 -- that we can run a settings check without that power to still check the rest
 -- of the parser.
+--
+-- This only makes sense when used with a 'checkMap', 'checkEither', 'mapIO',
+-- 'runIO', or similar function because the capability requirement is attached
+-- to the Check node in the parser tree.
+-- When used without such a node, this will attach a no-op Check node to the
+-- parser tree and as such still try to do all the parsing below but not above.
 requireCapability :: (HasCallStack) => Capability -> Parser a -> Parser a
-requireCapability = undefined
+requireCapability cap = \case
+  ParserCheck mLoc' forgivable caps f p ->
+    ParserCheck mLoc' forgivable (cap : caps) f p
+  p -> ParserCheck mLoc False [cap] (pure . Right) p
+  where
+    mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
 checkMapMaybeForgivable :: (HasCallStack) => (a -> Maybe b) -> Parser a -> Parser b
