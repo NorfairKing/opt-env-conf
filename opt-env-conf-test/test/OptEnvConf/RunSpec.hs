@@ -7,6 +7,7 @@ module OptEnvConf.RunSpec (spec) where
 
 import Autodocodec
 import Control.Applicative
+import Control.Concurrent
 import Data.Aeson as JSON (Object, Value (Null), toJSON)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KeyMap
@@ -159,6 +160,26 @@ spec = do
                   shouldFail' p capabilities Args.emptyArgs e mConf $ \case
                     ParseErrorMissingCapability _ :| [] -> True
                     _ -> False
+
+      it "still runs the below parser when a capability is missing" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \custom ->
+            forAllValid $ \result ->
+              forAllValid $ \e ->
+                forAllValid $ \mConf -> do
+                  var <- newMVar 0
+                  let p = requireCapability custom (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
+                  let capabilities = disableCapability custom capabilitiesPrototype
+                  errOrRes <- runParserOn capabilities Nothing p Args.emptyArgs e mConf
+                  case errOrRes of
+                    Left errs -> do
+                      NE.map parseErrorMessage errs
+                        `shouldSatisfy` ( \case
+                                            ParseErrorMissingCapability c :| [] | c == custom -> True
+                                            _ -> False
+                                        )
+                      readMVar var `shouldReturn` result -- instead of 1
+                    Right _ -> expectationFailure "The parser should not have succeeded."
 
     describe "WithConfig" $ do
       it "can replace the config object" $
