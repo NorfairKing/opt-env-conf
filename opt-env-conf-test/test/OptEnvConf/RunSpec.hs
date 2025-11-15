@@ -137,17 +137,6 @@ spec = do
               let expected = succ i
               shouldParse p Args.emptyArgs e mConf expected
 
-      it "cannot run IO without the IO capability" $
-        forAllValid $ \capabilitiesPrototype ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \i -> do
-                let p = mapIO (pure . succ) (pure (i :: Int))
-                let capabilities = disableCapability ioCapability capabilitiesPrototype
-                shouldFail' p capabilities Args.emptyArgs e mConf $ \case
-                  ParseErrorMissingCapability _ :| [] -> True
-                  _ -> False
-
     describe "RequireCapability" $ do
       it "can run the parser if the capability is available" $
         forAllValid $ \capabilitiesPrototype ->

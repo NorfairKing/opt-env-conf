@@ -72,8 +72,10 @@ disableCapability :: Capability -> Capabilities -> Capabilities
 disableCapability cap (Capabilities caps) =
   Capabilities (Set.insert cap caps)
 
-hasAllCapability :: Capabilities -> [Capability] -> Bool
-hasAllCapability (Capabilities caps) = all (`Set.notMember` caps)
+missingCapabilities :: Capabilities -> [Capability] -> Maybe (NonEmpty Capability)
+missingCapabilities (Capabilities caps) requiredCapabilities =
+  let missings = filter (`Set.member` caps) requiredCapabilities
+   in NE.nonEmpty missings
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
@@ -204,21 +206,21 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
         debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           debug ["parser"]
+          -- Definitely parse below
           a <- ppIndent $ go p'
           debug ["check"]
-          ppIndent $ do
-            let allRequiredCapabilities = ioCapability : requiredCapabilities
-            if hasAllCapability capabilities allRequiredCapabilities
-              then do
-                errOrB <- liftIO $ f a
-                case errOrB of
-                  Left err -> do
-                    debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
-                    ppError mLoc $ ParseErrorCheckFailed forgivable err
-                  Right b -> do
-                    debug ["succeeded"]
-                    pure b
-              else ppError mLoc $ ParseErrorMissingCapability ioCapability
+          -- Only perform the check (IO) if capabilities are sufficient
+          ppIndent $ case missingCapabilities capabilities requiredCapabilities of
+            Just missings -> ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
+            Nothing -> do
+              errOrB <- liftIO $ f a
+              case errOrB of
+                Left err -> do
+                  debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
+                  ppError mLoc $ ParseErrorCheckFailed forgivable err
+                Right b -> do
+                  debug ["succeeded"]
+                  pure b
       ParserCommands mLoc mDefault cs -> do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]
