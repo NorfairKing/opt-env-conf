@@ -60,11 +60,11 @@ module OptEnvConf.Parser
     readSecretTextFile,
     secretTextFileSetting,
     secretTextFileOrBareSetting,
+    readSecretCapability,
 
     -- * Parser implementation
     Parser (..),
     Capability (..),
-    ioCapability,
     HasParser (..),
     Command (..),
     CommandsBuilder (..),
@@ -232,12 +232,8 @@ newtype Capability = Capability {unCapability :: Text}
 
 instance Validity Capability
 
--- | The special-case IO capability that is implied to be necessary by ParserCheck
-ioCapability :: Capability
-ioCapability = Capability "io"
-
-readSecretCapability :: Capability
-readSecretCapability = Capability "read-secret"
+readSecretCapability :: String
+readSecretCapability = "read-secret"
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -673,12 +669,13 @@ allOrNothing = ParserAllOrNothing mLoc
 -- to the Check node in the parser tree.
 -- When used without such a node, this will attach a no-op Check node to the
 -- parser tree and as such still try to do all the parsing below but not above.
-requireCapability :: (HasCallStack) => Capability -> Parser a -> Parser a
-requireCapability cap = \case
+requireCapability :: (HasCallStack) => String -> Parser a -> Parser a
+requireCapability capName = \case
   ParserCheck mLoc' forgivable caps f p ->
     ParserCheck mLoc' forgivable (Set.insert cap caps) f p
   p -> ParserCheck mLoc False (Set.singleton cap) (pure . Right) p
   where
+    cap = Capability (T.pack capName)
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
 -- | Like 'checkMapMaybe', but allow trying the other side of any alternative if the result is Nothing.
@@ -1042,8 +1039,11 @@ secretTextFileOrBareSetting bs =
       guard $ p s
       pure $
         requireCapability readSecretCapability $
-          mapIO (resolveFile' >=> readSecretTextFile) $
-            ParserSetting mLoc s
+          -- These two mapIOs are not combined because the capability should
+          -- only apply to the reading, not the resolving.
+          mapIO readSecretTextFile $
+            mapIO resolveFile' $
+              ParserSetting mLoc s
 
     bareOption = bareSetting settingTryOption $ \case
       BuildTryArgument -> Nothing

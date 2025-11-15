@@ -13,6 +13,7 @@ import Data.Text (Text)
 import OptEnvConf
 import Path
 import Paths_opt_env_conf_example (version)
+import System.Exit
 
 exampleMain :: IO ()
 exampleMain = do
@@ -73,8 +74,13 @@ instance HasParser Dispatch where
                 argument,
                 metavar "STR"
               ],
-        -- We use runIO here as an example, it's definitely not necessary.
-        command "delete" "Delete" $ runIO $ pure DispatchDelete
+        command "delete" "Delete" $
+          -- This requireCapability and exitFailure are just here as an example, and used in a check.
+          -- [ref:CapabilityCheck]
+          -- Normally this would just be "pure DispatchDelete".
+          requireCapability "exit" $
+            mapIO (const exitFailure) $
+              pure DispatchDelete
       ]
 
 data Settings = Settings

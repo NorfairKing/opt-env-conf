@@ -144,9 +144,10 @@ spec = do
           forAllValid $ \e ->
             forAllValid $ \mConf ->
               forAllValid $ \result ->
-                forAllValid $ \custom -> do
-                  let p = requireCapability custom (pure (result :: Int))
-                      capabilities = enableCapability custom capabilitiesPrototype
+                forAllValid $ \capName -> do
+                  let p = requireCapability capName (pure (result :: Int))
+                  let cap = Capability (T.pack capName)
+                  let capabilities = enableCapability cap capabilitiesPrototype
                   shouldParse' p capabilities Args.emptyArgs e mConf result
 
       it "cannot run the parser if the capability is not available" $
@@ -154,28 +155,30 @@ spec = do
           forAllValid $ \e ->
             forAllValid $ \mConf ->
               forAllValid $ \result ->
-                forAllValid $ \custom -> do
-                  let p = requireCapability custom (pure (result :: Int))
-                      capabilities = disableCapability custom capabilitiesPrototype
+                forAllValid $ \capName -> do
+                  let p = requireCapability capName (pure (result :: Int))
+                  let cap = Capability (T.pack capName)
+                  let capabilities = disableCapability cap capabilitiesPrototype
                   shouldFail' p capabilities Args.emptyArgs e mConf $ \case
                     ParseErrorMissingCapability _ :| [] -> True
                     _ -> False
 
       it "still runs the below parser when a capability is missing" $
         forAllValid $ \capabilitiesPrototype ->
-          forAllValid $ \custom ->
+          forAllValid $ \capName ->
             forAllValid $ \result ->
               forAllValid $ \e ->
                 forAllValid $ \mConf -> do
                   var <- newMVar 0
-                  let p = requireCapability custom (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
-                  let capabilities = disableCapability custom capabilitiesPrototype
+                  let p = requireCapability capName (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
+                  let cap = Capability (T.pack capName)
+                  let capabilities = disableCapability cap capabilitiesPrototype
                   errOrRes <- runParserOn capabilities Nothing p Args.emptyArgs e mConf
                   case errOrRes of
                     Left errs -> do
                       NE.map parseErrorMessage errs
                         `shouldSatisfy` ( \case
-                                            ParseErrorMissingCapability c :| [] | c == custom -> True
+                                            ParseErrorMissingCapability c :| [] | c == cap -> True
                                             _ -> False
                                         )
                       readMVar var `shouldReturn` result -- instead of 1
