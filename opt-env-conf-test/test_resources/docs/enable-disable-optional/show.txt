@@ -4,9 +4,10 @@ WithConfig
   (Pure _)
   (Alt
      (Alt
-        (CheckPure
+        (Check
            Nothing
            True
+           []
            _
            (Setting
               Nothing
@@ -22,9 +23,10 @@ WithConfig
                  Nothing
                  (Just "Example of an enable/disable switch"))))
         (Alt
-           (CheckPure
+           (Check
               Nothing
               True
+              []
               _
               (Setting
                  Nothing
@@ -40,9 +42,10 @@ WithConfig
                     Nothing
                     Nothing)))
            (Alt
-              (CheckPure
+              (Check
                  Nothing
                  True
+                 []
                  _
                  (Setting
                     Nothing
@@ -58,9 +61,10 @@ WithConfig
                        Nothing
                        Nothing)))
               (Alt
-                 (CheckPure
+                 (Check
                     Nothing
                     True
+                    []
                     _
                     (Setting
                        Nothing
@@ -80,9 +84,10 @@ WithConfig
                           Nothing
                           (Just "BOOL")
                           (Just "Example of an enable/disable switch"))))
-                 (CheckPure
+                 (Check
                     Nothing
                     True
+                    []
                     _
                     (Setting
                        Nothing

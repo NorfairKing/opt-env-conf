@@ -1,6 +1,7 @@
-CheckPure
+Check
   Nothing
   True
+  []
   _
   (Some
      Nothing

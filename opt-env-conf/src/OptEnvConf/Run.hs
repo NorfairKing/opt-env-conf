@@ -203,21 +203,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                   if null parsedSettingsMap
                     then ppErrors' errs
                     else ppErrors' $ errs <> (ParseError mLoc (ParseErrorAllOrNothing parsedSettingsMap) :| [])
-      ParserCheckPure mLoc forgivable f p' -> do
-        debug [syntaxChunk "Parser with check (pure)", ": ", mSrcLocChunk mLoc]
-        ppIndent $ do
-          debug ["parser"]
-          a <- ppIndent $ go p'
-          debug ["check"]
-          ppIndent $
-            case f a of
-              Left err -> do
-                debug ["failed, forgivable: ", chunk $ T.pack $ show forgivable]
-                ppError mLoc $ ParseErrorCheckFailed forgivable err
-              Right b -> do
-                debug ["succeeded"]
-                pure b
-      ParserCheckIO mLoc forgivable requiredCapabilities f p' -> do
+      ParserCheck mLoc forgivable requiredCapabilities f p' -> do
         debug [syntaxChunk "Parser with check (io)", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           debug ["parser"]
@@ -237,7 +223,6 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
               else ppError mLoc $ ParseErrorMissingCapability ioCapability
       ParserRequireCapability mLoc cap p' -> do
         debug [syntaxChunk "RequireCapability", ": ", mSrcLocChunk mLoc, " ", capabilityChunk cap]
-        -- TODO require capability
         ppIndent $
           if hasCapability capabilities cap
             then go p'
@@ -580,11 +565,8 @@ runHelpParser mDebugMode args parser = do
             ParserAllOrNothing mLoc p' -> do
               debug [syntaxChunk "AllOrNothing", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
-            ParserCheckPure mLoc _ _ p' -> do
-              debug [syntaxChunk "Parser with check (pure)", ": ", mSrcLocChunk mLoc]
-              ppIndent $ go p'
-            ParserCheckIO mLoc _ _ _ p' -> do
-              debug [syntaxChunk "Parser with check (io)", ": ", mSrcLocChunk mLoc]
+            ParserCheck mLoc _ _ _ p' -> do
+              debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
               ppIndent $ go p'
             ParserWithConfig mLoc pc pa -> do
               debug [syntaxChunk "WithConfig", ": ", mSrcLocChunk mLoc]

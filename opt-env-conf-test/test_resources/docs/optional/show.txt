@@ -1,7 +1,8 @@
 Alt
-  (CheckPure
+  (Check
      Nothing
      True
+     []
      _
      (Setting
         Nothing
