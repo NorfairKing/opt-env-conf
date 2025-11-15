@@ -11,7 +11,7 @@ WithConfig
          (Check
             Nothing
             True
-            []
+            (fromList [])
             _
             (Setting
                Nothing
@@ -33,7 +33,7 @@ WithConfig
             (Check
                Nothing
                True
-               []
+               (fromList [])
                _
                (Setting
                   Nothing

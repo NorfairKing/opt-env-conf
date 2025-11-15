@@ -74,8 +74,7 @@ disableCapability cap (Capabilities caps) =
 
 missingCapabilities :: Capabilities -> Set Capability -> Maybe (NonEmpty Capability)
 missingCapabilities (Capabilities caps) requiredCapabilities =
-  let missings = Set.difference requiredCapabilities caps
-   in NE.nonEmpty (Set.toList missings)
+  NE.nonEmpty (Set.toList (Set.intersection requiredCapabilities caps))
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.

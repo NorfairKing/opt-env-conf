@@ -2,7 +2,7 @@ Alt
   (Check
      Nothing
      True
-     []
+     (fromList [])
      _
      (Setting
         Nothing
