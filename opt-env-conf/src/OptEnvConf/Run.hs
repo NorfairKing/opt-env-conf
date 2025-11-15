@@ -203,6 +203,11 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                     else ppErrors' $ errs <> (ParseError mLoc (ParseErrorAllOrNothing parsedSettingsMap) :| [])
       ParserCheck mLoc forgivable requiredCapabilities f p' -> do
         debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
+        when (not (Set.null requiredCapabilities)) $
+          debug $
+            "Requires capabilities: "
+              : capabilitiesChunks requiredCapabilities
+
         ppIndent $ do
           debug ["parser"]
           -- Definitely parse below
