@@ -72,9 +72,6 @@ disableCapability :: Capability -> Capabilities -> Capabilities
 disableCapability cap (Capabilities caps) =
   Capabilities (Set.insert cap caps)
 
-hasCapability :: Capabilities -> Capability -> Bool
-hasCapability (Capabilities caps) cap = Set.notMember cap caps
-
 hasAllCapability :: Capabilities -> [Capability] -> Bool
 hasAllCapability (Capabilities caps) = all (`Set.notMember` caps)
 
@@ -204,7 +201,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                     then ppErrors' errs
                     else ppErrors' $ errs <> (ParseError mLoc (ParseErrorAllOrNothing parsedSettingsMap) :| [])
       ParserCheck mLoc forgivable requiredCapabilities f p' -> do
-        debug [syntaxChunk "Parser with check (io)", ": ", mSrcLocChunk mLoc]
+        debug [syntaxChunk "Parser with check", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           debug ["parser"]
           a <- ppIndent $ go p'
@@ -221,12 +218,6 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                     debug ["succeeded"]
                     pure b
               else ppError mLoc $ ParseErrorMissingCapability ioCapability
-      ParserRequireCapability mLoc cap p' -> do
-        debug [syntaxChunk "RequireCapability", ": ", mSrcLocChunk mLoc, " ", capabilityChunk cap]
-        ppIndent $
-          if hasCapability capabilities cap
-            then go p'
-            else ppError mLoc $ ParseErrorMissingCapability cap
       ParserCommands mLoc mDefault cs -> do
         debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
         forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]
@@ -577,10 +568,6 @@ runHelpParser mDebugMode args parser = do
             ParserSetting mLoc _ -> do
               debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
               pure Nothing
-            ParserRequireCapability mLoc cap p' -> do
-              debug [syntaxChunk "RequireCapability", ": ", mSrcLocChunk mLoc, " ", capabilityChunk cap]
-              -- TODO require capability
-              ppIndent $ go p'
             ParserCommands mLoc mDefault cs -> do
               debug [syntaxChunk "Commands", ": ", mSrcLocChunk mLoc]
               forM_ mDefault $ \d -> debug ["default:", chunk $ T.pack $ show d]

@@ -288,7 +288,6 @@ pureCompletionQuery parser ix args =
       ParserWithConfig _ p1 p2 ->
         -- The config-file auto-completion is probably less important, we put it second.
         andCompletions p2 p1
-      ParserRequireCapability _ _ p -> go p
       ParserCommands _ _ cs -> do
         as <- get
         let possibilities = Args.consumeArgument as
