@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module OptEnvConf.Main
@@ -63,13 +64,6 @@ runParser ::
   Parser a ->
   IO a
 runParser version progDesc p = do
-  allArgs <- getArgs
-  let argMap' = parseArgs allArgs
-  let mArgMap = consumeSwitch ["--debug-optparse"] argMap'
-  let (debugMode, argMap) = case mArgMap of
-        Nothing -> (False, argMap')
-        Just am -> (True, am)
-
   completeEnv <- getEnvironment
   let envVars = EnvMap.parse completeEnv
 
@@ -81,20 +75,20 @@ runParser version progDesc p = do
     Nothing -> do
       let docs = parserDocs p
 
+      allArgs <- getArgs
+      let (debugMode, args) = consumeDebugMode allArgs
+
       mDebugMode <-
         if debugMode
           then Just <$> getTerminalCapabilitiesFromHandle stderr
           else pure Nothing
 
-      let mHelpConsumed = consumeSwitch ["-h", "--help"] argMap
-      let (helpMode, args') = case mHelpConsumed of
-            Nothing -> (False, argMap)
-            Just am -> (True, am)
+      let (helpMode, args') = consumeHelpMode args
 
       if helpMode
         then do
           progname <- getProgName
-          errOrDocs <- runHelpParser mDebugMode args' p
+          errOrDocs <- runHelpParser mDebugMode (Args.parseArgs args') p
           case errOrDocs of
             Left errs -> do
               stderrTc <- getTerminalCapabilitiesFromHandle stderr
@@ -108,13 +102,13 @@ runParser version progDesc p = do
               exitSuccess
         else do
           let (capabilities, args'') = consumeCapabilities args'
-          let (checkMode, args) = case consumeSwitch ["--run-settings-check"] args'' of
-                Nothing -> (False, args')
-                Just am -> (True, am)
+          let (checkMode, args''') = consumeCheckMode args''
+
+          let readyArgs = Args.parseArgs args'''
 
           let mConfig = Nothing -- We start with no config loaded.
           if checkMode
-            then runSettingsCheck capabilities p args envVars mConfig
+            then runSettingsCheck capabilities p readyArgs envVars mConfig
             else do
               let p' = internalParser p
               errOrResult <-
@@ -122,7 +116,7 @@ runParser version progDesc p = do
                   capabilities
                   mDebugMode
                   p'
-                  args
+                  readyArgs
                   envVars
                   mConfig
               case errOrResult of
@@ -166,8 +160,47 @@ runParser version progDesc p = do
                     exitSuccess
                   ParsedNormally a -> pure a
 
-consumeCapabilities :: Args -> (Capabilities, Args)
-consumeCapabilities argMap = (allCapabilities, argMap)
+-- We use [String] instead of [Args] because we want to remove these args, and act on them, before any real arg parsing happens.
+consumeExactArg :: String -> [String] -> (Bool, [String])
+consumeExactArg arg = go
+  where
+    go = \case
+      [] -> (False, [])
+      (x : xs)
+        | x == arg -> (True, xs)
+        | otherwise ->
+            let (found, rest) = go xs
+             in (found, x : rest)
+
+consumeDebugMode :: [String] -> (Bool, [String])
+consumeDebugMode = consumeExactArg "--debug-optparse"
+
+-- Note: Here we only consume exact -h as an arg, not -h as part of another arg like -hu
+consumeHelpMode :: [String] -> (Bool, [String])
+consumeHelpMode as =
+  let (found, as') = consumeExactArg "--help" as
+   in if found
+        then (True, as')
+        else consumeExactArg "-h" as'
+
+consumeCheckMode :: [String] -> (Bool, [String])
+consumeCheckMode = consumeExactArg "--run-settings-check"
+
+consumeCapabilities :: [String] -> (Capabilities, [String])
+consumeCapabilities = go allCapabilities
+  where
+    go :: Capabilities -> [String] -> (Capabilities, [String])
+    go caps = \case
+      [] -> (caps, [])
+      (x : xs) ->
+        let t = T.pack x
+         in case T.stripPrefix "--settings-capabilities-disable-" t of
+              Just capName -> go (disableCapability (Capability capName) caps) xs
+              Nothing -> case T.stripPrefix "--settings-capabilities-enable-" t of
+                Just capName -> go (enableCapability (Capability capName) caps) xs
+                Nothing ->
+                  let (finalCaps, rest) = go caps xs
+                   in (finalCaps, x : rest)
 
 -- Internal structure to help us do what the framework
 -- is supposed to.

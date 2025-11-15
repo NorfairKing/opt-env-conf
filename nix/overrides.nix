@@ -73,7 +73,7 @@ let
         capabilityArgs = lib.mapAttrsToList
           (cap: bool:
             if bool
-            then ""
+            then "--settings-capabilities-enable-" + cap
             else "--settings-capabilities-disable-" + cap)
           capabilities;
         capabilityArgsStr = concatStringsSep " " capabilityArgs;
