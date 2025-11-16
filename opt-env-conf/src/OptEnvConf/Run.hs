@@ -215,7 +215,11 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           debug ["check"]
           -- Only perform the check (IO) if capabilities are sufficient
           ppIndent $ case missingCapabilities capabilities requiredCapabilities of
-            Just missings -> ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
+            Just missings -> do
+              debug $
+                "Missing capabilities: "
+                  : capabilitiesChunks (Set.fromList (NE.toList missings))
+              ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
             Nothing -> do
               errOrB <- liftIO $ f a
               case errOrB of
