@@ -146,7 +146,7 @@ spec = do
               forAllValid $ \result ->
                 forAllValid $ \capName -> do
                   let p :: Parser Int
-                      p = requireCapability capName $ checkMapEither (const (Left "failed")) (pure (result :: Int))
+                      p = checkWithRequiredCapability capName $ checkMapEither (const (Left "failed")) (pure (result :: Int))
                   let cap = Capability (T.pack capName)
                   let capabilities = enableCapability cap capabilitiesPrototype
                   shouldFail' p capabilities Args.emptyArgs e mConf $ \case
@@ -160,7 +160,7 @@ spec = do
               forAllValid $ \result ->
                 forAllValid $ \capName -> do
                   let p :: Parser Int
-                      p = requireCapability capName $ checkMapEither (const (Left "failed")) (pure (result :: Int))
+                      p = checkWithRequiredCapability capName $ checkMapEither (const (Left "failed")) (pure (result :: Int))
                   let cap = Capability (T.pack capName)
                   let capabilities = disableCapability cap capabilitiesPrototype
                   shouldFail' p capabilities Args.emptyArgs e mConf $ \case
@@ -174,7 +174,7 @@ spec = do
               forAllValid $ \e ->
                 forAllValid $ \mConf -> do
                   var <- newMVar 0
-                  let p = requireCapability capName (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
+                  let p = checkWithRequiredCapability capName (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
                   let cap = Capability (T.pack capName)
                   let capabilities = disableCapability cap capabilitiesPrototype
                   errOrRes <- runParserOn capabilities Nothing p Args.emptyArgs e mConf

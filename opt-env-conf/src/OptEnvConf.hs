@@ -37,6 +37,7 @@ module OptEnvConf
     hidden,
     metavar,
     completer,
+    requiredCapability,
 
     -- ** Commands
     commands,
@@ -85,6 +86,7 @@ module OptEnvConf
     checkMapIOForgivable,
     checkMapMaybeForgivable,
     checkMapMaybe,
+    checkWithRequiredCapability,
     mapIO,
     choice,
     withDefault,

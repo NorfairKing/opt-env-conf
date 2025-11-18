@@ -25,8 +25,8 @@ module OptEnvConf.Parser
     checkMapEitherForgivable,
     checkMapIOForgivable,
     checkMapMaybeForgivable,
+    checkWithRequiredCapability,
     allOrNothing,
-    requireCapability,
     commands,
     command,
     defaultCommand,
@@ -657,8 +657,8 @@ allOrNothing = ParserAllOrNothing mLoc
 -- attached to the Setting or Check node in the parser tree.
 -- When used without such a node, this will attach a no-op Check node to the
 -- parser tree and as such still try to do all the parsing below but not above.
-requireCapability :: (HasCallStack) => String -> Parser a -> Parser a
-requireCapability capName = \case
+checkWithRequiredCapability :: (HasCallStack) => String -> Parser a -> Parser a
+checkWithRequiredCapability capName = \case
   ParserCheck mLoc' forgivable caps f p ->
     ParserCheck mLoc' forgivable (Set.insert cap caps) f p
   p -> ParserCheck mLoc False (Set.singleton cap) (pure . Right) p
@@ -1004,7 +1004,7 @@ secretTextFileSetting bs =
   withFrozenCallStack $
     -- Require the capability only for reading the secret file, not for parsing
     -- the string as a path.
-    requireCapability readSecretCapability $
+    checkWithRequiredCapability readSecretCapability $
       mapIO readSecretTextFile $
         filePathSetting bs
 
@@ -1031,13 +1031,13 @@ secretTextFileOrBareSetting bs =
       pure $
         -- Require the capability for the entire setting because the secret may be
         -- passed as an env var.
-        requireCapability readSecretCapability $
+        checkWithRequiredCapability readSecretCapability $
           T.pack <$> ParserSetting mLoc s
     fileSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "FILE_PATH"]
       guard $ p s
       pure $
-        requireCapability readSecretCapability $
+        checkWithRequiredCapability readSecretCapability $
           -- These two mapIOs are not combined because the capability should
           -- only apply to the reading, not the resolving.
           mapIO readSecretTextFile $
