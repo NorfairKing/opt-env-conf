@@ -10,8 +10,12 @@ Alt
         Nothing
         Nothing
         Nothing
+        []
+        False
         Nothing
-        (Just "first")))
+        (Just "first")
+        Nothing
+        (fromList [])))
   (Setting
      Nothing
      (Setting
@@ -23,5 +27,9 @@ Alt
         Nothing
         Nothing
         (Just _)
+        []
+        False
         Nothing
-        (Just "second")))
+        (Just "second")
+        Nothing
+        (fromList [])))

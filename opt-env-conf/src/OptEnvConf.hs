@@ -37,6 +37,7 @@ module OptEnvConf
     hidden,
     metavar,
     completer,
+    requiredCapability,
 
     -- ** Commands
     commands,
@@ -85,6 +86,7 @@ module OptEnvConf
     checkMapIOForgivable,
     checkMapMaybeForgivable,
     checkMapMaybe,
+    checkWithRequiredCapability,
     mapIO,
     choice,
     withDefault,
@@ -112,6 +114,7 @@ module OptEnvConf
     readSecretTextFile,
     secretTextFileSetting,
     secretTextFileOrBareSetting,
+    readSecretCapability,
 
     -- *** Migration
     strOption,
@@ -137,6 +140,7 @@ module OptEnvConf
     module OptEnvConf.Casing,
     module OptEnvConf.Doc,
     module OptEnvConf.Nix,
+    module OptEnvConf.Capability,
     module OptEnvConf.Parser,
     module OptEnvConf.Completer,
     module OptEnvConf.Reader,
@@ -147,6 +151,7 @@ module OptEnvConf
 where
 
 import Control.Applicative
+import OptEnvConf.Capability
 import OptEnvConf.Casing
 import OptEnvConf.Completer
 import OptEnvConf.Doc

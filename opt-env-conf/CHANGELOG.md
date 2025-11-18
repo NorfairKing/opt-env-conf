@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.0.0] - 2025-11-18
+
+### Added
+
+* Capability support for settings.
+
+This is technically a breaking change, but if you don't use any `opt-env-conf`
+internals, nothing should break for you.
+
+### Changed
+
+* Renamed `requireCapability` to `checkWithRequiredCapability`.
+* Fixed that `showSettingABit` did not show every part of a setting.
+
 ## [0.12.2.0] - 2025-11-18
 
 ### Changed

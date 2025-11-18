@@ -1,19 +1,15 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module OptEnvConf.Run
-  ( Capabilities (..),
-    allCapabilities,
-    enableCapability,
-    disableCapability,
-    runParserOn,
+  ( runParserOn,
     runHelpParser,
   )
 where
@@ -38,10 +34,9 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Data.Traversable
-import Data.Validity (Validity)
-import GHC.Generics (Generic)
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
+import OptEnvConf.Capability
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
@@ -54,27 +49,6 @@ import OptEnvConf.Setting
 import OptEnvConf.Validation
 import System.IO
 import Text.Colour
-
--- Set of disabled capabilities
-newtype Capabilities = Capabilities {unCapabilities :: Set Capability}
-  deriving (Show, Generic)
-
-instance Validity Capabilities
-
-allCapabilities :: Capabilities
-allCapabilities = Capabilities {unCapabilities = Set.empty}
-
-enableCapability :: Capability -> Capabilities -> Capabilities
-enableCapability cap (Capabilities caps) =
-  Capabilities (Set.delete cap caps)
-
-disableCapability :: Capability -> Capabilities -> Capabilities
-disableCapability cap (Capabilities caps) =
-  Capabilities (Set.insert cap caps)
-
-missingCapabilities :: Capabilities -> Set Capability -> Maybe (NonEmpty Capability)
-missingCapabilities (Capabilities caps) requiredCapabilities =
-  NE.nonEmpty (Set.toList (Set.intersection requiredCapabilities caps))
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.
@@ -214,13 +188,8 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           a <- ppIndent $ go p'
           debug ["check"]
           -- Only perform the check (IO) if capabilities are sufficient
-          ppIndent $ case missingCapabilities capabilities requiredCapabilities of
-            Just missings -> do
-              debug $
-                "Missing capabilities: "
-                  : capabilitiesChunks (Set.fromList (NE.toList missings))
-              ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
-            Nothing -> do
+          ppIndent $
+            withCapabilities mLoc requiredCapabilities capabilities $ do
               errOrB <- liftIO $ f a
               case errOrB of
                 Left err -> do
@@ -263,6 +232,17 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
               go pa
       ParserSetting mLoc set@Setting {..} -> do
         debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
+        when (not (Set.null settingRequiredCapabilities)) $
+          debug $
+            "Requires capabilities: "
+              : capabilitiesChunks settingRequiredCapabilities
+
+        -- Any argument parsing needs to still try to consume the relevant arguments, so we need to put
+        -- this helper function after that instead of arround the whole setting parsing.
+        -- After all the arguments, options, and switches have been tried, the rest can have a blanket 'cap'.
+        let cap :: forall r. PP r -> PP r
+            cap = withCapabilities mLoc settingRequiredCapabilities capabilities
+
         ppIndent $ do
           let markParsed = do
                 maybe
@@ -289,7 +269,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                   Nothing -> do
                     debug ["could not set based on argument: no argument"]
                     pure NotFound
-                  Just argStr -> do
+                  Just argStr -> cap $
                     case tryReaders rs argStr of
                       Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
                       Right a -> do
@@ -316,7 +296,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                           chunk $ T.pack $ show $ map renderDashed settingDasheds
                         ]
                       pure NotFound
-                    Just () -> do
+                    Just () -> cap $ do
                       debug ["set based on switch."]
                       pure $ Found a
 
@@ -339,7 +319,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                                 chunk $ T.pack $ show $ map renderDashed settingDasheds
                               ]
                             pure NotFound
-                          Just optionStr -> do
+                          Just optionStr -> cap $
                             case tryReaders rs optionStr of
                               Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
                               Right a -> do
@@ -356,7 +336,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                       pure a
                     _ -> do
                       let mEnvDoc = settingEnvDoc set
-                      mEnv <- case settingEnvVars of
+                      mEnv <- cap $ case settingEnvVars of
                         Nothing -> pure NotRun
                         Just ne -> do
                           -- Require readers before finding the env vars so the parser
@@ -472,6 +452,21 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                                           parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
                                           parseResultError (ParseErrorMissingConfVal mConfDoc) mConf
                                         ]
+
+withCapabilities ::
+  Maybe SrcLoc ->
+  Set Capability ->
+  Capabilities ->
+  PP a ->
+  PP a
+withCapabilities mLoc requiredCapabilities capabilities func =
+  case missingCapabilities capabilities requiredCapabilities of
+    Just missings -> do
+      debug $
+        "Missing capabilities: "
+          : capabilitiesChunks (Set.fromList (NE.toList missings))
+      ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
+    Nothing -> func
 
 data ParseResult a
   = NotRun

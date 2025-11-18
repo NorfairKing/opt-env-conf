@@ -16,6 +16,7 @@ import qualified Data.List.NonEmpty as NE
 import GHC.Generics (Generic)
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
+import OptEnvConf.Capability
 import OptEnvConf.EnvMap (EnvMap (..))
 import OptEnvConf.Error
 import OptEnvConf.Parser

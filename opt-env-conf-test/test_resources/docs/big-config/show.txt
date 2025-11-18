@@ -28,8 +28,12 @@ WithConfig
                        []))
                  Nothing
                  Nothing
+                 []
+                 False
                  (Just "FILE_PATH")
-                 (Just "Path to the configuration file"))))
+                 (Just "Path to the configuration file")
+                 (Just _)
+                 (fromList []))))
         (Check Nothing False (fromList []) _ (Pure _))))
   (Setting
      Nothing
@@ -73,5 +77,9 @@ WithConfig
                           _ _ (OptionalKeyCodec "sub" Nothing (StringCodec Nothing)))))) :|
               []))
         Nothing
+        []
+        False
         Nothing
-        (Just "big configuration object")))
+        (Just "big configuration object")
+        Nothing
+        (fromList [])))

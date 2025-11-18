@@ -139,38 +139,42 @@ spec = do
               shouldParse p Args.emptyArgs e mConf expected
 
     describe "RequireCapability" $ do
-      it "can run the parser if the capability is available" $
+      it "can run the check parser if the capability is available" $
         forAllValid $ \capabilitiesPrototype ->
           forAllValid $ \e ->
             forAllValid $ \mConf ->
               forAllValid $ \result ->
                 forAllValid $ \capName -> do
-                  let p = requireCapability capName (pure (result :: Int))
+                  let p :: Parser Int
+                      p = checkWithRequiredCapability capName $ checkMapEither (const (Left "failed")) (pure (result :: Int))
                   let cap = Capability (T.pack capName)
                   let capabilities = enableCapability cap capabilitiesPrototype
-                  shouldParse' p capabilities Args.emptyArgs e mConf result
+                  shouldFail' p capabilities Args.emptyArgs e mConf $ \case
+                    ParseErrorCheckFailed False "failed" :| [] -> True
+                    _ -> False
 
-      it "cannot run the parser if the capability is not available" $
+      it "cannot run the check parser if the capability is not available" $
         forAllValid $ \capabilitiesPrototype ->
           forAllValid $ \e ->
             forAllValid $ \mConf ->
               forAllValid $ \result ->
                 forAllValid $ \capName -> do
-                  let p = requireCapability capName (pure (result :: Int))
+                  let p :: Parser Int
+                      p = checkWithRequiredCapability capName $ checkMapEither (const (Left "failed")) (pure (result :: Int))
                   let cap = Capability (T.pack capName)
                   let capabilities = disableCapability cap capabilitiesPrototype
                   shouldFail' p capabilities Args.emptyArgs e mConf $ \case
                     ParseErrorMissingCapability _ :| [] -> True
                     _ -> False
 
-      it "still runs the below parser when a capability is missing" $
+      it "still runs the below parser when a capability is missing for the check parser" $
         forAllValid $ \capabilitiesPrototype ->
           forAllValid $ \capName ->
             forAllValid $ \result ->
               forAllValid $ \e ->
                 forAllValid $ \mConf -> do
                   var <- newMVar 0
-                  let p = requireCapability capName (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
+                  let p = checkWithRequiredCapability capName (mapIO pure (mapIO (swapMVar var) (pure (result :: Int))))
                   let cap = Capability (T.pack capName)
                   let capabilities = disableCapability cap capabilitiesPrototype
                   errOrRes <- runParserOn capabilities Nothing p Args.emptyArgs e mConf
@@ -183,6 +187,32 @@ spec = do
                                         )
                       readMVar var `shouldReturn` result -- instead of 1
                     Right _ -> expectationFailure "The parser should not have succeeded."
+
+      it "can run the setting parser if the capability is available" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \capName -> do
+                let p :: Parser Int
+                    p = setting [argument, reader auto, requiredCapability capName] :: Parser Int
+                let cap = Capability (T.pack capName)
+                let capabilities = enableCapability cap capabilitiesPrototype
+                shouldFail' p capabilities Args.emptyArgs e mConf $ \case
+                  ParseErrorMissingArgument _ :| [] -> True
+                  _ -> False
+
+      it "cannot run the setting parser if the capability is available" $
+        forAllValid $ \capabilitiesPrototype ->
+          forAllValid $ \e ->
+            forAllValid $ \mConf ->
+              forAllValid $ \capName -> do
+                let p :: Parser Int
+                    p = setting [argument, reader auto, requiredCapability capName] :: Parser Int
+                let cap = Capability (T.pack capName)
+                let capabilities = disableCapability cap capabilitiesPrototype
+                shouldFail' p capabilities Args.emptyArgs e mConf $ \case
+                  ParseErrorMissingCapability _ :| [] -> True
+                  _ -> False
 
     describe "WithConfig" $ do
       it "can replace the config object" $

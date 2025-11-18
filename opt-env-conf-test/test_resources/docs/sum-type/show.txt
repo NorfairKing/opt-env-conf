@@ -14,8 +14,12 @@ WithConfig
            Nothing
            Nothing
            Nothing
+           []
+           False
            Nothing
-           (Just "a")))
+           (Just "a")
+           Nothing
+           (fromList [])))
      (Alt
         (Setting
            Nothing
@@ -28,8 +32,12 @@ WithConfig
               Nothing
               Nothing
               Nothing
+              []
+              False
               Nothing
-              (Just "b")))
+              (Just "b")
+              Nothing
+              (fromList [])))
         (Alt
            (Setting
               Nothing
@@ -47,8 +55,12 @@ WithConfig
                        []))
                  Nothing
                  Nothing
+                 []
+                 False
                  (Just "SUM_TYPE")
-                 (Just "example")))
+                 (Just "example")
+                 Nothing
+                 (fromList [])))
            (Alt
               (Setting
                  Nothing
@@ -71,8 +83,12 @@ WithConfig
                              (BimapCodec _ _ (StringCodec Nothing))) :|
                           []))
                     Nothing
+                    []
+                    False
                     Nothing
-                    (Just "example")))
+                    (Just "example")
+                    Nothing
+                    (fromList [])))
               (Setting
                  Nothing
                  (Setting
@@ -84,5 +100,9 @@ WithConfig
                     Nothing
                     Nothing
                     (Just _)
+                    []
+                    False
                     Nothing
-                    (Just "example")))))))
+                    (Just "example")
+                    Nothing
+                    (fromList [])))))))

@@ -11,6 +11,7 @@ where
 import qualified Data.Text as T
 import Data.Version
 import OptEnvConf.Args as Args
+import OptEnvConf.Capability
 import OptEnvConf.Check
 import OptEnvConf.Completion
 import OptEnvConf.Doc

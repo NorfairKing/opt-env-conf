@@ -16,5 +16,9 @@ Check
            Nothing
            Nothing
            Nothing
+           []
+           False
            Nothing
-           (Just "Verbosity level. Use multiple to increase verbosity"))))
+           (Just "Verbosity level. Use multiple to increase verbosity")
+           Nothing
+           (fromList []))))

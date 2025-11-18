@@ -19,8 +19,12 @@ WithConfig
               Nothing
               Nothing
               Nothing
+              []
+              False
               Nothing
-              (Just "Example of an enable/disable switch"))))
+              (Just "Example of an enable/disable switch")
+              Nothing
+              (fromList []))))
      (Alt
         (Check
            Nothing
@@ -38,8 +42,12 @@ WithConfig
                  Nothing
                  Nothing
                  Nothing
+                 []
+                 True
                  Nothing
-                 Nothing)))
+                 Nothing
+                 Nothing
+                 (fromList []))))
         (Alt
            (Check
               Nothing
@@ -57,8 +65,12 @@ WithConfig
                     Nothing
                     Nothing
                     Nothing
+                    []
+                    True
                     Nothing
-                    Nothing)))
+                    Nothing
+                    Nothing
+                    (fromList []))))
            (Alt
               (Check
                  Nothing
@@ -81,8 +93,12 @@ WithConfig
                              []))
                        Nothing
                        Nothing
+                       []
+                       False
                        (Just "BOOL")
-                       (Just "Example of an enable/disable switch"))))
+                       (Just "Example of an enable/disable switch")
+                       Nothing
+                       (fromList []))))
               (Alt
                  (Check
                     Nothing
@@ -107,6 +123,10 @@ WithConfig
                                 (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
                                 []))
                           Nothing
+                          []
+                          False
                           Nothing
-                          (Just "Example of an enable/disable switch"))))
+                          (Just "Example of an enable/disable switch")
+                          Nothing
+                          (fromList []))))
                  (Pure _))))))

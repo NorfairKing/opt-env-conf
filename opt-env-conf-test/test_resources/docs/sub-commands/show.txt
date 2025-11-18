@@ -28,8 +28,12 @@ WithConfig
                        []))
                  Nothing
                  Nothing
+                 []
+                 False
                  (Just "FILE_PATH")
-                 (Just "Path to the configuration file"))))
+                 (Just "Path to the configuration file")
+                 (Just _)
+                 (fromList []))))
         (Check Nothing False (fromList []) _ (Pure _))))
   (Commands
      Nothing
@@ -66,8 +70,12 @@ WithConfig
                            (BimapCodec _ _ (StringCodec Nothing))) :|
                         []))
                   Nothing
+                  [ "john" ]
+                  False
                   (Just "NAME")
-                  (Just "name"))))
+                  (Just "name")
+                  Nothing
+                  (fromList []))))
      , Command
          "sub"
          "command with subcommands"

@@ -1,8 +1,6 @@
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -27,8 +25,8 @@ module OptEnvConf.Parser
     checkMapEitherForgivable,
     checkMapIOForgivable,
     checkMapMaybeForgivable,
+    checkWithRequiredCapability,
     allOrNothing,
-    requireCapability,
     commands,
     command,
     defaultCommand,
@@ -105,10 +103,9 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Data.Validity
-import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
+import OptEnvConf.Capability
 import OptEnvConf.Casing
 import OptEnvConf.Completer
 import OptEnvConf.Reader
@@ -225,20 +222,6 @@ data Parser a where
     !(Maybe SrcLoc) ->
     !(Setting a) ->
     Parser a
-
-newtype Capability = Capability {unCapability :: Text}
-  deriving stock (Generic)
-  deriving newtype (Show, Eq, Ord, IsString)
-
-instance Validity Capability
-
--- | The annotation for any setting reading secrets.
---
--- We add these so that we can disable them in settings checks, to avoid
--- failing settings checks when secrets are read at runtime instead of
--- build-time.
-readSecretCapability :: String
-readSecretCapability = "read-secret"
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -669,13 +652,13 @@ allOrNothing = ParserAllOrNothing mLoc
 -- that we can run a settings check without that power to still check the rest
 -- of the parser.
 --
--- This only makes sense when used with a 'checkMap', 'checkEither', 'mapIO',
--- 'runIO', or similar function because the capability requirement is attached
--- to the Check node in the parser tree.
+-- This only makes sense when used with a 'checkMap', 'checkEither',
+-- 'mapIO', 'runIO', or similar function because the capability requirement is
+-- attached to the Setting or Check node in the parser tree.
 -- When used without such a node, this will attach a no-op Check node to the
 -- parser tree and as such still try to do all the parsing below but not above.
-requireCapability :: (HasCallStack) => String -> Parser a -> Parser a
-requireCapability capName = \case
+checkWithRequiredCapability :: (HasCallStack) => String -> Parser a -> Parser a
+checkWithRequiredCapability capName = \case
   ParserCheck mLoc' forgivable caps f p ->
     ParserCheck mLoc' forgivable (Set.insert cap caps) f p
   p -> ParserCheck mLoc False (Set.singleton cap) (pure . Right) p
@@ -921,7 +904,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingHidden = True,
             settingMetavar = Nothing,
             settingHelp = Nothing,
-            settingCompleter = Nothing
+            settingCompleter = Nothing,
+            settingRequiredCapabilities = Set.empty
           }
     parseDisableSwitch :: Parser Bool
     parseDisableSwitch =
@@ -939,7 +923,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingHidden = True,
             settingMetavar = Nothing,
             settingHelp = Nothing,
-            settingCompleter = Nothing
+            settingCompleter = Nothing,
+            settingRequiredCapabilities = Set.empty
           }
 
     parseEnv :: Maybe (Parser Bool)
@@ -960,7 +945,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingHidden = False,
               settingMetavar = Just "BOOL",
               settingHelp = settingHelp s,
-              settingCompleter = Nothing
+              settingCompleter = Nothing,
+              settingRequiredCapabilities = Set.empty
             }
     parseConfigVal :: Maybe (Parser Bool)
     parseConfigVal = do
@@ -980,7 +966,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingHidden = False,
               settingMetavar = Nothing,
               settingHelp = settingHelp s,
-              settingCompleter = Nothing
+              settingCompleter = Nothing,
+              settingRequiredCapabilities = Set.empty
             }
     parseDummy :: Parser Bool
     parseDummy =
@@ -998,7 +985,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingHidden = False,
             settingMetavar = Nothing,
             settingHelp = settingHelp s,
-            settingCompleter = Nothing
+            settingCompleter = Nothing,
+            settingRequiredCapabilities = Set.empty
           }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed
     prefixDashedLong prefix = \case
@@ -1014,7 +1002,9 @@ readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 secretTextFileSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
 secretTextFileSetting bs =
   withFrozenCallStack $
-    requireCapability readSecretCapability $
+    -- Require the capability only for reading the secret file, not for parsing
+    -- the string as a path.
+    checkWithRequiredCapability readSecretCapability $
       mapIO readSecretTextFile $
         filePathSetting bs
 
@@ -1038,12 +1028,16 @@ secretTextFileOrBareSetting bs =
     bareSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "SECRET"]
       guard $ p s
-      pure $ T.pack <$> ParserSetting mLoc s
+      pure $
+        -- Require the capability for the entire setting because the secret may be
+        -- passed as an env var.
+        checkWithRequiredCapability readSecretCapability $
+          T.pack <$> ParserSetting mLoc s
     fileSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "FILE_PATH"]
       guard $ p s
       pure $
-        requireCapability readSecretCapability $
+        checkWithRequiredCapability readSecretCapability $
           -- These two mapIOs are not combined because the capability should
           -- only apply to the reading, not the resolving.
           mapIO readSecretTextFile $

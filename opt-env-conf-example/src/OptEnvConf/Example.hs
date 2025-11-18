@@ -78,7 +78,7 @@ instance HasParser Dispatch where
           -- This requireCapability and exitFailure are just here as an example, and used in a check.
           -- [ref:CapabilityCheck]
           -- Normally this would just be "pure DispatchDelete".
-          requireCapability "exit" $
+          checkWithRequiredCapability "exit" $
             mapIO (const exitFailure) $
               pure DispatchDelete
       ]

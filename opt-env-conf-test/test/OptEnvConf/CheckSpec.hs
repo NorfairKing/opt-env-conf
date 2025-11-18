@@ -42,7 +42,7 @@ spec = sequential $
                           )
 
       it "says incapable when a required capability is missing" $ do
-        let p = requireCapability readSecretCapability $ checkMapEither (const (Left "failed")) $ setting [argument, reader string] :: Parser String
+        let p = checkWithRequiredCapability readSecretCapability $ checkMapEither (const (Left "failed")) $ setting [argument, reader string] :: Parser String
         stderrTc <- getTerminalCapabilitiesFromHandle stderr
         checkResult <- runSettingsCheckOn (disableCapability (Capability "read-secret") allCapabilities) stderrTc p ["arg"] EnvMap.empty Nothing
         checkResult
@@ -52,7 +52,7 @@ spec = sequential $
                           )
 
       it "says failed when a required capability is available" $ do
-        let p = requireCapability readSecretCapability $ checkMapEither (const (Left "failed")) $ setting [argument, reader string] :: Parser String
+        let p = checkWithRequiredCapability readSecretCapability $ checkMapEither (const (Left "failed")) $ setting [argument, reader string] :: Parser String
         stderrTc <- getTerminalCapabilitiesFromHandle stderr
         checkResult <- runSettingsCheckOn allCapabilities stderrTc p ["arg"] EnvMap.empty Nothing
         checkResult
@@ -65,7 +65,7 @@ spec = sequential $
         let p :: Parser (String, String)
             p =
               (,)
-                <$> requireCapability readSecretCapability (checkMapEither (const (Left "failed")) $ setting [argument, reader string])
+                <$> checkWithRequiredCapability readSecretCapability (checkMapEither (const (Left "failed")) $ setting [argument, reader string])
                 <*> checkMapEither (const (Left "failed")) (setting [argument, reader string])
 
         stderrTc <- getTerminalCapabilitiesFromHandle stderr

@@ -14,5 +14,9 @@ Check
         Nothing
         Nothing
         (Just _)
+        []
+        True
         (Just "STR")
-        (Just "Example of a hidden setting")))
+        (Just "Example of a hidden setting")
+        Nothing
+        (fromList [])))

@@ -28,8 +28,12 @@ WithConfig
                        []))
                  Nothing
                  Nothing
+                 []
+                 False
                  (Just "FILE_PATH")
-                 (Just "Path to the configuration file"))))
+                 (Just "Path to the configuration file")
+                 (Just _)
+                 (fromList []))))
         (Check Nothing False (fromList []) _ (Pure _))))
   (Ap
      (Ap
@@ -64,8 +68,12 @@ WithConfig
                           (BimapCodec _ _ (StringCodec Nothing))) :|
                        []))
                  (Just _)
+                 [ "Greetings" ]
+                 False
                  (Just "GREETING")
-                 (Just "Greeting to use"))))
+                 (Just "Greeting to use")
+                 Nothing
+                 (fromList []))))
         (Setting
            Nothing
            (Setting
@@ -77,8 +85,12 @@ WithConfig
               Nothing
               Nothing
               (Just _)
+              []
+              False
               (Just "SUBJECT")
-              (Just "Who to greet"))))
+              (Just "Who to greet")
+              Nothing
+              (fromList []))))
      (Setting
         Nothing
         (Setting
@@ -102,5 +114,9 @@ WithConfig
                  (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
                  []))
            (Just _)
+           []
+           False
            (Just "ANY")
-           (Just "Whether to be polite"))))
+           (Just "Whether to be polite")
+           Nothing
+           (fromList []))))

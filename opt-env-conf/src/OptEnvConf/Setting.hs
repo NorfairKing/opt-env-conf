@@ -1,8 +1,10 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-unused-pattern-binds #-}
 
 module OptEnvConf.Setting
   ( Setting (..),
@@ -37,6 +39,8 @@ module OptEnvConf.Setting
     completer,
     Builder (..),
     BuildInstruction (..),
+    requiredCapability,
+    readSecretCapability,
 
     -- * Internal
     showSettingABit,
@@ -59,7 +63,11 @@ import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
+import qualified Data.Text as T
 import OptEnvConf.Args (Dashed (..), renderDashed)
+import OptEnvConf.Capability
 import OptEnvConf.Casing
 import OptEnvConf.Completer
 import OptEnvConf.Reader
@@ -99,7 +107,8 @@ data Setting a = Setting
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String),
-    settingCompleter :: !(Maybe Completer)
+    settingCompleter :: !(Maybe Completer),
+    settingRequiredCapabilities :: !(Set Capability)
   }
 
 -- An 'Ord'-able Setting without giving 'Setting' an 'Eq' instance
@@ -180,33 +189,43 @@ emptySetting =
       settingExamples = [],
       settingHidden = False,
       settingDefaultValue = Nothing,
-      settingCompleter = Nothing
+      settingCompleter = Nothing,
+      settingRequiredCapabilities = Set.empty
     }
 
 -- | Show a 'Setting' as much as possible, for debugging
 showSettingABit :: Setting a -> ShowS
 showSettingABit Setting {..} =
-  showParen True $
-    showString "Setting "
-      . showsPrec 11 settingDasheds
-      . showString " "
-      . showListWith (\_ -> showString "_") settingReaders
-      . showString " "
-      . showsPrec 11 settingTryArgument
-      . showString " "
-      . showMaybeWith (\_ -> showString "_") settingSwitchValue
-      . showString " "
-      . showsPrec 11 settingTryOption
-      . showString " "
-      . showsPrec 11 settingEnvVars
-      . showString " "
-      . showMaybeWith (showNonEmptyWith showConfigValSettingABit) settingConfigVals
-      . showString " "
-      . showMaybeWith (\_ -> showString "_") settingDefaultValue
-      . showString " "
-      . showsPrec 11 settingMetavar
-      . showString " "
-      . showsPrec 11 settingHelp
+  let Setting _ _ _ _ _ _ _ _ _ _ _ _ _ _ = undefined
+   in showParen True $
+        showString "Setting "
+          . showsPrec 11 settingDasheds
+          . showString " "
+          . showListWith (\_ -> showString "_") settingReaders
+          . showString " "
+          . showsPrec 11 settingTryArgument
+          . showString " "
+          . showMaybeWith (\_ -> showString "_") settingSwitchValue
+          . showString " "
+          . showsPrec 11 settingTryOption
+          . showString " "
+          . showsPrec 11 settingEnvVars
+          . showString " "
+          . showMaybeWith (showNonEmptyWith showConfigValSettingABit) settingConfigVals
+          . showString " "
+          . showMaybeWith (\_ -> showString "_") settingDefaultValue
+          . showString " "
+          . showsPrec 11 settingExamples
+          . showString " "
+          . showsPrec 11 settingHidden
+          . showString " "
+          . showsPrec 11 settingMetavar
+          . showString " "
+          . showsPrec 11 settingHelp
+          . showString " "
+          . showMaybeWith (\_ -> showString "_") settingCompleter
+          . showString " "
+          . showsPrec 11 settingRequiredCapabilities
 
 showConfigValSettingABit :: ConfigValSetting a -> ShowS
 showConfigValSettingABit ConfigValSetting {..} =
@@ -244,6 +263,7 @@ data BuildInstruction a
   | BuildAddExample !String
   | BuildSetHidden
   | BuildSetCompleter !Completer
+  | BuildAddRequiredCapability !Capability
 
 applyBuildInstructions :: [BuildInstruction a] -> Setting a -> Setting a
 applyBuildInstructions is s = foldr applyBuildInstruction s is
@@ -264,6 +284,7 @@ applyBuildInstruction bi s = case bi of
   BuildAddExample e -> s {settingExamples = e : settingExamples s}
   BuildSetHidden -> s {settingHidden = True}
   BuildSetCompleter c -> s {settingCompleter = Just c}
+  BuildAddRequiredCapability c -> s {settingRequiredCapabilities = Set.insert c (settingRequiredCapabilities s)}
 
 instance Semigroup (Builder f) where
   (<>) (Builder f1) (Builder f2) = Builder (f1 <> f2)
@@ -446,3 +467,7 @@ hidden = Builder [BuildSetHidden]
 -- Multiple 'completer's are redundant.
 completer :: Completer -> Builder a
 completer c = Builder [BuildSetCompleter c]
+
+-- | Annotate a setting with a required capability.
+requiredCapability :: String -> Builder a
+requiredCapability c = Builder [BuildAddRequiredCapability (Capability (T.pack c))]
