@@ -7,6 +7,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module OptEnvConf.Run
   ( Capabilities (..),
@@ -263,8 +264,11 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
             "Requires capabilities: "
               : capabilitiesChunks requiredCapabilities
 
-        let cap =
-              withCapabilities mLoc requiredCapabilities capabilities
+        -- Any argument parsing needs to still try to consume the relevant arguments, so we need to put
+        -- this helper function after that instead of arround the whole setting parsing.
+        -- After all the arguments, options, and switches have been tried, the rest can have a blanket 'cap'.
+        let cap :: forall r. PP r -> PP r
+            cap = withCapabilities mLoc requiredCapabilities capabilities
 
         ppIndent $ do
           let markParsed = do
@@ -397,7 +401,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
                           let mConfDoc = settingConfDoc set
                           mConf <- case settingConfigVals of
                             Nothing -> pure NotRun
-                            Just confSets -> cap $ do
+                            Just confSets -> do
                               mObj <- asks ppEnvConf
                               case mObj of
                                 Nothing -> do
