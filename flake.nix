@@ -1,8 +1,8 @@
 {
   description = "opt-env-conf";
   nixConfig = {
-    extra-substituters = "https://foobar.cachix.org";
-    extra-trusted-public-keys = "foobar.cachix.org-1:srabhQPgZR0EO+bOppsCWbesHOgk8ABakPL8D1h5wOU=";
+    extra-substituters = "https://opt-env-conf.cachix.org";
+    extra-trusted-public-keys = "opt-env-conf.cachix.org-1:srabhQPgZR0EO+bOppsCWbesHOgk8ABakPL8D1h5wOU=";
   };
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.11";
