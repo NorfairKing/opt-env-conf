@@ -26,6 +26,7 @@ library
   exposed-modules:
       OptEnvConf
       OptEnvConf.Args
+      OptEnvConf.Capability
       OptEnvConf.Casing
       OptEnvConf.Check
       OptEnvConf.Completer

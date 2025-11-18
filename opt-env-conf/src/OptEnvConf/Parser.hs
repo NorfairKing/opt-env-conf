@@ -105,6 +105,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
+import OptEnvConf.Capability
 import OptEnvConf.Casing
 import OptEnvConf.Completer
 import OptEnvConf.Reader

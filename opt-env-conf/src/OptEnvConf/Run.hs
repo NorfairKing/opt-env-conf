@@ -36,6 +36,7 @@ import qualified Data.Text as T
 import Data.Traversable
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
+import OptEnvConf.Capability
 import OptEnvConf.Doc
 import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap

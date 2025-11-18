@@ -1,8 +1,6 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -57,14 +55,6 @@ module OptEnvConf.Setting
     suffixEnvVarSetting,
     prefixConfigValSetting,
     suffixConfigValSettingKey,
-
-    -- ** Capabilities
-    Capabilities (..),
-    Capability (..),
-    allCapabilities,
-    enableCapability,
-    disableCapability,
-    missingCapabilities,
   )
 where
 
@@ -75,13 +65,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.String
-import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Validity
-import Data.Validity.Text ()
-import GHC.Generics (Generic)
 import OptEnvConf.Args (Dashed (..), renderDashed)
+import OptEnvConf.Capability
 import OptEnvConf.Casing
 import OptEnvConf.Completer
 import OptEnvConf.Reader
@@ -485,38 +471,3 @@ completer c = Builder [BuildSetCompleter c]
 -- | Annotate a setting with a required capability.
 requiredCapability :: String -> Builder a
 requiredCapability c = Builder [BuildAddRequiredCapability (Capability (T.pack c))]
-
--- Set of disabled capabilities
-newtype Capabilities = Capabilities {unCapabilities :: Set Capability}
-  deriving (Show, Generic)
-
-instance Validity Capabilities
-
-allCapabilities :: Capabilities
-allCapabilities = Capabilities {unCapabilities = Set.empty}
-
-enableCapability :: Capability -> Capabilities -> Capabilities
-enableCapability cap (Capabilities caps) =
-  Capabilities (Set.delete cap caps)
-
-disableCapability :: Capability -> Capabilities -> Capabilities
-disableCapability cap (Capabilities caps) =
-  Capabilities (Set.insert cap caps)
-
-missingCapabilities :: Capabilities -> Set Capability -> Maybe (NonEmpty Capability)
-missingCapabilities (Capabilities caps) requiredCapabilities =
-  NE.nonEmpty (Set.toList (Set.intersection requiredCapabilities caps))
-
-newtype Capability = Capability {unCapability :: Text}
-  deriving stock (Generic)
-  deriving newtype (Show, Eq, Ord, IsString)
-
-instance Validity Capability
-
--- | The annotation for any setting reading secrets.
---
--- We add these so that we can disable them in settings checks, to avoid
--- failing settings checks when secrets are read at runtime instead of
--- build-time.
-readSecretCapability :: String
-readSecretCapability = "read-secret"
