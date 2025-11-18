@@ -6,13 +6,13 @@
 module OptEnvConf.Check
   ( runSettingsCheck,
     runSettingsCheckOn,
+    CheckResult (..),
   )
 where
 
 import qualified Data.Aeson as JSON
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import Data.Maybe
 import GHC.Generics (Generic)
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
@@ -80,13 +80,17 @@ runSettingsCheckOn capabilities debugMode p args envVars mConfig = do
   pure $ case errOrSets of
     Right a -> CheckSucceeded a
     Left errs ->
-      let missingCaps =
-            mapMaybe
+      -- If all the errors are missing capability errors, return
+      -- CheckIncapable, otherwise CheckFailed
+      let mMissingCaps =
+            -- This MUST be mapM instead of mapMaybe because we need to ensure
+            -- ALL errors are missing capability errors
+            mapM
               ( \case
                   ParseError mLoc (ParseErrorMissingCapability cap) -> Just (MissingCapability mLoc cap)
                   _ -> Nothing
               )
-              (NE.toList errs)
-       in case NE.nonEmpty missingCaps of
+              errs
+       in case mMissingCaps of
             Just ne -> CheckIncapable ne
             Nothing -> CheckFailed errs
