@@ -6,6 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-unused-pattern-binds #-}
 
 module OptEnvConf.Setting
   ( Setting (..),
@@ -209,27 +210,36 @@ emptySetting =
 -- | Show a 'Setting' as much as possible, for debugging
 showSettingABit :: Setting a -> ShowS
 showSettingABit Setting {..} =
-  showParen True $
-    showString "Setting "
-      . showsPrec 11 settingDasheds
-      . showString " "
-      . showListWith (\_ -> showString "_") settingReaders
-      . showString " "
-      . showsPrec 11 settingTryArgument
-      . showString " "
-      . showMaybeWith (\_ -> showString "_") settingSwitchValue
-      . showString " "
-      . showsPrec 11 settingTryOption
-      . showString " "
-      . showsPrec 11 settingEnvVars
-      . showString " "
-      . showMaybeWith (showNonEmptyWith showConfigValSettingABit) settingConfigVals
-      . showString " "
-      . showMaybeWith (\_ -> showString "_") settingDefaultValue
-      . showString " "
-      . showsPrec 11 settingMetavar
-      . showString " "
-      . showsPrec 11 settingHelp
+  let Setting _ _ _ _ _ _ _ _ _ _ _ _ _ _ = undefined
+   in showParen True $
+        showString "Setting "
+          . showsPrec 11 settingDasheds
+          . showString " "
+          . showListWith (\_ -> showString "_") settingReaders
+          . showString " "
+          . showsPrec 11 settingTryArgument
+          . showString " "
+          . showMaybeWith (\_ -> showString "_") settingSwitchValue
+          . showString " "
+          . showsPrec 11 settingTryOption
+          . showString " "
+          . showsPrec 11 settingEnvVars
+          . showString " "
+          . showMaybeWith (showNonEmptyWith showConfigValSettingABit) settingConfigVals
+          . showString " "
+          . showMaybeWith (\_ -> showString "_") settingDefaultValue
+          . showString " "
+          . showsPrec 11 settingExamples
+          . showString " "
+          . showsPrec 11 settingHidden
+          . showString " "
+          . showsPrec 11 settingMetavar
+          . showString " "
+          . showsPrec 11 settingHelp
+          . showString " "
+          . showMaybeWith (\_ -> showString "_") settingCompleter
+          . showString " "
+          . showsPrec 11 settingRequiredCapabilities
 
 showConfigValSettingABit :: ConfigValSetting a -> ShowS
 showConfigValSettingABit ConfigValSetting {..} =

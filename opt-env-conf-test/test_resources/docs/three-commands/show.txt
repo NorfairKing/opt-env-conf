@@ -24,8 +24,12 @@ WithConfig
                   Nothing
                   Nothing
                   Nothing
+                  []
+                  False
                   (Just "STR")
-                  (Just "argument"))))
+                  (Just "argument")
+                  Nothing
+                  (fromList []))))
      , Command
          "two"
          "second"
@@ -69,8 +73,12 @@ WithConfig
                                       }))) :|
                            []))
                      Nothing
+                     [ "5" ]
+                     False
                      (Just "INT")
-                     (Just "number"))))
+                     (Just "number")
+                     Nothing
+                     (fromList []))))
             (Alt
                (Setting
                   Nothing
@@ -83,8 +91,12 @@ WithConfig
                      Nothing
                      Nothing
                      Nothing
+                     []
+                     False
                      Nothing
-                     (Just "enable extra")))
+                     (Just "enable extra")
+                     Nothing
+                     (fromList [])))
                (Alt
                   (Setting
                      Nothing
@@ -97,8 +109,12 @@ WithConfig
                         Nothing
                         Nothing
                         Nothing
+                        []
+                        True
                         Nothing
-                        Nothing))
+                        Nothing
+                        Nothing
+                        (fromList [])))
                   (Alt
                      (Setting
                         Nothing
@@ -111,8 +127,12 @@ WithConfig
                            Nothing
                            Nothing
                            Nothing
+                           []
+                           True
                            Nothing
-                           Nothing))
+                           Nothing
+                           Nothing
+                           (fromList [])))
                      (Alt
                         (Setting
                            Nothing
@@ -130,8 +150,12 @@ WithConfig
                                     []))
                               Nothing
                               Nothing
+                              []
+                              False
                               (Just "BOOL")
-                              (Just "enable extra")))
+                              (Just "enable extra")
+                              Nothing
+                              (fromList [])))
                         (Alt
                            (Setting
                               Nothing
@@ -152,8 +176,12 @@ WithConfig
                                           PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
                                        []))
                                  Nothing
+                                 []
+                                 False
                                  Nothing
-                                 (Just "enable extra")))
+                                 (Just "enable extra")
+                                 Nothing
+                                 (fromList [])))
                            (Pure _)))))))
      , Command "three-very-long-command-name" "third" (Pure _)
      ])

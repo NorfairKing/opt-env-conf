@@ -20,8 +20,12 @@ WithConfig
                  Nothing
                  Nothing
                  Nothing
+                 []
+                 False
                  Nothing
-                 (Just "Example of a yes/no switch"))))
+                 (Just "Example of a yes/no switch")
+                 Nothing
+                 (fromList []))))
         (Alt
            (Check
               Nothing
@@ -39,8 +43,12 @@ WithConfig
                     Nothing
                     Nothing
                     Nothing
+                    []
+                    True
                     Nothing
-                    Nothing)))
+                    Nothing
+                    Nothing
+                    (fromList []))))
            (Alt
               (Check
                  Nothing
@@ -58,8 +66,12 @@ WithConfig
                        Nothing
                        Nothing
                        Nothing
+                       []
+                       True
                        Nothing
-                       Nothing)))
+                       Nothing
+                       Nothing
+                       (fromList []))))
               (Alt
                  (Check
                     Nothing
@@ -82,8 +94,12 @@ WithConfig
                                 []))
                           Nothing
                           Nothing
+                          []
+                          False
                           (Just "BOOL")
-                          (Just "Example of a yes/no switch"))))
+                          (Just "Example of a yes/no switch")
+                          Nothing
+                          (fromList []))))
                  (Check
                     Nothing
                     True
@@ -107,6 +123,10 @@ WithConfig
                                 (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
                                 []))
                           Nothing
+                          []
+                          False
                           Nothing
-                          (Just "Example of a yes/no switch"))))))))
+                          (Just "Example of a yes/no switch")
+                          Nothing
+                          (fromList []))))))))
      (Pure _))

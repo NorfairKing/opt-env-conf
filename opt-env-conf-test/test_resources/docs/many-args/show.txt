@@ -11,5 +11,9 @@ Many
         Nothing
         Nothing
         Nothing
+        []
+        False
         (Just "ARGUMENT")
-        (Just "Argument")))
+        (Just "Argument")
+        Nothing
+        (fromList [])))
