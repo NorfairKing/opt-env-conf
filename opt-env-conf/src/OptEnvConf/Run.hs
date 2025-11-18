@@ -10,11 +10,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module OptEnvConf.Run
-  ( Capabilities (..),
-    allCapabilities,
-    enableCapability,
-    disableCapability,
-    runParserOn,
+  ( runParserOn,
     runHelpParser,
   )
 where
@@ -39,8 +35,6 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Data.Traversable
-import Data.Validity (Validity)
-import GHC.Generics (Generic)
 import GHC.Stack (SrcLoc)
 import OptEnvConf.Args as Args
 import OptEnvConf.Doc
@@ -55,27 +49,6 @@ import OptEnvConf.Setting
 import OptEnvConf.Validation
 import System.IO
 import Text.Colour
-
--- Set of disabled capabilities
-newtype Capabilities = Capabilities {unCapabilities :: Set Capability}
-  deriving (Show, Generic)
-
-instance Validity Capabilities
-
-allCapabilities :: Capabilities
-allCapabilities = Capabilities {unCapabilities = Set.empty}
-
-enableCapability :: Capability -> Capabilities -> Capabilities
-enableCapability cap (Capabilities caps) =
-  Capabilities (Set.delete cap caps)
-
-disableCapability :: Capability -> Capabilities -> Capabilities
-disableCapability cap (Capabilities caps) =
-  Capabilities (Set.insert cap caps)
-
-missingCapabilities :: Capabilities -> Set Capability -> Maybe (NonEmpty Capability)
-missingCapabilities (Capabilities caps) requiredCapabilities =
-  NE.nonEmpty (Set.toList (Set.intersection requiredCapabilities caps))
 
 -- | Run a parser on given arguments and environment instead of getting them
 -- from the current process.

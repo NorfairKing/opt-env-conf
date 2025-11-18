@@ -20,6 +20,7 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import OptEnvConf.Error
 import OptEnvConf.Parser
 import OptEnvConf.Run
+import OptEnvConf.Setting
 import OptEnvConf.Terminal (getTerminalCapabilitiesFromHandle)
 import System.Exit
 import System.IO (stderr, stdout)

@@ -34,6 +34,7 @@ library:
   - selective
   - text
   - validity
+  - validity-text
   - validity-containers
   when:
     - condition: "!os(windows)"

@@ -105,8 +105,6 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Data.Validity
-import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack, SrcLoc, callStack, getCallStack, withFrozenCallStack)
 import OptEnvConf.Args (Dashed (..), prefixDashed)
 import OptEnvConf.Casing
@@ -227,20 +225,6 @@ data Parser a where
     !(Set Capability) ->
     !(Setting a) ->
     Parser a
-
-newtype Capability = Capability {unCapability :: Text}
-  deriving stock (Generic)
-  deriving newtype (Show, Eq, Ord, IsString)
-
-instance Validity Capability
-
--- | The annotation for any setting reading secrets.
---
--- We add these so that we can disable them in settings checks, to avoid
--- failing settings checks when secrets are read at runtime instead of
--- build-time.
-readSecretCapability :: String
-readSecretCapability = "read-secret"
 
 instance Functor Parser where
   -- We case-match to produce shallower parser structures.
@@ -927,7 +911,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingHidden = True,
             settingMetavar = Nothing,
             settingHelp = Nothing,
-            settingCompleter = Nothing
+            settingCompleter = Nothing,
+            settingRequiredCapabilities = Set.empty
           }
     parseDisableSwitch :: Parser Bool
     parseDisableSwitch =
@@ -945,7 +930,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingHidden = True,
             settingMetavar = Nothing,
             settingHelp = Nothing,
-            settingCompleter = Nothing
+            settingCompleter = Nothing,
+            settingRequiredCapabilities = Set.empty
           }
 
     parseEnv :: Maybe (Parser Bool)
@@ -966,7 +952,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingHidden = False,
               settingMetavar = Just "BOOL",
               settingHelp = settingHelp s,
-              settingCompleter = Nothing
+              settingCompleter = Nothing,
+              settingRequiredCapabilities = Set.empty
             }
     parseConfigVal :: Maybe (Parser Bool)
     parseConfigVal = do
@@ -986,7 +973,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingHidden = False,
               settingMetavar = Nothing,
               settingHelp = settingHelp s,
-              settingCompleter = Nothing
+              settingCompleter = Nothing,
+              settingRequiredCapabilities = Set.empty
             }
     parseDummy :: Parser Bool
     parseDummy =
@@ -1004,7 +992,8 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingHidden = False,
             settingMetavar = Nothing,
             settingHelp = settingHelp s,
-            settingCompleter = Nothing
+            settingCompleter = Nothing,
+            settingRequiredCapabilities = Set.empty
           }
     prefixDashedLong :: String -> Dashed -> Maybe Dashed
     prefixDashedLong prefix = \case

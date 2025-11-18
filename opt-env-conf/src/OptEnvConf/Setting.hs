@@ -1,5 +1,8 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -37,6 +40,8 @@ module OptEnvConf.Setting
     completer,
     Builder (..),
     BuildInstruction (..),
+    requiredCapability,
+    readSecretCapability,
 
     -- * Internal
     showSettingABit,
@@ -51,6 +56,14 @@ module OptEnvConf.Setting
     suffixEnvVarSetting,
     prefixConfigValSetting,
     suffixConfigValSettingKey,
+
+    -- ** Capabilities
+    Capabilities (..),
+    Capability (..),
+    allCapabilities,
+    enableCapability,
+    disableCapability,
+    missingCapabilities,
   )
 where
 
@@ -59,6 +72,14 @@ import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
+import Data.String
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Validity
+import Data.Validity.Text ()
+import GHC.Generics (Generic)
 import OptEnvConf.Args (Dashed (..), renderDashed)
 import OptEnvConf.Casing
 import OptEnvConf.Completer
@@ -99,7 +120,8 @@ data Setting a = Setting
     -- | Which metavar should be show in documentation
     settingMetavar :: !(Maybe Metavar),
     settingHelp :: !(Maybe String),
-    settingCompleter :: !(Maybe Completer)
+    settingCompleter :: !(Maybe Completer),
+    settingRequiredCapabilities :: !(Set Capability)
   }
 
 -- An 'Ord'-able Setting without giving 'Setting' an 'Eq' instance
@@ -180,7 +202,8 @@ emptySetting =
       settingExamples = [],
       settingHidden = False,
       settingDefaultValue = Nothing,
-      settingCompleter = Nothing
+      settingCompleter = Nothing,
+      settingRequiredCapabilities = Set.empty
     }
 
 -- | Show a 'Setting' as much as possible, for debugging
@@ -244,6 +267,7 @@ data BuildInstruction a
   | BuildAddExample !String
   | BuildSetHidden
   | BuildSetCompleter !Completer
+  | BuildAddRequiredCapability !Capability
 
 applyBuildInstructions :: [BuildInstruction a] -> Setting a -> Setting a
 applyBuildInstructions is s = foldr applyBuildInstruction s is
@@ -264,6 +288,7 @@ applyBuildInstruction bi s = case bi of
   BuildAddExample e -> s {settingExamples = e : settingExamples s}
   BuildSetHidden -> s {settingHidden = True}
   BuildSetCompleter c -> s {settingCompleter = Just c}
+  BuildAddRequiredCapability c -> s {settingRequiredCapabilities = Set.insert c (settingRequiredCapabilities s)}
 
 instance Semigroup (Builder f) where
   (<>) (Builder f1) (Builder f2) = Builder (f1 <> f2)
@@ -446,3 +471,42 @@ hidden = Builder [BuildSetHidden]
 -- Multiple 'completer's are redundant.
 completer :: Completer -> Builder a
 completer c = Builder [BuildSetCompleter c]
+
+-- | Annotate a setting with a required capability.
+requiredCapability :: String -> Builder a
+requiredCapability c = Builder [BuildAddRequiredCapability (Capability (T.pack c))]
+
+-- Set of disabled capabilities
+newtype Capabilities = Capabilities {unCapabilities :: Set Capability}
+  deriving (Show, Generic)
+
+instance Validity Capabilities
+
+allCapabilities :: Capabilities
+allCapabilities = Capabilities {unCapabilities = Set.empty}
+
+enableCapability :: Capability -> Capabilities -> Capabilities
+enableCapability cap (Capabilities caps) =
+  Capabilities (Set.delete cap caps)
+
+disableCapability :: Capability -> Capabilities -> Capabilities
+disableCapability cap (Capabilities caps) =
+  Capabilities (Set.insert cap caps)
+
+missingCapabilities :: Capabilities -> Set Capability -> Maybe (NonEmpty Capability)
+missingCapabilities (Capabilities caps) requiredCapabilities =
+  NE.nonEmpty (Set.toList (Set.intersection requiredCapabilities caps))
+
+newtype Capability = Capability {unCapability :: Text}
+  deriving stock (Generic)
+  deriving newtype (Show, Eq, Ord, IsString)
+
+instance Validity Capability
+
+-- | The annotation for any setting reading secrets.
+--
+-- We add these so that we can disable them in settings checks, to avoid
+-- failing settings checks when secrets are read at runtime instead of
+-- build-time.
+readSecretCapability :: String
+readSecretCapability = "read-secret"
