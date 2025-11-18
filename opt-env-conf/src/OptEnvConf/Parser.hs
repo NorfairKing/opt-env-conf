@@ -673,13 +673,15 @@ allOrNothing = ParserAllOrNothing mLoc
 -- that we can run a settings check without that power to still check the rest
 -- of the parser.
 --
--- This only makes sense when used with a 'checkMap', 'checkEither', 'mapIO',
--- 'runIO', or similar function because the capability requirement is attached
--- to the Check node in the parser tree.
+-- This only makes sense when used with a 'setting', 'checkMap', 'checkEither',
+-- 'mapIO', 'runIO', or similar function because the capability requirement is
+-- attached to the Setting or Check node in the parser tree.
 -- When used without such a node, this will attach a no-op Check node to the
 -- parser tree and as such still try to do all the parsing below but not above.
 requireCapability :: (HasCallStack) => String -> Parser a -> Parser a
 requireCapability capName = \case
+  ParserSetting mLoc' caps s ->
+    ParserSetting mLoc' (Set.insert cap caps) s
   ParserCheck mLoc' forgivable caps f p ->
     ParserCheck mLoc' forgivable (Set.insert cap caps) f p
   p -> ParserCheck mLoc False (Set.singleton cap) (pure . Right) p

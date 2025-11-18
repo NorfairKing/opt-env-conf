@@ -214,13 +214,8 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           a <- ppIndent $ go p'
           debug ["check"]
           -- Only perform the check (IO) if capabilities are sufficient
-          ppIndent $ case missingCapabilities capabilities requiredCapabilities of
-            Just missings -> do
-              debug $
-                "Missing capabilities: "
-                  : capabilitiesChunks (Set.fromList (NE.toList missings))
-              ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
-            Nothing -> do
+          ppIndent $
+            withCapabilities mLoc requiredCapabilities capabilities $ do
               errOrB <- liftIO $ f a
               case errOrB of
                 Left err -> do
@@ -261,217 +256,238 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           ppIndent $
             local (\e -> e {ppEnvConf = mNewConfig}) $
               go pa
-      ParserSetting mLoc _ set@Setting {..} -> do
+      ParserSetting mLoc requiredCapabilities set@Setting {..} -> do
         debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
-        ppIndent $ do
-          let markParsed = do
-                maybe
-                  (pure ())
-                  ( \loc -> modify' $ \s ->
-                      s
-                        { ppStateParsedSettings =
-                            M.insert
-                              (hashSetting set)
-                              loc
-                              (ppStateParsedSettings s)
-                        }
-                  )
-                  mLoc
-          let mOptDoc = settingOptDoc set
-          mArg <-
-            if settingTryArgument
-              then do
-                -- Require readers before finding the argument so the parser
-                -- always fails if it's missing a reader.
-                rs <- requireReaders settingReaders
-                mS <- ppArg
-                case mS of
-                  Nothing -> do
-                    debug ["could not set based on argument: no argument"]
-                    pure NotFound
-                  Just argStr -> do
-                    case tryReaders rs argStr of
-                      Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
-                      Right a -> do
-                        debug
-                          [ "set based on argument: ",
-                            chunk $ T.pack $ show argStr
-                          ]
-                        pure $ Found a
-              else pure NotRun
+        when (not (Set.null requiredCapabilities)) $
+          debug $
+            "Requires capabilities: "
+              : capabilitiesChunks requiredCapabilities
 
-          case mArg of
-            Found a -> do
-              markParsed
-              pure a
-            _ -> do
-              mSwitch <- case settingSwitchValue of
-                Nothing -> pure NotRun
-                Just a -> do
-                  mS <- ppSwitch settingDasheds
+        ppIndent $
+          withCapabilities mLoc requiredCapabilities capabilities $ do
+            let markParsed = do
+                  maybe
+                    (pure ())
+                    ( \loc -> modify' $ \s ->
+                        s
+                          { ppStateParsedSettings =
+                              M.insert
+                                (hashSetting set)
+                                loc
+                                (ppStateParsedSettings s)
+                          }
+                    )
+                    mLoc
+            let mOptDoc = settingOptDoc set
+            mArg <-
+              if settingTryArgument
+                then do
+                  -- Require readers before finding the argument so the parser
+                  -- always fails if it's missing a reader.
+                  rs <- requireReaders settingReaders
+                  mS <- ppArg
                   case mS of
                     Nothing -> do
-                      debug
-                        [ "could not set based on switch, no switch: ",
-                          chunk $ T.pack $ show $ map renderDashed settingDasheds
-                        ]
+                      debug ["could not set based on argument: no argument"]
                       pure NotFound
-                    Just () -> do
-                      debug ["set based on switch."]
-                      pure $ Found a
+                    Just argStr -> do
+                      case tryReaders rs argStr of
+                        Left errs -> ppError mLoc $ ParseErrorArgumentRead mOptDoc errs
+                        Right a -> do
+                          debug
+                            [ "set based on argument: ",
+                              chunk $ T.pack $ show argStr
+                            ]
+                          pure $ Found a
+                else pure NotRun
 
-              case mSwitch of
-                Found a -> do
-                  markParsed
-                  pure a
-                _ -> do
-                  mOpt <-
-                    if settingTryOption
-                      then do
-                        -- Require readers before finding the option so the parser
-                        -- always fails if it's missing a reader.
-                        rs <- requireReaders settingReaders
-                        mS <- ppOpt settingDasheds
-                        case mS of
-                          Nothing -> do
-                            debug
-                              [ "could not set based on options, no option: ",
-                                chunk $ T.pack $ show $ map renderDashed settingDasheds
-                              ]
-                            pure NotFound
-                          Just optionStr -> do
-                            case tryReaders rs optionStr of
-                              Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
-                              Right a -> do
-                                debug
-                                  [ "set based on option: ",
-                                    chunk $ T.pack $ show optionStr
-                                  ]
-                                pure $ Found a
-                      else pure NotRun
+            case mArg of
+              Found a -> do
+                markParsed
+                pure a
+              _ -> do
+                mSwitch <- case settingSwitchValue of
+                  Nothing -> pure NotRun
+                  Just a -> do
+                    mS <- ppSwitch settingDasheds
+                    case mS of
+                      Nothing -> do
+                        debug
+                          [ "could not set based on switch, no switch: ",
+                            chunk $ T.pack $ show $ map renderDashed settingDasheds
+                          ]
+                        pure NotFound
+                      Just () -> do
+                        debug ["set based on switch."]
+                        pure $ Found a
 
-                  case mOpt of
-                    Found a -> do
-                      markParsed
-                      pure a
-                    _ -> do
-                      let mEnvDoc = settingEnvDoc set
-                      mEnv <- case settingEnvVars of
-                        Nothing -> pure NotRun
-                        Just ne -> do
-                          -- Require readers before finding the env vars so the parser
+                case mSwitch of
+                  Found a -> do
+                    markParsed
+                    pure a
+                  _ -> do
+                    mOpt <-
+                      if settingTryOption
+                        then do
+                          -- Require readers before finding the option so the parser
                           -- always fails if it's missing a reader.
                           rs <- requireReaders settingReaders
-                          es <- asks ppEnvEnv
-                          let founds = mapMaybe ((`EnvMap.lookup` es) . envVarSettingVar) (NE.toList ne)
-                          -- Run the parser on all specified env vars before
-                          -- returning the first because we want to fail if any
-                          -- of them fail, even if they wouldn't be the parse
-                          -- result.
-                          results <- for founds $ \varStr ->
-                            case tryReaders rs varStr of
-                              Left errs -> ppError mLoc $ ParseErrorEnvRead mEnvDoc errs
-                              Right a -> do
-                                debug
-                                  [ "set based on env: ",
-                                    chunk $ T.pack $ show varStr
-                                  ]
-                                pure a
-                          case listToMaybe results of
+                          mS <- ppOpt settingDasheds
+                          case mS of
                             Nothing -> do
                               debug
-                                [ "could not set based on env vars, no var: ",
-                                  chunk $ T.pack $ show $ maybe [] NE.toList settingEnvVars
+                                [ "could not set based on options, no option: ",
+                                  chunk $ T.pack $ show $ map renderDashed settingDasheds
                                 ]
                               pure NotFound
-                            Just a -> pure $ Found a
+                            Just optionStr -> do
+                              case tryReaders rs optionStr of
+                                Left err -> ppError mLoc $ ParseErrorOptionRead mOptDoc err
+                                Right a -> do
+                                  debug
+                                    [ "set based on option: ",
+                                      chunk $ T.pack $ show optionStr
+                                    ]
+                                  pure $ Found a
+                        else pure NotRun
 
-                      case mEnv of
-                        Found a -> do
-                          markParsed
-                          pure a
-                        _ -> do
-                          let mConfDoc = settingConfDoc set
-                          mConf <- case settingConfigVals of
-                            Nothing -> pure NotRun
-                            Just confSets -> do
-                              mObj <- asks ppEnvConf
-                              case mObj of
-                                Nothing -> do
-                                  debug ["no config object to set from"]
-                                  pure NotFound
-                                Just obj -> do
-                                  let goConfSet ConfigValSetting {..} = do
-                                        let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
-                                            jsonParser o (k :| rest) = case NE.nonEmpty rest of
-                                              Nothing -> do
-                                                case KeyMap.lookup (Key.fromString k) o of
-                                                  Nothing -> pure Nothing
-                                                  Just v -> Just <$> parseJSON v
-                                              Just neRest -> do
-                                                mO' <- o .:? Key.fromString k
-                                                case mO' of
-                                                  Nothing -> pure Nothing
-                                                  Just o' -> jsonParser o' neRest
-                                        case JSON.parseEither (jsonParser obj) configValSettingPath of
-                                          Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                          Right mV -> case mV of
-                                            Nothing -> do
-                                              debug
-                                                [ "could not set based on config value, not configured: ",
-                                                  chunk $ T.pack $ show $ NE.toList configValSettingPath
-                                                ]
-                                              pure Nothing
-                                            Just v -> case JSON.parseEither (parseJSONVia configValSettingCodec) v of
-                                              Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
-                                              Right mA -> case mA of
+                    case mOpt of
+                      Found a -> do
+                        markParsed
+                        pure a
+                      _ -> do
+                        let mEnvDoc = settingEnvDoc set
+                        mEnv <- case settingEnvVars of
+                          Nothing -> pure NotRun
+                          Just ne -> do
+                            -- Require readers before finding the env vars so the parser
+                            -- always fails if it's missing a reader.
+                            rs <- requireReaders settingReaders
+                            es <- asks ppEnvEnv
+                            let founds = mapMaybe ((`EnvMap.lookup` es) . envVarSettingVar) (NE.toList ne)
+                            -- Run the parser on all specified env vars before
+                            -- returning the first because we want to fail if any
+                            -- of them fail, even if they wouldn't be the parse
+                            -- result.
+                            results <- for founds $ \varStr ->
+                              case tryReaders rs varStr of
+                                Left errs -> ppError mLoc $ ParseErrorEnvRead mEnvDoc errs
+                                Right a -> do
+                                  debug
+                                    [ "set based on env: ",
+                                      chunk $ T.pack $ show varStr
+                                    ]
+                                  pure a
+                            case listToMaybe results of
+                              Nothing -> do
+                                debug
+                                  [ "could not set based on env vars, no var: ",
+                                    chunk $ T.pack $ show $ maybe [] NE.toList settingEnvVars
+                                  ]
+                                pure NotFound
+                              Just a -> pure $ Found a
+
+                        case mEnv of
+                          Found a -> do
+                            markParsed
+                            pure a
+                          _ -> do
+                            let mConfDoc = settingConfDoc set
+                            mConf <- case settingConfigVals of
+                              Nothing -> pure NotRun
+                              Just confSets -> do
+                                mObj <- asks ppEnvConf
+                                case mObj of
+                                  Nothing -> do
+                                    debug ["no config object to set from"]
+                                    pure NotFound
+                                  Just obj -> do
+                                    let goConfSet ConfigValSetting {..} = do
+                                          let jsonParser :: JSON.Object -> NonEmpty String -> JSON.Parser (Maybe JSON.Value)
+                                              jsonParser o (k :| rest) = case NE.nonEmpty rest of
                                                 Nothing -> do
-                                                  debug
-                                                    [ "could not set based on config value, configured to nothing: ",
-                                                      chunk $ T.pack $ show $ NE.toList configValSettingPath
-                                                    ]
-                                                  pure Nothing
-                                                Just a -> do
-                                                  debug
-                                                    [ "set based on config value: ",
-                                                      chunk $ T.pack $ show v
-                                                    ]
-                                                  pure $ Just a
-                                  let toRes = \case
-                                        Nothing -> NotFound
-                                        Just a -> Found a
-                                  let goConfSets (confSet :| rest) = case NE.nonEmpty rest of
-                                        Nothing -> toRes <$> goConfSet confSet
-                                        Just ne -> do
-                                          res <- goConfSet confSet
-                                          case res of
-                                            Just a -> pure $ Found a
-                                            Nothing -> goConfSets ne
-                                  goConfSets confSets
-                          case mConf of
-                            Found a -> do
-                              markParsed
-                              pure a
-                            _ ->
-                              case settingDefaultValue of
-                                Just (a, _) -> do
-                                  debug ["set to default value"]
-                                  pure a -- Don't mark as parsed
-                                Nothing -> do
-                                  let parseResultError e res = case res of
-                                        NotRun -> Nothing
-                                        NotFound -> Just e
-                                        Found _ -> Nothing -- Should not happen.
-                                  debug ["not found"]
-                                  maybe (ppError mLoc ParseErrorEmptySetting) (ppErrors mLoc) $
-                                    NE.nonEmpty $
-                                      catMaybes
-                                        [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
-                                          parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
-                                          parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
-                                          parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
-                                          parseResultError (ParseErrorMissingConfVal mConfDoc) mConf
-                                        ]
+                                                  case KeyMap.lookup (Key.fromString k) o of
+                                                    Nothing -> pure Nothing
+                                                    Just v -> Just <$> parseJSON v
+                                                Just neRest -> do
+                                                  mO' <- o .:? Key.fromString k
+                                                  case mO' of
+                                                    Nothing -> pure Nothing
+                                                    Just o' -> jsonParser o' neRest
+                                          case JSON.parseEither (jsonParser obj) configValSettingPath of
+                                            Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
+                                            Right mV -> case mV of
+                                              Nothing -> do
+                                                debug
+                                                  [ "could not set based on config value, not configured: ",
+                                                    chunk $ T.pack $ show $ NE.toList configValSettingPath
+                                                  ]
+                                                pure Nothing
+                                              Just v -> case JSON.parseEither (parseJSONVia configValSettingCodec) v of
+                                                Left err -> ppError mLoc $ ParseErrorConfigRead mConfDoc err
+                                                Right mA -> case mA of
+                                                  Nothing -> do
+                                                    debug
+                                                      [ "could not set based on config value, configured to nothing: ",
+                                                        chunk $ T.pack $ show $ NE.toList configValSettingPath
+                                                      ]
+                                                    pure Nothing
+                                                  Just a -> do
+                                                    debug
+                                                      [ "set based on config value: ",
+                                                        chunk $ T.pack $ show v
+                                                      ]
+                                                    pure $ Just a
+                                    let toRes = \case
+                                          Nothing -> NotFound
+                                          Just a -> Found a
+                                    let goConfSets (confSet :| rest) = case NE.nonEmpty rest of
+                                          Nothing -> toRes <$> goConfSet confSet
+                                          Just ne -> do
+                                            res <- goConfSet confSet
+                                            case res of
+                                              Just a -> pure $ Found a
+                                              Nothing -> goConfSets ne
+                                    goConfSets confSets
+                            case mConf of
+                              Found a -> do
+                                markParsed
+                                pure a
+                              _ ->
+                                case settingDefaultValue of
+                                  Just (a, _) -> do
+                                    debug ["set to default value"]
+                                    pure a -- Don't mark as parsed
+                                  Nothing -> do
+                                    let parseResultError e res = case res of
+                                          NotRun -> Nothing
+                                          NotFound -> Just e
+                                          Found _ -> Nothing -- Should not happen.
+                                    debug ["not found"]
+                                    maybe (ppError mLoc ParseErrorEmptySetting) (ppErrors mLoc) $
+                                      NE.nonEmpty $
+                                        catMaybes
+                                          [ parseResultError (ParseErrorMissingArgument mOptDoc) mArg,
+                                            parseResultError (ParseErrorMissingSwitch mOptDoc) mSwitch,
+                                            parseResultError (ParseErrorMissingOption mOptDoc) mOpt,
+                                            parseResultError (ParseErrorMissingEnvVar mEnvDoc) mEnv,
+                                            parseResultError (ParseErrorMissingConfVal mConfDoc) mConf
+                                          ]
+
+withCapabilities ::
+  Maybe SrcLoc ->
+  Set Capability ->
+  Capabilities ->
+  PP a ->
+  PP a
+withCapabilities mLoc requiredCapabilities capabilities func =
+  case missingCapabilities capabilities requiredCapabilities of
+    Just missings -> do
+      debug $
+        "Missing capabilities: "
+          : capabilitiesChunks (Set.fromList (NE.toList missings))
+      ppErrors mLoc $ NE.map ParseErrorMissingCapability missings
+    Nothing -> func
 
 data ParseResult a
   = NotRun
