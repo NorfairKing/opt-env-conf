@@ -5,7 +5,6 @@ Check
   _
   (Setting
      Nothing
-     (fromList [])
      (Setting
         []
         [ _ ]

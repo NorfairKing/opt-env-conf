@@ -286,7 +286,7 @@ lintParser =
         c1 <- go p1
         c2 <- local (const True) (go p2)
         pure $ c1 || c2
-      ParserSetting mLoc _ Setting {..} -> mapValidationTFailure (LintError mLoc) $ do
+      ParserSetting mLoc Setting {..} -> mapValidationTFailure (LintError mLoc) $ do
         case settingHelp of
           Nothing ->
             -- Hidden values may be undocumented

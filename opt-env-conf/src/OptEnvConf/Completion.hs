@@ -315,7 +315,7 @@ pureCompletionQuery parser ix args =
                   put rest
                   goCommand c
                 Nothing -> pure Nothing -- Invalid command
-      ParserSetting _ _ Setting {..} -> do
+      ParserSetting _ Setting {..} -> do
         let arg = fromMaybe "" mCursorArg
         let completionDescription = settingHelp
         let completeWithCompleter = pure $ Just $ maybeToList $ do

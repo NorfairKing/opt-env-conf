@@ -194,7 +194,7 @@ spec = do
             forAllValid $ \mConf ->
               forAllValid $ \capName -> do
                 let p :: Parser Int
-                    p = requireCapability capName $ setting [argument, reader auto] :: Parser Int
+                    p = setting [argument, reader auto, requiredCapability capName] :: Parser Int
                 let cap = Capability (T.pack capName)
                 let capabilities = enableCapability cap capabilitiesPrototype
                 shouldFail' p capabilities Args.emptyArgs e mConf $ \case
@@ -202,19 +202,6 @@ spec = do
                   _ -> False
 
       it "cannot run the setting parser if the capability is available" $
-        forAllValid $ \capabilitiesPrototype ->
-          forAllValid $ \e ->
-            forAllValid $ \mConf ->
-              forAllValid $ \capName -> do
-                let p :: Parser Int
-                    p = requireCapability capName $ setting [argument, reader auto] :: Parser Int
-                let cap = Capability (T.pack capName)
-                let capabilities = disableCapability cap capabilitiesPrototype
-                shouldFail' p capabilities Args.emptyArgs e mConf $ \case
-                  ParseErrorMissingCapability _ :| [] -> True
-                  _ -> False
-
-      it "cannot run the setting parser if the capability is available, set in setting" $
         forAllValid $ \capabilitiesPrototype ->
           forAllValid $ \e ->
             forAllValid $ \mConf ->

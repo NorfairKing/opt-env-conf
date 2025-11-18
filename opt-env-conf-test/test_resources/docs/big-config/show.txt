@@ -14,7 +14,6 @@ WithConfig
            _
            (Setting
               Nothing
-              (fromList [])
               (Setting
                  [ DashedLong ('c' :| "onfig-file") ]
                  [ _ ]
@@ -34,7 +33,6 @@ WithConfig
         (Check Nothing False (fromList []) _ (Pure _))))
   (Setting
      Nothing
-     (fromList [])
      (Setting
         []
         []

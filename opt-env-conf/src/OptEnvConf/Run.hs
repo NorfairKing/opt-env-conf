@@ -1,6 +1,5 @@
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -230,18 +229,18 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           ppIndent $
             local (\e -> e {ppEnvConf = mNewConfig}) $
               go pa
-      ParserSetting mLoc requiredCapabilities set@Setting {..} -> do
+      ParserSetting mLoc set@Setting {..} -> do
         debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
-        when (not (Set.null requiredCapabilities)) $
+        when (not (Set.null settingRequiredCapabilities)) $
           debug $
             "Requires capabilities: "
-              : capabilitiesChunks requiredCapabilities
+              : capabilitiesChunks settingRequiredCapabilities
 
         -- Any argument parsing needs to still try to consume the relevant arguments, so we need to put
         -- this helper function after that instead of arround the whole setting parsing.
         -- After all the arguments, options, and switches have been tried, the rest can have a blanket 'cap'.
         let cap :: forall r. PP r -> PP r
-            cap = withCapabilities mLoc requiredCapabilities capabilities
+            cap = withCapabilities mLoc settingRequiredCapabilities capabilities
 
         ppIndent $ do
           let markParsed = do
@@ -571,7 +570,7 @@ runHelpParser mDebugMode args parser = do
                 mNewConfig <- go pc
                 mRes <- go pa
                 pure $ mRes <|> mNewConfig -- Reverse order
-            ParserSetting mLoc _ _ -> do
+            ParserSetting mLoc _ -> do
               debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
               pure Nothing
             ParserCommands mLoc mDefault cs -> do

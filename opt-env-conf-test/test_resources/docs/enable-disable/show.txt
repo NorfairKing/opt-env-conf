@@ -10,7 +10,6 @@ WithConfig
         _
         (Setting
            Nothing
-           (fromList [])
            (Setting
               [ DashedLong ('(' :| "enable|disable)-example") ]
               []
@@ -30,7 +29,6 @@ WithConfig
            _
            (Setting
               Nothing
-              (fromList [])
               (Setting
                  [ DashedLong ('d' :| "isable-example") ]
                  []
@@ -50,7 +48,6 @@ WithConfig
               _
               (Setting
                  Nothing
-                 (fromList [])
                  (Setting
                     [ DashedLong ('e' :| "nable-example") ]
                     []
@@ -70,7 +67,6 @@ WithConfig
                  _
                  (Setting
                     Nothing
-                    (fromList [])
                     (Setting
                        []
                        [ _ ]
@@ -95,7 +91,6 @@ WithConfig
                     _
                     (Setting
                        Nothing
-                       (fromList [])
                        (Setting
                           []
                           []
