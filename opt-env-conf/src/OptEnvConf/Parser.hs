@@ -223,6 +223,8 @@ data Parser a where
   -- | General settings
   ParserSetting ::
     !(Maybe SrcLoc) ->
+    -- | Necessary capabilities
+    !(Set Capability) ->
     !(Setting a) ->
     Parser a
 
@@ -280,7 +282,7 @@ instance Alternative Parser where
           ParserCheck _ _ _ _ p -> isEmpty p
           ParserCommands _ _ cs -> null cs
           ParserWithConfig _ pc ps -> isEmpty pc && isEmpty ps
-          ParserSetting _ _ -> False
+          ParserSetting _ _ _ -> False
      in case (isEmpty p1, isEmpty p2) of
           (True, True) -> ParserEmpty Nothing
           (True, False) -> p2
@@ -386,10 +388,12 @@ showParserPrec = go
             . go 11 p1
             . showString " "
             . go 11 p2
-      ParserSetting mLoc p ->
+      ParserSetting mLoc caps p ->
         showParen (d > 10) $
           showString "Setting "
             . showsPrec 11 mLoc
+            . showString " "
+            . showsPrec 11 caps
             . showString " "
             . showSettingABit p
 
@@ -478,7 +482,7 @@ class HasParser a where
 --
 --         (Hence the name of the package.)
 setting :: (HasCallStack) => [Builder a] -> Parser a
-setting = ParserSetting mLoc . buildSetting
+setting = ParserSetting mLoc Set.empty . buildSetting
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
 
@@ -576,8 +580,8 @@ withShownDefault showDefault defaultValue = go
             ParserCheck {} -> p'
             ParserCommands {} -> p'
             ParserWithConfig {} -> p'
-            ParserSetting mLoc s -> case settingDefaultValue s of
-              Nothing -> ParserSetting mLoc $ s {settingDefaultValue = Just (defaultValue, showDefault defaultValue)}
+            ParserSetting mLoc caps s -> case settingDefaultValue s of
+              Nothing -> ParserSetting mLoc caps $ s {settingDefaultValue = Just (defaultValue, showDefault defaultValue)}
               Just _ -> p
 
 -- | Try a list of parsers in order
@@ -907,7 +911,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
 
     parseEnableSwitch :: Parser Bool
     parseEnableSwitch =
-      ParserSetting mLoc $
+      ParserSetting mLoc Set.empty $
         Setting
           { settingDasheds = mapMaybe (prefixDashedLong truePrefix) (settingDasheds s),
             settingReaders = [],
@@ -925,7 +929,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
           }
     parseDisableSwitch :: Parser Bool
     parseDisableSwitch =
-      ParserSetting mLoc $
+      ParserSetting mLoc Set.empty $
         Setting
           { settingDasheds = mapMaybe (prefixDashedLong falsePrefix) (settingDasheds s),
             settingReaders = [],
@@ -946,7 +950,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
     parseEnv = do
       ne <- settingEnvVars s
       pure $
-        ParserSetting mLoc $
+        ParserSetting mLoc Set.empty $
           Setting
             { settingDasheds = [],
               settingReaders = (auto :: Reader Bool) : settingReaders s,
@@ -966,7 +970,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
     parseConfigVal = do
       ne <- settingConfigVals s
       pure $
-        ParserSetting mLoc $
+        ParserSetting mLoc Set.empty $
           Setting
             { settingDasheds = [],
               settingReaders = [],
@@ -984,7 +988,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             }
     parseDummy :: Parser Bool
     parseDummy =
-      ParserSetting mLoc $
+      ParserSetting mLoc Set.empty $
         Setting
           { settingDasheds = mapMaybe (prefixDashedLong helpPrefix) (settingDasheds s),
             settingReaders = [],
@@ -1014,6 +1018,8 @@ readSecretTextFile = fmap T.strip . T.readFile . fromAbsFile
 secretTextFileSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
 secretTextFileSetting bs =
   withFrozenCallStack $
+    -- Require the capability only for reading the secret file, not for parsing
+    -- the string as a path.
     requireCapability readSecretCapability $
       mapIO readSecretTextFile $
         filePathSetting bs
@@ -1038,7 +1044,11 @@ secretTextFileOrBareSetting bs =
     bareSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "SECRET"]
       guard $ p s
-      pure $ T.pack <$> ParserSetting mLoc s
+      pure $
+        -- Require the capability for the entire setting because the secret may be
+        -- passed as an env var.
+        requireCapability readSecretCapability $
+          T.pack <$> ParserSetting mLoc Set.empty s
     fileSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "FILE_PATH"]
       guard $ p s
@@ -1048,7 +1058,7 @@ secretTextFileOrBareSetting bs =
           -- only apply to the reading, not the resolving.
           mapIO readSecretTextFile $
             mapIO resolveFile' $
-              ParserSetting mLoc s
+              ParserSetting mLoc Set.empty s
 
     bareOption = bareSetting settingTryOption $ \case
       BuildTryArgument -> Nothing
@@ -1178,7 +1188,7 @@ parserEraseSrcLocs = go
       ParserCheck _ forgivable caps f p -> ParserCheck Nothing forgivable caps f (go p)
       ParserCommands _ mDefault cs -> ParserCommands Nothing mDefault $ map commandEraseSrcLocs cs
       ParserWithConfig _ p1 p2 -> ParserWithConfig Nothing (go p1) (go p2)
-      ParserSetting _ s -> ParserSetting Nothing s
+      ParserSetting _ caps s -> ParserSetting Nothing caps s
 
 commandEraseSrcLocs :: Command a -> Command a
 commandEraseSrcLocs c =
@@ -1215,7 +1225,7 @@ parserTraverseSetting func = go
       ParserCheck mLoc forgivable caps f p -> ParserCheck mLoc forgivable caps f <$> go p
       ParserCommands mLoc mDefault cs -> ParserCommands mLoc mDefault <$> traverse (commandTraverseSetting func) cs
       ParserWithConfig mLoc p1 p2 -> ParserWithConfig mLoc <$> go p1 <*> go p2
-      ParserSetting mLoc s -> ParserSetting mLoc <$> func s
+      ParserSetting mLoc caps s -> ParserSetting mLoc caps <$> func s
 
 {-# ANN commandTraverseSetting ("NOCOVER" :: String) #-}
 commandTraverseSetting ::
@@ -1245,4 +1255,4 @@ parserSettingsMap = go
       ParserCommands _ _ cs -> M.unions $ map (go . commandParser) cs
       ParserWithConfig _ p1 p2 -> M.union (go p1) (go p2)
       -- The nothing part shouldn't happen but I don't know when it doesn't
-      ParserSetting mLoc s -> maybe M.empty (M.singleton (hashSetting s)) mLoc
+      ParserSetting mLoc _ s -> maybe M.empty (M.singleton (hashSetting s)) mLoc

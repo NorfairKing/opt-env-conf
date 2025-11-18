@@ -261,7 +261,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
           ppIndent $
             local (\e -> e {ppEnvConf = mNewConfig}) $
               go pa
-      ParserSetting mLoc set@Setting {..} -> do
+      ParserSetting mLoc _ set@Setting {..} -> do
         debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
         ppIndent $ do
           let markParsed = do
@@ -576,7 +576,7 @@ runHelpParser mDebugMode args parser = do
                 mNewConfig <- go pc
                 mRes <- go pa
                 pure $ mRes <|> mNewConfig -- Reverse order
-            ParserSetting mLoc _ -> do
+            ParserSetting mLoc _ _ -> do
               debug [syntaxChunk "Setting", ": ", mSrcLocChunk mLoc]
               pure Nothing
             ParserCommands mLoc mDefault cs -> do

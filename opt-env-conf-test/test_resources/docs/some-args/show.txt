@@ -7,6 +7,7 @@ Check
      Nothing
      (Setting
         Nothing
+        (fromList [])
         (Setting
            []
            [ _ ]

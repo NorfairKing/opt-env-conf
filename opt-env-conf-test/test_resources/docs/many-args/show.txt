@@ -2,6 +2,7 @@ Many
   Nothing
   (Setting
      Nothing
+     (fromList [])
      (Setting
         []
         [ _ ]

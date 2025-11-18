@@ -15,6 +15,7 @@ WithConfig
             _
             (Setting
                Nothing
+               (fromList [])
                (Setting
                   []
                   [ _ ]
@@ -37,6 +38,7 @@ WithConfig
                _
                (Setting
                   Nothing
+                  (fromList [])
                   (Setting
                      [ DashedLong ('n' :| "umber") , DashedShort 'n' ]
                      [ _ ]
@@ -74,6 +76,7 @@ WithConfig
             (Alt
                (Setting
                   Nothing
+                  (fromList [])
                   (Setting
                      [ DashedLong ('(' :| "enable|disable)-enable") ]
                      []
@@ -88,6 +91,7 @@ WithConfig
                (Alt
                   (Setting
                      Nothing
+                     (fromList [])
                      (Setting
                         [ DashedLong ('d' :| "isable-enable") ]
                         []
@@ -102,6 +106,7 @@ WithConfig
                   (Alt
                      (Setting
                         Nothing
+                        (fromList [])
                         (Setting
                            [ DashedLong ('e' :| "nable-enable") ]
                            []
@@ -116,6 +121,7 @@ WithConfig
                      (Alt
                         (Setting
                            Nothing
+                           (fromList [])
                            (Setting
                               []
                               [ _ ]
@@ -135,6 +141,7 @@ WithConfig
                         (Alt
                            (Setting
                               Nothing
+                              (fromList [])
                               (Setting
                                  []
                                  []

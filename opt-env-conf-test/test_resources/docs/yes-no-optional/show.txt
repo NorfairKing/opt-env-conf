@@ -11,6 +11,7 @@ WithConfig
            _
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  [ DashedLong ('[' :| "no-]example") ]
                  []
@@ -30,6 +31,7 @@ WithConfig
               _
               (Setting
                  Nothing
+                 (fromList [])
                  (Setting
                     [ DashedLong ('n' :| "o-example") ]
                     []
@@ -49,6 +51,7 @@ WithConfig
                  _
                  (Setting
                     Nothing
+                    (fromList [])
                     (Setting
                        [ DashedLong ('e' :| "xample") ]
                        []
@@ -68,6 +71,7 @@ WithConfig
                     _
                     (Setting
                        Nothing
+                       (fromList [])
                        (Setting
                           []
                           [ _ ]
@@ -91,6 +95,7 @@ WithConfig
                     _
                     (Setting
                        Nothing
+                       (fromList [])
                        (Setting
                           []
                           []

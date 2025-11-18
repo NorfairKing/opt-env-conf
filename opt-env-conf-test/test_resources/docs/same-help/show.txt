@@ -11,6 +11,7 @@ WithConfig
            _
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  [ DashedLong ('i' :| "nt") ]
                  [ _ ]
@@ -50,6 +51,7 @@ WithConfig
            _
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  [ DashedLong ('s' :| "tring") ]
                  [ _ ]
@@ -79,6 +81,7 @@ WithConfig
      (Alt
         (Setting
            Nothing
+           (fromList [])
            (Setting
               [ DashedLong ('[' :| "no-]other") ]
               []
@@ -93,6 +96,7 @@ WithConfig
         (Alt
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  [ DashedLong ('n' :| "o-other") ]
                  []
@@ -107,6 +111,7 @@ WithConfig
            (Alt
               (Setting
                  Nothing
+                 (fromList [])
                  (Setting
                     [ DashedLong ('o' :| "ther") ]
                     []
@@ -121,6 +126,7 @@ WithConfig
               (Alt
                  (Setting
                     Nothing
+                    (fromList [])
                     (Setting
                        []
                        [ _ ]
@@ -138,6 +144,7 @@ WithConfig
                  (Alt
                     (Setting
                        Nothing
+                       (fromList [])
                        (Setting
                           []
                           []

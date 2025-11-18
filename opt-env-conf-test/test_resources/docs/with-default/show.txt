@@ -1,6 +1,7 @@
 Alt
   (Setting
      Nothing
+     (fromList [])
      (Setting
         [ DashedShort 'f' , DashedLong ('f' :| "irst") ]
         []
@@ -14,6 +15,7 @@ Alt
         (Just "first")))
   (Setting
      Nothing
+     (fromList [])
      (Setting
         [ DashedShort 's' , DashedLong ('s' :| "econd") ]
         []

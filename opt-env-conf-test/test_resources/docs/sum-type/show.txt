@@ -5,6 +5,7 @@ WithConfig
   (Alt
      (Setting
         Nothing
+        (fromList [])
         (Setting
            [ DashedShort 'a' ]
            []
@@ -19,6 +20,7 @@ WithConfig
      (Alt
         (Setting
            Nothing
+           (fromList [])
            (Setting
               [ DashedShort 'b' ]
               []
@@ -33,6 +35,7 @@ WithConfig
         (Alt
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  []
                  [ _ ]
@@ -52,6 +55,7 @@ WithConfig
            (Alt
               (Setting
                  Nothing
+                 (fromList [])
                  (Setting
                     []
                     []
@@ -75,6 +79,7 @@ WithConfig
                     (Just "example")))
               (Setting
                  Nothing
+                 (fromList [])
                  (Setting
                     []
                     []

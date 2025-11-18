@@ -14,6 +14,7 @@ WithConfig
            _
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  [ DashedLong ('c' :| "onfig-file") ]
                  [ _ ]
@@ -40,6 +41,7 @@ WithConfig
            _
            (Setting
               Nothing
+              (fromList [])
               (Setting
                  [ DashedShort 'g' , DashedLong ('g' :| "reeting") ]
                  [ _ ]
@@ -68,6 +70,7 @@ WithConfig
                  (Just "Greeting to use"))))
         (Setting
            Nothing
+           (fromList [])
            (Setting
               []
               [ _ ]
@@ -81,6 +84,7 @@ WithConfig
               (Just "Who to greet"))))
      (Setting
         Nothing
+        (fromList [])
         (Setting
            [ DashedShort 'p' , DashedLong ('p' :| "olite") ]
            [ _ ]

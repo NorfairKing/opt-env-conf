@@ -46,7 +46,7 @@ parserNixOptions = go
         -- config to load a config but it's technically possible so let's
         -- support it.
         M.unionWith combineOption (go p1) (go p2)
-      ParserSetting _ s ->
+      ParserSetting _ _ s ->
         let codecTups = maybe [] NE.toList (settingConfigVals s)
          in M.unionsWith combineOption $ flip map codecTups $ \ConfigValSetting {..} ->
               let go' :: NonEmpty Text -> Map Text Option
