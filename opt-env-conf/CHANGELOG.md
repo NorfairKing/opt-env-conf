@@ -1,6 +1,13 @@
 # Changelog
 
-## [0.12.0.0] - 2025-11-25
+## [0.12.2.0] - 2025-11-18
+
+### Changed
+
+* Fixed a bug in which parse errors would be ignored during checking as soon as
+  one missing capability was encountered.
+
+## [0.12.0.0] - 2025-11-15
 
 ### Added
 
