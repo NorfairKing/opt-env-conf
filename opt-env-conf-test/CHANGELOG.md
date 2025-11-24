@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.0.3] - 2025-11-20
+
+### Added
+
+* Compabitility with `opt-env-conf >=0.13`
+
 ## [0.0.0.2] - 2025-03-12
 
 ### Added

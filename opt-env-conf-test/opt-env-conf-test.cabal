@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           opt-env-conf-test
-version:        0.0.0.2
+version:        0.0.0.3
 synopsis:       A testing companion package for opt-env-conf
 homepage:       https://github.com/NorfairKing/opt-env-conf#readme
 bug-reports:    https://github.com/NorfairKing/opt-env-conf/issues
