@@ -2,6 +2,7 @@
 
 module OptEnvConf.Output where
 
+import Data.Char as Char
 import Data.List (intercalate, intersperse)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
@@ -11,7 +12,7 @@ import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Version
-import GHC.Stack (SrcLoc, prettySrcLoc)
+import GHC.Stack (SrcLoc (..), prettySrcLoc)
 import OptEnvConf.Args (Dashed (..))
 import qualified OptEnvConf.Args as Args
 import OptEnvConf.Parser
@@ -94,7 +95,22 @@ mSrcLocChunk :: Maybe SrcLoc -> Chunk
 mSrcLocChunk = maybe "without srcLoc" srcLocChunk
 
 srcLocChunk :: SrcLoc -> Chunk
-srcLocChunk = fore cyan . chunk . T.pack . prettySrcLoc
+srcLocChunk = fore cyan . chunk . T.pack . prettySrcLoc . cleanSrcLoc
+  where
+    -- GHC puts the package hash in there, which may change accross compilation
+    -- and that messes with golden tests.
+    -- We try to remove the hash from the package here.
+    -- The srcLocPackage looks like this:
+    -- opt-env-conf-test-0.0.0.3-6OHAhVu967XFT6LS52oRkR-opt-env-conf-test
+    -- which looks like:
+    -- <name>-<version>-<hash>-<name>
+    -- So we take every '-'-separated part until one starts with a number.
+    cleanSrcLoc loc = loc {srcLocPackage = cleanPackage (srcLocPackage loc)}
+    cleanPackage pkg =
+      T.unpack $
+        T.intercalate "-" $
+          takeWhile (not . maybe False (Char.isDigit . fst) . T.uncons) $
+            T.splitOn "-" (T.pack pkg)
 
 indent :: [[Chunk]] -> [[Chunk]]
 indent = map ("  " :)

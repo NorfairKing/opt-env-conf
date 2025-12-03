@@ -3,4 +3,4 @@
   [31mInvalid Setting:[m
   [33mconf[m or [33mname[m was called with no way to load configuration.
   You can load configuration with [33mwithConfig[m, or explicitly not load any configuration with [33mwithoutConfig[m.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:124:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:124:7 in opt-env-conf-test:OptEnvConf.LintSpec[m

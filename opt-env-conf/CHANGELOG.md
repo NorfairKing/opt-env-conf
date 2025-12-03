@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0.0] - 2025-12-03
+
+### Changed
+
+* Source location package names are now cleaned up to not contain a hash.
+  This makes it possible to use them in golden tests.
+
 ## [0.13.0.0] - 2025-11-18
 
 ### Added

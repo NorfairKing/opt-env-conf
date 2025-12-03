@@ -21,7 +21,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Maybe
 import qualified Data.Text as T
-import GHC.Stack (SrcLoc, prettySrcLoc)
+import GHC.Stack (SrcLoc)
 import OptEnvConf.Args
 import OptEnvConf.Output
 import OptEnvConf.Parser
@@ -228,7 +228,7 @@ renderLintError LintError {..} =
             ],
             ["This is not allowed because the parser would run infinitely."]
           ],
-      maybe [] (pure . ("Defined at: " :) . pure . fore cyan . chunk . T.pack . prettySrcLoc) lintErrorSrcLoc
+      maybe [] (pure . ("Defined at: " :) . pure . srcLocChunk) lintErrorSrcLoc
     ]
 
 lintParser :: Parser a -> Maybe (NonEmpty LintError)

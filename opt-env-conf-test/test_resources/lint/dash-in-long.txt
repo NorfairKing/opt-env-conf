@@ -4,4 +4,4 @@
   [33mlong[m may not start with a '-'.
   Found [33mlong[m "--switch".
   Try [33mlong[m "switch" instead.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:33:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:33:7 in opt-env-conf-test:OptEnvConf.LintSpec[m

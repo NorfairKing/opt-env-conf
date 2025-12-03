@@ -2,4 +2,4 @@
   
   [31mInvalid Setting:[m
   [33mswitch[m has no [33mlong[m or [33mshort[m.
-  Defined at: [36mtest/OptEnvConf/LintSpec.hs:98:7 in main:OptEnvConf.LintSpec[m
+  Defined at: [36mtest/OptEnvConf/LintSpec.hs:98:7 in opt-env-conf-test:OptEnvConf.LintSpec[m
