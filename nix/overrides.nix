@@ -89,7 +89,7 @@ let
   # If it does, you'll need to use 'makeSettingsCheckScript' and run it outside
   # of the build sandbox, for example in an activation script.
   makeSettingsCheck = name: capabilities: exe: args: env: runCommand name env ''
-    ${makeSettingsCheckScript name capabilities exe args env}/bin/${name} > "$out" 2>&1
+    ${makeSettingsCheckScript name capabilities exe args env}/bin/${name} > "$out"
   '';
 
   makeSettingsCheckHomeManagerActivationScript = name: capabilities: exe: args: env: {
@@ -111,7 +111,7 @@ let
         check = makeSettingsCheck
           (service.name or "settings-check")
           capabilities
-          (last (init (splitString "\n" service.script)))
+          (last (filter (l: lib.trim l != "") (splitString "\n" service.script)))
           (service.scriptArgs or [ ]) # TODO is this right?
           environment;
       in
