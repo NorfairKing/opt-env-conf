@@ -125,25 +125,19 @@ let
     {
       Unit.Documentation =
         let
-          path = service.path or [ ];
-          pathVar = makeSearchPath "bin" path;
           environment =
             # service.Environment is a list of strings of the form <foo>=<bar>
             # We have to turn it into an attrset here first
-            let
-              environmentAttrSet =
-                builtins.listToAttrs (map
-                  (e:
-                    let parts = lib.splitString "=" e;
-                    in {
-                      name =
-                        # The rest of the string below will still have the context.
-                        builtins.unsafeDiscardStringContext (builtins.head parts);
-                      value = lib.concatStrings (builtins.tail parts);
-                    })
-                  (service.Service.Environment or [ ]));
-            in
-            (environmentAttrSet // { PATH = pathVar; });
+            builtins.listToAttrs (map
+              (e:
+                let parts = lib.splitString "=" e;
+                in {
+                  name =
+                    # The rest of the string below will still have the context.
+                    builtins.unsafeDiscardStringContext (builtins.head parts);
+                  value = lib.concatStrings (builtins.tail parts);
+                })
+              (service.Service.Environment or [ ]));
           check = makeSettingsCheck
             (service.name or "settings-check")
             capabilities
