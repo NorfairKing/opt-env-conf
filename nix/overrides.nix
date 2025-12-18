@@ -88,6 +88,8 @@ let
   # files not available in the nix build sandbox.
   # If it does, you'll need to use 'makeSettingsCheckScript' and run it outside
   # of the build sandbox, for example in an activation script.
+  # 
+  # Note that we don't redirect 2>&1 here because we want to see the errors in the build logs, not in the result.
   makeSettingsCheck = name: capabilities: exe: args: env: runCommand name env ''
     ${makeSettingsCheckScript name capabilities exe args env}/bin/${name} > "$out"
   '';
@@ -125,7 +127,23 @@ let
         let
           path = service.path or [ ];
           pathVar = makeSearchPath "bin" path;
-          environment = ((service.environment or { }) // { PATH = pathVar; });
+          environment =
+            # service.Environment is a list of strings of the form <foo>=<bar>
+            # We have to turn it into an attrset here first
+            let
+              environmentAttrSet =
+                builtins.listToAttrs (map
+                  (e:
+                    let parts = lib.splitString "=" e;
+                    in {
+                      name =
+                        # The rest of the string below will still have the context.
+                        builtins.unsafeDiscardStringContext (builtins.head parts);
+                      value = lib.concatStrings (builtins.tail parts);
+                    })
+                  (service.Service.Environment or [ ]));
+            in
+            (environmentAttrSet // { PATH = pathVar; });
           check = makeSettingsCheck
             (service.name or "settings-check")
             capabilities
