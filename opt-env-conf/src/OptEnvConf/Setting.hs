@@ -152,7 +152,8 @@ prefixEnvVarSetting prefix e =
 suffixEnvVarSetting :: String -> EnvVarSetting -> EnvVarSetting
 suffixEnvVarSetting suffix e = e {envVarSettingVar = envVarSettingVar e <> suffix}
 
-data ConfigValSetting a = forall void.
+data ConfigValSetting a
+  = forall void.
   ConfigValSetting
   { configValSettingPath :: !(NonEmpty String),
     configValSettingAllowPrefix :: !Bool,

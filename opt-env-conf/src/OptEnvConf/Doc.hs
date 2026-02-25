@@ -229,29 +229,29 @@ renderSetDocWithoutHeader SetDoc {..} =
           [ ["argument:"],
             [mMetavarChunk setDocMetavar]
           ]
-        | setDocTryArgument
+      | setDocTryArgument
       ],
       [ unwordsChunks
           [ ["switch:"],
             dashedChunksNE dasheds
           ]
-        | setDocTrySwitch,
-          dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
+      | setDocTrySwitch,
+        dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
       ],
       [ unwordsChunks
           [ ["option:"],
             dashedChunksNE dasheds
               ++ [" ", mMetavarChunk setDocMetavar]
           ]
-        | setDocTryOption,
-          dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
+      | setDocTryOption,
+        dasheds <- maybeToList (NE.nonEmpty setDocDasheds)
       ],
       [ unwordsChunks
           [ ["env:"],
             envVarChunksNE vars
               ++ [" ", mMetavarChunk setDocMetavar]
           ]
-        | vars <- maybeToList setDocEnvVars
+      | vars <- maybeToList setDocEnvVars
       ],
       concat
         [ concatMap
@@ -270,13 +270,13 @@ renderSetDocWithoutHeader SetDoc {..} =
                         )
             )
             (NE.toList confs)
-          | confs <- maybeToList setDocConfKeys
+        | confs <- maybeToList setDocConfKeys
         ],
       [ defaultValueChunks dv
-        | dv <- maybeToList setDocDefault
+      | dv <- maybeToList setDocDefault
       ],
       [ exampleValuesChunks setDocExamples
-        | not (null setDocExamples)
+      | not (null setDocExamples)
       ]
     ]
 
@@ -323,25 +323,25 @@ renderManPage progname version progDesc docs' =
               [ [ [".Sh ", "COMMANDS"],
                   renderCommandDocs docs
                 ]
-                | not (null commandDocs)
+              | not (null commandDocs)
               ],
             concat
               [ [ [".Sh ", "OPTIONS"],
                   renderLongOptDocs optDocs
                 ]
-                | not (nullDocs optDocs)
+              | not (nullDocs optDocs)
               ],
             concat
               [ [ [".Sh ", "ENVIRONMENT VARIABLES"],
                   renderEnvDocs envDocs
                 ]
-                | not (nullDocs envDocs)
+              | not (nullDocs envDocs)
               ],
             concat
               [ [ [".Sh ", "CONFIGURATION VALUES"],
                   renderConfDocs confDocs
                 ]
-                | not (nullDocs confDocs)
+              | not (nullDocs confDocs)
               ]
           ]
 
@@ -364,25 +364,25 @@ renderReferenceDocumentation progname docs' =
               [ [ headerChunks "All commands",
                   renderCommandDocs docs
                 ]
-                | not (null commandDocs)
+              | not (null commandDocs)
               ],
             concat
               [ [ headerChunks "Options",
                   renderLongOptDocs optDocs
                 ]
-                | not (nullDocs optDocs)
+              | not (nullDocs optDocs)
               ],
             concat
               [ [ headerChunks "Environment Variables",
                   renderEnvDocs envDocs
                 ]
-                | not (nullDocs envDocs)
+              | not (nullDocs envDocs)
               ],
             concat
               [ [ headerChunks "Configuration Values",
                   renderConfDocs confDocs
                 ]
-                | not (nullDocs confDocs)
+              | not (nullDocs confDocs)
               ]
           ]
 
@@ -441,7 +441,7 @@ renderHelpPageHelper progname' commandPath mVersion progDesc docs =
           [ [ headerChunks "Available commands",
               renderCommandDocsShort docs
             ]
-            | not (null (docsToCommandDocs docs))
+          | not (null (docsToCommandDocs docs))
           ]
       ]
 
@@ -576,7 +576,7 @@ renderCommandDocs = unlinesChunks . go True . withoutHiddenDocs
                             indent $ concatMap renderSetDocWithoutHeader $ d : sds,
                             [[]]
                           ]
-                        | not isTopLevel
+                      | not isTopLevel
                       ],
                     goOr isTopLevel rest
                   ]
@@ -669,16 +669,16 @@ renderShortOptDocs progname = unwordsChunks . (\cs -> [[progNameChunk progname],
               $ unwordsChunks
               $ concat
                 [ [ [mMetavarChunk optDocMetavar]
-                    | optDocTryArgument
+                  | optDocTryArgument
                   ],
                   [ concat $ maybeToList $ dashedChunks optDocDasheds
-                    | optDocTrySwitch
+                  | optDocTrySwitch
                   ],
                   [ concat
                       [ concat $ maybeToList $ dashedChunks optDocDasheds,
                         [" ", mMetavarChunk optDocMetavar]
                       ]
-                    | optDocTryOption
+                  | optDocTryOption
                   ]
                 ]
 
@@ -724,7 +724,7 @@ renderOptDocLong OptDoc {..} =
             [ maybeToList $ dashedChunks optDocDasheds,
               [ [ mMetavarChunk optDocMetavar
                 ]
-                | optDocTryArgument
+              | optDocTryArgument
               ]
             ],
         [mHelpChunk optDocHelp]

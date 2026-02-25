@@ -526,16 +526,15 @@ spec = do
 
       -- Unfolding short options as well
       argParseSpecs
-        ( (,)
-            <$> ( length
-                    <$> many
-                      ( setting
-                          [ help "verbosity",
-                            switch (),
-                            short 'v'
-                          ]
-                      )
+        ( ( (,) . length
+              <$> many
+                ( setting
+                    [ help "verbosity",
+                      switch (),
+                      short 'v'
+                    ]
                 )
+          )
             <*> setting
               [ reader str,
                 option,
@@ -650,8 +649,9 @@ spec = do
         verbosityArgsExamples
       argParseSpecs
         ( swap
-            <$> ( (,)
-                    <$> (length <$> many (setting [switch (), short 'v', long "verbose"]))
+            <$> ( ( (,) . length
+                      <$> many (setting [switch (), short 'v', long "verbose"])
+                  )
                     <*> many (setting [reader str, argument])
                 ) ::
             Parser ([String], Int)

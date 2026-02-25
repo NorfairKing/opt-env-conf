@@ -294,7 +294,7 @@ instance Alternative Parser where
   some = fmap NE.toList . ParserSome Nothing
 
 showParserABit :: Parser a -> String
-showParserABit = ($ "") . showParserPrec 0
+showParserABit = flip (showParserPrec 0) ""
 
 showParserPrec :: Int -> Parser a -> ShowS
 showParserPrec = go
@@ -752,7 +752,7 @@ withFirstYamlConfig parsers =
   withFrozenCallStack $
     withConfig $
       mapIO readFirstYamlConfigFile $
-        (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
+        ((<>) . maybeToList <$> optional configuredConfigFile) <*> parsers
 
 -- | Combine all Yaml config files that exist into a single combined config object.
 withCombinedYamlConfigs :: Parser [Path Abs File] -> Parser a -> Parser a
@@ -763,7 +763,7 @@ withCombinedYamlConfigs' combiner parsers =
   withFrozenCallStack $
     withConfig $
       mapIO (foldM resolveYamlConfigFile Nothing) $
-        (<>) <$> (maybeToList <$> optional configuredConfigFile) <*> parsers
+        ((<>) . maybeToList <$> optional configuredConfigFile) <*> parsers
   where
     resolveYamlConfigFile :: Maybe JSON.Object -> Path Abs File -> IO (Maybe JSON.Object)
     resolveYamlConfigFile acc = fmap (combineMaybeObjects acc . join) . readYamlConfigFile
