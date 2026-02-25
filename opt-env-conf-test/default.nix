@@ -6,7 +6,7 @@
 }:
 mkDerivation {
   pname = "opt-env-conf-test";
-  version = "0.0.0.3";
+  version = "0.0.0.4";
   src = ./.;
   libraryHaskellDepends = [
     aeson base genvalidity genvalidity-containers opt-env-conf

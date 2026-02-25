@@ -142,7 +142,8 @@ runParser version progDesc p = do
                     hPutChunksLocaleWith tc stdout $ renderReferenceDocumentation progname docs
                     exitSuccess
                   RenderNixosOptions -> do
-                    putStrLn $ T.unpack $ renderParserNixOptions p'
+                    progname <- getProgName
+                    putStrLn $ T.unpack $ renderParserNixOptionsWithGeneratedComment progname p'
                     exitSuccess
                   BashCompletionScript progPath -> do
                     progname <- getProgName

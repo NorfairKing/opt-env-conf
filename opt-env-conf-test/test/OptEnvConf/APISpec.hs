@@ -112,8 +112,7 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
         parserDocs p
 
   it "renders the Nix options the same way" $
-    pureGoldenTextFile ("test_resources/docs/" <> dir <> "/nix-options.nix") $
-      renderParserNixOptions p
+    pureGoldenNixOptions ("test_resources/docs/" <> dir <> "/nix-options.nix") p
 
 sameHelpParser :: Parser (Either Int String, Bool)
 sameHelpParser =

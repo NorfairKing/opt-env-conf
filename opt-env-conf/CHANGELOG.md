@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.1.0] - 2026-02-25
+
+### Added
+
+* `renderSettingsNixOptionsWithGeneratedComment`
+* `renderParserNixOptionsWithGeneratedComment`
+* `withGeneratedComment`
+
+### Changed
+
+* The `--render-nix-options` CLI output now includes a generated file comment
+
 ## [0.14.0.0] - 2025-12-03
 
 ### Changed

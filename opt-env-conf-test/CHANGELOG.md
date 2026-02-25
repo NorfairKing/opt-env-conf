@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.0.4] - 2026-02-25
+
+### Changed
+
+* `pureGoldenNixOptions` now prepends a generated file comment pointing to the test that generated each file
+
 ## [0.0.0.3] - 2025-11-20
 
 ### Added
