@@ -395,16 +395,26 @@ pureCompletionQuery parser ix args =
             as <- get
             if settingTryArgument
               then do
-                case Args.consumeArgument as of
-                  [] -> completeWithCompleterAtEnd
-                  -- TODO in theory we really need to try all possible consumptions of an argument.
-                  -- This would complicate this function quite a bit, so we
-                  -- just try the first option and leave it there for now.
-                  (mConsumed, as') : _ -> do
+                let possibilities = Args.consumeArgument as
+                -- Try all possible consumptions of the argument.
+                -- If any possibility actually consumes a value, prefer
+                -- that over the "don't consume" fallback, because a
+                -- consumed value means the user already provided input.
+                case filter (isJust . fst) possibilities of
+                  (_, as') : _ -> do
                     put as'
-                    case mConsumed of
-                      Nothing -> completeWithCompleterAtEnd
-                      Just _ -> pure $ Just []
+                    pure $ Just []
+                  [] ->
+                    -- No possibility consumed a value.  This is either
+                    -- because there are no args at all (the [] case from
+                    -- consumeArgument) or because only the consume-nothing
+                    -- fallback matched.  In both cases, offer the
+                    -- completer if we are at the end.
+                    case possibilities of
+                      [] -> completeWithCompleterAtEnd
+                      (_, as') : _ -> do
+                        put as'
+                        completeWithCompleterAtEnd
               else
                 if isJust settingSwitchValue
                   then do
