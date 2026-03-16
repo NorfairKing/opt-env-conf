@@ -288,33 +288,53 @@ pureCompletionQuery parser ix args =
       ParserWithConfig _ p1 p2 ->
         -- The config-file auto-completion is probably less important, we put it second.
         andCompletions p2 p1
-      ParserCommands _ _ cs -> do
+      ParserCommands _ mDefault cs -> do
+        let mDefaultCommand = do
+              d <- mDefault
+              find ((== d) . commandArg) cs
         as <- get
         let possibilities = Args.consumeArgument as
-        fmap combineOptions $ forM possibilities $ \(mArg, rest) -> do
-          case mArg of
-            Nothing -> do
-              if argsAtEnd rest
-                then do
-                  let arg = fromMaybe "" mCursorArg
-                  let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
-                  pure $
-                    Just $
-                      map
-                        ( \Command {..} ->
-                            Completion
-                              { completionSuggestion = SuggestionBare commandArg,
-                                completionDescription = Just commandHelp
-                              }
-                        )
-                        matchingCommands
-                else pure Nothing -- TODO: What does this mean?
-            Just arg ->
-              case find ((== arg) . commandArg) cs of
-                Just c -> do
-                  put rest
-                  goCommand c
-                Nothing -> pure Nothing -- Invalid command
+        -- First, try matching an explicit command name.
+        explicitCommandCompletions <-
+          fmap combineOptions $ forM possibilities $ \(mArg, rest) -> do
+            case mArg of
+              Nothing -> do
+                if argsAtEnd rest
+                  then do
+                    let arg = fromMaybe "" mCursorArg
+                    let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
+                    pure $
+                      Just $
+                        map
+                          ( \Command {..} ->
+                              Completion
+                                { completionSuggestion = SuggestionBare commandArg,
+                                  completionDescription = Just commandHelp
+                                }
+                          )
+                          matchingCommands
+                  else pure Nothing -- TODO: What does this mean?
+              Just arg ->
+                case find ((== arg) . commandArg) cs of
+                  Just c -> do
+                    put rest
+                    goCommand c
+                  Nothing -> pure Nothing
+        -- If there is a default command, also try completing within
+        -- the default command's parser, since that is what would run
+        -- if the user provides no command.
+        case mDefaultCommand of
+          Nothing -> pure explicitCommandCompletions
+          Just dc -> do
+            defaultCompletions <- tryOrRestore $ goCommand dc
+            case defaultCompletions of
+              Nothing -> pure explicitCommandCompletions
+              Just dcs
+                -- If the default command consumed any args, it is a
+                -- better match than the explicit command listing, so
+                -- use only its completions.
+                | argsAtEnd as -> pure $ combineOptions [explicitCommandCompletions, Just dcs]
+                | otherwise -> pure $ Just dcs
       ParserSetting _ Setting {..} -> do
         let arg = fromMaybe "" mCursorArg
         let completionDescription = settingHelp
