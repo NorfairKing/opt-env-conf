@@ -237,3 +237,160 @@ spec = do
         1
         ["foo"]
         ["ho", "hu"]
+
+    describe "commands with a default command" $ do
+      let p =
+            commands
+              [ command "foo" "1" $ pure (),
+                command "bar" "2" $ pure (),
+                command "baz" "3" $ pure (),
+                defaultCommand "bar"
+              ]
+
+      it "still lists all commands when there is a default" $
+        parserCompletionTest
+          p
+          0
+          []
+          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+
+      it "still filters commands by prefix when there is a default" $
+        parserCompletionTest
+          p
+          0
+          ["b"]
+          [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+
+      it "completes the default command's switch when no command is given" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ setting [switch (), long "example"],
+                command "bar" "2" $ pure (),
+                defaultCommand "foo"
+              ]
+          )
+          0
+          ["--"]
+          ["--example"]
+
+      it "completes both commands and the default command's switch" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ setting [switch (), long "example"],
+                command "bar" "2" $ pure (),
+                defaultCommand "foo"
+              ]
+          )
+          0
+          []
+          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), "--example"]
+
+      it "completes the default command's option when no command is given" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ setting [option, long "example", completer $ listCompleter ["hi"]],
+                command "bar" "2" $ pure (),
+                defaultCommand "foo"
+              ]
+          )
+          0
+          ["--"]
+          ["--example"]
+
+      it "completes the default command's option value when no command is given" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ setting [option, long "example", reader (str :: Reader String), completer $ listCompleter ["hi"]],
+                command "bar" "2" $ pure "bar",
+                defaultCommand "foo"
+              ]
+          )
+          1
+          ["--example"]
+          ["hi"]
+
+      it "completes the default command's argument when no command is given" $
+        parserCompletionDescriptionTest
+          ( commands
+              [ command "foo" "1" $ setting [argument, reader (str :: Reader String), help "arg help", completer $ listCompleter ["val"]],
+                command "bar" "2" $ pure "bar",
+                defaultCommand "foo"
+              ]
+          )
+          0
+          []
+          -- Should include the default command's argument completer along with command names
+          ["1", "2", "arg help"]
+
+      it "completes inside the default command after consuming its switch" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $
+                  (,)
+                    <$> setting [switch (), long "first"]
+                    <*> setting [switch (), long "second"],
+                command "bar" "2" $ pure ((), ()),
+                defaultCommand "foo"
+              ]
+          )
+          1
+          ["--first"]
+          ["--second"]
+
+      it "completes inside the default command after consuming its option" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $
+                  (,)
+                    <$> setting [option, reader (str :: Reader String), long "name"]
+                    <*> setting [switch (), long "verbose"],
+                command "bar" "2" $ pure ("bar", ()),
+                defaultCommand "foo"
+              ]
+          )
+          2
+          ["--name", "hello"]
+          ["--verbose"]
+
+    describe "global options with commands and a default" $ do
+      it "completes global options and commands together" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> commands
+                [ command "foo" "1" $ pure (),
+                  command "bar" "2" $ pure (),
+                  defaultCommand "foo"
+                ]
+          )
+          0
+          []
+          ["--verbose", Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+
+      it "completes commands after a global option" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> commands
+                [ command "foo" "1" $ pure (),
+                  command "bar" "2" $ pure (),
+                  defaultCommand "foo"
+                ]
+          )
+          1
+          ["--verbose"]
+          [Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+
+      it "completes the default command's options after a global option" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> commands
+                [ command "foo" "1" $ setting [switch (), long "example"],
+                  command "bar" "2" $ pure (),
+                  defaultCommand "foo"
+                ]
+          )
+          1
+          ["--verbose"]
+          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), "--example"]
