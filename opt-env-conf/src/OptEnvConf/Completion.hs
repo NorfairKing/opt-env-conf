@@ -241,6 +241,37 @@ pureCompletionQuery parser ix args =
           pure Nothing
         Just a -> pure (Just a)
 
+    -- Completions for many/some: try the parser repeatedly.
+    -- Each iteration either advances the args state (consuming input)
+    -- or produces end-of-input suggestions. We keep completions from
+    -- the iteration that is at the cursor position (the last one that
+    -- advanced state, or the first if none advance).
+    manyCompletions :: Parser x -> State Args (Maybe [Completion Suggestion])
+    manyCompletions p = do
+      before <- get
+      mR <- go p
+      case mR of
+        Nothing -> pure Nothing
+        Just os -> do
+          after <- get
+          if after == before
+            then -- State did not advance; return these completions.
+              pure $ Just os
+            else -- State advanced: something was consumed. Try the
+            -- next iteration. Its completions supersede ours
+            -- only if it also has a valid result.
+              do
+                mMore <- manyCompletions p
+                case mMore of
+                  Nothing -> pure $ Just os
+                  Just more
+                    -- If the next iteration only produced stale
+                    -- dashed suggestions (state didn't advance
+                    -- further), prefer our completions which came
+                    -- from the advancing iteration.
+                    | null os -> pure $ Just more
+                    | otherwise -> pure $ Just os
+
     orCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
     orCompletions p1 p2 = do
       p1s <- tryOrRestore $ go p1
@@ -273,16 +304,8 @@ pureCompletionQuery parser ix args =
       ParserAlt p1 p2 -> orCompletions p1 p2
       ParserSelect p1 p2 -> andCompletions p1 p2
       ParserEmpty _ -> pure Nothing
-      ParserMany _ p -> do
-        mR <- go p
-        case mR of
-          Nothing -> pure Nothing
-          Just os -> fmap (os ++) <$> go p
-      ParserSome _ p -> do
-        mR <- go p
-        case mR of
-          Nothing -> pure Nothing
-          Just os -> fmap (os ++) <$> go p
+      ParserMany _ p -> manyCompletions p
+      ParserSome _ p -> manyCompletions p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ _ p -> go p
       ParserWithConfig _ p1 p2 ->
