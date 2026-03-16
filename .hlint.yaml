@@ -17,3 +17,6 @@
 - ignore:
     name: "Redundant fmap"
     within: OptEnvConf.RunSpec
+- ignore:
+    name: "Use $>"
+    within: OptEnvConf.CompletionSpec

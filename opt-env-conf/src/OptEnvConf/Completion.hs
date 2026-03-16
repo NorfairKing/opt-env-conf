@@ -227,8 +227,10 @@ pureCompletionQuery parser ix args =
   fromMaybe [] $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
+    -- Complete within a command's parser. The command name itself is
+    -- already handled in the ParserCommands branch (argsAtEnd case).
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
-    goCommand = go . commandParser -- TODO complete with the command
+    goCommand = go . commandParser
     combineOptions = Just . concat . catMaybes
 
     tryOrRestore :: State Args (Maybe a) -> State Args (Maybe a)
@@ -240,6 +242,37 @@ pureCompletionQuery parser ix args =
           put before
           pure Nothing
         Just a -> pure (Just a)
+
+    -- Completions for many/some: try the parser repeatedly.
+    -- Each iteration either advances the args state (consuming input)
+    -- or produces end-of-input suggestions. We keep completions from
+    -- the iteration that is at the cursor position (the last one that
+    -- advanced state, or the first if none advance).
+    manyCompletions :: Parser x -> State Args (Maybe [Completion Suggestion])
+    manyCompletions p = do
+      before <- get
+      mR <- go p
+      case mR of
+        Nothing -> pure Nothing
+        Just os -> do
+          after <- get
+          if after == before
+            then -- State did not advance; return these completions.
+              pure $ Just os
+            else -- State advanced: something was consumed. Try the
+            -- next iteration. Its completions supersede ours
+            -- only if it also has a valid result.
+              do
+                mMore <- manyCompletions p
+                case mMore of
+                  Nothing -> pure $ Just os
+                  Just more
+                    -- If the next iteration only produced stale
+                    -- dashed suggestions (state didn't advance
+                    -- further), prefer our completions which came
+                    -- from the advancing iteration.
+                    | null os -> pure $ Just more
+                    | otherwise -> pure $ Just os
 
     orCompletions :: Parser x -> Parser y -> State Args (Maybe [Completion Suggestion])
     orCompletions p1 p2 = do
@@ -273,48 +306,73 @@ pureCompletionQuery parser ix args =
       ParserAlt p1 p2 -> orCompletions p1 p2
       ParserSelect p1 p2 -> andCompletions p1 p2
       ParserEmpty _ -> pure Nothing
-      ParserMany _ p -> do
-        mR <- go p
-        case mR of
-          Nothing -> pure Nothing
-          Just os -> fmap (os ++) <$> go p
-      ParserSome _ p -> do
-        mR <- go p
-        case mR of
-          Nothing -> pure Nothing
-          Just os -> fmap (os ++) <$> go p
+      ParserMany _ p -> manyCompletions p
+      ParserSome _ p -> manyCompletions p
       ParserAllOrNothing _ p -> go p
       ParserCheck _ _ _ _ p -> go p
       ParserWithConfig _ p1 p2 ->
         -- The config-file auto-completion is probably less important, we put it second.
         andCompletions p2 p1
-      ParserCommands _ _ cs -> do
+      ParserCommands _ mDefault cs -> do
+        let mDefaultCommand = do
+              d <- mDefault
+              find ((== d) . commandArg) cs
         as <- get
         let possibilities = Args.consumeArgument as
-        fmap combineOptions $ forM possibilities $ \(mArg, rest) -> do
-          case mArg of
-            Nothing -> do
-              if argsAtEnd rest
-                then do
-                  let arg = fromMaybe "" mCursorArg
-                  let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
-                  pure $
-                    Just $
-                      map
-                        ( \Command {..} ->
-                            Completion
-                              { completionSuggestion = SuggestionBare commandArg,
-                                completionDescription = Just commandHelp
-                              }
-                        )
-                        matchingCommands
-                else pure Nothing -- TODO: What does this mean?
-            Just arg ->
-              case find ((== arg) . commandArg) cs of
-                Just c -> do
-                  put rest
-                  goCommand c
-                Nothing -> pure Nothing -- Invalid command
+        -- First, try matching an explicit command name.
+        explicitCommandCompletions <-
+          fmap combineOptions $ forM possibilities $ \(mArg, rest) -> do
+            case mArg of
+              Nothing -> do
+                if argsAtEnd rest
+                  then do
+                    let arg = fromMaybe "" mCursorArg
+                    let matchingCommands = filter ((arg `isPrefixOf`) . commandArg) cs
+                    pure $
+                      Just $
+                        map
+                          ( \Command {..} ->
+                              Completion
+                                { completionSuggestion = SuggestionBare commandArg,
+                                  completionDescription = Just commandHelp
+                                }
+                          )
+                          matchingCommands
+                  else -- consumeArgument offered "don't consume" but there
+                  -- are still live args remaining. This possibility is
+                  -- invalid for commands: if we didn't consume a command
+                  -- name then the remaining args have nowhere to go.
+                    pure Nothing
+              Just arg ->
+                case find ((== arg) . commandArg) cs of
+                  Just c -> do
+                    put rest
+                    goCommand c
+                  Nothing -> pure Nothing
+        -- If there is a default command, also try completing within
+        -- the default command's parser, since that is what would run
+        -- if the user provides no command.
+        case mDefaultCommand of
+          Nothing -> pure explicitCommandCompletions
+          Just dc -> do
+            defaultCompletions <- tryOrRestore $ goCommand dc
+            case defaultCompletions of
+              Nothing -> pure explicitCommandCompletions
+              Just dcs
+                -- If no args were consumed (we were already at end),
+                -- combine the explicit command listing with the default
+                -- command's completions.
+                | argsAtEnd as -> pure $ combineOptions [explicitCommandCompletions, Just dcs]
+                | otherwise -> do
+                    -- The default command consumed args, so its
+                    -- completions are valid.  But we must restore
+                    -- the state: the consumed args may also be
+                    -- intended for sibling parsers in an
+                    -- applicative (<*>), e.g. an option like
+                    -- --archive-dir that the default command
+                    -- swallowed as a positional argument.
+                    put as
+                    pure $ Just dcs
       ParserSetting _ Setting {..} -> do
         let arg = fromMaybe "" mCursorArg
         let completionDescription = settingHelp
@@ -346,16 +404,26 @@ pureCompletionQuery parser ix args =
             as <- get
             if settingTryArgument
               then do
-                case Args.consumeArgument as of
-                  [] -> completeWithCompleterAtEnd
-                  -- TODO in theory we really need to try all possible consumptions of an argument.
-                  -- This would complicate this function quite a bit, so we
-                  -- just try the first option and leave it there for now.
-                  (mConsumed, as') : _ -> do
+                let possibilities = Args.consumeArgument as
+                -- Try all possible consumptions of the argument.
+                -- If any possibility actually consumes a value, prefer
+                -- that over the "don't consume" fallback, because a
+                -- consumed value means the user already provided input.
+                case filter (isJust . fst) possibilities of
+                  (_, as') : _ -> do
                     put as'
-                    case mConsumed of
-                      Nothing -> completeWithCompleterAtEnd
-                      Just _ -> pure $ Just []
+                    pure $ Just []
+                  [] ->
+                    -- No possibility consumed a value.  This is either
+                    -- because there are no args at all (the [] case from
+                    -- consumeArgument) or because only the consume-nothing
+                    -- fallback matched.  In both cases, offer the
+                    -- completer if we are at the end.
+                    case possibilities of
+                      [] -> completeWithCompleterAtEnd
+                      (_, as') : _ -> do
+                        put as'
+                        completeWithCompleterAtEnd
               else
                 if isJust settingSwitchValue
                   then do
@@ -397,7 +465,10 @@ pureCompletionQuery parser ix args =
                         -- We can't auto-complete settings parsed from env vars
                         -- or config values, but this path is still valid.
                         --
-                        -- TODO consider checking if env vars or config vals
-                        -- are parsed, then this path may still be invalid
-                        -- afteral.
+                        -- If we checked whether the env var is set or the
+                        -- config val is present, we could return Nothing when
+                        -- they are absent. That would let alternatives reject
+                        -- this branch, improving completions when one branch
+                        -- is env/conf-only and the other has args/options.
+                        -- This would require IO or an environment parameter.
                         pure $ Just []

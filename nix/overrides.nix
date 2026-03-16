@@ -63,6 +63,9 @@ let
   installManpagesAndCompletions = exeNames: drv:
     installManpages exeNames (installCompletions exeNames drv);
 
+  completionChecks = import ./completion-checks.nix { inherit runCommand writeShellApplication; };
+  inherit (completionChecks) makeCompletionCheckScript makeCompletionCheck;
+
   makeSettingsCheckScript = name: capabilities: exe: args: env: writeShellApplication {
     inherit name;
     runtimeEnv = env;
@@ -156,6 +159,8 @@ let
         installCompletion
         installCompletions
         installManpagesAndCompletions
+        makeCompletionCheckScript
+        makeCompletionCheck
         makeSettingsCheckScript
         makeSettingsCheck
         makeSettingsCheckHomeManagerActivationScript

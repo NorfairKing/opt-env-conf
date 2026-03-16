@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.14.1.1] - 2026-03-17
+
+### Changed
+
+* Fixed completion for options next to default commands with arguments.
+  When a default command's argument parser speculatively consumed a dashed
+  option (e.g. `--archive-dir`) as a positional value, sibling parsers in
+  the same applicative could no longer see it, suppressing their completers.
+
 ## [0.14.1.0] - 2026-02-25
 
 ### Added
