@@ -108,6 +108,30 @@
           #   ];
           #   inherit haskellPackages;
           # };
+          completion-bash =
+            haskellPackages.opt-env-conf.makeCompletionCheck
+              "completion-bash"
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              false
+              "bash";
+          completion-bash-enriched =
+            haskellPackages.opt-env-conf.makeCompletionCheck
+              "completion-bash-enriched"
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              true
+              "bash";
+          completion-zsh =
+            haskellPackages.opt-env-conf.makeCompletionCheck
+              "completion-zsh"
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              true
+              "zsh";
+          completion-fish =
+            haskellPackages.opt-env-conf.makeCompletionCheck
+              "completion-fish"
+              "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
+              true
+              "fish";
           example-settings-check =
             haskellPackages.opt-env-conf.makeSettingsCheck
               "example-settings-check"
