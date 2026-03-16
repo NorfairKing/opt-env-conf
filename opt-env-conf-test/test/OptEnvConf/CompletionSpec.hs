@@ -1111,3 +1111,31 @@ spec = do
           0
           ["ge"]
           ["gen", "getter"]
+
+    -- Failing tests for TODO items in Completion.hs.
+    -- These assert the correct behavior that is not yet implemented.
+    xdescribe "TODO: only first consumeArgument possibility is tried (line 394)" $ do
+      -- When a dashed-looking value is provided as a positional argument,
+      -- the completion engine treats it as a potential switch (first
+      -- consumeArgument possibility) instead of consuming it.  This
+      -- causes the argument's completer to fire even though a value was
+      -- already provided.
+      it "should not offer the argument completer after a dashed value is consumed" $
+        parserCompletionTest
+          (setting [argument, reader (str :: Reader String), completer $ listCompleter ["file"]])
+          1
+          ["--foo"]
+          []
+
+      -- Same issue in a tuple: the first argument's completer fires
+      -- alongside the second's, even though the first argument already
+      -- has a value.
+      it "should only complete the second argument after a dashed first argument" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [argument, reader (str :: Reader String), completer $ listCompleter ["file"]]
+              <*> setting [argument, reader (str :: Reader String), completer $ listCompleter ["dest"]]
+          )
+          1
+          ["--foo"]
+          ["dest"]
