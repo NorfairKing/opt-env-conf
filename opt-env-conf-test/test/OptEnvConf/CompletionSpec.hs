@@ -971,6 +971,105 @@ spec = do
           ["bar"]
           ["--beta"]
 
+    describe "alternative branch failures" $ do
+      let emptyP = empty :: Parser ()
+      it "restores state when first branch fails in an alternative" $
+        parserCompletionTest
+          (emptyP <|> setting [switch (), long "foo"])
+          0
+          []
+          ["--foo"]
+
+      it "returns first branch completions when second branch fails" $
+        parserCompletionTest
+          (setting [switch (), long "foo"] <|> emptyP)
+          0
+          []
+          ["--foo"]
+
+      it "returns no completions when both alternatives fail" $
+        parserCompletionTest
+          (emptyP <|> emptyP)
+          0
+          []
+          []
+
+    describe "applicative branch failures" $ do
+      let emptyP = empty :: Parser ()
+      let emptyS = empty :: Parser String
+      it "returns nothing when first applicative branch fails" $
+        parserCompletionTest
+          ((,) <$> emptyP <*> setting [switch (), long "foo"])
+          0
+          []
+          []
+
+      it "returns nothing when second applicative branch fails" $
+        parserCompletionTest
+          ((,) <$> setting [switch (), long "foo"] <*> emptyS)
+          0
+          []
+          []
+
+    describe "many edge cases" $ do
+      it "handles many where the inner parser fails" $
+        parserCompletionTest
+          (many (commands [command "foo" "1" $ pure ()]))
+          0
+          ["unknown"]
+          []
+
+      it "returns first iteration completions when recursive call fails" $
+        parserCompletionTest
+          (many (commands [command "foo" "1" $ pure ()]))
+          1
+          ["foo"]
+          [Completion "foo" (Just "1")]
+
+    describe "command not found" $ do
+      it "returns no completions for an unknown command" $
+        parserCompletionTest
+          (commands [command "foo" "1" $ pure (), command "bar" "2" $ pure ()])
+          1
+          ["unknown"]
+          []
+
+    describe "argument completer at end" $ do
+      it "offers the argument completer at the end after a switch is consumed" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> setting [argument, reader (str :: Reader String), completer $ listCompleter ["file"]]
+          )
+          1
+          ["--verbose"]
+          ["file"]
+
+    describe "option with different dashed in args" $ do
+      it "does not suggest an option when a different dashed is in the args" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [option, reader (str :: Reader String), long "output", completer $ listCompleter ["file.txt"]]
+              <*> setting [option, reader (str :: Reader String), long "input", completer $ listCompleter ["data.csv"]]
+          )
+          1
+          ["--input"]
+          ["data.csv"]
+
+    describe "default command parser failure" $ do
+      let emptyS = empty :: Parser String
+      it "falls back to explicit commands when default command parser fails" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ (,) <$> setting [argument, reader (str :: Reader String)] <*> emptyS,
+                command "bar" "2" $ pure ("", ""),
+                defaultCommand "foo"
+              ]
+          )
+          0
+          []
+          [Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+
     describe "prefix filtering" $ do
       it "filters switches by typed prefix" $
         parserCompletionTest
