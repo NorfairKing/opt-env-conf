@@ -336,7 +336,11 @@ pureCompletionQuery parser ix args =
                                 }
                           )
                           matchingCommands
-                  else pure Nothing -- TODO: What does this mean?
+                  else -- consumeArgument offered "don't consume" but there
+                  -- are still live args remaining. This possibility is
+                  -- invalid for commands: if we didn't consume a command
+                  -- name then the remaining args have nowhere to go.
+                    pure Nothing
               Just arg ->
                 case find ((== arg) . commandArg) cs of
                   Just c -> do
@@ -440,7 +444,10 @@ pureCompletionQuery parser ix args =
                         -- We can't auto-complete settings parsed from env vars
                         -- or config values, but this path is still valid.
                         --
-                        -- TODO consider checking if env vars or config vals
-                        -- are parsed, then this path may still be invalid
-                        -- afteral.
+                        -- If we checked whether the env var is set or the
+                        -- config val is present, we could return Nothing when
+                        -- they are absent. That would let alternatives reject
+                        -- this branch, improving completions when one branch
+                        -- is env/conf-only and the other has args/options.
+                        -- This would require IO or an environment parameter.
                         pure $ Just []
