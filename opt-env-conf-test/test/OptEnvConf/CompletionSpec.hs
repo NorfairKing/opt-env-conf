@@ -95,28 +95,36 @@ spec = do
         ((,) <$> setting [switch (), long "foo"] <*> setting [switch (), long "bar"])
         0
         []
-        ["--foo", "--bar"]
+        [ "--foo",
+          "--bar"
+        ]
 
     it "can complete both switches of a tuple, with a prefix" $
       parserCompletionTest
         ((,) <$> setting [switch (), long "bar"] <*> setting [switch (), long "baz"])
         0
         ["--b"]
-        ["--bar", "--baz"]
+        [ "--bar",
+          "--baz"
+        ]
 
     it "can complete both switches of an either" $
       parserCompletionTest
         (setting [switch (), long "foo"] <|> setting [switch (), long "bar"])
         0
         []
-        ["--foo", "--bar"]
+        [ "--foo",
+          "--bar"
+        ]
 
     it "can complete both switches of an either wrapped in optionals" $
       parserCompletionTest
         (optional (setting [switch (), long "foo"]) <|> optional (setting [switch (), long "bar"]))
         0
         []
-        ["--foo", "--bar"]
+        [ "--foo",
+          "--bar"
+        ]
 
     describe "commands" $ do
       let p =
@@ -131,14 +139,19 @@ spec = do
           p
           0
           []
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2"),
+            Completion "baz" (Just "3")
+          ]
 
       it "can complete a command argument when it's been partially provided" $
         parserCompletionTest
           p
           0
           ["b"]
-          [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          [ Completion "bar" (Just "2"),
+            Completion "baz" (Just "3")
+          ]
 
     describe "completion after a command" $ do
       it "can complete a command with a switch" $
@@ -226,7 +239,9 @@ spec = do
         )
         2
         ["--foo", "foo"]
-        ["--bar", "--quux"]
+        [ "--bar",
+          "--quux"
+        ]
 
     it "no longer suggests an argument that has already been parsed" $
       parserCompletionDescriptionTest
@@ -237,7 +252,9 @@ spec = do
         )
         1
         ["foo"]
-        ["ho", "hu"]
+        [ "ho",
+          "hu"
+        ]
 
     describe "commands with a default command" $ do
       let p =
@@ -253,14 +270,19 @@ spec = do
           p
           0
           []
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2"),
+            Completion "baz" (Just "3")
+          ]
 
       it "still filters commands by prefix when there is a default" $
         parserCompletionTest
           p
           0
           ["b"]
-          [Completion "bar" (Just "2"), Completion "baz" (Just "3")]
+          [ Completion "bar" (Just "2"),
+            Completion "baz" (Just "3")
+          ]
 
       it "completes the default command's switch when no command is given" $
         parserCompletionTest
@@ -284,7 +306,10 @@ spec = do
           )
           0
           []
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), "--example"]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2"),
+            "--example"
+          ]
 
       it "completes the default command's option when no command is given" $
         parserCompletionTest
@@ -321,7 +346,10 @@ spec = do
           0
           []
           -- Should include the default command's argument completer along with command names
-          ["1", "2", "arg help"]
+          [ "1",
+            "2",
+            "arg help"
+          ]
 
       it "completes inside the default command after consuming its switch" $
         parserCompletionTest
@@ -366,7 +394,10 @@ spec = do
           )
           0
           []
-          ["--verbose", Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+          [ "--verbose",
+            Completion "foo" (Just "1"),
+            Completion "bar" (Just "2")
+          ]
 
       it "completes commands after a global option" $
         parserCompletionTest
@@ -380,7 +411,9 @@ spec = do
           )
           1
           ["--verbose"]
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2")
+          ]
 
       it "completes the default command's options after a global option" $
         parserCompletionTest
@@ -394,7 +427,10 @@ spec = do
           )
           1
           ["--verbose"]
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2"), "--example"]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2"),
+            "--example"
+          ]
 
     describe "many" $ do
       it "can complete repeated switches" $
@@ -431,7 +467,9 @@ spec = do
           )
           1
           ["--include"]
-          ["foo", "bar"]
+          [ "foo",
+            "bar"
+          ]
 
       it "can complete repeated options after one has already been parsed" $
         parserCompletionTest
@@ -445,8 +483,13 @@ spec = do
               )
           )
           3
-          ["--include", "foo", "--include"]
-          ["foo", "bar"]
+          [ "--include",
+            "foo",
+            "--include"
+          ]
+          [ "foo",
+            "bar"
+          ]
 
     describe "some" $ do
       it "can complete at least one switch" $
@@ -473,7 +516,9 @@ spec = do
           )
           0
           []
-          ["--host", "--port"]
+          [ "--host",
+            "--port"
+          ]
 
       it "still suggests the remaining option after one is consumed" $
         parserCompletionTest
@@ -577,7 +622,10 @@ spec = do
           )
           0
           []
-          ["--alpha", "--beta", "--gamma"]
+          [ "--alpha",
+            "--beta",
+            "--gamma"
+          ]
 
     describe "withDefault" $ do
       it "completes the underlying parser" $
@@ -585,7 +633,9 @@ spec = do
           (withDefault "default" $ setting [option, reader (str :: Reader String), long "name", completer $ listCompleter ["alice", "bob"]])
           1
           ["--name"]
-          ["alice", "bob"]
+          [ "alice",
+            "bob"
+          ]
 
       it "still suggests the option when it has a default" $
         parserCompletionTest
@@ -610,14 +660,18 @@ spec = do
           p
           0
           []
-          [Completion "top" (Just "top-level"), Completion "other" (Just "other")]
+          [ Completion "top" (Just "top-level"),
+            Completion "other" (Just "other")
+          ]
 
       it "completes sub-commands after selecting a top-level command" $
         parserCompletionTest
           p
           1
           ["top"]
-          [Completion "sub-a" (Just "sub a"), Completion "sub-b" (Just "sub b")]
+          [ Completion "sub-a" (Just "sub a"),
+            Completion "sub-b" (Just "sub b")
+          ]
 
       it "filters sub-commands by prefix" $
         parserCompletionTest
@@ -640,7 +694,10 @@ spec = do
           )
           1
           ["top"]
-          [Completion "sub-a" (Just "sub a"), Completion "sub-b" (Just "sub b"), "--flag"]
+          [ Completion "sub-a" (Just "sub a"),
+            Completion "sub-b" (Just "sub b"),
+            "--flag"
+          ]
 
     describe "commands merged via alternative" $ do
       it "completes commands from both sides of an alternative" $
@@ -650,7 +707,9 @@ spec = do
           )
           0
           []
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2")
+          ]
 
     describe "arguments after double dash" $ do
       -- A bare -- is consumed as the argument value "--" when it's
@@ -709,7 +768,9 @@ spec = do
           )
           0
           []
-          ["src", "dst"]
+          [ "src",
+            "dst"
+          ]
 
       it "completes the second argument after the first" $
         parserCompletionTest
@@ -749,7 +810,9 @@ spec = do
           )
           0
           []
-          ["hello", "world"]
+          [ "hello",
+            "world"
+          ]
 
     describe "withConfig" $ do
       it "completes the main parser through withConfig" $
@@ -770,7 +833,9 @@ spec = do
           0
           []
           -- Main parser completions come first (p2), then config parser completions (p1)
-          ["--verbose", "--config-file"]
+          [ "--verbose",
+            "--config-file"
+          ]
 
       it "completes the config file value along with main parser suggestions" $
         parserCompletionTest
@@ -782,7 +847,9 @@ spec = do
           ["--config-file"]
           -- The main parser (p2) still suggests --verbose since it hasn't
           -- consumed anything, and the config parser (p1) offers the completer.
-          ["--verbose", "config.yaml"]
+          [ "--verbose",
+            "config.yaml"
+          ]
 
       it "completes the main parser after the config option is consumed" $
         parserCompletionTest
@@ -810,7 +877,9 @@ spec = do
           )
           0
           []
-          ["--name", "--verbose"]
+          [ "--name",
+            "--verbose"
+          ]
 
       it "completes the second part when the optional is skipped" $
         parserCompletionTest
@@ -820,7 +889,9 @@ spec = do
           )
           0
           []
-          ["--name", "--verbose"]
+          [ "--name",
+            "--verbose"
+          ]
 
     describe "many with other parsers" $ do
       it "completes both many and a following switch" $
@@ -831,7 +902,9 @@ spec = do
           )
           0
           []
-          ["--include", "--verbose"]
+          [ "--include",
+            "--verbose"
+          ]
 
       it "completes both after consuming one many-option" $
         parserCompletionTest
@@ -841,7 +914,9 @@ spec = do
           )
           2
           ["--include", "foo"]
-          ["--include", "--verbose"]
+          [ "--include",
+            "--verbose"
+          ]
 
       it "completes many switches combined with a command" $
         parserCompletionTest
@@ -854,7 +929,10 @@ spec = do
           )
           0
           []
-          ["--verbose", Completion "run" (Just "run it"), Completion "build" (Just "build it")]
+          [ "--verbose",
+            Completion "run" (Just "run it"),
+            Completion "build" (Just "build it")
+          ]
 
       it "completes commands after consuming many switches" $
         parserCompletionTest
@@ -867,7 +945,10 @@ spec = do
           )
           2
           ["-v", "-v"]
-          ["--verbose", Completion "run" (Just "run it"), Completion "build" (Just "build it")]
+          [ "--verbose",
+            Completion "run" (Just "run it"),
+            Completion "build" (Just "build it")
+          ]
 
     describe "folded short switches" $ do
       it "can complete after a folded short switch is consumed" $
@@ -912,7 +993,10 @@ spec = do
           )
           0
           []
-          ["--config", "--verbose", "file.txt"]
+          [ "--config",
+            "--verbose",
+            "file.txt"
+          ]
 
       it "completes correctly after all optional+many consumed" $
         parserCompletionTest
@@ -922,8 +1006,13 @@ spec = do
               <*> setting [argument, reader (str :: Reader String), completer $ listCompleter ["file.txt"]]
           )
           3
-          ["--config", "foo", "--verbose"]
-          ["--verbose", "file.txt"]
+          [ "--config",
+            "foo",
+            "--verbose"
+          ]
+          [ "--verbose",
+            "file.txt"
+          ]
 
     describe "commands with options inside" $ do
       it "completes a command's many options" $
@@ -945,7 +1034,10 @@ spec = do
               ]
           )
           3
-          ["run", "--arg", "val"]
+          [ "run",
+            "--arg",
+            "val"
+          ]
           ["--arg"]
 
     describe "multiple commands with shared options" $ do
@@ -1054,7 +1146,10 @@ spec = do
               <*> setting [switch (), long "extra"]
           )
           3
-          ["--name", "--other", "--extra"]
+          [ "--name",
+            "--other",
+            "--extra"
+          ]
           []
 
     describe "option with different dashed in args" $ do
@@ -1080,7 +1175,9 @@ spec = do
           )
           0
           []
-          [Completion "foo" (Just "1"), Completion "bar" (Just "2")]
+          [ Completion "foo" (Just "1"),
+            Completion "bar" (Just "2")
+          ]
 
     describe "prefix filtering" $ do
       it "filters switches by typed prefix" $
@@ -1110,7 +1207,9 @@ spec = do
           )
           0
           ["ge"]
-          ["gen", "getter"]
+          [ "gen",
+            "getter"
+          ]
 
     describe "argument completion with dashed values" $ do
       -- When a dashed-looking value is provided as a positional argument,
@@ -1137,3 +1236,183 @@ spec = do
           1
           ["--foo"]
           ["dest"]
+
+    describe "partial option value completion" $ do
+      it "filters option values by typed prefix" $
+        parserCompletionTest
+          ( setting
+              [ option,
+                reader (str :: Reader String),
+                long "name",
+                completer $ listCompleter ["alice", "bob"]
+              ]
+          )
+          1
+          ["--name", "al"]
+          ["alice"]
+
+      it "returns all option values when prefix is empty" $
+        parserCompletionTest
+          ( setting
+              [ option,
+                reader (str :: Reader String),
+                long "name",
+                completer $ listCompleter ["alice", "bob"]
+              ]
+          )
+          1
+          ["--name", ""]
+          [ "alice",
+            "bob"
+          ]
+
+    describe "partial argument completion" $ do
+      it "filters argument values by typed prefix" $
+        parserCompletionTest
+          ( setting
+              [ argument,
+                reader (str :: Reader String),
+                completer $ listCompleter ["file1", "file2", "data"]
+              ]
+          )
+          0
+          ["fi"]
+          [ "file1",
+            "file2"
+          ]
+
+      it "filters argument values by a different prefix" $
+        parserCompletionTest
+          ( setting
+              [ argument,
+                reader (str :: Reader String),
+                completer $ listCompleter ["file1", "file2", "data"]
+              ]
+          )
+          0
+          ["da"]
+          ["data"]
+
+    describe "partial command name with inner option completion" $ do
+      it "completes a command's options after selecting by prefix" $
+        parserCompletionTest
+          ( commands
+              [ command "deploy" "deploy it" $ setting [switch (), long "force"],
+                command "debug" "debug it" $ pure ()
+              ]
+          )
+          1
+          ["deploy"]
+          ["--force"]
+
+    describe "completion at a middle index" $ do
+      it "completes the value of an option at its value position with a matching prefix" $
+        parserCompletionTest
+          ( (,)
+              <$> setting
+                [ option,
+                  reader (str :: Reader String),
+                  long "foo",
+                  completer $ listCompleter ["val1", "val2"]
+                ]
+              <*> setting [switch (), long "bar"]
+          )
+          1
+          ["--foo", "v", "--bar"]
+          [ "val1",
+            "val2"
+          ]
+
+      it "filters completions when cursor word narrows the match" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "alpha"]
+              <*> setting [switch (), long "beta"]
+          )
+          0
+          ["--alpha", "--beta"]
+          ["--alpha"]
+
+    describe "partial long option prefix with multiple matches" $ do
+      it "filters options by a short prefix matching multiple" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> setting [switch (), long "version"]
+          )
+          0
+          ["--ver"]
+          [ "--verbose",
+            "--version"
+          ]
+
+      it "filters options by a longer prefix matching one" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> setting [switch (), long "version"]
+          )
+          0
+          ["--verb"]
+          ["--verbose"]
+
+    describe "partial argument completion after consuming earlier args" $ do
+      it "filters the second argument's completer by prefix after the first is consumed" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [argument, reader (str :: Reader String), completer $ listCompleter ["src"]]
+              <*> setting [argument, reader (str :: Reader String), completer $ listCompleter ["dst", "data"]]
+          )
+          1
+          ["src", "ds"]
+          ["dst"]
+
+    describe "commands with partial option value inside" $ do
+      it "filters a command's option values by prefix" $
+        parserCompletionTest
+          ( commands
+              [ command "run" "run it" $
+                  setting
+                    [ option,
+                      reader (str :: Reader String),
+                      long "output",
+                      completer $ listCompleter ["file.txt", "final.out", "data.csv"]
+                    ]
+              ]
+          )
+          2
+          ["run", "--output", "fi"]
+          [ "file.txt",
+            "final.out"
+          ]
+
+    describe "many with partial values" $ do
+      it "filters many option values by prefix" $
+        parserCompletionTest
+          ( many
+              ( setting
+                  [ option,
+                    reader (str :: Reader String),
+                    long "include",
+                    completer $ listCompleter ["foo", "bar"]
+                  ]
+              )
+          )
+          1
+          ["--include", "fo"]
+          ["foo"]
+
+      it "filters many option values by prefix after one is consumed" $
+        parserCompletionTest
+          ( many
+              ( setting
+                  [ option,
+                    reader (str :: Reader String),
+                    long "include",
+                    completer $ listCompleter ["foo", "bar"]
+                  ]
+              )
+          )
+          3
+          ["--include", "foo", "--include", "ba"]
+          ["bar"]
