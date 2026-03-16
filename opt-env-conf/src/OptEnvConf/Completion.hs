@@ -227,8 +227,10 @@ pureCompletionQuery parser ix args =
   fromMaybe [] $ evalState (go parser) selectedArgs
   where
     (selectedArgs, mCursorArg) = selectArgs ix args
+    -- Complete within a command's parser. The command name itself is
+    -- already handled in the ParserCommands branch (argsAtEnd case).
     goCommand :: Command a -> State Args (Maybe [Completion Suggestion])
-    goCommand = go . commandParser -- TODO complete with the command
+    goCommand = go . commandParser
     combineOptions = Just . concat . catMaybes
 
     tryOrRestore :: State Args (Maybe a) -> State Args (Maybe a)
