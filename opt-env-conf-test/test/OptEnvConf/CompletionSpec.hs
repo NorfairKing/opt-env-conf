@@ -1112,9 +1112,7 @@ spec = do
           ["ge"]
           ["gen", "getter"]
 
-    -- Failing tests for TODO items in Completion.hs.
-    -- These assert the correct behavior that is not yet implemented.
-    xdescribe "TODO: only first consumeArgument possibility is tried (line 394)" $ do
+    describe "argument completion with dashed values" $ do
       -- When a dashed-looking value is provided as a positional argument,
       -- the completion engine treats it as a potential switch (first
       -- consumeArgument possibility) instead of consuming it.  This
