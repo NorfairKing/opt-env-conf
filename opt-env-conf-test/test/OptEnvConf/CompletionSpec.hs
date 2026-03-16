@@ -750,3 +750,253 @@ spec = do
           0
           []
           ["hello", "world"]
+
+    describe "withConfig" $ do
+      it "completes the main parser through withConfig" $
+        parserCompletionTest
+          ( withConfig (pure Nothing) $
+              setting [switch (), long "example"]
+          )
+          0
+          []
+          ["--example"]
+
+      it "completes the config file option together with the main parser" $
+        parserCompletionTest
+          ( withConfig
+              (Nothing <$ setting [option, reader (str :: Reader String), long "config-file", completer $ listCompleter ["config.yaml"]])
+              (setting [switch (), long "verbose"])
+          )
+          0
+          []
+          -- Main parser completions come first (p2), then config parser completions (p1)
+          ["--verbose", "--config-file"]
+
+      it "completes the config file value along with main parser suggestions" $
+        parserCompletionTest
+          ( withConfig
+              (Nothing <$ setting [option, reader (str :: Reader String), long "config-file", completer $ listCompleter ["config.yaml"]])
+              (setting [switch (), long "verbose"])
+          )
+          1
+          ["--config-file"]
+          -- The main parser (p2) still suggests --verbose since it hasn't
+          -- consumed anything, and the config parser (p1) offers the completer.
+          ["--verbose", "config.yaml"]
+
+      it "completes the main parser after the config option is consumed" $
+        parserCompletionTest
+          ( withConfig
+              (Nothing <$ setting [option, reader (str :: Reader String), long "config-file", completer $ listCompleter ["config.yaml"]])
+              (setting [switch (), long "verbose"])
+          )
+          2
+          ["--config-file", "config.yaml"]
+          ["--verbose"]
+
+    describe "optional" $ do
+      it "completes through an optional parser" $
+        parserCompletionTest
+          (optional $ setting [switch (), long "verbose"])
+          0
+          []
+          ["--verbose"]
+
+      it "completes an optional with an applicative" $
+        parserCompletionTest
+          ( (,)
+              <$> optional (setting [option, reader (str :: Reader String), long "name", completer $ listCompleter ["alice"]])
+              <*> setting [switch (), long "verbose"]
+          )
+          0
+          []
+          ["--name", "--verbose"]
+
+      it "completes the second part when the optional is skipped" $
+        parserCompletionTest
+          ( (,)
+              <$> optional (setting [option, reader (str :: Reader String), long "name"])
+              <*> setting [switch (), long "verbose"]
+          )
+          0
+          []
+          ["--name", "--verbose"]
+
+    describe "many with other parsers" $ do
+      it "completes both many and a following switch" $
+        parserCompletionTest
+          ( (,)
+              <$> many (setting [option, reader (str :: Reader String), long "include", completer $ listCompleter ["foo"]])
+              <*> setting [switch (), long "verbose"]
+          )
+          0
+          []
+          ["--include", "--verbose"]
+
+      it "completes both after consuming one many-option" $
+        parserCompletionTest
+          ( (,)
+              <$> many (setting [option, reader (str :: Reader String), long "include", completer $ listCompleter ["foo"]])
+              <*> setting [switch (), long "verbose"]
+          )
+          2
+          ["--include", "foo"]
+          ["--include", "--verbose"]
+
+      it "completes many switches combined with a command" $
+        parserCompletionTest
+          ( (,)
+              <$> many (setting [switch (), long "verbose", short 'v'])
+              <*> commands
+                [ command "run" "run it" $ pure (),
+                  command "build" "build it" $ pure ()
+                ]
+          )
+          0
+          []
+          ["--verbose", Completion "run" (Just "run it"), Completion "build" (Just "build it")]
+
+      it "completes commands after consuming many switches" $
+        parserCompletionTest
+          ( (,)
+              <$> many (setting [switch (), long "verbose", short 'v'])
+              <*> commands
+                [ command "run" "run it" $ pure (),
+                  command "build" "build it" $ pure ()
+                ]
+          )
+          2
+          ["-v", "-v"]
+          ["--verbose", Completion "run" (Just "run it"), Completion "build" (Just "build it")]
+
+    describe "folded short switches" $ do
+      it "can complete after a folded short switch is consumed" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), short 'v']
+              <*> setting [switch (), short 'n']
+          )
+          1
+          ["-v"]
+          ["-n"]
+
+      it "no longer suggests a switch consumed via folding" $
+        parserCompletionTest
+          ( (,,)
+              <$> setting [switch (), short 'v']
+              <*> setting [switch (), short 'n']
+              <*> setting [switch (), short 'x']
+          )
+          1
+          ["-vn"]
+          ["-x"]
+
+    describe "short option shorthand" $ do
+      it "completes after a short option consumed in shorthand" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [option, reader (str :: Reader String), short 'f']
+              <*> setting [switch (), long "verbose"]
+          )
+          1
+          ["-ffoo.txt"]
+          ["--verbose"]
+
+    describe "deeply nested parsers" $ do
+      it "completes through optional + many + applicative" $
+        parserCompletionTest
+          ( (,,)
+              <$> optional (setting [option, reader (str :: Reader String), long "config"])
+              <*> many (setting [switch (), long "verbose", short 'v'])
+              <*> setting [argument, reader (str :: Reader String), completer $ listCompleter ["file.txt"]]
+          )
+          0
+          []
+          ["--config", "--verbose", "file.txt"]
+
+      it "completes correctly after all optional+many consumed" $
+        parserCompletionTest
+          ( (,,)
+              <$> optional (setting [option, reader (str :: Reader String), long "config"])
+              <*> many (setting [switch (), long "verbose", short 'v'])
+              <*> setting [argument, reader (str :: Reader String), completer $ listCompleter ["file.txt"]]
+          )
+          3
+          ["--config", "foo", "--verbose"]
+          ["--verbose", "file.txt"]
+
+    describe "commands with options inside" $ do
+      it "completes a command's many options" $
+        parserCompletionTest
+          ( commands
+              [ command "run" "run it" $
+                  many (setting [option, reader (str :: Reader String), long "arg", completer $ listCompleter ["val"]])
+              ]
+          )
+          2
+          ["run", "--arg"]
+          ["val"]
+
+      it "completes a command's many options after one is consumed" $
+        parserCompletionTest
+          ( commands
+              [ command "run" "run it" $
+                  many (setting [option, reader (str :: Reader String), long "arg", completer $ listCompleter ["val"]])
+              ]
+          )
+          3
+          ["run", "--arg", "val"]
+          ["--arg"]
+
+    describe "multiple commands with shared options" $ do
+      it "completes options in the selected command only" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ setting [switch (), long "alpha"],
+                command "bar" "2" $ setting [switch (), long "beta"]
+              ]
+          )
+          1
+          ["foo"]
+          ["--alpha"]
+
+      it "does not leak options from other commands" $
+        parserCompletionTest
+          ( commands
+              [ command "foo" "1" $ setting [switch (), long "alpha"],
+                command "bar" "2" $ setting [switch (), long "beta"]
+              ]
+          )
+          1
+          ["bar"]
+          ["--beta"]
+
+    describe "prefix filtering" $ do
+      it "filters switches by typed prefix" $
+        parserCompletionTest
+          ( (,)
+              <$> setting [switch (), long "verbose"]
+              <*> setting [switch (), long "version"]
+          )
+          0
+          ["--verb"]
+          ["--verbose"]
+
+      it "returns nothing when prefix matches nothing" $
+        parserCompletionTest
+          (setting [switch (), long "verbose"])
+          0
+          ["--xyz"]
+          []
+
+      it "filters commands by typed prefix" $
+        parserCompletionDescriptionTest
+          ( commands
+              [ command "generate" "gen" $ pure (),
+                command "get" "getter" $ pure (),
+                command "build" "builder" $ pure ()
+              ]
+          )
+          0
+          ["ge"]
+          ["gen", "getter"]
