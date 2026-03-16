@@ -972,41 +972,42 @@ spec = do
           ["--beta"]
 
     describe "alternative branch failures" $ do
-      let emptyP = empty :: Parser ()
+      -- A parser that is not detected as isEmpty but still fails during
+      -- completion (andCompletions fails because the inner empty fails).
+      -- This avoids the (<|>) optimization that removes empty alternatives.
+      let failingP = (empty :: Parser ()) *> pure ()
       it "restores state when first branch fails in an alternative" $
         parserCompletionTest
-          (emptyP <|> setting [switch (), long "foo"])
+          (failingP <|> setting [switch (), long "foo"])
           0
           []
           ["--foo"]
 
       it "returns first branch completions when second branch fails" $
         parserCompletionTest
-          (setting [switch (), long "foo"] <|> emptyP)
+          (setting [switch (), long "foo"] <|> failingP)
           0
           []
           ["--foo"]
 
       it "returns no completions when both alternatives fail" $
         parserCompletionTest
-          (emptyP <|> emptyP)
+          (failingP <|> failingP)
           0
           []
           []
 
     describe "applicative branch failures" $ do
-      let emptyP = empty :: Parser ()
-      let emptyS = empty :: Parser String
       it "returns nothing when first applicative branch fails" $
         parserCompletionTest
-          ((,) <$> emptyP <*> setting [switch (), long "foo"])
+          ((,) <$> ((empty :: Parser ()) *> pure ()) <*> setting [switch (), long "foo"])
           0
           []
           []
 
       it "returns nothing when second applicative branch fails" $
         parserCompletionTest
-          ((,) <$> setting [switch (), long "foo"] <*> emptyS)
+          ((,) <$> setting [switch (), long "foo"] <*> ((empty :: Parser String) *> pure ("" :: String)))
           0
           []
           []
@@ -1014,9 +1015,9 @@ spec = do
     describe "many edge cases" $ do
       it "handles many where the inner parser fails" $
         parserCompletionTest
-          (many (commands [command "foo" "1" $ pure ()]))
+          (many ((empty :: Parser ()) *> pure ()))
           0
-          ["unknown"]
+          []
           []
 
       it "returns first iteration completions when recursive call fails" $
@@ -1044,6 +1045,17 @@ spec = do
           1
           ["--verbose"]
           ["file"]
+
+      it "does not offer option completer when not at end of args" $
+        parserCompletionTest
+          ( (,,)
+              <$> setting [switch (), long "other"]
+              <*> setting [option, reader (str :: Reader String), long "name", completer $ listCompleter ["val"]]
+              <*> setting [switch (), long "extra"]
+          )
+          3
+          ["--name", "--other", "--extra"]
+          []
 
     describe "option with different dashed in args" $ do
       it "does not suggest an option when a different dashed is in the args" $
