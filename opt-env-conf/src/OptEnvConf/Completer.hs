@@ -6,6 +6,8 @@ module OptEnvConf.Completer
     listCompleter,
     listIOCompleter,
     filePath,
+    filePathWithExtension,
+    filePathWithExtensions,
     directoryPath,
   )
 where
@@ -96,6 +98,18 @@ filePath = Completer $ \fp' -> do
           dirsFromPartialListing,
           dirsFromParentListing
         ]
+
+filePathWithExtension :: String -> Completer
+filePathWithExtension ext = filePathWithExtensions [ext]
+
+filePathWithExtensions :: [String] -> Completer
+filePathWithExtensions exts = Completer $ \s -> do
+  results <- unCompleter filePath s
+  pure $ filter matchesExtension results
+  where
+    matchesExtension path
+      | "/" `isSuffixOf` path = True
+      | otherwise = any (`isSuffixOf` path) exts
 
 directoryPath :: Completer
 directoryPath = Completer $ \fp' -> do

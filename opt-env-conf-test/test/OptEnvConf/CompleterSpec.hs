@@ -27,6 +27,9 @@ spec = do
         -- File in dir in dir
         exampleFile3 <- resolveFile deeperDir "gold.txt"
         writeFile (fromAbsFile exampleFile3) ""
+        -- YAML file
+        yamlFile <- resolveFile tdir "config.yaml"
+        writeFile (fromAbsFile yamlFile) ""
         -- Hidden file
         hiddenFile <- resolveFile tdir ".hidden.txt"
         writeFile (fromAbsFile hiddenFile) ""
@@ -50,14 +53,15 @@ spec = do
                   withCurrentDir tdir $
                     unCompleter filePath s `shouldReturn` l
 
-        c "" ["foo.txt", "bar/"]
+        c "" ["foo.txt", "config.yaml", "bar/"]
         c "f" ["foo.txt"]
         c "b" ["bar/"]
         c "bar" ["bar/quux.txt", "bar/", "bar/deep/"]
+        c "c" ["config.yaml"]
         c "q" []
         c "." [".hidden.txt", ".hidden/"]
-        c "./" ["./foo.txt", "./bar/"]
-        c "././" ["././foo.txt", "././bar/"]
+        c "./" ["./foo.txt", "./config.yaml", "./bar/"]
+        c "././" ["././foo.txt", "././config.yaml", "././bar/"]
         c "./." ["./.hidden.txt", "./.hidden/"]
         c "./bar" ["./bar/quux.txt", "./bar/", "./bar/deep/"]
 
@@ -76,7 +80,7 @@ spec = do
           withCurrentDir tdir $ do
             let absPrefix = fromAbsDir tdir
             results <- unCompleter filePath absPrefix
-            results `shouldBe` [absPrefix <> "foo.txt", absPrefix <> "bar/"]
+            results `shouldBe` [absPrefix <> "foo.txt", absPrefix <> "config.yaml", absPrefix <> "bar/"]
 
       describe "directoryPath" $ do
         let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
@@ -100,3 +104,25 @@ spec = do
         c "bar/" ["bar/", "bar/deep/"]
         c "bar/d" ["bar/deep/"]
         c "bar/deep" ["bar/deep/"]
+
+      describe "filePathWithExtension" $ do
+        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+            c s l = withFrozenCallStack $
+              itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+                withCurrentDir tdir $
+                  unCompleter (filePathWithExtension ".yaml") s `shouldReturn` l
+
+        c "" ["config.yaml", "bar/"]
+        c "c" ["config.yaml"]
+        c "b" ["bar/"]
+        c "bar" ["bar/", "bar/deep/"]
+
+      describe "filePathWithExtensions" $ do
+        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+            c s l = withFrozenCallStack $
+              itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+                withCurrentDir tdir $
+                  unCompleter (filePathWithExtensions [".txt", ".yaml"]) s `shouldReturn` l
+
+        c "" ["foo.txt", "config.yaml", "bar/"]
+        c "bar/" ["bar/quux.txt", "bar/deep/"]

@@ -825,7 +825,8 @@ configuredConfigFile =
     [ option,
       long "config-file",
       env "CONFIG_FILE",
-      help "Path to the configuration file"
+      help "Path to the configuration file",
+      completer (filePathWithExtensions [".yaml", ".yml"])
     ]
 
 -- | Define a setting for a 'Bool' with a given default value.

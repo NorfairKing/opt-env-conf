@@ -55,6 +55,8 @@ module OptEnvConf
 
     -- ** Completers
     filePath,
+    filePathWithExtension,
+    filePathWithExtensions,
     directoryPath,
 
     -- ** Prefixing parsers

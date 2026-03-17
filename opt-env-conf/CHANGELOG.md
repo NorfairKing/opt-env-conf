@@ -2,8 +2,15 @@
 
 ## [0.14.1.1] - 2026-03-17
 
+### Added
+
+* `filePathWithExtension` and `filePathWithExtensions` completers for
+  completing only files with specific extensions.
+
 ### Changed
 
+* `withLocalYamlConfig` (via `configuredConfigFile`) now completes only
+  `.yaml` and `.yml` files instead of all files.
 * Fixed completion for options next to default commands with arguments.
   When a default command's argument parser speculatively consumed a dashed
   option (e.g. `--archive-dir`) as a positional value, sibling parsers in
