@@ -1507,12 +1507,15 @@ spec = do
           -- After typing the dashed of an option that takes a value, the
           -- cursor is in the value position.  The option's completer
           -- should fire first, then other options should follow.
+          --
+          -- Shell sends index pointing at the empty cursor word:
+          --   exe --dir <tab> -> index=1, words=["--dir", ""]
           itWithOuter "completes directory option value first, then other options" $ \tdir -> do
             let parser =
                   (,)
                     <$> directoryPathSetting [help "d", option, long "dir"]
                     <*> setting [switch (), long "verbose"]
-            results <- evalQuery parser 2 ["--dir", ""] tdir
+            results <- evalQuery parser 1 ["--dir", ""] tdir
             let suggestions = map completionSuggestion results
             suggestions `shouldBe` ["exampledir/", "--verbose"]
 
@@ -1521,6 +1524,6 @@ spec = do
                   (,)
                     <$> filePathSetting [help "f", option, long "file"]
                     <*> setting [switch (), long "verbose"]
-            results <- evalQuery parser 2 ["--file", ""] tdir
+            results <- evalQuery parser 1 ["--file", ""] tdir
             let suggestions = map completionSuggestion results
             suggestions `shouldBe` ["example.txt", "exampledir/", "--verbose"]
