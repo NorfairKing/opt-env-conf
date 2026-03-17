@@ -1,4 +1,4 @@
-[36mUsage: [m[33mopt-env-conf-example[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m COMMAND [36m[[m[37m--log-level[m [33mLOG_LEVEL[m[36m][m [36m[[m[37m-b[m[36m|[m[37m--base[m [33mDIRECTORY_PATH[m[36m][m [36m[[m[37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [36m[[m[37m--payment-currency[m [33mCURRENCY[m[36m][m[36m][m
+[36mUsage: [m[33mopt-env-conf-example[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m COMMAND [36m[[m[37m--log-level[m [33mLOG_LEVEL[m[36m][m [36m[[m[37m-b[m[36m|[m[37m--base[m [33mDIRECTORY_PATH[m[36m][m [36m[[m[37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mSECRET_KEY_FILE[m [36m[[m[37m--payment-currency[m [33mCURRENCY[m[36m][m[36m][m
 
 [36mAll settings[m:
   [34mShow this help text[m
@@ -36,8 +36,8 @@
       [33m<string>[m
 
   [34mSecret key[m
-  option: [37m--payment-secret-key[m [33mFILE_PATH[m
-  env: [37mEXAMPLE_PAYMENT_SECRET_KEY[m [33mFILE_PATH[m
+  option: [37m--payment-secret-key[m [33mSECRET_KEY_FILE[m
+  env: [37mEXAMPLE_PAYMENT_SECRET_KEY[m [33mSECRET_KEY_FILE[m
   config:
     [37mexample.payment.secret-key[m: # [32mor null[m
       [33m<string>[m
@@ -94,12 +94,12 @@
   [37m--payment-currency[m   [34mCurrency[m  
 
 [36mEnvironment Variables[m:
-  [37mCONFIG_FILE[m [33mFILE_PATH[m                   [34mPath to the configuration file[m                     
-  [37mEXAMPLE_LOG_LEVEL[m [33mLOG_LEVEL[m             [34mminimal severity of log messages[m   default: [33m"DEBUG"[m
-  [37mCACHE_DIRECTORY[m [33mDIRECTORY_PATH[m          [34mcache directory[m                                    
-  [37mEXAMPLE_PAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m   [34mPublic key[m                                         
-  [37mEXAMPLE_PAYMENT_SECRET_KEY[m [33mFILE_PATH[m    [34mSecret key[m                                         
-  [37mEXAMPLE_PAYMENT_CURRENCY[m [33mCURRENCY[m       [34mCurrency[m                                           
+  [37mCONFIG_FILE[m [33mFILE_PATH[m                        [34mPath to the configuration file[m                     
+  [37mEXAMPLE_LOG_LEVEL[m [33mLOG_LEVEL[m                  [34mminimal severity of log messages[m   default: [33m"DEBUG"[m
+  [37mCACHE_DIRECTORY[m [33mDIRECTORY_PATH[m               [34mcache directory[m                                    
+  [37mEXAMPLE_PAYMENT_PUBLIC_KEY[m [33mPUBLIC_KEY[m        [34mPublic key[m                                         
+  [37mEXAMPLE_PAYMENT_SECRET_KEY[m [33mSECRET_KEY_FILE[m   [34mSecret key[m                                         
+  [37mEXAMPLE_PAYMENT_CURRENCY[m [33mCURRENCY[m            [34mCurrency[m                                           
 
 [36mConfiguration Values[m:
   [34mminimal severity of log messages[m

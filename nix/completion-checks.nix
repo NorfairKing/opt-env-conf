@@ -66,12 +66,14 @@ let
     echo "Test: file path completion (directories end in /, files do not)"
     TESTDIR=$(mktemp -d)
     mkdir -p "$TESTDIR/mysubdir"
+    touch "$TESTDIR/myfile.yaml"
     touch "$TESTDIR/myfile.txt"
     pushd "$TESTDIR" > /dev/null
     OUT=$(query 2 --completion-word prog --completion-word --config-file --completion-word "")
     popd > /dev/null
-    assert_contains "file in file completion" "$OUT" "myfile.txt"
-    assert_not_contains "file has no trailing slash" "$OUT" "myfile.txt/"
+    assert_contains "yaml file in file completion" "$OUT" "myfile.yaml"
+    assert_not_contains "yaml file has no trailing slash" "$OUT" "myfile.yaml/"
+    assert_not_contains "non-yaml file excluded from config-file completion" "$OUT" "myfile.txt"
     assert_contains "directory in file completion" "$OUT" "mysubdir/"
     rm -rf "$TESTDIR"
 

@@ -1,16 +1,27 @@
 # Changelog
 
-## [0.14.1.1] - 2026-03-17
+## [0.15.0.0] - 2026-03-17
 
 ### Added
 
 * `filePathWithExtension` and `filePathWithExtensions` completers for
   completing only files with specific extensions.
+* `CompletionResult` and `CompletionFinality` types for per-result
+  trailing-space suppression in zsh.
 
 ### Changed
 
+* **Breaking:** `Completer` now wraps `String -> IO [CompletionResult]`
+  instead of `String -> IO [String]`. Each result carries a
+  `CompletionFinality` indicating whether it is final (e.g. a file — shell
+  appends trailing space) or non-final (e.g. a directory — no trailing
+  space). The zsh completion script uses this signal instead of the `*/`
+  suffix heuristic.
 * `withLocalYamlConfig` (via `configuredConfigFile`) now completes only
   `.yaml` and `.yml` files instead of all files.
+* Fixed `filePathSetting` and `directoryPathSetting` so that user-provided
+  builders (e.g. `completer`, `metavar`) take precedence over the built-in
+  defaults instead of being silently overridden.
 * Fixed completion for options next to default commands with arguments.
   When a default command's argument parser speculatively consumed a dashed
   option (e.g. `--archive-dir`) as a positional value, sibling parsers in

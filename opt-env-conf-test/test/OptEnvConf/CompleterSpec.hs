@@ -46,83 +46,101 @@ spec = do
       )
     $ do
       describe "filePath" $ do
-        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+        let c :: (HasCallStack) => String -> [CompletionResult] -> TestDef '[Path Abs Dir] ()
             c s l =
               withFrozenCallStack $
-                itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+                itWithOuter (unwords ["can complete", show s, "to", show (map completionResultValue l)]) $ \tdir ->
                   withCurrentDir tdir $
                     unCompleter filePath s `shouldReturn` l
 
-        c "" ["foo.txt", "config.yaml", "bar/"]
-        c "f" ["foo.txt"]
-        c "b" ["bar/"]
-        c "bar" ["bar/quux.txt", "bar/", "bar/deep/"]
-        c "c" ["config.yaml"]
+        c "" [fileR "foo.txt", fileR "config.yaml", dirR "bar/"]
+        c "f" [fileR "foo.txt"]
+        c "b" [dirR "bar/"]
+        c "bar" [fileR "bar/quux.txt", dirR "bar/", dirR "bar/deep/"]
+        c "c" [fileR "config.yaml"]
         c "q" []
-        c "." [".hidden.txt", ".hidden/"]
-        c "./" ["./foo.txt", "./config.yaml", "./bar/"]
-        c "././" ["././foo.txt", "././config.yaml", "././bar/"]
-        c "./." ["./.hidden.txt", "./.hidden/"]
-        c "./bar" ["./bar/quux.txt", "./bar/", "./bar/deep/"]
+        c "." [fileR ".hidden.txt", dirR ".hidden/"]
+        c "./" [fileR "./foo.txt", fileR "./config.yaml", dirR "./bar/"]
+        c "././" [fileR "././foo.txt", fileR "././config.yaml", dirR "././bar/"]
+        c "./." [fileR "./.hidden.txt", dirR "./.hidden/"]
+        c "./bar" [fileR "./bar/quux.txt", dirR "./bar/", dirR "./bar/deep/"]
 
         -- Deeper nesting.
         -- Directories end in /, files do not.  This convention is how
         -- shells decide whether to append a trailing space after a
         -- completion.
-        c "bar/" ["bar/quux.txt", "bar/deep/"]
-        c "bar/d" ["bar/deep/"]
-        c "bar/deep" ["bar/deep/gold.txt", "bar/deep/"]
-        c "bar/deep/" ["bar/deep/gold.txt"]
-        c "bar/q" ["bar/quux.txt"]
+        c "bar/" [fileR "bar/quux.txt", dirR "bar/deep/"]
+        c "bar/d" [dirR "bar/deep/"]
+        c "bar/deep" [fileR "bar/deep/gold.txt", dirR "bar/deep/"]
+        c "bar/deep/" [fileR "bar/deep/gold.txt"]
+        c "bar/q" [fileR "bar/quux.txt"]
 
         -- Absolute paths
         itWithOuter "can complete absolute paths" $ \tdir ->
           withCurrentDir tdir $ do
             let absPrefix = fromAbsDir tdir
             results <- unCompleter filePath absPrefix
-            results `shouldBe` [absPrefix <> "foo.txt", absPrefix <> "config.yaml", absPrefix <> "bar/"]
+            results
+              `shouldBe` [ fileR (absPrefix <> "foo.txt"),
+                           fileR (absPrefix <> "config.yaml"),
+                           dirR (absPrefix <> "bar/")
+                         ]
 
       describe "directoryPath" $ do
-        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+        let c :: (HasCallStack) => String -> [CompletionResult] -> TestDef '[Path Abs Dir] ()
             c s l = withFrozenCallStack $
-              itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+              itWithOuter (unwords ["can complete", show s, "to", show (map completionResultValue l)]) $ \tdir ->
                 withCurrentDir tdir $
                   unCompleter directoryPath s `shouldReturn` l
 
-        c "" ["bar/"]
-        c "b" ["bar/"]
+        c "" [dirR "bar/"]
+        c "b" [dirR "bar/"]
         c "f" []
-        c "." [".hidden/"]
-        c "./" ["./bar/"]
-        c "./." ["./.hidden/"]
-        c "././" ["././bar/"]
-        c "./." ["./.hidden/"]
-        c "./bar" ["./bar/", "./bar/deep/"]
+        c "." [dirR ".hidden/"]
+        c "./" [dirR "./bar/"]
+        c "./." [dirR "./.hidden/"]
+        c "././" [dirR "././bar/"]
+        c "./." [dirR "./.hidden/"]
+        c "./bar" [dirR "./bar/", dirR "./bar/deep/"]
 
         -- Deeper nesting.
         -- Only directories are returned, never files.
-        c "bar/" ["bar/", "bar/deep/"]
-        c "bar/d" ["bar/deep/"]
-        c "bar/deep" ["bar/deep/"]
+        c "bar/" [dirR "bar/", dirR "bar/deep/"]
+        c "bar/d" [dirR "bar/deep/"]
+        c "bar/deep" [dirR "bar/deep/"]
 
       describe "filePathWithExtension" $ do
-        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+        let c :: (HasCallStack) => String -> [CompletionResult] -> TestDef '[Path Abs Dir] ()
             c s l = withFrozenCallStack $
-              itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+              itWithOuter (unwords ["can complete", show s, "to", show (map completionResultValue l)]) $ \tdir ->
                 withCurrentDir tdir $
                   unCompleter (filePathWithExtension ".yaml") s `shouldReturn` l
 
-        c "" ["config.yaml", "bar/"]
-        c "c" ["config.yaml"]
-        c "b" ["bar/"]
-        c "bar" ["bar/", "bar/deep/"]
+        c "" [fileR "config.yaml", dirR "bar/"]
+        c "c" [fileR "config.yaml"]
+        c "b" [dirR "bar/"]
+        c "bar" [dirR "bar/", dirR "bar/deep/"]
 
       describe "filePathWithExtensions" $ do
-        let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
+        let c :: (HasCallStack) => String -> [CompletionResult] -> TestDef '[Path Abs Dir] ()
             c s l = withFrozenCallStack $
-              itWithOuter (unwords ["can complete", show s, "to", show l]) $ \tdir ->
+              itWithOuter (unwords ["can complete", show s, "to", show (map completionResultValue l)]) $ \tdir ->
                 withCurrentDir tdir $
                   unCompleter (filePathWithExtensions [".txt", ".yaml"]) s `shouldReturn` l
 
-        c "" ["foo.txt", "config.yaml", "bar/"]
-        c "bar/" ["bar/quux.txt", "bar/deep/"]
+        c "" [fileR "foo.txt", fileR "config.yaml", dirR "bar/"]
+        c "bar/" [fileR "bar/quux.txt", dirR "bar/deep/"]
+
+fileR :: String -> CompletionResult
+fileR s =
+  CompletionResult
+    { completionResultValue = s,
+      completionResultFinality = CompletionFinal
+    }
+
+dirR :: String -> CompletionResult
+dirR s =
+  CompletionResult
+    { completionResultValue = s,
+      completionResultFinality = CompletionNotFinal
+    }

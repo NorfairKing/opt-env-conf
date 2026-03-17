@@ -3,6 +3,9 @@
 module OptEnvConf.Completer
   ( Completer (..),
     mkCompleter,
+    CompletionFinality (..),
+    CompletionResult (..),
+    finalResult,
     listCompleter,
     listIOCompleter,
     filePath,
@@ -17,17 +20,45 @@ import Data.Maybe
 import Path
 import Path.IO
 
-newtype Completer = Completer {unCompleter :: String -> IO [String]}
+-- | Whether a shell should consider a completion result to be complete.
+--
+-- A final result like @file.txt@ means the user is done typing this
+-- argument, so the shell should append a trailing space.
+--
+-- A non-final result like @dir/@ means the user likely wants to keep
+-- typing (e.g. to complete a file inside the directory), so the shell
+-- should not append a trailing space.
+data CompletionFinality
+  = -- | The completion is complete; the shell should append a trailing space.
+    CompletionFinal
+  | -- | The completion may be extended further; no trailing space.
+    CompletionNotFinal
+  deriving (Show, Eq, Ord)
+
+data CompletionResult = CompletionResult
+  { completionResultValue :: !String,
+    completionResultFinality :: !CompletionFinality
+  }
+  deriving (Show, Eq, Ord)
+
+finalResult :: String -> CompletionResult
+finalResult s =
+  CompletionResult
+    { completionResultValue = s,
+      completionResultFinality = CompletionFinal
+    }
+
+newtype Completer = Completer {unCompleter :: String -> IO [CompletionResult]}
 
 -- Forward-compatible synonym for the 'Completer' constructor
-mkCompleter :: (String -> IO [String]) -> Completer
+mkCompleter :: (String -> IO [CompletionResult]) -> Completer
 mkCompleter = Completer
 
 listCompleter :: [String] -> Completer
 listCompleter ss = listIOCompleter $ pure ss
 
 listIOCompleter :: IO [String] -> Completer
-listIOCompleter act = Completer $ \s -> filterPrefix s <$> act
+listIOCompleter act = Completer $ \s -> filterPrefix s . map finalResult <$> act
 
 filePath :: Completer
 filePath = Completer $ \fp' -> do
@@ -36,7 +67,7 @@ filePath = Completer $ \fp' -> do
   -- An empty string is not a valid relative file or dir, but it is the most
   -- common option so we special case it here
   let (prefix, fp) = stripCurDir fp'
-  fmap (filterPrefix fp' . map (prefix <>)) $ do
+  fmap (filterPrefix fp' . map (addPrefix prefix)) $ do
     let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
     (dirsFromParentListing, filesFromParentListing) <- case parseSomeDir fp of
       Nothing -> case fp of
@@ -93,11 +124,14 @@ filePath = Completer $ \fp' -> do
 
     pure $
       concat
-        [ filesFromPartialListing,
-          filesFromParentListing,
-          dirsFromPartialListing,
-          dirsFromParentListing
+        [ map fileResult filesFromPartialListing,
+          map fileResult filesFromParentListing,
+          map dirResult dirsFromPartialListing,
+          map dirResult dirsFromParentListing
         ]
+  where
+    addPrefix :: String -> CompletionResult -> CompletionResult
+    addPrefix pfx cr = cr {completionResultValue = pfx <> completionResultValue cr}
 
 filePathWithExtension :: String -> Completer
 filePathWithExtension ext = filePathWithExtensions [ext]
@@ -107,9 +141,9 @@ filePathWithExtensions exts = Completer $ \s -> do
   results <- unCompleter filePath s
   pure $ filter matchesExtension results
   where
-    matchesExtension path
-      | "/" `isSuffixOf` path = True
-      | otherwise = any (`isSuffixOf` path) exts
+    matchesExtension cr
+      | "/" `isSuffixOf` completionResultValue cr = True
+      | otherwise = any (`isSuffixOf` completionResultValue cr) exts
 
 directoryPath :: Completer
 directoryPath = Completer $ \fp' -> do
@@ -118,7 +152,7 @@ directoryPath = Completer $ \fp' -> do
   -- An empty string is not a valid relative file or dir, but it is the most
   -- common option so we special case it here
   let (prefix, fp) = stripCurDir fp'
-  fmap (filterPrefix fp' . map (prefix <>)) $ do
+  fmap (filterPrefix fp' . map (addPrefix prefix . dirResult)) $ do
     let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
     dirsFromParentListing <- case parseSomeDir fp of
       Nothing -> case fp of
@@ -160,6 +194,23 @@ directoryPath = Completer $ \fp' -> do
         [ dirsFromPartialListing,
           dirsFromParentListing
         ]
+  where
+    addPrefix :: String -> CompletionResult -> CompletionResult
+    addPrefix pfx cr = cr {completionResultValue = pfx <> completionResultValue cr}
+
+fileResult :: String -> CompletionResult
+fileResult s =
+  CompletionResult
+    { completionResultValue = s,
+      completionResultFinality = CompletionFinal
+    }
+
+dirResult :: String -> CompletionResult
+dirResult s =
+  CompletionResult
+    { completionResultValue = s,
+      completionResultFinality = CompletionNotFinal
+    }
 
 hiddenRel :: Path Rel f -> Bool
 hiddenRel p = case toFilePath p of
@@ -173,5 +224,5 @@ stripCurDir = \case
      in ("./" <> pf, rest)
   p -> ("", p)
 
-filterPrefix :: String -> [String] -> [String]
-filterPrefix s = filter (s `isPrefixOf`)
+filterPrefix :: String -> [CompletionResult] -> [CompletionResult]
+filterPrefix s = filter ((s `isPrefixOf`) . completionResultValue)

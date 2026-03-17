@@ -88,12 +88,19 @@ zshCompletionScript progPath progname =
       "     if [[ $word[1] == \"-\" ]]; then",
       "       local desc=(\"$parts[1] ($parts[2])\")",
       "       compadd -d desc -- $parts[1]",
+      "     elif [[ $parts[3] == 'N' ]]; then",
+      "       local desc=($(print -f  \"%-019s -- %s\" $parts[1] $parts[2]))",
+      "       compadd -f -l -S '' -d desc -- $parts[1]",
       "     else",
       "       local desc=($(print -f  \"%-019s -- %s\" $parts[1] $parts[2]))",
-      "       compadd -l -d desc -- $parts[1]",
+      "       compadd -f -l -d desc -- $parts[1]",
       "     fi",
       "  else",
-      "    compadd -f -- $word",
+      "    if [[ $parts[3] == 'N' ]]; then",
+      "      compadd -f -S '' -- $parts[1]",
+      "    else",
+      "      compadd -f -- $parts[1]",
+      "    fi",
       "  fi",
       "done"
     ]
@@ -116,10 +123,11 @@ fishCompletionScript progPath progname =
           "      set tmpline $tmpline --completion-word $arg",
           "    end",
           "    for opt in (" ++ fromAbsFile progPath ++ " $tmpline)",
-          "      if test -d $opt",
-          "        echo -E \"$opt/\"",
+          "      set -l val (string split \\t -- $opt)[1]",
+          "      if test -d $val",
+          "        echo -E \"$val/\"",
           "      else",
-          "        echo -E \"$opt\"",
+          "        echo -E \"$val\"",
           "      end",
           "    end",
           "end",
@@ -165,12 +173,17 @@ runCompletionQuery parser enriched index' ws' = do
       putStr $
         unlines $
           map
-            ( \Completion {..} -> case completionDescription of
-                Nothing -> completionSuggestion
-                Just d -> completionSuggestion <> "\t" <> d
+            ( \Completion {..} ->
+                let val = completionResultValue completionSuggestion
+                    notFinal = completionResultFinality completionSuggestion == CompletionNotFinal
+                 in case (notFinal, completionDescription) of
+                      (False, Nothing) -> val
+                      (False, Just d) -> val <> "\t" <> d
+                      (True, Nothing) -> val <> "\t\tN"
+                      (True, Just d) -> val <> "\t" <> d <> "\tN"
             )
             evaluatedCompletions
-    else putStr $ unlines $ map completionSuggestion evaluatedCompletions
+    else putStr $ unlines $ map (completionResultValue . completionSuggestion) evaluatedCompletions
   pure ()
 
 -- Because the first arg has already been skipped we get input like this here:
@@ -201,13 +214,13 @@ instance (IsString str) => IsString (Completion str) where
         completionDescription = Nothing
       }
 
-evalCompletions :: String -> [Completion Suggestion] -> IO [Completion String]
+evalCompletions :: String -> [Completion Suggestion] -> IO [Completion CompletionResult]
 evalCompletions arg = fmap concat . mapM (evalCompletion arg)
 
-evalCompletion :: String -> Completion Suggestion -> IO [Completion String]
+evalCompletion :: String -> Completion Suggestion -> IO [Completion CompletionResult]
 evalCompletion arg c = do
-  ss <- evalSuggestion arg (completionSuggestion c)
-  pure $ map (\s -> c {completionSuggestion = s}) ss
+  rs <- evalSuggestion arg (completionSuggestion c)
+  pure $ map (\r -> c {completionSuggestion = r}) rs
 
 data Suggestion
   = SuggestionBare !String
@@ -217,9 +230,9 @@ data Suggestion
 instance IsString Suggestion where
   fromString = SuggestionBare
 
-evalSuggestion :: String -> Suggestion -> IO [String]
+evalSuggestion :: String -> Suggestion -> IO [CompletionResult]
 evalSuggestion arg = \case
-  SuggestionBare s -> pure $ filter (arg `isPrefixOf`) [s]
+  SuggestionBare s -> pure $ filter ((arg `isPrefixOf`) . completionResultValue) [finalResult s]
   SuggestionCompleter (Completer act) -> act arg
 
 pureCompletionQuery :: Parser a -> Int -> [String] -> [Completion Suggestion]

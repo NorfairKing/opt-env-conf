@@ -1,4 +1,4 @@
-[36mUsage: [m[33mexample[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m [36m[[m[37m--port[m [33mPORT[m[36m][m [36m[[m[37m--log-level[m [33mLOG_LEVEL[m[36m][m [36m[[m[37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mFILE_PATH[m [36m[[m[37m--payment-currency[m [33mCURRENCY[m[36m][m[36m][m COMMAND
+[36mUsage: [m[33mexample[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m [36m[[m[37m--port[m [33mPORT[m[36m][m [36m[[m[37m--log-level[m [33mLOG_LEVEL[m[36m][m [36m[[m[37m--payment-public-key[m [33mPUBLIC_KEY[m [37m--payment-secret-key[m [33mSECRET_KEY_FILE[m [36m[[m[37m--payment-currency[m [33mCURRENCY[m[36m][m[36m][m COMMAND
 
 example program description
 
@@ -37,8 +37,8 @@ example program description
       [33m<string>[m
 
   [34mSecret key[m
-  option: [37m--payment-secret-key[m [33mFILE_PATH[m
-  env: [37mPAYMENT_SECRET_KEY[m [33mFILE_PATH[m
+  option: [37m--payment-secret-key[m [33mSECRET_KEY_FILE[m
+  env: [37mPAYMENT_SECRET_KEY[m [33mSECRET_KEY_FILE[m
   config:
     [37mpayment.secret-key[m: # [32mor null[m
       [33m<string>[m

@@ -108,7 +108,8 @@ parserCompletionTest p ix ws expected = do
   let arg = fromMaybe "" $ listToMaybe $ drop ix ws
   let completions = pureCompletionQuery p ix ws
   evaluatedCompletions <- evalCompletions arg completions
-  evaluatedCompletions `shouldBe` expected
+  let toStringCompletion c = c {completionSuggestion = completionResultValue (completionSuggestion c)}
+  map toStringCompletion evaluatedCompletions `shouldBe` expected
 
 parserCompletionDescriptionTest :: Parser a -> Int -> [String] -> [String] -> IO ()
 parserCompletionDescriptionTest p ix ws descriptions = do

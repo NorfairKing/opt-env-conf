@@ -22,11 +22,18 @@ for word in $completions; do
      if [[ $word[1] == "-" ]]; then
        local desc=("$parts[1] ($parts[2])")
        compadd -d desc -- $parts[1]
+     elif [[ $parts[3] == 'N' ]]; then
+       local desc=($(print -f  "%-019s -- %s" $parts[1] $parts[2]))
+       compadd -f -l -S '' -d desc -- $parts[1]
      else
        local desc=($(print -f  "%-019s -- %s" $parts[1] $parts[2]))
-       compadd -l -d desc -- $parts[1]
+       compadd -f -l -d desc -- $parts[1]
      fi
   else
-    compadd -f -- $word
+    if [[ $parts[3] == 'N' ]]; then
+      compadd -f -S '' -- $parts[1]
+    else
+      compadd -f -- $parts[1]
+    fi
   fi
 done

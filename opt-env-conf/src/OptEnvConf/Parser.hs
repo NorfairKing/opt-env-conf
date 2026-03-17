@@ -479,11 +479,11 @@ filePathSetting builders =
   mapIO resolveFile' $
     withFrozenCallStack $
       setting $
-        [ reader str,
-          metavar "FILE_PATH",
-          completer filePath
-        ]
-          ++ builders
+        builders
+          ++ [ reader str,
+               metavar "FILE_PATH",
+               completer filePath
+             ]
 
 -- | A setting for @Path Abs dir@.
 --
@@ -496,11 +496,11 @@ directoryPathSetting builders =
   mapIO resolveDir' $
     withFrozenCallStack $
       setting $
-        [ reader str,
-          metavar "DIRECTORY_PATH",
-          completer directoryPath
-        ]
-          ++ builders
+        builders
+          ++ [ reader str,
+               metavar "DIRECTORY_PATH",
+               completer directoryPath
+             ]
 
 -- | A 'setting' with 'option', a 'reader' set to 'str', and the 'metavar' set to @STR@.
 --

@@ -8,10 +8,11 @@
       set tmpline $tmpline --completion-word $arg
     end
     for opt in (/usr/bin/example-executable $tmpline)
-      if test -d $opt
-        echo -E "$opt/"
+      set -l val (string split \t -- $opt)[1]
+      if test -d $val
+        echo -E "$val/"
       else
-        echo -E "$opt"
+        echo -E "$val"
       end
     end
 end
