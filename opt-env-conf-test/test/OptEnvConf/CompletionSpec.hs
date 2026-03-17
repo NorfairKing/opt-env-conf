@@ -5,12 +5,14 @@ module OptEnvConf.CompletionSpec (spec) where
 
 import Control.Applicative
 import qualified Data.List.NonEmpty as NE
+import Data.Maybe
 import OptEnvConf.Completer
 import OptEnvConf.Completion
 import OptEnvConf.Parser
 import OptEnvConf.Setting
 import OptEnvConf.Test
 import Path
+import Path.IO
 import Test.Syd
 
 spec :: Spec
@@ -1416,3 +1418,88 @@ spec = do
           3
           ["--include", "foo", "--include", "ba"]
           ["bar"]
+
+  sequential . doNotRandomiseExecutionOrder
+    $ aroundAll
+      ( \func -> withSystemTempDir "completion-spec" $ \tdir -> do
+          exampleFile <- resolveFile tdir "example.txt"
+          writeFile (fromAbsFile exampleFile) ""
+          exampleDir <- resolveDir tdir "exampledir"
+          createDir exampleDir
+          nested <- resolveFile exampleDir "nested.txt"
+          writeFile (fromAbsFile nested) ""
+          func tdir
+      )
+    $ do
+      let evalQuery p ix ws tdir = withCurrentDir tdir $ do
+            let arg = fromMaybe "" $ listToMaybe $ drop ix ws
+            let completions = pureCompletionQuery p ix ws
+            evalCompletions arg completions
+
+      describe "file and directory completion" $ do
+        describe "filePathSetting" $ do
+          itWithOuter "completes files and directories for a file argument" $ \tdir -> do
+            results <- evalQuery (filePathSetting [help "f", argument]) 0 [] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["example.txt", "exampledir/"]
+
+          itWithOuter "completes files and directories after a file option's dashed" $ \tdir -> do
+            results <- evalQuery (filePathSetting [help "f", option, long "file"]) 1 ["--file"] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["example.txt", "exampledir/"]
+
+          itWithOuter "filters by prefix" $ \tdir -> do
+            results <- evalQuery (filePathSetting [help "f", argument]) 0 ["exampledi"] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["exampledir/"]
+
+          -- Directories end in /, files do not.  This convention is how
+          -- shells decide whether to append a trailing space after a
+          -- completion.  The exact values are checked by
+          -- "completes files and directories for a file argument" above;
+          -- this test re-states the invariant explicitly.
+          itWithOuter "directories end in / and files do not" $ \tdir -> do
+            results <- evalQuery (filePathSetting [help "f", argument]) 0 [] tdir
+            map completionSuggestion results `shouldBe` ["example.txt", "exampledir/"]
+
+          itWithOuter "carries the description through to file completions" $ \tdir -> do
+            results <- evalQuery (filePathSetting [help "my file", argument]) 0 [] tdir
+            map completionDescription results `shouldBe` [Just "my file", Just "my file"]
+
+        describe "directoryPathSetting" $ do
+          itWithOuter "completes only directories for a directory argument" $ \tdir -> do
+            results <- evalQuery (directoryPathSetting [help "d", argument]) 0 [] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["exampledir/"]
+
+          itWithOuter "completes only directories after a directory option's dashed" $ \tdir -> do
+            results <- evalQuery (directoryPathSetting [help "d", option, long "dir"]) 1 ["--dir"] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["exampledir/"]
+
+          itWithOuter "never includes files" $ \tdir -> do
+            results <- evalQuery (directoryPathSetting [help "d", argument]) 0 [] tdir
+            map completionSuggestion results `shouldBe` ["exampledir/"]
+
+          itWithOuter "carries the description through to directory completions" $ \tdir -> do
+            results <- evalQuery (directoryPathSetting [help "my dir", argument]) 0 [] tdir
+            map completionDescription results `shouldBe` [Just "my dir"]
+
+        describe "combined with other settings" $ do
+          itWithOuter "includes file completions alongside other options" $ \tdir -> do
+            let parser =
+                  (,)
+                    <$> filePathSetting [help "f", option, long "file"]
+                    <*> setting [switch (), long "verbose"]
+            results <- evalQuery parser 1 ["--file"] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["example.txt", "exampledir/", "--verbose"]
+
+          itWithOuter "includes directory completions alongside other options" $ \tdir -> do
+            let parser =
+                  (,)
+                    <$> directoryPathSetting [help "d", option, long "dir"]
+                    <*> setting [switch (), long "verbose"]
+            results <- evalQuery parser 1 ["--dir"] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["exampledir/", "--verbose"]

@@ -61,6 +61,23 @@ spec = do
         c "./." ["./.hidden.txt", "./.hidden/"]
         c "./bar" ["./bar/quux.txt", "./bar/", "./bar/deep/"]
 
+        -- Deeper nesting.
+        -- Directories end in /, files do not.  This convention is how
+        -- shells decide whether to append a trailing space after a
+        -- completion.
+        c "bar/" ["bar/quux.txt", "bar/deep/"]
+        c "bar/d" ["bar/deep/"]
+        c "bar/deep" ["bar/deep/gold.txt", "bar/deep/"]
+        c "bar/deep/" ["bar/deep/gold.txt"]
+        c "bar/q" ["bar/quux.txt"]
+
+        -- Absolute paths
+        itWithOuter "can complete absolute paths" $ \tdir ->
+          withCurrentDir tdir $ do
+            let absPrefix = fromAbsDir tdir
+            results <- unCompleter filePath absPrefix
+            results `shouldBe` [absPrefix <> "foo.txt", absPrefix <> "bar/"]
+
       describe "directoryPath" $ do
         let c :: (HasCallStack) => String -> [String] -> TestDef '[Path Abs Dir] ()
             c s l = withFrozenCallStack $
@@ -77,3 +94,9 @@ spec = do
         c "././" ["././bar/"]
         c "./." ["./.hidden/"]
         c "./bar" ["./bar/", "./bar/deep/"]
+
+        -- Deeper nesting.
+        -- Only directories are returned, never files.
+        c "bar/" ["bar/", "bar/deep/"]
+        c "bar/d" ["bar/deep/"]
+        c "bar/deep" ["bar/deep/"]
