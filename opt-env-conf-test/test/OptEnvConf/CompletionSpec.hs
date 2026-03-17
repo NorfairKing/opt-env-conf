@@ -1527,3 +1527,19 @@ spec = do
             results <- evalQuery parser 1 ["--file", ""] tdir
             let suggestions = map completionSuggestion results
             suggestions `shouldBe` ["example.txt", "exampledir/", "--verbose"]
+
+          -- A default command with an argument combined with a
+          -- directory option causes the directory completer not to fire
+          -- when completing the option's value.
+          itWithOuter "completes directory option value alongside default command with argument" $ \tdir -> do
+            let parser =
+                  (,)
+                    <$> commands
+                      [ command "file" "f" $
+                          setting [help "f", argument, reader (str :: Reader String)],
+                        defaultCommand "file"
+                      ]
+                    <*> directoryPathSetting [help "a", option, long "archive-dir"]
+            results <- evalQuery parser 1 ["--archive-dir", ""] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldSatisfy` (elem "exampledir/")
