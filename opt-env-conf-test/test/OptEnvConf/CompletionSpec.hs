@@ -1503,3 +1503,24 @@ spec = do
             results <- evalQuery parser 1 ["--dir"] tdir
             let suggestions = map completionSuggestion results
             suggestions `shouldBe` ["exampledir/", "--verbose"]
+
+          -- After typing the dashed of an option that takes a value, the
+          -- cursor is in the value position.  The option's completer
+          -- should fire first, then other options should follow.
+          itWithOuter "completes directory option value first, then other options" $ \tdir -> do
+            let parser =
+                  (,)
+                    <$> directoryPathSetting [help "d", option, long "dir"]
+                    <*> setting [switch (), long "verbose"]
+            results <- evalQuery parser 2 ["--dir", ""] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["exampledir/", "--verbose"]
+
+          itWithOuter "completes file option value first, then other options" $ \tdir -> do
+            let parser =
+                  (,)
+                    <$> filePathSetting [help "f", option, long "file"]
+                    <*> setting [switch (), long "verbose"]
+            results <- evalQuery parser 2 ["--file", ""] tdir
+            let suggestions = map completionSuggestion results
+            suggestions `shouldBe` ["example.txt", "exampledir/", "--verbose"]
