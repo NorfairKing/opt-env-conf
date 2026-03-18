@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0.1] - 2026-03-18
+
+### Changed
+
+* Fixed autocompletion for paths containing `..` components.
+  Paths like `../`, `../foo`, and `bar/../` now complete correctly.
+
 ## [0.15.0.0] - 2026-03-17
 
 ### Added

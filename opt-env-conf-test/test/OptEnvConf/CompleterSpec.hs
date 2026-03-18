@@ -75,6 +75,65 @@ spec = do
         c "bar/deep/" [fileR "bar/deep/gold.txt"]
         c "bar/q" [fileR "bar/quux.txt"]
 
+        -- Parent directory paths (..)
+        -- These tests run from inside bar/ so that .. refers to the
+        -- test root directory.
+        itWithOuter "can complete \"..\" to parent directory contents" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter filePath ".."
+            results
+              `shouldBe` [ fileR "../foo.txt",
+                           fileR "../config.yaml",
+                           dirR "../bar/"
+                         ]
+        itWithOuter "can complete \"../\" to parent directory contents" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter filePath "../"
+            results
+              `shouldBe` [ fileR "../foo.txt",
+                           fileR "../config.yaml",
+                           dirR "../bar/"
+                         ]
+        itWithOuter "can complete \"../f\" to matching parent files" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter filePath "../f"
+            results
+              `shouldBe` [fileR "../foo.txt"]
+        itWithOuter "can complete \"../bar/\" to sibling dir contents" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter filePath "../bar/"
+            results
+              `shouldBe` [ fileR "../bar/quux.txt",
+                           dirR "../bar/deep/"
+                         ]
+
+        -- Parent directory in the middle of a path
+        itWithOuter "can complete \"bar/../\" to current dir contents" $ \tdir ->
+          withCurrentDir tdir $ do
+            results <- unCompleter filePath "bar/../"
+            results
+              `shouldBe` [ fileR "bar/../foo.txt",
+                           fileR "bar/../config.yaml",
+                           dirR "bar/../bar/"
+                         ]
+        itWithOuter "can complete \"bar/../f\" to matching files" $ \tdir ->
+          withCurrentDir tdir $ do
+            results <- unCompleter filePath "bar/../f"
+            results
+              `shouldBe` [fileR "bar/../foo.txt"]
+        itWithOuter "can complete \"../bar/deep/../\" to bar/ contents" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter filePath "../bar/deep/../"
+            results
+              `shouldBe` [ fileR "../bar/deep/../quux.txt",
+                           dirR "../bar/deep/../deep/"
+                         ]
+
         -- Absolute paths
         itWithOuter "can complete absolute paths" $ \tdir ->
           withCurrentDir tdir $ do
@@ -108,6 +167,38 @@ spec = do
         c "bar/" [dirR "bar/", dirR "bar/deep/"]
         c "bar/d" [dirR "bar/deep/"]
         c "bar/deep" [dirR "bar/deep/"]
+
+        -- Parent directory paths (..)
+        itWithOuter "can complete \"..\" to parent directories" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter directoryPath ".."
+            results
+              `shouldBe` [dirR "../bar/"]
+        itWithOuter "can complete \"../\" to parent directories" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter directoryPath "../"
+            results
+              `shouldBe` [dirR "../bar/"]
+        itWithOuter "can complete \"../b\" to matching parent directories" $ \tdir -> do
+          subdir <- resolveDir tdir "bar"
+          withCurrentDir subdir $ do
+            results <- unCompleter directoryPath "../b"
+            results
+              `shouldBe` [dirR "../bar/"]
+
+        -- Parent directory in the middle of a path
+        itWithOuter "can complete \"bar/../\" to current dir directories" $ \tdir ->
+          withCurrentDir tdir $ do
+            results <- unCompleter directoryPath "bar/../"
+            results
+              `shouldBe` [dirR "bar/../bar/"]
+        itWithOuter "can complete \"bar/../b\" to matching directories" $ \tdir ->
+          withCurrentDir tdir $ do
+            results <- unCompleter directoryPath "bar/../b"
+            results
+              `shouldBe` [dirR "bar/../bar/"]
 
       describe "filePathWithExtension" $ do
         let c :: (HasCallStack) => String -> [CompletionResult] -> TestDef '[Path Abs Dir] ()

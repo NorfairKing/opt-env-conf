@@ -63,18 +63,17 @@ listIOCompleter act = Completer $ \s -> filterPrefix s . map finalResult <$> act
 filePath :: Completer
 filePath = Completer $ \fp' -> do
   here <- getCurrentDir
+  let (prefix, fp, baseDir) = splitDotDot here fp'
+  filePathFromDir baseDir prefix fp fp'
 
-  -- An empty string is not a valid relative file or dir, but it is the most
-  -- common option so we special case it here
-  let (prefix, fp) = stripCurDir fp'
+filePathFromDir :: Path Abs Dir -> String -> FilePath -> FilePath -> IO [CompletionResult]
+filePathFromDir baseDir prefix fp fp' = do
   fmap (filterPrefix fp' . map (addPrefix prefix)) $ do
     let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
     (dirsFromParentListing, filesFromParentListing) <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
-          -- This is not a valid rel dir but still a prefix of a valid rel dir:
-          -- the current dir
-          (ds, fs) <- listDirRel here
+          (ds, fs) <- listDirRel baseDir
           pure
             ( map fromRelDir $ filter (not . hiddenRel) ds,
               map fromRelFile $ filter (not . hiddenRel) fs
@@ -87,7 +86,8 @@ filePath = Completer $ \fp' -> do
             map (fromAbsFile . (ad </>)) $ filter (not . hiddenRel) fs
           )
       Just (Rel rd) -> do
-        (ds, fs) <- listDirForgiving rd
+        let ad = baseDir </> rd
+        (ds, fs) <- listDirForgiving ad
         pure
           ( map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds,
             map (fromRelFile . (rd </>)) $ filter (not . hiddenRel) fs
@@ -95,11 +95,9 @@ filePath = Completer $ \fp' -> do
 
     (dirsFromPartialListing, filesFromPartialListing) <- case parseSomeFile fp of
       Nothing ->
-        -- This is not a valid rel file but still a prefix of a valid
-        -- (hidden) rel file.
         if fp == "."
           then do
-            (ds, fs) <- listDirRel here
+            (ds, fs) <- listDirRel baseDir
             pure
               ( map fromRelDir ds,
                 map fromRelFile fs
@@ -115,8 +113,9 @@ filePath = Completer $ \fp' -> do
           )
       Just (Rel rf) -> do
         let dir = parent rf
+        let ad = baseDir </> dir
         let filterHidden = if hiddenRel rf then id else filter (not . hiddenRel)
-        (ds, fs) <- listDirForgiving dir
+        (ds, fs) <- listDirForgiving ad
         pure
           ( map (fromRelDir . (dir </>)) $ filterHidden ds,
             map (fromRelFile . (dir </>)) $ filterHidden fs
@@ -148,25 +147,25 @@ filePathWithExtensions exts = Completer $ \s -> do
 directoryPath :: Completer
 directoryPath = Completer $ \fp' -> do
   here <- getCurrentDir
+  let (prefix, fp, baseDir) = splitDotDot here fp'
+  directoryPathFromDir baseDir prefix fp fp'
 
-  -- An empty string is not a valid relative file or dir, but it is the most
-  -- common option so we special case it here
-  let (prefix, fp) = stripCurDir fp'
+directoryPathFromDir :: Path Abs Dir -> String -> FilePath -> FilePath -> IO [CompletionResult]
+directoryPathFromDir baseDir prefix fp fp' = do
   fmap (filterPrefix fp' . map (addPrefix prefix . dirResult)) $ do
     let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
     dirsFromParentListing <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
-          -- This is not a valid rel dir but still a prefix of a valid rel dir:
-          -- the current dir
-          (ds, _) <- listDirRel here
+          (ds, _) <- listDirRel baseDir
           pure (map fromRelDir $ filter (not . hiddenRel) ds)
         _ -> pure []
       Just (Abs ad) -> do
         (ds, _) <- listDirForgiving ad
         pure (map (fromAbsDir . (ad </>)) $ filter (not . hiddenRel) ds)
       Just (Rel rd) -> do
-        (ds, _) <- listDirForgiving rd
+        let ad = baseDir </> rd
+        (ds, _) <- listDirForgiving ad
         pure (map (fromRelDir . (rd </>)) $ filter (not . hiddenRel) ds)
 
     dirsFromPartialListing <- case parseSomeDir fp of
@@ -177,16 +176,15 @@ directoryPath = Completer $ \fp' -> do
         (ds, _) <- listDirForgiving dir
         pure (map (fromAbsDir . (dir </>)) $ filterHidden ds)
       Just (Rel rf) ->
-        -- This is not a valid rel dir but still a prefix of a valid
-        -- (hidden) rel dir.
         if fp == "."
           then do
-            (ds, _) <- listDirRel here
+            (ds, _) <- listDirRel baseDir
             pure (map fromRelDir ds)
           else do
             let dir = parent rf
+            let ad = baseDir </> dir
             let filterHidden = if hiddenRel rf then id else filter (not . hiddenRel)
-            (ds, _) <- listDirForgiving dir
+            (ds, _) <- listDirForgiving ad
             pure (map (fromRelDir . (dir </>)) $ filterHidden ds)
 
     pure $
@@ -223,6 +221,57 @@ stripCurDir = \case
     let (pf, rest) = stripCurDir rest'
      in ("./" <> pf, rest)
   p -> ("", p)
+
+-- | Split a path at @..@ components.
+--
+-- Returns @(prefix, remainder, baseDir)@ where:
+--
+--  * @prefix@ is the literal text up to and including the last @..\/@ (to
+--    prepend to completion results)
+--  * @remainder@ is the part after that last @..\/@ (to pass to
+--    @parseSomeDir@ \/ @parseSomeFile@, which reject @..@)
+--  * @baseDir@ is the absolute directory that @remainder@ should be resolved
+--    relative to
+--
+-- If there are no @..@ components, @prefix@ is just the stripped @.\/@ prefix,
+-- @remainder@ is the rest, and @baseDir@ is the current directory.
+splitDotDot :: Path Abs Dir -> FilePath -> (FilePath, FilePath, Path Abs Dir)
+splitDotDot here fp' =
+  let (curDirPrefix, afterCurDir) = stripCurDir fp'
+      components = splitOnSlash afterCurDir
+      -- Find the index after the last "../" component
+      lastDotDotIdx = case [i | (i, c) <- zip [1 ..] components, c == ".."] of
+        [] -> 0
+        ixs -> maximum ixs
+   in if lastDotDotIdx == 0
+        then (curDirPrefix, afterCurDir, here)
+        else
+          let prefixComponents = take lastDotDotIdx components
+              remainderComponents = drop lastDotDotIdx components
+              prefix = curDirPrefix <> concatMap (<> "/") prefixComponents
+              -- Preserve trailing slash from the original input
+              trailingSlash
+                | "/" `isSuffixOf` afterCurDir, not (null remainderComponents) = "/"
+                | otherwise = ""
+              remainder = intercalate "/" remainderComponents <> trailingSlash
+              baseDir = foldl' applyComponent here prefixComponents
+           in (prefix, remainder, baseDir)
+
+-- | Split a filepath on @\/@ separators, dropping empty segments.
+splitOnSlash :: FilePath -> [String]
+splitOnSlash [] = []
+splitOnSlash s =
+  let (seg, rest) = break (== '/') s
+   in case rest of
+        [] -> [seg | not (null seg)]
+        _ : rest' -> [seg | not (null seg)] <> splitOnSlash rest'
+
+-- | Apply a single path component to an absolute directory.
+applyComponent :: Path Abs Dir -> String -> Path Abs Dir
+applyComponent d ".." = parent d
+applyComponent d c = case parseRelDir c of
+  Nothing -> d
+  Just rd -> d </> rd
 
 filterPrefix :: String -> [CompletionResult] -> [CompletionResult]
 filterPrefix s = filter ((s `isPrefixOf`) . completionResultValue)
