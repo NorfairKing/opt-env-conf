@@ -56,12 +56,16 @@ joinMMList = \case
 joinMMMList :: (Monad m) => m (MList m (m (MList m a))) -> m (MList m a)
 joinMMMList = (>>= joinMMList)
 
-appendMList :: (Functor m) => MList m a -> MList m a -> MList m a
-appendMList MNil ml = ml
-appendMList (MCons a ml1) ml2 = MCons a $ (`appendMList` ml2) <$> ml1
-
-appendMMMList :: (Applicative m) => m (MList m a) -> m (MList m a) -> m (MList m a)
-appendMMMList ml1 ml2 = appendMList <$> ml1 <*> ml2
+-- Lazy in the second argument: do not run its effects until the first list
+-- is exhausted. A strict definition (e.g. liftA2 over an eager concat) forces
+-- the entire downstream search tree just to produce the head element, which
+-- causes exponential blowup through ListT's >>= and <|>.
+appendMMMList :: (Monad m) => m (MList m a) -> m (MList m a) -> m (MList m a)
+appendMMMList ml1 ml2 = do
+  l1 <- ml1
+  case l1 of
+    MNil -> ml2
+    MCons a m -> pure $ MCons a (appendMMMList m ml2)
 
 -- This can be directly used as a monad transformer
 newtype ListT m a = ListT {unListT :: m (MList m a)}

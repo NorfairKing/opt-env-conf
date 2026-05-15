@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0.2] - 2026-05-15
+
+### Changed
+
+* Fixed an exponential-time blowup when parsing inputs with several `many`-style
+  options combined with a `choice` containing positional arguments. Parses that
+  previously took minutes now complete in milliseconds. The fix makes the
+  internal `ListT` nondet stream lazy in its second argument and threads inner
+  branches into the outer parser on demand.
+
 ## [0.15.0.1] - 2026-03-18
 
 ### Changed

@@ -8,6 +8,7 @@ module OptEnvConf.RunSpec (spec) where
 import Autodocodec
 import Control.Applicative
 import Control.Concurrent
+import Control.Monad (void)
 import Data.Aeson as JSON (Object, Value (Null), toJSON)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KeyMap
@@ -25,6 +26,7 @@ import OptEnvConf.EnvMap (EnvMap (..))
 import qualified OptEnvConf.EnvMap as EnvMap
 import OptEnvConf.EnvMap.Gen ()
 import OptEnvConf.Error
+import qualified System.Timeout as Timeout
 import Test.Syd
 import Test.Syd.Validity
 import Text.Colour
@@ -128,6 +130,45 @@ spec = do
               let p = some $ setting [reader str, argument]
               let expected = NE.toList ls
               shouldParse p args e mConf expected
+
+      -- Regression test for an exponential-time bug.
+      --
+      -- A parser shaped like
+      --
+      --     choice [some argument, many --filter] <*> many --opt1 <*> many --opt2 <*> ...
+      --
+      -- combined with input that has both several @--opt1 VAL@ pairs and at
+      -- least one @--opt2 VAL@ pair scaled super-linearly: in the broken
+      -- version, every added @--opt2@ multiplied total parse time by ~3x.
+      --
+      -- The original report came from a sydtest mutation suite invocation
+      -- with 6 @--mutation@ + 6 @--mutation-suite-exe@ flags taking
+      -- > 30 seconds of CPU just to parse settings. With the parser shape
+      -- below and 6 @--opt1@ + 6 @--opt2@ pairs the broken version takes
+      -- many minutes; the fixed version completes in milliseconds.
+      it "parses many-many input in bounded time (regression: no exponential blowup)" $ do
+        let parser :: Parser ()
+            parser =
+              void $
+                (,,)
+                  <$> choice
+                    [ some (setting [reader str, argument, help "F", metavar "F"] :: Parser String),
+                      many (setting [reader str, option, long "filter", help "F", metavar "F"])
+                    ]
+                  <*> many (setting [reader str, option, long "opt1", help "x", metavar "X"] :: Parser String)
+                  <*> many (setting [reader str, option, long "opt2", help "x", metavar "X"] :: Parser String)
+        let args =
+              parseArgs $
+                concat (replicate 6 ["--opt1", "/v"])
+                  ++ concat (replicate 6 ["--opt2", "/v"])
+        mResult <-
+          Timeout.timeout
+            (500 * 1000)
+            (runParserOn allCapabilities Nothing parser args EnvMap.empty Nothing)
+        case mResult of
+          Nothing -> expectationFailure "parser took longer than 0.5 seconds; likely exponential blowup"
+          Just (Left errs) -> expectationFailure $ T.unpack $ renderChunksText With24BitColours $ renderErrors errs
+          Just (Right ()) -> pure ()
 
     describe "MapIO" $ do
       it "can run an IO action on the result of a parser" $

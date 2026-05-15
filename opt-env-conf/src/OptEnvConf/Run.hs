@@ -152,8 +152,7 @@ runParserOn capabilities mDebugMode parser args envVars mConfig = do
         ppIndent $ do
           e <- ask
           s <- get
-          results <- liftIO $ runPP (go p') s e
-          (result, s') <- ppNonDetList results
+          (result, s') <- ppNonDet $ runPPNonDet (go p') s e
           put s'
           case result of
             Success a -> pure a
@@ -606,13 +605,15 @@ newtype PP a = PP (ReaderT PPEnv (ValidationT ParseError (StateT PPState (NonDet
       MonadState PPState
     )
 
-runPP ::
+-- Keeps nondeterminism lazy: callers consume the resulting branches one at a
+-- time, so unreached branches never run.
+runPPNonDet ::
   PP a ->
   PPState ->
   PPEnv ->
-  IO [(Validation ParseError a, PPState)]
-runPP (PP p) args envVars =
-  runNonDetT (runStateT (runValidationT (runReaderT p envVars)) args)
+  NonDetT IO (Validation ParseError a, PPState)
+runPPNonDet (PP p) args envVars =
+  runStateT (runValidationT (runReaderT p envVars)) args
 
 runPPLazy ::
   PP a ->
@@ -631,13 +632,11 @@ tryPP :: PP a -> PP (Maybe a)
 tryPP pp = do
   s <- get
   e <- ask
-  results <- liftIO $ runPP pp s e
-  (errOrRes, s') <- ppNonDetList results
+  (errOrRes, s') <- ppNonDet $ runPPNonDet pp s e
   case errOrRes of
     Failure errs ->
       if all errorIsForgivable errs
-        then do
-          pure Nothing
+        then pure Nothing
         else ppErrors' errs
     Success a -> do
       put s' -- Only set state if parsing succeeded.
