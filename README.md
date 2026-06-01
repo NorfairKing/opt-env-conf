@@ -1,5 +1,7 @@
 # OptEnvConf
 
+[![NixCI](https://staging.nix-ci.com/badge/gh:NorfairKing:opt-env-conf)](https://staging.nix-ci.com/gh:NorfairKing:opt-env-conf)
+
 ## Status
 
 Used in production in all my products and some companies.
