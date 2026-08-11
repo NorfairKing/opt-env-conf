@@ -53,15 +53,15 @@ spec = do
                   withCurrentDir tdir $
                     unCompleter filePath s `shouldReturn` l
 
-        c "" [fileR "foo.txt", fileR "config.yaml", dirR "bar/"]
+        c "" [fileR "config.yaml", fileR "foo.txt", dirR "bar/"]
         c "f" [fileR "foo.txt"]
         c "b" [dirR "bar/"]
         c "bar" [fileR "bar/quux.txt", dirR "bar/", dirR "bar/deep/"]
         c "c" [fileR "config.yaml"]
         c "q" []
         c "." [fileR ".hidden.txt", dirR ".hidden/"]
-        c "./" [fileR "./foo.txt", fileR "./config.yaml", dirR "./bar/"]
-        c "././" [fileR "././foo.txt", fileR "././config.yaml", dirR "././bar/"]
+        c "./" [fileR "./config.yaml", fileR "./foo.txt", dirR "./bar/"]
+        c "././" [fileR "././config.yaml", fileR "././foo.txt", dirR "././bar/"]
         c "./." [fileR "./.hidden.txt", dirR "./.hidden/"]
         c "./bar" [fileR "./bar/quux.txt", dirR "./bar/", dirR "./bar/deep/"]
 
@@ -83,8 +83,8 @@ spec = do
           withCurrentDir subdir $ do
             results <- unCompleter filePath ".."
             results
-              `shouldBe` [ fileR "../foo.txt",
-                           fileR "../config.yaml",
+              `shouldBe` [ fileR "../config.yaml",
+                           fileR "../foo.txt",
                            dirR "../bar/"
                          ]
         itWithOuter "can complete \"../\" to parent directory contents" $ \tdir -> do
@@ -92,8 +92,8 @@ spec = do
           withCurrentDir subdir $ do
             results <- unCompleter filePath "../"
             results
-              `shouldBe` [ fileR "../foo.txt",
-                           fileR "../config.yaml",
+              `shouldBe` [ fileR "../config.yaml",
+                           fileR "../foo.txt",
                            dirR "../bar/"
                          ]
         itWithOuter "can complete \"../f\" to matching parent files" $ \tdir -> do
@@ -116,8 +116,8 @@ spec = do
           withCurrentDir tdir $ do
             results <- unCompleter filePath "bar/../"
             results
-              `shouldBe` [ fileR "bar/../foo.txt",
-                           fileR "bar/../config.yaml",
+              `shouldBe` [ fileR "bar/../config.yaml",
+                           fileR "bar/../foo.txt",
                            dirR "bar/../bar/"
                          ]
         itWithOuter "can complete \"bar/../f\" to matching files" $ \tdir ->
@@ -140,8 +140,8 @@ spec = do
             let absPrefix = fromAbsDir tdir
             results <- unCompleter filePath absPrefix
             results
-              `shouldBe` [ fileR (absPrefix <> "foo.txt"),
-                           fileR (absPrefix <> "config.yaml"),
+              `shouldBe` [ fileR (absPrefix <> "config.yaml"),
+                           fileR (absPrefix <> "foo.txt"),
                            dirR (absPrefix <> "bar/")
                          ]
 
@@ -219,7 +219,7 @@ spec = do
                 withCurrentDir tdir $
                   unCompleter (filePathWithExtensions [".txt", ".yaml"]) s `shouldReturn` l
 
-        c "" [fileR "foo.txt", fileR "config.yaml", dirR "bar/"]
+        c "" [fileR "config.yaml", fileR "foo.txt", dirR "bar/"]
         c "bar/" [fileR "bar/quux.txt", dirR "bar/deep/"]
 
 fileR :: String -> CompletionResult

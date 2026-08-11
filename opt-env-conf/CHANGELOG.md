@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.15.0.3] - 2026-08-11
+
+### Changed
+
+* Path completers now sort the directory listings they complete from.
+  They previously handed back entries in whatever order the filesystem
+  reported them, so the same completion produced different output on
+  different machines.
+
 ## [0.15.0.2] - 2026-05-15
 
 ### Changed

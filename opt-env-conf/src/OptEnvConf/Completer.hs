@@ -60,6 +60,9 @@ listCompleter ss = listIOCompleter $ pure ss
 listIOCompleter :: IO [String] -> Completer
 listIOCompleter act = Completer $ \s -> filterPrefix s . map finalResult <$> act
 
+-- | Complete a file path.
+--
+-- Files come before directories, each in the order of 'listDirRelSorted'.
 filePath :: Completer
 filePath = Completer $ \fp' -> do
   here <- getCurrentDir
@@ -69,11 +72,11 @@ filePath = Completer $ \fp' -> do
 filePathFromDir :: Path Abs Dir -> String -> FilePath -> FilePath -> IO [CompletionResult]
 filePathFromDir baseDir prefix fp fp' = do
   fmap (filterPrefix fp' . map (addPrefix prefix)) $ do
-    let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
+    let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRelSorted d)
     (dirsFromParentListing, filesFromParentListing) <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
-          (ds, fs) <- listDirRel baseDir
+          (ds, fs) <- listDirRelSorted baseDir
           pure
             ( map fromRelDir $ filter (not . hiddenRel) ds,
               map fromRelFile $ filter (not . hiddenRel) fs
@@ -97,7 +100,7 @@ filePathFromDir baseDir prefix fp fp' = do
       Nothing ->
         if fp == "."
           then do
-            (ds, fs) <- listDirRel baseDir
+            (ds, fs) <- listDirRelSorted baseDir
             pure
               ( map fromRelDir ds,
                 map fromRelFile fs
@@ -144,6 +147,9 @@ filePathWithExtensions exts = Completer $ \s -> do
       | "/" `isSuffixOf` completionResultValue cr = True
       | otherwise = any (`isSuffixOf` completionResultValue cr) exts
 
+-- | Complete a directory path.
+--
+-- Results are in the order of 'listDirRelSorted'.
 directoryPath :: Completer
 directoryPath = Completer $ \fp' -> do
   here <- getCurrentDir
@@ -153,11 +159,11 @@ directoryPath = Completer $ \fp' -> do
 directoryPathFromDir :: Path Abs Dir -> String -> FilePath -> FilePath -> IO [CompletionResult]
 directoryPathFromDir baseDir prefix fp fp' = do
   fmap (filterPrefix fp' . map (addPrefix prefix . dirResult)) $ do
-    let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRel d)
+    let listDirForgiving d = fromMaybe ([], []) <$> forgivingAbsence (listDirRelSorted d)
     dirsFromParentListing <- case parseSomeDir fp of
       Nothing -> case fp of
         [] -> do
-          (ds, _) <- listDirRel baseDir
+          (ds, _) <- listDirRelSorted baseDir
           pure (map fromRelDir $ filter (not . hiddenRel) ds)
         _ -> pure []
       Just (Abs ad) -> do
@@ -178,7 +184,7 @@ directoryPathFromDir baseDir prefix fp fp' = do
       Just (Rel rf) ->
         if fp == "."
           then do
-            (ds, _) <- listDirRel baseDir
+            (ds, _) <- listDirRelSorted baseDir
             pure (map fromRelDir ds)
           else do
             let dir = parent rf
@@ -209,6 +215,17 @@ dirResult s =
     { completionResultValue = s,
       completionResultFinality = CompletionNotFinal
     }
+
+-- | 'listDirRel', but sorted.
+--
+-- The filesystem hands back directory entries in an order it is free to
+-- choose, and different filesystems choose differently.
+-- Sorting here, at the only place completion looks at a directory, is what
+-- makes completion output the same everywhere.
+listDirRelSorted :: Path Abs Dir -> IO ([Path Rel Dir], [Path Rel File])
+listDirRelSorted d = do
+  (ds, fs) <- listDirRel d
+  pure (sort ds, sort fs)
 
 hiddenRel :: Path Rel f -> Bool
 hiddenRel p = case toFilePath p of
