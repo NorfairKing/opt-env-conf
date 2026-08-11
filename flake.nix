@@ -2,7 +2,7 @@
   description = "opt-env-conf";
   nixConfig = {
     extra-substituters = "https://opt-env-conf.cachix.org";
-    extra-trusted-public-keys = "opt-env-conf.cachix.org-1:srabhQPgZR0EO+bOppsCWbesHOgk8ABakPL8D1h5wOU=";
+    extra-trusted-public-keys = "opt-env-conf.cachix.org-1:gkENPxoLqJMYgYsFOCCbA3wr3MkNfN5bdDQPjs4QHlU=";
   };
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-26.05";
@@ -23,6 +23,7 @@
     weeder-nix.flake = false;
     dekking.url = "github:NorfairKing/dekking";
     dekking.flake = false;
+    release-to-hackage.url = "github:NorfairKing/release-to-hackage";
   };
 
   outputs =
@@ -38,6 +39,7 @@
     , sydtest
     , weeder-nix
     , dekking
+    , release-to-hackage
     }:
     let
       system = "x86_64-linux";
@@ -66,7 +68,16 @@
     {
       overrides.${system} = pkgs.callPackage ./nix/overrides.nix { };
       overlays.${system} = import ./nix/overlay.nix;
-      packages.${system}.default = haskellPackages.optEnvConfRelease;
+      packages.${system} = {
+        default = haskellPackages.optEnvConfRelease;
+        release-to-hackage = release-to-hackage.lib.${system}.makeHackageRelease {
+          packages = pkgs.lib.getAttrs [
+            "opt-env-conf"
+            "opt-env-conf-test"
+          ]
+            haskellPackages.optEnvConfPackages;
+        };
+      };
       checks.${system} =
         let
           backwardCompatibilityCheckFor = nixpkgs: (haskellPackagesFor nixpkgs).optEnvConfRelease;
@@ -171,10 +182,6 @@
           mandoc
         ] ++ self.checks.${system}.pre-commit.enabledPackages;
         shellHook = self.checks.${system}.pre-commit.shellHook;
-      };
-      nix-ci.cachix = {
-        name = "opt-env-conf";
-        public-key = "opt-env-conf.cachix.org-1:gkENPxoLqJMYgYsFOCCbA3wr3MkNfN5bdDQPjs4QHlU=";
       };
     };
 }
