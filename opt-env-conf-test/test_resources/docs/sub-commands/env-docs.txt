@@ -9,7 +9,16 @@ AnyDocsAnd
               AnyDocsSingle
                 ConfDoc
                   { confDocKeys =
-                      ( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
+                      ( "name" :| []
+                      , AnyOfSchema
+                          (NullSchema :|
+                             [ StringSchema
+                                 StringBounds
+                                   { stringBoundsMinLength = Nothing
+                                   , stringBoundsMaxLength = Nothing
+                                   }
+                             ])
+                      ) :|
                         []
                   , confDocDefault = Nothing
                   , confDocExamples = [ "john" ]

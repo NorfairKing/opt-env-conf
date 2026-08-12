@@ -54,7 +54,14 @@ AnyDocsAnd
                , setDocConfKeys =
                    Just
                      (( "sum-type" :| []
-                      , AnyOfSchema (NullSchema :| [ StringSchema ])
+                      , AnyOfSchema
+                          (NullSchema :|
+                             [ StringSchema
+                                 StringBounds
+                                   { stringBoundsMinLength = Nothing
+                                   , stringBoundsMaxLength = Nothing
+                                   }
+                             ])
                       ) :|
                         [])
                , setDocDefault = Nothing

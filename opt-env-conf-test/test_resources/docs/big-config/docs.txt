@@ -45,7 +45,14 @@ AnyDocsAnd
                                                  })))
                                       Nothing :|
                                       [ ObjectKeySchema
-                                          "sub" (Optional Nothing) StringSchema Nothing
+                                          "sub"
+                                          (Optional Nothing)
+                                          (StringSchema
+                                             StringBounds
+                                               { stringBoundsMinLength = Nothing
+                                               , stringBoundsMaxLength = Nothing
+                                               })
+                                          Nothing
                                       ])))
                          ])
                   ) :|

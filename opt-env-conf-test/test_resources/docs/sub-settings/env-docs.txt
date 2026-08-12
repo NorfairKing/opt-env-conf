@@ -4,7 +4,14 @@ AnyDocsAnd
       ConfDoc
         { confDocKeys =
             ( "foo" :| [ "bar" , "quux" ]
-            , AnyOfSchema (NullSchema :| [ StringSchema ])
+            , AnyOfSchema
+                (NullSchema :|
+                   [ StringSchema
+                       StringBounds
+                         { stringBoundsMinLength = Nothing
+                         , stringBoundsMaxLength = Nothing
+                         }
+                   ])
             ) :|
               []
         , confDocDefault = Nothing

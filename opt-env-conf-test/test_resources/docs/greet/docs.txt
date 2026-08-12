@@ -28,7 +28,14 @@ AnyDocsAnd
            , setDocConfKeys =
                Just
                  (( "greeting" :| []
-                  , AnyOfSchema (NullSchema :| [ StringSchema ])
+                  , AnyOfSchema
+                      (NullSchema :|
+                         [ StringSchema
+                             StringBounds
+                               { stringBoundsMinLength = Nothing
+                               , stringBoundsMaxLength = Nothing
+                               }
+                         ])
                   ) :|
                     [])
            , setDocDefault = Just "\"Hello\""

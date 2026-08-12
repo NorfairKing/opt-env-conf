@@ -27,7 +27,14 @@ AnyDocsAnd
            , setDocConfKeys =
                Just
                  (( "foo" :| [ "bar" , "quux" ]
-                  , AnyOfSchema (NullSchema :| [ StringSchema ])
+                  , AnyOfSchema
+                      (NullSchema :|
+                         [ StringSchema
+                             StringBounds
+                               { stringBoundsMinLength = Nothing
+                               , stringBoundsMaxLength = Nothing
+                               }
+                         ])
                   ) :|
                     [])
            , setDocDefault = Nothing

@@ -21,7 +21,15 @@ AnyDocsAnd
                                            , boundsUpper = Just 9223372036854775807
                                            })))
                                 Nothing :|
-                                [ ObjectKeySchema "sub" (Optional Nothing) StringSchema Nothing
+                                [ ObjectKeySchema
+                                    "sub"
+                                    (Optional Nothing)
+                                    (StringSchema
+                                       StringBounds
+                                         { stringBoundsMinLength = Nothing
+                                         , stringBoundsMaxLength = Nothing
+                                         })
+                                    Nothing
                                 ])))
                    ])
             ) :|

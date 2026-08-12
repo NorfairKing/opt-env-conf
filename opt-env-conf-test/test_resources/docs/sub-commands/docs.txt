@@ -32,7 +32,16 @@ AnyDocsAnd
                      , setDocEnvVars = Just ("NAME" :| [])
                      , setDocConfKeys =
                          Just
-                           (( "name" :| [] , AnyOfSchema (NullSchema :| [ StringSchema ]) ) :|
+                           (( "name" :| []
+                            , AnyOfSchema
+                                (NullSchema :|
+                                   [ StringSchema
+                                       StringBounds
+                                         { stringBoundsMinLength = Nothing
+                                         , stringBoundsMaxLength = Nothing
+                                         }
+                                   ])
+                            ) :|
                               [])
                      , setDocDefault = Nothing
                      , setDocExamples = [ "john" ]
