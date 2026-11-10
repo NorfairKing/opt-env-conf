@@ -5,22 +5,35 @@
 { lib }:
 {
   foo = lib.mkOption {
-    default = { };
-    type = lib.types.submodule {
+    type = lib.types.submodule ({ config, options, ... }:
+    {
       options = {
+        __defined = lib.mkOption {
+          default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+            bar = config.bar.__defined;
+          };
+          internal = true;
+          readOnly = true;
+        };
         bar = lib.mkOption {
-          default = { };
-          type = lib.types.submodule {
+          type = lib.types.submodule ({ config, options, ... }:
+          {
             options = {
+              __defined = lib.mkOption {
+                default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+                  quux = config.quux;
+                };
+                internal = true;
+                readOnly = true;
+              };
               quux = lib.mkOption {
-                default = null;
                 description = "Example with sub-settings";
                 type = lib.types.nullOr lib.types.str;
               };
             };
-          };
+          });
         };
       };
-    };
+    });
   };
 }

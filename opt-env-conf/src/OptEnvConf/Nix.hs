@@ -45,6 +45,14 @@ renderSettingsNixOptions = renderParserNixOptions (settingsParser :: Parser a)
 renderParserNixOptions :: Parser a -> Text
 renderParserNixOptions = renderExpr . parserNixOptionExpr
 
+renderSettingsNixOptionType :: forall a. (HasParser a) => Text
+renderSettingsNixOptionType = renderParserNixOptionType (settingsParser :: Parser a)
+
+-- | Unlike 'renderParserNixOptions', the type of a submodule, so it has a
+-- @__defined@ option that holds only the settings that were defined.
+renderParserNixOptionType :: Parser a -> Text
+renderParserNixOptionType = renderExpr . withNixArgs . optionTypeExpr . OptionTypeSubmodule . parserNixOptions
+
 parserNixOptionExpr :: Parser a -> Expr
 parserNixOptionExpr = withNixArgs . optionsExpr . parserNixOptions
 

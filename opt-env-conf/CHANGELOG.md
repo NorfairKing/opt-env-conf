@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.16.0.0] - 2026-11-11
+
+### Added
+
+* `renderSettingsNixOptionType` and `renderParserNixOptionType`, which render
+  the settings as the type of a submodule, so that it has a `__defined` option
+  that holds only the settings that were defined.
+
+### Changed
+
+* With `autodocodec-nix >=0.2.0.0`, a setting that was not set is an option
+  that was not defined instead of one that defaults to `null`, and a nested
+  setting's submodule no longer defaults to `{ }`.
+
 ## [0.15.0.3] - 2026-08-11
 
 ### Changed

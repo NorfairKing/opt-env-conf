@@ -114,6 +114,9 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
   it "renders the Nix options the same way" $
     pureGoldenNixOptions ("test_resources/docs/" <> dir <> "/nix-options.nix") p
 
+  it "renders the Nix option type the same way" $
+    pureGoldenNixOptionType ("test_resources/docs/" <> dir <> "/nix-option-type.nix") p
+
 sameHelpParser :: Parser (Either Int String, Bool)
 sameHelpParser =
   withoutConfig $

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.1.0] - 2026-11-11
+
+### Added
+
+* `goldenSettingsNixOptionTypeSpec`, `goldenParserNixOptionTypeSpec` and
+  `pureGoldenNixOptionType`.
+
 ## [0.0.0.5] - 2026-09-27
 
 ### Changed

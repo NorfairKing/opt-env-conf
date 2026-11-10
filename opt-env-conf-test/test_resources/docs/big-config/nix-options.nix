@@ -5,18 +5,25 @@
 { lib }:
 {
   big = lib.mkOption {
-    default = null;
     description = "big configuration object";
-    type = lib.types.nullOr (lib.types.submodule {
+    type = lib.types.nullOr (lib.types.submodule ({ config, options, ... }:
+    {
       options = {
+        __defined = lib.mkOption {
+          default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+            map = config.map;
+            sub = config.sub;
+          };
+          internal = true;
+          readOnly = true;
+        };
         map = lib.mkOption {
           type = lib.types.attrsOf (lib.types.attrsOf lib.types.int);
         };
         sub = lib.mkOption {
-          default = null;
-          type = lib.types.nullOr lib.types.str;
+          type = lib.types.str;
         };
       };
-    });
+    }));
   };
 }

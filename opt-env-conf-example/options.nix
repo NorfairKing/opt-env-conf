@@ -5,42 +5,54 @@
 { lib }:
 {
   cache-directory = lib.mkOption {
-    default = null;
     description = "cache directory";
     type = lib.types.nullOr lib.types.str;
   };
   example = lib.mkOption {
-    default = { };
-    type = lib.types.submodule {
+    type = lib.types.submodule ({ config, options, ... }:
+    {
       options = {
+        __defined = lib.mkOption {
+          default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+            log-level = config.log-level;
+            payment = config.payment.__defined;
+          };
+          internal = true;
+          readOnly = true;
+        };
         log-level = lib.mkOption {
-          default = null;
           description = "minimal severity of log messages";
           type = lib.types.nullOr lib.types.str;
         };
         payment = lib.mkOption {
-          default = { };
-          type = lib.types.submodule {
+          type = lib.types.submodule ({ config, options, ... }:
+          {
             options = {
+              __defined = lib.mkOption {
+                default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+                  currency = config.currency;
+                  public-key = config.public-key;
+                  secret-key = config.secret-key;
+                };
+                internal = true;
+                readOnly = true;
+              };
               currency = lib.mkOption {
-                default = null;
                 description = "Currency";
                 type = lib.types.nullOr lib.types.str;
               };
               public-key = lib.mkOption {
-                default = null;
                 description = "Public key";
                 type = lib.types.nullOr lib.types.str;
               };
               secret-key = lib.mkOption {
-                default = null;
                 description = "Secret key";
                 type = lib.types.nullOr lib.types.str;
               };
             };
-          };
+          });
         };
       };
-    };
+    });
   };
 }

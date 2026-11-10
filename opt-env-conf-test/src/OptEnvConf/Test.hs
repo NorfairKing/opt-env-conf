@@ -33,6 +33,9 @@ module OptEnvConf.Test
     goldenSettingsNixOptionsSpec,
     goldenParserNixOptionsSpec,
     pureGoldenNixOptions,
+    goldenSettingsNixOptionTypeSpec,
+    goldenParserNixOptionTypeSpec,
+    pureGoldenNixOptionType,
     module OptEnvConf,
   )
 where
@@ -143,6 +146,19 @@ pureGoldenNixOptions :: (HasCallStack) => FilePath -> Parser a -> GoldenTest Tex
 pureGoldenNixOptions path parser =
   pureGoldenTextFile path $
     generatedFileComment Stack.callStack <> renderParserNixOptions parser
+
+goldenSettingsNixOptionTypeSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> Spec
+goldenSettingsNixOptionTypeSpec path = withFrozenCallStack $ goldenParserNixOptionTypeSpec (settingsParser @a) path
+
+goldenParserNixOptionTypeSpec :: (HasCallStack) => Parser a -> FilePath -> Spec
+goldenParserNixOptionTypeSpec parser path = withFrozenCallStack $ do
+  specify "produces the nix option type as before" $
+    pureGoldenNixOptionType path parser
+
+pureGoldenNixOptionType :: (HasCallStack) => FilePath -> Parser a -> GoldenTest Text
+pureGoldenNixOptionType path parser =
+  pureGoldenTextFile path $
+    generatedFileComment Stack.callStack <> renderParserNixOptionType parser
 
 generatedFileComment :: CallStack -> T.Text
 generatedFileComment cs =
