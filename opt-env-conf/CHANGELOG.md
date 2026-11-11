@@ -13,6 +13,10 @@
 * With `autodocodec-nix >=0.2.0.0`, a setting that was not set is an option
   that was not defined instead of one that defaults to `null`, and a nested
   setting's submodule no longer defaults to `{ }`.
+  Reading a setting that was not defined throws, so a module can no longer
+  write the options from `renderSettingsNixOptions` out whole.
+  Use the type from `renderSettingsNixOptionType` and write its
+  `config.__defined` instead.
 
 ## [0.15.0.3] - 2026-08-11
 
