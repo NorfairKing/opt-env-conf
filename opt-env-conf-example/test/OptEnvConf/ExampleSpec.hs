@@ -13,7 +13,7 @@ spec :: Spec
 spec = do
   settingsLintSpec @Instructions
   goldenSettingsReferenceDocumentationSpec @Instructions "test_resources/documentation.txt" "opt-env-conf-example"
-  goldenSettingsNixOptionsSpec @Instructions "options.nix"
+  goldenSettingsNixOptionTypeSpec @Instructions "options.nix"
 
   describe "Settings parsing" $ do
     it "can parse a read dispatch" $

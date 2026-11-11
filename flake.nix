@@ -147,6 +147,7 @@
               "${haskellPackages.opt-env-conf-example}/bin/opt-env-conf-example"
               [ "delete" ]
               { };
+          nix-option-type-check = pkgs.callPackage ./nix/nix-option-type-check.nix { };
           pre-commit = pre-commit-hooks.lib.${system}.run {
             src = ./.;
             hooks = {

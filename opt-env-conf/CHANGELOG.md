@@ -7,16 +7,28 @@
 * `renderSettingsNixOptionType` and `renderParserNixOptionType`, which render
   the settings as the type of a submodule, so that it has a `__defined` option
   that holds only the settings that were defined.
+* `renderSettingsNixOptionTypeWithGeneratedComment` and
+  `renderParserNixOptionTypeWithGeneratedComment`.
 
 ### Changed
 
 * With `autodocodec-nix >=0.2.0.0`, a setting that was not set is an option
   that was not defined instead of one that defaults to `null`, and a nested
   setting's submodule no longer defaults to `{ }`.
-  Reading a setting that was not defined throws, so a module can no longer
-  write the options from `renderSettingsNixOptions` out whole.
-  Use the type from `renderSettingsNixOptionType` and write its
-  `config.__defined` instead.
+  Reading a setting that was not defined throws, so a module writes the
+  `__defined` of its settings instead, for example `cfg.settings.__defined`.
+* The hidden `--render-nix-options` flag is now `--render-nix-option-type`, and
+  renders the type.
+* Fixed that the generated file comment commented out the first line of the
+  rendered Nix.
+
+### Removed
+
+* `renderSettingsNixOptions`, `renderParserNixOptions`,
+  `renderSettingsNixOptionsWithGeneratedComment`,
+  `renderParserNixOptionsWithGeneratedComment` and `parserNixOptionExpr`.
+  A set of options has no `__defined` of its own, so it cannot be written out
+  whole.
 
 ## [0.15.0.3] - 2026-08-11
 

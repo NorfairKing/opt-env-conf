@@ -30,9 +30,6 @@ module OptEnvConf.Test
     pureGoldenReferenceDocumentation,
 
     -- * Nix options
-    goldenSettingsNixOptionsSpec,
-    goldenParserNixOptionsSpec,
-    pureGoldenNixOptions,
     goldenSettingsNixOptionTypeSpec,
     goldenParserNixOptionTypeSpec,
     pureGoldenNixOptionType,
@@ -133,19 +130,6 @@ pureGoldenReferenceDocumentation path progname parser =
     renderChunksText With24BitColours $
       renderReferenceDocumentation progname $
         parserDocs parser
-
-goldenSettingsNixOptionsSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> Spec
-goldenSettingsNixOptionsSpec path = withFrozenCallStack $ goldenParserNixOptionsSpec (settingsParser @a) path
-
-goldenParserNixOptionsSpec :: (HasCallStack) => Parser a -> FilePath -> Spec
-goldenParserNixOptionsSpec parser path = withFrozenCallStack $ do
-  specify "produces the nix options as before" $
-    pureGoldenNixOptions path parser
-
-pureGoldenNixOptions :: (HasCallStack) => FilePath -> Parser a -> GoldenTest Text
-pureGoldenNixOptions path parser =
-  pureGoldenTextFile path $
-    generatedFileComment Stack.callStack <> renderParserNixOptions parser
 
 goldenSettingsNixOptionTypeSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> Spec
 goldenSettingsNixOptionTypeSpec path = withFrozenCallStack $ goldenParserNixOptionTypeSpec (settingsParser @a) path

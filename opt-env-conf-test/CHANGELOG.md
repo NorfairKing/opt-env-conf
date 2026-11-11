@@ -1,11 +1,17 @@
 # Changelog
 
-## [0.0.1.0] - 2026-11-11
+## [0.1.0.0] - 2026-11-11
 
 ### Added
 
 * `goldenSettingsNixOptionTypeSpec`, `goldenParserNixOptionTypeSpec` and
   `pureGoldenNixOptionType`.
+
+### Removed
+
+* `goldenSettingsNixOptionsSpec`, `goldenParserNixOptionsSpec` and
+  `pureGoldenNixOptions`, along with what they rendered in `opt-env-conf`.
+  Use the type that the new functions render instead.
 
 ## [0.0.0.5] - 2026-09-27
 

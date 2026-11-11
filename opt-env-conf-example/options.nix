@@ -3,56 +3,67 @@
 # opt-env-conf-example:test/OptEnvConf/ExampleSpec.hs:16
 # To update this it, run the test with --golden-reset
 { lib }:
+lib.types.submodule ({ config, options, ... }:
 {
-  cache-directory = lib.mkOption {
-    description = "cache directory";
-    type = lib.types.nullOr lib.types.str;
-  };
-  example = lib.mkOption {
-    type = lib.types.submodule ({ config, options, ... }:
-    {
-      options = {
-        __defined = lib.mkOption {
-          default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
-            log-level = config.log-level;
-            payment = config.payment.__defined;
-          };
-          internal = true;
-          readOnly = true;
-        };
-        log-level = lib.mkOption {
-          description = "minimal severity of log messages";
-          type = lib.types.nullOr lib.types.str;
-        };
-        payment = lib.mkOption {
-          type = lib.types.submodule ({ config, options, ... }:
-          {
-            options = {
-              __defined = lib.mkOption {
-                default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
-                  currency = config.currency;
-                  public-key = config.public-key;
-                  secret-key = config.secret-key;
-                };
-                internal = true;
-                readOnly = true;
-              };
-              currency = lib.mkOption {
-                description = "Currency";
-                type = lib.types.nullOr lib.types.str;
-              };
-              public-key = lib.mkOption {
-                description = "Public key";
-                type = lib.types.nullOr lib.types.str;
-              };
-              secret-key = lib.mkOption {
-                description = "Secret key";
-                type = lib.types.nullOr lib.types.str;
-              };
-            };
-          });
-        };
+  options = {
+    __defined = lib.mkOption {
+      default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+        cache-directory = config.cache-directory;
+        example = config.example.__defined;
       };
-    });
+      internal = true;
+      readOnly = true;
+    };
+    cache-directory = lib.mkOption {
+      description = "cache directory";
+      type = lib.types.nullOr lib.types.str;
+    };
+    example = lib.mkOption {
+      type = lib.types.submodule ({ config, options, ... }:
+      {
+        options = {
+          __defined = lib.mkOption {
+            default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+              log-level = config.log-level;
+              payment = config.payment.__defined;
+            };
+            internal = true;
+            readOnly = true;
+          };
+          log-level = lib.mkOption {
+            description = "minimal severity of log messages";
+            type = lib.types.nullOr lib.types.str;
+          };
+          payment = lib.mkOption {
+            type = lib.types.submodule ({ config, options, ... }:
+            {
+              options = {
+                __defined = lib.mkOption {
+                  default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+                    currency = config.currency;
+                    public-key = config.public-key;
+                    secret-key = config.secret-key;
+                  };
+                  internal = true;
+                  readOnly = true;
+                };
+                currency = lib.mkOption {
+                  description = "Currency";
+                  type = lib.types.nullOr lib.types.str;
+                };
+                public-key = lib.mkOption {
+                  description = "Public key";
+                  type = lib.types.nullOr lib.types.str;
+                };
+                secret-key = lib.mkOption {
+                  description = "Secret key";
+                  type = lib.types.nullOr lib.types.str;
+                };
+              };
+            });
+          };
+        };
+      });
+    };
   };
-}
+})
