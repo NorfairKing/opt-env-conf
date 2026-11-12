@@ -9,7 +9,7 @@ let
         { options.value = lib.mkOption { inherit type; }; }
         { value = definition; }
       ];
-    }).config.value.__defined;
+    }).config.value;
   cases = {
     "leaves out every setting that was not defined" = {
       definition = { };

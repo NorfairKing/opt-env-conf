@@ -15,7 +15,7 @@ extra-deps:
   - safe-coloured-text-layout
   - safe-coloured-text-gen
 - github: NorfairKing/autodocodec
-  commit: 73c9688d1185c3cb4856c9efe9b43aa521ca69da
+  commit: f82499be753b2f49ae6d7caa1211b27aa75cff3e
   subdirs:
     - autodocodec
     - autodocodec-yaml

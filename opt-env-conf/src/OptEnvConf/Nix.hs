@@ -40,8 +40,8 @@ withGeneratedComment progname content =
 renderSettingsNixOptionType :: forall a. (HasParser a) => Text
 renderSettingsNixOptionType = renderParserNixOptionType (settingsParser :: Parser a)
 
--- | The type of a submodule, so that it has a @__defined@ option that holds
--- only the settings that were defined.
+-- | The type of a submodule whose value holds only the settings that were
+-- defined.
 renderParserNixOptionType :: Parser a -> Text
 renderParserNixOptionType = renderOptionType . OptionTypeSubmodule . parserNixOptions
 

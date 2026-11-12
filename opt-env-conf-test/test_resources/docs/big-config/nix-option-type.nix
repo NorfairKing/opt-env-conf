@@ -3,26 +3,27 @@
 # opt-env-conf-test:test/OptEnvConf/APISpec.hs:25
 # To update this it, run the test with --golden-reset
 { lib }:
-lib.types.submodule ({ config, options, ... }:
+(let definedSubmodule = submodule: submodule // { merge = if submodule.merge ? v2 then { __functor = self: loc: defs: (self.v2 { inherit loc defs; }).value; v2 = args: let merged = submodule.merge.v2 args; in merged // { value = merged.value.__defined; }; } else loc: defs: (submodule.merge loc defs).__defined; emptyValue.value = submodule.emptyValue.value.__defined; substSubModules = modules: definedSubmodule (submodule.substSubModules modules); }; in definedSubmodule) (lib.types.submodule ({ config, options, ... }:
 {
   options = {
     __defined = lib.mkOption {
       default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
-        big = if config.big == null then null else config.big.__defined;
+        big = config.big;
       };
       internal = true;
       readOnly = true;
     };
     big = lib.mkOption {
       description = "big configuration object";
-      type = lib.types.nullOr (lib.types.submodule ({ config, options, ... }:
+      type = lib.types.nullOr ((let definedSubmodule = submodule: submodule // { merge = if submodule.merge ? v2 then { __functor = self: loc: defs: (self.v2 { inherit loc defs; }).value; v2 = args: let merged = submodule.merge.v2 args; in merged // { value = merged.value.__defined; }; } else loc: defs: (submodule.merge loc defs).__defined; emptyValue.value = submodule.emptyValue.value.__defined; substSubModules = modules: definedSubmodule (submodule.substSubModules modules); }; in definedSubmodule) (lib.types.submodule ({ config, options, ... }:
       {
         options = {
           __defined = lib.mkOption {
-            default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
-              map = config.map;
+            default = (lib.mergeAttrs {
+              map = if options.map.isDefined then config.map else throw "The option `${lib.showOption options.map.loc}' is required but was not defined.";
+            }) ((lib.filterAttrs (name: _: options.${name}.isDefined)) {
               sub = config.sub;
-            };
+            });
             internal = true;
             readOnly = true;
           };
@@ -33,7 +34,7 @@ lib.types.submodule ({ config, options, ... }:
             type = lib.types.str;
           };
         };
-      }));
+      })));
     };
   };
-})
+}))
