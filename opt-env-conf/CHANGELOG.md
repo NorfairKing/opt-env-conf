@@ -17,7 +17,7 @@
   setting's submodule no longer defaults to `{ }`.
   The value of the settings leaves out every setting that was not defined, so
   a module can write it out as it is.
-  Reading a setting from it that was not defined throws, so read one with
+  A setting that was not defined is missing from it, so read one with
   `cfg.settings.foo or default`.
 * The hidden `--render-nix-options` flag is now `--render-nix-option-type`, and
   renders the type.

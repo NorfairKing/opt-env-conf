@@ -3,11 +3,11 @@
     "autodocodec": {
       "flake": false,
       "locked": {
-        "lastModified": 1794477542,
-        "narHash": "sha256-H9fa2g9xXf174c6qrRU5pvxgImvztE6xfC3spIHIkH4=",
+        "lastModified": 1794482722,
+        "narHash": "sha256-yTO0s+N0MJcxotIaaoxm/xek6WdY4C1JuMcynMLfss0=",
         "owner": "NorfairKing",
         "repo": "autodocodec",
-        "rev": "f82499be753b2f49ae6d7caa1211b27aa75cff3e",
+        "rev": "94e6154f572b7fb098cc1ccf403dbf1d16ea4442",
         "type": "github"
       },
       "original": {

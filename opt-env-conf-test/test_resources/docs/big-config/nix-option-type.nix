@@ -3,7 +3,8 @@
 # opt-env-conf-test:test/OptEnvConf/APISpec.hs:25
 # To update this it, run the test with --golden-reset
 { lib }:
-(let definedSubmodule = submodule: submodule // { merge = if submodule.merge ? v2 then { __functor = self: loc: defs: (self.v2 { inherit loc defs; }).value; v2 = args: let merged = submodule.merge.v2 args; in merged // { value = merged.value.__defined; }; } else loc: defs: (submodule.merge loc defs).__defined; emptyValue.value = submodule.emptyValue.value.__defined; substSubModules = modules: definedSubmodule (submodule.substSubModules modules); }; in definedSubmodule) (lib.types.submodule ({ config, options, ... }:
+({ definedSubmodule }:
+definedSubmodule (lib.types.submodule ({ config, options, ... }:
 {
   options = {
     __defined = lib.mkOption {
@@ -14,8 +15,9 @@
       readOnly = true;
     };
     big = lib.mkOption {
+      defaultText = lib.literalMD "None, this option is left out when it is not set.";
       description = "big configuration object";
-      type = lib.types.nullOr ((let definedSubmodule = submodule: submodule // { merge = if submodule.merge ? v2 then { __functor = self: loc: defs: (self.v2 { inherit loc defs; }).value; v2 = args: let merged = submodule.merge.v2 args; in merged // { value = merged.value.__defined; }; } else loc: defs: (submodule.merge loc defs).__defined; emptyValue.value = submodule.emptyValue.value.__defined; substSubModules = modules: definedSubmodule (submodule.substSubModules modules); }; in definedSubmodule) (lib.types.submodule ({ config, options, ... }:
+      type = lib.types.nullOr (definedSubmodule (lib.types.submodule ({ config, options, ... }:
       {
         options = {
           __defined = lib.mkOption {
@@ -28,13 +30,17 @@
             readOnly = true;
           };
           map = lib.mkOption {
+            defaultText = lib.literalMD "None, this option is required.";
             type = lib.types.attrsOf (lib.types.attrsOf lib.types.int);
           };
           sub = lib.mkOption {
+            defaultText = lib.literalMD "None, this option is left out when it is not set.";
             type = lib.types.str;
           };
         };
       })));
     };
   };
-}))
+}))) {
+  definedSubmodule = let definedSubmodule = submodule: submodule // { merge = if submodule.merge ? v2 then { __functor = self: loc: defs: (self.v2 { inherit loc defs; }).value; v2 = args: let merged = submodule.merge.v2 args; in merged // { value = merged.value.__defined; }; } else loc: defs: (submodule.merge loc defs).__defined; emptyValue = if submodule.emptyValue ? value then { value = submodule.emptyValue.value.__defined; } else submodule.emptyValue; substSubModules = modules: definedSubmodule (submodule.substSubModules modules); }; in definedSubmodule;
+}
