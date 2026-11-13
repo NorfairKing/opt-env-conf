@@ -38,6 +38,11 @@ spec = do
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
   exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
 
+  describe "renderParserNixOptionTypeWithGeneratedComment" $
+    it "renders the type below a comment that says how it was generated" $
+      pureGoldenTextFile "test_resources/nix-option-type-with-generated-comment.nix" $
+        renderParserNixOptionTypeWithGeneratedComment "sub-settings" subSettingsParser
+
 exampleParserSpec :: (HasCallStack) => FilePath -> String -> Parser a -> Spec
 exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
   let version = makeVersion [0, 0, 0]
@@ -111,8 +116,8 @@ exampleParserSpec dir progDesc p = withFrozenCallStack $ describe dir $ do
       renderReferenceDocumentation dir $
         parserDocs p
 
-  it "renders the Nix options the same way" $
-    pureGoldenNixOptions ("test_resources/docs/" <> dir <> "/nix-options.nix") p
+  it "renders the Nix option type the same way" $
+    pureGoldenNixOptionType ("test_resources/docs/" <> dir <> "/nix-option-type.nix") p
 
 sameHelpParser :: Parser (Either Int String, Bool)
 sameHelpParser =

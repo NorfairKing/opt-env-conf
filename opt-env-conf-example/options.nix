@@ -3,44 +3,77 @@
 # opt-env-conf-example:test/OptEnvConf/ExampleSpec.hs:16
 # To update this it, run the test with --golden-reset
 { lib }:
+({ definedSubmodule }:
+definedSubmodule (lib.types.submodule ({ config, options, ... }:
 {
-  cache-directory = lib.mkOption {
-    default = null;
-    description = "cache directory";
-    type = lib.types.nullOr lib.types.str;
-  };
-  example = lib.mkOption {
-    default = { };
-    type = lib.types.submodule {
-      options = {
-        log-level = lib.mkOption {
-          default = null;
-          description = "minimal severity of log messages";
-          type = lib.types.nullOr lib.types.str;
-        };
-        payment = lib.mkOption {
-          default = { };
-          type = lib.types.submodule {
-            options = {
-              currency = lib.mkOption {
-                default = null;
-                description = "Currency";
-                type = lib.types.nullOr lib.types.str;
-              };
-              public-key = lib.mkOption {
-                default = null;
-                description = "Public key";
-                type = lib.types.nullOr lib.types.str;
-              };
-              secret-key = lib.mkOption {
-                default = null;
-                description = "Secret key";
-                type = lib.types.nullOr lib.types.str;
-              };
+  options = {
+    __defined = lib.mkOption {
+      default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+        cache-directory = config.cache-directory;
+        example = config.example;
+      };
+      internal = true;
+      readOnly = true;
+    };
+    cache-directory = lib.mkOption {
+      defaultText = lib.literalMD "None, this option is left out when it is not set.";
+      description = "cache directory";
+      type = lib.types.nullOr lib.types.str;
+    };
+    example = lib.mkOption {
+      defaultText = lib.literalMD "None, this option is left out when it is not set.";
+      type = definedSubmodule (lib.types.submodule ({ config, options, ... }:
+      {
+        options = {
+          __defined = lib.mkOption {
+            default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+              log-level = config.log-level;
+              payment = config.payment;
             };
+            internal = true;
+            readOnly = true;
+          };
+          log-level = lib.mkOption {
+            defaultText = lib.literalMD "None, this option is left out when it is not set.";
+            description = "minimal severity of log messages";
+            type = lib.types.nullOr lib.types.str;
+          };
+          payment = lib.mkOption {
+            defaultText = lib.literalMD "None, this option is left out when it is not set.";
+            type = definedSubmodule (lib.types.submodule ({ config, options, ... }:
+            {
+              options = {
+                __defined = lib.mkOption {
+                  default = (lib.filterAttrs (name: _: options.${name}.isDefined)) {
+                    currency = config.currency;
+                    public-key = config.public-key;
+                    secret-key = config.secret-key;
+                  };
+                  internal = true;
+                  readOnly = true;
+                };
+                currency = lib.mkOption {
+                  defaultText = lib.literalMD "None, this option is left out when it is not set.";
+                  description = "Currency";
+                  type = lib.types.nullOr lib.types.str;
+                };
+                public-key = lib.mkOption {
+                  defaultText = lib.literalMD "None, this option is left out when it is not set.";
+                  description = "Public key";
+                  type = lib.types.nullOr lib.types.str;
+                };
+                secret-key = lib.mkOption {
+                  defaultText = lib.literalMD "None, this option is left out when it is not set.";
+                  description = "Secret key";
+                  type = lib.types.nullOr lib.types.str;
+                };
+              };
+            }));
           };
         };
-      };
+      }));
     };
   };
+}))) {
+  definedSubmodule = let definedSubmodule = submodule: submodule // { merge = if submodule.merge ? v2 then { __functor = self: loc: defs: (self.v2 { inherit loc defs; }).value; v2 = args: let merged = submodule.merge.v2 args; in merged // { value = merged.value.__defined; }; } else loc: defs: (submodule.merge loc defs).__defined; emptyValue = if submodule.emptyValue ? value then { value = submodule.emptyValue.value.__defined; } else submodule.emptyValue; substSubModules = modules: definedSubmodule (submodule.substSubModules modules); }; in definedSubmodule;
 }
