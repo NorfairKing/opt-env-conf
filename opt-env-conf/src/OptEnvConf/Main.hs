@@ -141,9 +141,9 @@ runParser version progDesc p = do
                     tc <- getTerminalCapabilitiesFromHandle stdout
                     hPutChunksLocaleWith tc stdout $ renderReferenceDocumentation progname docs
                     exitSuccess
-                  RenderNixosOptions -> do
+                  RenderNixOptionType -> do
                     progname <- getProgName
-                    putStrLn $ T.unpack $ renderParserNixOptionsWithGeneratedComment progname p'
+                    putStrLn $ T.unpack $ renderParserNixOptionTypeWithGeneratedComment progname p'
                     exitSuccess
                   BashCompletionScript progPath -> do
                     progname <- getProgName
@@ -210,7 +210,7 @@ data Internal a
   = ShowVersion
   | RenderMan
   | RenderDocumentation
-  | RenderNixosOptions
+  | RenderNixOptionType
   | BashCompletionScript (Path Abs File)
   | ZshCompletionScript (Path Abs File)
   | FishCompletionScript (Path Abs File)
@@ -244,10 +244,10 @@ internalParser p =
           help "Render reference documentation"
         ],
       setting
-        [ switch RenderNixosOptions,
-          long "render-nix-options",
+        [ switch RenderNixOptionType,
+          long "render-nix-option-type",
           hidden,
-          help "Render Nix options"
+          help "Render the type of a NixOS module's settings"
         ],
       BashCompletionScript
         <$> setting

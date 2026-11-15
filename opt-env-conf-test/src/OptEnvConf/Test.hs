@@ -30,9 +30,9 @@ module OptEnvConf.Test
     pureGoldenReferenceDocumentation,
 
     -- * Nix options
-    goldenSettingsNixOptionsSpec,
-    goldenParserNixOptionsSpec,
-    pureGoldenNixOptions,
+    goldenSettingsNixOptionTypeSpec,
+    goldenParserNixOptionTypeSpec,
+    pureGoldenNixOptionType,
     module OptEnvConf,
   )
 where
@@ -131,18 +131,18 @@ pureGoldenReferenceDocumentation path progname parser =
       renderReferenceDocumentation progname $
         parserDocs parser
 
-goldenSettingsNixOptionsSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> Spec
-goldenSettingsNixOptionsSpec path = withFrozenCallStack $ goldenParserNixOptionsSpec (settingsParser @a) path
+goldenSettingsNixOptionTypeSpec :: forall a. (HasCallStack) => (HasParser a) => FilePath -> Spec
+goldenSettingsNixOptionTypeSpec path = withFrozenCallStack $ goldenParserNixOptionTypeSpec (settingsParser @a) path
 
-goldenParserNixOptionsSpec :: (HasCallStack) => Parser a -> FilePath -> Spec
-goldenParserNixOptionsSpec parser path = withFrozenCallStack $ do
-  specify "produces the nix options as before" $
-    pureGoldenNixOptions path parser
+goldenParserNixOptionTypeSpec :: (HasCallStack) => Parser a -> FilePath -> Spec
+goldenParserNixOptionTypeSpec parser path = withFrozenCallStack $ do
+  specify "produces the nix option type as before" $
+    pureGoldenNixOptionType path parser
 
-pureGoldenNixOptions :: (HasCallStack) => FilePath -> Parser a -> GoldenTest Text
-pureGoldenNixOptions path parser =
+pureGoldenNixOptionType :: (HasCallStack) => FilePath -> Parser a -> GoldenTest Text
+pureGoldenNixOptionType path parser =
   pureGoldenTextFile path $
-    generatedFileComment Stack.callStack <> renderParserNixOptions parser
+    generatedFileComment Stack.callStack <> renderParserNixOptionType parser
 
 generatedFileComment :: CallStack -> T.Text
 generatedFileComment cs =

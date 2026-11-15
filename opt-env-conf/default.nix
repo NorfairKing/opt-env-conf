@@ -6,7 +6,7 @@
 }:
 mkDerivation {
   pname = "opt-env-conf";
-  version = "0.15.0.3";
+  version = "0.16.0.0";
   src = ./.;
   libraryHaskellDepends = [
     aeson autodocodec autodocodec-nix autodocodec-schema

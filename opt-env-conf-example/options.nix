@@ -3,41 +3,64 @@
 # opt-env-conf-example:test/OptEnvConf/ExampleSpec.hs:16
 # To update this it, run the test with --golden-reset
 { lib }:
-{
+let
+  definedSubmodule = required: declarations: definedType required (lib.types.submodule {
+    options = declarations;
+  });
+  definedType = required: submodule: submodule // {
+    emptyValue = { };
+    functor = submodule.functor // {
+      name = "definedSubmodule";
+    };
+    merge = submodule.merge // {
+      v2 = args: let
+        configValue = name: lib.getAttr name merged.value;
+        isDefined = name: (lib.getAttr name options).isDefined;
+        merged = submodule.merge.v2 args;
+        options = merged.valueMeta.configuration.options;
+        requiredValue = name: if isDefined name then configValue name else throw (lib.concatStrings [
+          "The option `"
+          (lib.showOption (lib.getAttr name options).loc)
+          "' is required but was not defined."
+        ]);
+      in
+      merged // {
+        value = lib.genAttrs required requiredValue // lib.genAttrs (lib.filter isDefined (lib.attrNames (lib.removeAttrs options ["_module"]))) configValue;
+      };
+    };
+    substSubModules = modules: definedType required (submodule.substSubModules modules);
+    typeMerge = _: null;
+  };
+in
+definedSubmodule [] {
   cache-directory = lib.mkOption {
-    default = null;
+    defaultText = lib.literalMD "Unspecified";
     description = "cache directory";
     type = lib.types.nullOr lib.types.str;
   };
   example = lib.mkOption {
-    default = { };
-    type = lib.types.submodule {
-      options = {
-        log-level = lib.mkOption {
-          default = null;
-          description = "minimal severity of log messages";
-          type = lib.types.nullOr lib.types.str;
-        };
-        payment = lib.mkOption {
-          default = { };
-          type = lib.types.submodule {
-            options = {
-              currency = lib.mkOption {
-                default = null;
-                description = "Currency";
-                type = lib.types.nullOr lib.types.str;
-              };
-              public-key = lib.mkOption {
-                default = null;
-                description = "Public key";
-                type = lib.types.nullOr lib.types.str;
-              };
-              secret-key = lib.mkOption {
-                default = null;
-                description = "Secret key";
-                type = lib.types.nullOr lib.types.str;
-              };
-            };
+    type = definedSubmodule [] {
+      log-level = lib.mkOption {
+        defaultText = lib.literalMD "Unspecified, interpreted as `\"DEBUG\"`";
+        description = "minimal severity of log messages";
+        type = lib.types.nullOr lib.types.str;
+      };
+      payment = lib.mkOption {
+        type = definedSubmodule [] {
+          currency = lib.mkOption {
+            defaultText = lib.literalMD "Unspecified";
+            description = "Currency";
+            type = lib.types.nullOr lib.types.str;
+          };
+          public-key = lib.mkOption {
+            defaultText = lib.literalMD "Unspecified";
+            description = "Public key";
+            type = lib.types.nullOr lib.types.str;
+          };
+          secret-key = lib.mkOption {
+            defaultText = lib.literalMD "Unspecified";
+            description = "Secret key";
+            type = lib.types.nullOr lib.types.str;
           };
         };
       };

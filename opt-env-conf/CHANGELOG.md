@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.16.0.0] - 2026-11-14
+
+### Added
+
+* `renderSettingsNixOptionType`, `renderParserNixOptionType` and their
+  `WithGeneratedComment` variants.
+
+### Changed
+
+* A setting that is not set is left out of the settings' value instead of
+  being `null`.
+* `--render-nix-options` is now `--render-nix-option-type`.
+* The generated type needs nixpkgs 25.11 or newer.
+* The Nix option of a setting with a default documents that default.
+
+### Removed
+
+* `renderSettingsNixOptions`, `renderParserNixOptions`, their
+  `WithGeneratedComment` variants and `parserNixOptionExpr`.
+
+### Fixed
+
+* The generated file comment no longer comments out the first line of the
+  rendered Nix.
+
 ## [0.15.0.3] - 2026-08-11
 
 ### Changed
