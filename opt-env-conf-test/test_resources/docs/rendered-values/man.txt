@@ -1,0 +1,76 @@
+.Dd $Mdocdate$
+.Dt rendered-values 1
+.Os
+.Sh NAME
+.Nm rendered-values
+.Nd example with rendered default and example values
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+rendered-values [--config-file FILE_PATH]
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  Path to the configuration file
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
+
+  an object with a default and an example
+  config:
+    big: # or null
+      # BigConfig
+      map: # required
+        <key>: 
+          <key>: 
+            <integer> # 64 bit signed integer
+      sub: # optional
+        <string>
+  default: the default big configuration
+
+  a list with a default
+  config:
+    list: # or null
+      - <integer> # 64 bit signed integer
+  default: [1,2,3]
+
+  a number with a codec that can only decode
+  config:
+    decode-only: # or null
+      <integer> # 64 bit unsigned integer
+  default: 5
+
+.Sh OPTIONS
+  -h|--help     Show this help text              
+  --version     Output version information: 0.0.0
+  --config-file Path to the configuration file   
+
+.Sh ENVIRONMENT VARIABLES
+  CONFIG_FILE FILE_PATH   Path to the configuration file
+
+.Sh CONFIGURATION VALUES
+  an object with a default and an example
+  default: the default big configuration
+  big:
+    # or null
+    # BigConfig
+    map: # required
+      <key>: 
+        <key>: 
+          <integer> # 64 bit signed integer
+    sub: # optional
+      <string>
+  a list with a default
+  default: [1,2,3]
+  list:
+    # or null
+    - <integer> # 64 bit signed integer
+  a number with a codec that can only decode
+  default: 5
+  decode-only:
+    # or null
+    <integer> # 64 bit unsigned integer
+

@@ -1,0 +1,76 @@
+AnyDocsAnd
+  [ AnyDocsOr []
+  , AnyDocsSingle
+      ConfDoc
+        { confDocKeys =
+            ( "big" :| []
+            , AnyOfSchema
+                (NullSchema :|
+                   [ CommentSchema
+                       "BigConfig"
+                       (ObjectSchema
+                          (ObjectAllOfSchema
+                             (ObjectKeySchema
+                                "map"
+                                Required
+                                (MapSchema
+                                   (MapSchema
+                                      (IntegerSchema
+                                         Bounds
+                                           { boundsLower = Just (-9223372036854775808)
+                                           , boundsUpper = Just 9223372036854775807
+                                           })))
+                                Nothing :|
+                                [ ObjectKeySchema
+                                    "sub"
+                                    (Optional Nothing)
+                                    (StringSchema
+                                       StringBounds
+                                         { stringBoundsMinLength = Nothing
+                                         , stringBoundsMaxLength = Nothing
+                                         })
+                                    Nothing
+                                ])))
+                   ])
+            ) :|
+              []
+        , confDocDefault = Just "the default big configuration"
+        , confDocExamples = []
+        , confDocHelp = Just "an object with a default and an example"
+        }
+  , AnyDocsSingle
+      ConfDoc
+        { confDocKeys =
+            ( "list" :| []
+            , AnyOfSchema
+                (NullSchema :|
+                   [ ArraySchema
+                       (IntegerSchema
+                          Bounds
+                            { boundsLower = Just (-9223372036854775808)
+                            , boundsUpper = Just 9223372036854775807
+                            })
+                   ])
+            ) :|
+              []
+        , confDocDefault = Just "[1,2,3]"
+        , confDocExamples = []
+        , confDocHelp = Just "a list with a default"
+        }
+  , AnyDocsSingle
+      ConfDoc
+        { confDocKeys =
+            ( "decode-only" :| []
+            , AnyOfSchema
+                (NullSchema :|
+                   [ IntegerSchema
+                       Bounds
+                         { boundsLower = Just 0 , boundsUpper = Just 18446744073709551615 }
+                   ])
+            ) :|
+              []
+        , confDocDefault = Just "5"
+        , confDocExamples = []
+        , confDocHelp = Just "a number with a codec that can only decode"
+        }
+  ]

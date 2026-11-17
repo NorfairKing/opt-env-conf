@@ -1,0 +1,2 @@
+  [37m--config-file[m              [34mPath to the configuration file[m                           
+  [37m--(enable|disable)-example[m [34mExample of an enable/disable switch with an example value[m

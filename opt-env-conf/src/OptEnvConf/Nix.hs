@@ -16,6 +16,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (listToMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import OptEnvConf.Parser
@@ -78,26 +79,46 @@ parserNixOptions = go
                               (optionalFieldWith' p configValSettingCodec)
                               (optionalFieldWith p configValSettingCodec)
                               (T.pack <$> settingHelp s)
-                          -- The codec can only decode, so the default is only
-                          -- documented when what it shows as is a value that
-                          -- the codec accepts, like a number or a string.
-                          -- What else it shows as is Haskell, not Nix.
                           documentedDefault :: Maybe JSON.Value
                           documentedDefault = do
-                            (_, shown) <- settingDefaultValue s
-                            v <- JSON.decodeStrictText (T.pack shown)
-                            _ <- JSON.parseMaybe (parseJSONVia configValSettingCodec) v
-                            pure v
-                       in M.map (\o -> o {optionDocumentedDefault = documentedDefault}) $ objectCodecNixOptions oc
+                            (a, shown) <- settingDefaultValue s
+                            case configValSettingEncoder of
+                              Just encode -> pure (encode a)
+                              -- A codec that can only decode can still
+                              -- document the default when what it shows as is
+                              -- a value that the codec accepts, like a number
+                              -- or a string.
+                              -- What else it shows as is Haskell, not Nix.
+                              Nothing -> do
+                                v <- JSON.decodeStrictText (T.pack shown)
+                                _ <- JSON.parseMaybe (parseJSONVia configValSettingCodec) v
+                                pure v
+                          optionExampleValue :: Maybe JSON.Value
+                          optionExampleValue = do
+                            encode <- configValSettingEncoder
+                            -- A Nix option has only one example.
+                            a <- listToMaybe (settingValueExamples s)
+                            pure (encode a)
+                       in M.map
+                            ( \o ->
+                                o
+                                  { optionDocumentedDefault = documentedDefault,
+                                    optionExample = optionExampleValue
+                                  }
+                            )
+                            $ objectCodecNixOptions oc
                     Just rest ->
                       let m = go' rest
                        in M.singleton p $ emptyOption {optionType = Just (OptionTypeSubmodule m)}
                in go' $ NE.map T.pack configValSettingPath
     combineOption :: Option -> Option -> Option
-    combineOption o1 o2 = case (optionType o1, optionType o2) of
-      (Nothing, _) -> o2
-      (Just ot1, Nothing) -> o2 {optionType = Just ot1}
-      (Just ot1, Just ot2) -> o2 {optionType = Just $ combineOptionType ot1 ot2}
+    combineOption o1 o2 =
+      let o = case (optionType o1, optionType o2) of
+            (Nothing, _) -> o2
+            (Just ot1, Nothing) -> o2 {optionType = Just ot1}
+            (Just ot1, Just ot2) -> o2 {optionType = Just $ combineOptionType ot1 ot2}
+       in -- Any setting's example is a valid example for the key.
+          o {optionExample = optionExample o2 <|> optionExample o1}
 
     combineOptionType :: OptionType -> OptionType -> OptionType
     combineOptionType ot1 ot2 = simplifyOptionType $ case (ot1, ot2) of

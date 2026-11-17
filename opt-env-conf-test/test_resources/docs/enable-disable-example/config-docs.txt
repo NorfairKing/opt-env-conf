@@ -1,0 +1,13 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          EnvDoc
+            { envDocVars = "CONFIG_FILE" :| []
+            , envDocDefault = Nothing
+            , envDocExamples = []
+            , envDocMetavar = Just "FILE_PATH"
+            , envDocHelp = Just "Path to the configuration file"
+            }
+      ]
+  , AnyDocsOr []
+  ]

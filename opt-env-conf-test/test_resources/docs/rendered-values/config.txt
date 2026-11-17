@@ -1,0 +1,21 @@
+  [34man object with a default and an example[m
+  default: [33mthe default big configuration[m
+  [37mbig[m:
+    # [32mor null[m
+    # BigConfig
+    [37mmap[m: # [31mrequired[m
+      [37m<key>[m: 
+        [37m<key>[m: 
+          [33m<integer>[m # [32m64 bit signed integer[m
+    [37msub[m: # [34moptional[m
+      [33m<string>[m
+  [34ma list with a default[m
+  default: [33m[1,2,3][m
+  [37mlist[m:
+    # [32mor null[m
+    - [33m<integer>[m # [32m64 bit signed integer[m
+  [34ma number with a codec that can only decode[m
+  default: [33m5[m
+  [37mdecode-only[m:
+    # [32mor null[m
+    [33m<integer>[m # [32m64 bit unsigned integer[m

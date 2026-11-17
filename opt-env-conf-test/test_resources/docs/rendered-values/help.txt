@@ -1,0 +1,39 @@
+[36mUsage: [m[33mrendered-values[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m
+
+example with rendered default and example values
+
+[36mAvailable settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
+
+  [34man object with a default and an example[m
+  config:
+    [37mbig[m: # [32mor null[m
+      # BigConfig
+      [37mmap[m: # [31mrequired[m
+        [37m<key>[m: 
+          [37m<key>[m: 
+            [33m<integer>[m # [32m64 bit signed integer[m
+      [37msub[m: # [34moptional[m
+        [33m<string>[m
+  default: [33mthe default big configuration[m
+
+  [34ma list with a default[m
+  config:
+    [37mlist[m: # [32mor null[m
+      - [33m<integer>[m # [32m64 bit signed integer[m
+  default: [33m[1,2,3][m
+
+  [34ma number with a codec that can only decode[m
+  config:
+    [37mdecode-only[m: # [32mor null[m
+      [33m<integer>[m # [32m64 bit unsigned integer[m
+  default: [33m5[m
+

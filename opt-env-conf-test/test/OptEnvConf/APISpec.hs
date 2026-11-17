@@ -6,6 +6,7 @@ module OptEnvConf.APISpec (spec) where
 
 import Autodocodec
 import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Text (Text)
 import Data.Version
 import GHC.Stack (HasCallStack, withFrozenCallStack)
@@ -37,6 +38,8 @@ spec = do
   exampleParserSpec "greet" "hello world example" greetParser
   exampleParserSpec "three-commands" "example with three commands" threeCommandsParser
   exampleParserSpec "sub-commands" "example with subcommands" subCommandsParser
+  exampleParserSpec "rendered-values" "example with rendered default and example values" renderedValuesParser
+  exampleParserSpec "enable-disable-example" "enableDisableSwitch with an example value" enableDisableExampleParser
 
   describe "renderParserNixOptionTypeWithGeneratedComment" $
     it "renders the type below a comment that says how it was generated" $
@@ -206,7 +209,8 @@ secretParser =
         ]
       <*> secretTextFileOrBareSetting
         [ help "Second example secret, bare or in a file",
-          name "second-secret"
+          name "second-secret",
+          exampleValue "/run/secrets/second-secret"
         ]
       <*> secretTextFileOrBareSetting
         [ help "Second example secret, bare or in a file, only option",
@@ -303,6 +307,50 @@ bigConfigParser =
       [ conf "big",
         help "big configuration object"
       ]
+
+data RenderedValues = RenderedValues !BigConfig ![Int] !Int
+
+renderedValuesParser :: Parser RenderedValues
+renderedValuesParser =
+  withLocalYamlConfig $
+    RenderedValues
+      <$> setting
+        [ conf "big",
+          help "an object with a default and an example",
+          valueWithShown
+            (const "the default big configuration")
+            BigConfig
+              { bigConfigMap = M.singleton "a" (M.singleton "b" 1),
+                bigConfigSubObject = Nothing
+              },
+          exampleValue
+            BigConfig
+              { bigConfigMap = M.singleton "c" (M.singleton "d" 2),
+                bigConfigSubObject = Just "sub"
+              }
+        ]
+      <*> setting
+        [ conf "list",
+          help "a list with a default",
+          value [1, 2, 3]
+        ]
+      <*> setting
+        [ decodeOnlyConfWith "decode-only" (fromIntegral <$> (codec :: JSONCodec Word)),
+          help "a number with a codec that can only decode",
+          value 5
+        ]
+
+enableDisableExampleParser :: Parser EnableDisable
+enableDisableExampleParser =
+  withLocalYamlConfig $
+    EnableDisable
+      <$> enableDisableSwitch
+        [ long "example",
+          help "Example of an enable/disable switch with an example value",
+          conf "example",
+          value True,
+          exampleValue False
+        ]
 
 subSettingsParser :: Parser String
 subSettingsParser =

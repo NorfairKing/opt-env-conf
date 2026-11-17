@@ -38,9 +38,11 @@ WithConfig
                                 Bounds
                                   { boundsLower = Just (-9223372036854775808)
                                   , boundsUpper = Just 9223372036854775807
-                                  }))) :|
+                                  })))
+                       (Just _) :|
                        []))
                  Nothing
+                 []
                  []
                  False
                  (Just "INT")
@@ -83,9 +85,11 @@ WithConfig
                                 StringBounds
                                   { stringBoundsMinLength = Nothing
                                   , stringBoundsMaxLength = Nothing
-                                  }))) :|
+                                  })))
+                       (Just _) :|
                        []))
                  Nothing
+                 []
                  []
                  False
                  (Just "STR")
@@ -105,6 +109,7 @@ WithConfig
               Nothing
               Nothing
               []
+              []
               False
               Nothing
               (Just "int or string")
@@ -123,6 +128,7 @@ WithConfig
                  Nothing
                  Nothing
                  []
+                 []
                  True
                  Nothing
                  Nothing
@@ -140,6 +146,7 @@ WithConfig
                     Nothing
                     Nothing
                     Nothing
+                    []
                     []
                     True
                     Nothing
@@ -162,6 +169,7 @@ WithConfig
                        Nothing
                        Nothing
                        []
+                       []
                        False
                        (Just "BOOL")
                        (Just "int or string")
@@ -183,9 +191,11 @@ WithConfig
                                 BimapCodec
                                 _
                                 _
-                                (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                                (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                                (Just _) :|
                                 []))
                           Nothing
+                          []
                           []
                           False
                           Nothing

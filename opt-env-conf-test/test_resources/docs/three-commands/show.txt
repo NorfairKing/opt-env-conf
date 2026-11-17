@@ -25,6 +25,7 @@ WithConfig
                   Nothing
                   Nothing
                   []
+                  []
                   False
                   (Just "STR")
                   (Just "argument")
@@ -70,10 +71,12 @@ WithConfig
                                     Bounds
                                       { boundsLower = Just (-9223372036854775808)
                                       , boundsUpper = Just 9223372036854775807
-                                      }))) :|
+                                      })))
+                           (Just _) :|
                            []))
                      Nothing
                      [ "5" ]
+                     []
                      False
                      (Just "INT")
                      (Just "number")
@@ -91,6 +94,7 @@ WithConfig
                      Nothing
                      Nothing
                      Nothing
+                     []
                      []
                      False
                      Nothing
@@ -110,6 +114,7 @@ WithConfig
                         Nothing
                         Nothing
                         []
+                        []
                         True
                         Nothing
                         Nothing
@@ -127,6 +132,7 @@ WithConfig
                            Nothing
                            Nothing
                            Nothing
+                           []
                            []
                            True
                            Nothing
@@ -151,6 +157,7 @@ WithConfig
                               Nothing
                               Nothing
                               []
+                              []
                               False
                               (Just "BOOL")
                               (Just "enable extra")
@@ -173,9 +180,11 @@ WithConfig
                                        _
                                        _
                                        (EitherCodec
-                                          PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                                          PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                                       (Just _) :|
                                        []))
                                  Nothing
+                                 []
                                  []
                                  False
                                  Nothing

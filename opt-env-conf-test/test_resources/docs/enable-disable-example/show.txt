@@ -1,0 +1,143 @@
+WithConfig
+  _
+  Nothing
+  (Check
+     Nothing
+     False
+     (fromList [])
+     _
+     (Alt
+        (Check
+           Nothing
+           False
+           (fromList [])
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('c' :| "onfig-file") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "CONFIG_FILE"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
+                 Nothing
+                 Nothing
+                 []
+                 []
+                 False
+                 (Just "FILE_PATH")
+                 (Just "Path to the configuration file")
+                 (Just _)
+                 (fromList []))))
+        (Check Nothing False (fromList []) _ (Pure _))))
+  (Alt
+     (Check
+        Nothing
+        True
+        (fromList [])
+        _
+        (Setting
+           Nothing
+           (Setting
+              [ DashedLong ('(' :| "enable|disable)-example") ]
+              []
+              False
+              (Just _)
+              False
+              Nothing
+              Nothing
+              Nothing
+              []
+              []
+              False
+              Nothing
+              (Just "Example of an enable/disable switch with an example value")
+              Nothing
+              (fromList []))))
+     (Alt
+        (Check
+           Nothing
+           True
+           (fromList [])
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('d' :| "isable-example") ]
+                 []
+                 False
+                 (Just _)
+                 False
+                 Nothing
+                 Nothing
+                 Nothing
+                 []
+                 []
+                 True
+                 Nothing
+                 Nothing
+                 Nothing
+                 (fromList []))))
+        (Alt
+           (Check
+              Nothing
+              True
+              (fromList [])
+              _
+              (Setting
+                 Nothing
+                 (Setting
+                    [ DashedLong ('e' :| "nable-example") ]
+                    []
+                    False
+                    (Just _)
+                    False
+                    Nothing
+                    Nothing
+                    Nothing
+                    []
+                    []
+                    True
+                    Nothing
+                    Nothing
+                    Nothing
+                    (fromList []))))
+           (Alt
+              (Check
+                 Nothing
+                 True
+                 (fromList [])
+                 _
+                 (Setting
+                    Nothing
+                    (Setting
+                       []
+                       []
+                       False
+                       Nothing
+                       False
+                       Nothing
+                       (Just
+                          (ConfigValSetting
+                             ("example" :| [])
+                             BimapCodec
+                             _
+                             _
+                             (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                             (Just _) :|
+                             []))
+                       Nothing
+                       []
+                       [ _ ]
+                       False
+                       Nothing
+                       (Just "Example of an enable/disable switch with an example value")
+                       Nothing
+                       (fromList []))))
+              (Pure _)))))

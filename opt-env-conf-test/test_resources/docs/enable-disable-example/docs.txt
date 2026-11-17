@@ -1,0 +1,59 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = True
+               , setDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , setDocEnvVars = Just ("CONFIG_FILE" :| [])
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Just "FILE_PATH"
+               , setDocHelp = Just "Path to the configuration file"
+               })
+      , AnyDocsSingle Nothing
+      ]
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = True
+               , setDocTryOption = False
+               , setDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+               , setDocEnvVars = Nothing
+               , setDocConfKeys = Nothing
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp =
+                   Just "Example of an enable/disable switch with an example value"
+               })
+      , AnyDocsSingle Nothing
+      , AnyDocsSingle Nothing
+      , AnyDocsSingle
+          (Just
+             SetDoc
+               { setDocTryArgument = False
+               , setDocTrySwitch = False
+               , setDocTryOption = False
+               , setDocDasheds = []
+               , setDocEnvVars = Nothing
+               , setDocConfKeys =
+                   Just
+                     (( "example" :| []
+                      , AnyOfSchema (NullSchema :| [ BoolSchema ])
+                      ) :|
+                        [])
+               , setDocDefault = Nothing
+               , setDocExamples = []
+               , setDocMetavar = Nothing
+               , setDocHelp =
+                   Just "Example of an enable/disable switch with an example value"
+               })
+      , AnyDocsSingle Nothing
+      ]
+  ]

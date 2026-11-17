@@ -20,6 +20,7 @@ WithConfig
               Nothing
               Nothing
               []
+              []
               False
               Nothing
               (Just "Example of a yes/no switch")
@@ -43,6 +44,7 @@ WithConfig
                  Nothing
                  Nothing
                  []
+                 []
                  True
                  Nothing
                  Nothing
@@ -65,6 +67,7 @@ WithConfig
                     Nothing
                     Nothing
                     Nothing
+                    []
                     []
                     True
                     Nothing
@@ -94,6 +97,7 @@ WithConfig
                        Nothing
                        Nothing
                        []
+                       []
                        False
                        (Just "BOOL")
                        (Just "Example of a yes/no switch")
@@ -120,9 +124,11 @@ WithConfig
                                 BimapCodec
                                 _
                                 _
-                                (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                                (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                                (Just _) :|
                                 []))
                           Nothing
+                          []
                           []
                           False
                           Nothing

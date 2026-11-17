@@ -29,6 +29,7 @@ WithConfig
                  Nothing
                  Nothing
                  []
+                 []
                  False
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file")
@@ -84,9 +85,11 @@ WithConfig
                                 StringBounds
                                   { stringBoundsMinLength = Nothing
                                   , stringBoundsMaxLength = Nothing
-                                  })))))) :|
+                                  }))))))
+              (Just _) :|
               []))
         Nothing
+        []
         []
         False
         Nothing

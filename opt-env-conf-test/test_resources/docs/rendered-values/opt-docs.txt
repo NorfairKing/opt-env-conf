@@ -1,0 +1,19 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "FILE_PATH"
+               , optDocHelp = Just "Path to the configuration file"
+               })
+      ]
+  , AnyDocsSingle Nothing
+  , AnyDocsSingle Nothing
+  , AnyDocsSingle Nothing
+  ]

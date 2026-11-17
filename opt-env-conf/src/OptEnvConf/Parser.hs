@@ -902,6 +902,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingConfigVals = Nothing,
             settingDefaultValue = Nothing,
             settingExamples = [],
+            settingValueExamples = [],
             settingHidden = True,
             settingMetavar = Nothing,
             settingHelp = Nothing,
@@ -921,6 +922,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingConfigVals = Nothing,
             settingDefaultValue = Nothing,
             settingExamples = [],
+            settingValueExamples = [],
             settingHidden = True,
             settingMetavar = Nothing,
             settingHelp = Nothing,
@@ -943,6 +945,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingConfigVals = Nothing,
               settingDefaultValue = Nothing,
               settingExamples = [],
+              settingValueExamples = [],
               settingHidden = False,
               settingMetavar = Just "BOOL",
               settingHelp = settingHelp s,
@@ -964,6 +967,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
               settingConfigVals = Just ne,
               settingDefaultValue = Nothing,
               settingExamples = [],
+              settingValueExamples = settingValueExamples s,
               settingHidden = False,
               settingMetavar = Nothing,
               settingHelp = settingHelp s,
@@ -983,6 +987,7 @@ makeDoubleSwitch truePrefix falsePrefix helpPrefix builders =
             settingConfigVals = Nothing,
             settingDefaultValue = Nothing,
             settingExamples = [],
+            settingValueExamples = [],
             settingHidden = False,
             settingMetavar = Nothing,
             settingHelp = settingHelp s,
@@ -1011,6 +1016,8 @@ secretTextFileSetting bs =
 
 -- | Load a secret from a text file, with 'readSecretTextFile', or specify it
 -- directly
+--
+-- It ignores any 'exampleValue'.
 secretTextFileOrBareSetting :: (HasCallStack) => [Builder FilePath] -> Parser Text
 secretTextFileOrBareSetting bs =
   withFrozenCallStack $
@@ -1025,7 +1032,13 @@ secretTextFileOrBareSetting bs =
         ]
   where
     mLoc = snd <$> listToMaybe (getCallStack callStack)
-    b = mconcat $ bs ++ [reader str]
+    -- One example value would document a secret for the bare config setting
+    -- and a path for the file config setting, so it cannot mean either.
+    b = mconcat $ map (mapMaybeBuilder dropValueExample) bs ++ [reader str]
+    dropValueExample :: BuildInstruction FilePath -> Maybe (BuildInstruction FilePath)
+    dropValueExample = \case
+      BuildAddValueExample _ -> Nothing
+      i -> Just i
     bareSetting p f = do
       let s = completeBuilder $ mconcat [mapMaybeBuilder f b, reader str, metavar "SECRET"]
       guard $ p s

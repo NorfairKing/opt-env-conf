@@ -15,6 +15,7 @@ Check
         Nothing
         (Just _)
         []
+        []
         True
         (Just "STR")
         (Just "Example of a hidden setting")

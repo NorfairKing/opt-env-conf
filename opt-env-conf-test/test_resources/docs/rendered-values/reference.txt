@@ -1,0 +1,68 @@
+[36mUsage: [m[33mrendered-values[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m
+
+[36mAll settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information[m
+  switch: [37m--version[m
+
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
+
+  [34man object with a default and an example[m
+  config:
+    [37mbig[m: # [32mor null[m
+      # BigConfig
+      [37mmap[m: # [31mrequired[m
+        [37m<key>[m: 
+          [37m<key>[m: 
+            [33m<integer>[m # [32m64 bit signed integer[m
+      [37msub[m: # [34moptional[m
+        [33m<string>[m
+  default: [33mthe default big configuration[m
+
+  [34ma list with a default[m
+  config:
+    [37mlist[m: # [32mor null[m
+      - [33m<integer>[m # [32m64 bit signed integer[m
+  default: [33m[1,2,3][m
+
+  [34ma number with a codec that can only decode[m
+  config:
+    [37mdecode-only[m: # [32mor null[m
+      [33m<integer>[m # [32m64 bit unsigned integer[m
+  default: [33m5[m
+
+[36mOptions[m:
+  [37m-h[m[36m|[m[37m--help[m     [34mShow this help text[m           
+  [37m--version[m     [34mOutput version information[m    
+  [37m--config-file[m [34mPath to the configuration file[m
+
+[36mEnvironment Variables[m:
+  [37mCONFIG_FILE[m [33mFILE_PATH[m   [34mPath to the configuration file[m
+
+[36mConfiguration Values[m:
+  [34man object with a default and an example[m
+  default: [33mthe default big configuration[m
+  [37mbig[m:
+    # [32mor null[m
+    # BigConfig
+    [37mmap[m: # [31mrequired[m
+      [37m<key>[m: 
+        [37m<key>[m: 
+          [33m<integer>[m # [32m64 bit signed integer[m
+    [37msub[m: # [34moptional[m
+      [33m<string>[m
+  [34ma list with a default[m
+  default: [33m[1,2,3][m
+  [37mlist[m:
+    # [32mor null[m
+    - [33m<integer>[m # [32m64 bit signed integer[m
+  [34ma number with a codec that can only decode[m
+  default: [33m5[m
+  [37mdecode-only[m:
+    # [32mor null[m
+    [33m<integer>[m # [32m64 bit unsigned integer[m
+

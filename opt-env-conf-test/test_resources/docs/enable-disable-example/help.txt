@@ -1,0 +1,21 @@
+[36mUsage: [m[33menable-disable-example[m [36m[[m[37m--config-file[m [33mFILE_PATH[m[36m][m [36m[[m[37m--(enable|disable)-example[m[36m][m
+
+enableDisableSwitch with an example value
+
+[36mAvailable settings[m:
+  [34mShow this help text[m
+  switch: [37m-h[m[36m|[m[37m--help[m
+
+  [34mOutput version information: 0.0.0[m
+  switch: [37m--version[m
+
+  [34mPath to the configuration file[m
+  option: [37m--config-file[m [33mFILE_PATH[m
+  env: [37mCONFIG_FILE[m [33mFILE_PATH[m
+
+  [34mExample of an enable/disable switch with an example value[m
+  switch: [37m--(enable|disable)-example[m
+  config:
+    [37mexample[m: # [32mor null[m
+      [33m<boolean>[m
+

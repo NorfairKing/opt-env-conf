@@ -1,0 +1,184 @@
+WithConfig
+  _
+  Nothing
+  (Check
+     Nothing
+     False
+     (fromList [])
+     _
+     (Alt
+        (Check
+           Nothing
+           False
+           (fromList [])
+           _
+           (Setting
+              Nothing
+              (Setting
+                 [ DashedLong ('c' :| "onfig-file") ]
+                 [ _ ]
+                 False
+                 Nothing
+                 True
+                 (Just
+                    (EnvVarSetting
+                       { envVarSettingVar = "CONFIG_FILE"
+                       , envVarSettingAllowPrefix = True
+                       } :|
+                       []))
+                 Nothing
+                 Nothing
+                 []
+                 []
+                 False
+                 (Just "FILE_PATH")
+                 (Just "Path to the configuration file")
+                 (Just _)
+                 (fromList []))))
+        (Check Nothing False (fromList []) _ (Pure _))))
+  (Ap
+     (Ap
+        (Check
+           Nothing
+           True
+           (fromList [])
+           _
+           (Setting
+              Nothing
+              (Setting
+                 []
+                 []
+                 False
+                 Nothing
+                 False
+                 Nothing
+                 (Just
+                    (ConfigValSetting
+                       ("big" :| [])
+                       BimapCodec
+                       _
+                       _
+                       (EitherCodec
+                          PossiblyJointUnion
+                          NullCodec
+                          (ObjectOfCodec
+                             (Just "BigConfig")
+                             (ApCodec
+                                (BimapCodec
+                                   _
+                                   _
+                                   (RequiredKeyCodec
+                                      "map"
+                                      Nothing
+                                      (MapCodec
+                                         (MapCodec
+                                            (BimapCodec
+                                               _
+                                               _
+                                               (IntegerCodec
+                                                  Nothing
+                                                  Bounds
+                                                    { boundsLower = Just (-9223372036854775808)
+                                                    , boundsUpper = Just 9223372036854775807
+                                                    }))))))
+                                (BimapCodec
+                                   _
+                                   _
+                                   (OptionalKeyCodec
+                                      "sub"
+                                      Nothing
+                                      (StringCodec
+                                         Nothing
+                                         StringBounds
+                                           { stringBoundsMinLength = Nothing
+                                           , stringBoundsMaxLength = Nothing
+                                           }))))))
+                       (Just _) :|
+                       []))
+                 (Just _)
+                 []
+                 [ _ ]
+                 False
+                 Nothing
+                 (Just "an object with a default and an example")
+                 Nothing
+                 (fromList []))))
+        (Setting
+           Nothing
+           (Setting
+              []
+              []
+              False
+              Nothing
+              False
+              Nothing
+              (Just
+                 (ConfigValSetting
+                    ("list" :| [])
+                    BimapCodec
+                    _
+                    _
+                    (EitherCodec
+                       PossiblyJointUnion
+                       NullCodec
+                       (BimapCodec
+                          _
+                          _
+                          (ArrayOfCodec
+                             Nothing
+                             (BimapCodec
+                                _
+                                _
+                                (IntegerCodec
+                                   Nothing
+                                   Bounds
+                                     { boundsLower = Just (-9223372036854775808)
+                                     , boundsUpper = Just 9223372036854775807
+                                     })))))
+                    (Just _) :|
+                    []))
+              (Just _)
+              []
+              []
+              False
+              Nothing
+              (Just "a list with a default")
+              Nothing
+              (fromList []))))
+     (Setting
+        Nothing
+        (Setting
+           []
+           []
+           False
+           Nothing
+           False
+           Nothing
+           (Just
+              (ConfigValSetting
+                 ("decode-only" :| [])
+                 BimapCodec
+                 _
+                 _
+                 (EitherCodec
+                    PossiblyJointUnion
+                    NullCodec
+                    (BimapCodec
+                       _
+                       _
+                       (IntegerCodec
+                          Nothing
+                          Bounds
+                            { boundsLower = Just 0
+                            , boundsUpper = Just 18446744073709551615
+                            })))
+                 Nothing :|
+                 []))
+           (Just _)
+           []
+           []
+           False
+           Nothing
+           (Just "a number with a codec that can only decode")
+           Nothing
+           (fromList []))))

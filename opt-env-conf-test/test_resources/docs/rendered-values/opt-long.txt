@@ -1,0 +1,1 @@
+  [37m--config-file[m [34mPath to the configuration file[m

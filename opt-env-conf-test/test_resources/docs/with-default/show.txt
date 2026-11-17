@@ -11,6 +11,7 @@ Alt
         Nothing
         Nothing
         []
+        []
         False
         Nothing
         (Just "first")
@@ -27,6 +28,7 @@ Alt
         Nothing
         Nothing
         (Just _)
+        []
         []
         False
         Nothing

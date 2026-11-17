@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.17.0.0] - 2026-11-16
+
+### Added
+
+* `exampleValue`, to document an example value of a configuration setting.
+* `decodeOnlyConfWith`, `decodeOnlyConfWith'`, `unprefixedDecodeOnlyConfWith`
+  and `unprefixedDecodeOnlyConfWith'`, for a codec that can only parse.
+
+### Changed
+
+* `confWith`, `confWith'`, `unprefixedConfWith` and `unprefixedConfWith'` take
+  a `JSONCodec`, which can also encode.
+  To migrate a codec that can only parse, like `f <$> codec`, make it encode
+  with `dimapCodec` or `bimapCodec`, or use `decodeOnlyConfWith` instead.
+  Such a `dimapCodec` or `bimapCodec` also works with older versions.
+* The Nix option of a setting with a default documents that default whenever
+  its codec can encode it, not only when it shows as JSON.
+* The Nix option of a setting with an `exampleValue` has that `example`.
+* Requires `autodocodec-nix >=0.3.0.0`.
+
 ## [0.16.0.0] - 2026-11-14
 
 ### Added

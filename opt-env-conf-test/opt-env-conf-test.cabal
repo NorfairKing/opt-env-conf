@@ -48,6 +48,20 @@ extra-source-files:
     test_resources/docs/empty/reference.txt
     test_resources/docs/empty/show.txt
     test_resources/docs/empty/version.txt
+    test_resources/docs/enable-disable-example/config-docs.txt
+    test_resources/docs/enable-disable-example/config.txt
+    test_resources/docs/enable-disable-example/docs.txt
+    test_resources/docs/enable-disable-example/env-docs.txt
+    test_resources/docs/enable-disable-example/env.txt
+    test_resources/docs/enable-disable-example/help.txt
+    test_resources/docs/enable-disable-example/man.txt
+    test_resources/docs/enable-disable-example/nix-option-type.nix
+    test_resources/docs/enable-disable-example/opt-docs.txt
+    test_resources/docs/enable-disable-example/opt-long.txt
+    test_resources/docs/enable-disable-example/opt-short.txt
+    test_resources/docs/enable-disable-example/reference.txt
+    test_resources/docs/enable-disable-example/show.txt
+    test_resources/docs/enable-disable-example/version.txt
     test_resources/docs/enable-disable-optional/config-docs.txt
     test_resources/docs/enable-disable-optional/config.txt
     test_resources/docs/enable-disable-optional/docs.txt
@@ -132,6 +146,20 @@ extra-source-files:
     test_resources/docs/optional/reference.txt
     test_resources/docs/optional/show.txt
     test_resources/docs/optional/version.txt
+    test_resources/docs/rendered-values/config-docs.txt
+    test_resources/docs/rendered-values/config.txt
+    test_resources/docs/rendered-values/docs.txt
+    test_resources/docs/rendered-values/env-docs.txt
+    test_resources/docs/rendered-values/env.txt
+    test_resources/docs/rendered-values/help.txt
+    test_resources/docs/rendered-values/man.txt
+    test_resources/docs/rendered-values/nix-option-type.nix
+    test_resources/docs/rendered-values/opt-docs.txt
+    test_resources/docs/rendered-values/opt-long.txt
+    test_resources/docs/rendered-values/opt-short.txt
+    test_resources/docs/rendered-values/reference.txt
+    test_resources/docs/rendered-values/show.txt
+    test_resources/docs/rendered-values/version.txt
     test_resources/docs/same-help/config-docs.txt
     test_resources/docs/same-help/config.txt
     test_resources/docs/same-help/docs.txt
@@ -389,6 +417,7 @@ test-suite opt-env-conf-test
       OptEnvConf.NonDetSpec
       OptEnvConf.ReaderSpec
       OptEnvConf.RunSpec
+      OptEnvConf.SettingSpec
       OptEnvConf.TestUtils
       OptEnvConf.ToplevelSpec
       Paths_opt_env_conf_test
@@ -407,7 +436,7 @@ test-suite opt-env-conf-test
     , genvalidity-sydtest
     , genvalidity-text
     , mtl
-    , opt-env-conf >=0.16.0.0
+    , opt-env-conf >=0.17.0.0
     , opt-env-conf-test
     , path
     , path-io

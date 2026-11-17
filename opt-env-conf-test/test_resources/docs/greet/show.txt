@@ -29,6 +29,7 @@ WithConfig
                  Nothing
                  Nothing
                  []
+                 []
                  False
                  (Just "FILE_PATH")
                  (Just "Path to the configuration file")
@@ -73,10 +74,12 @@ WithConfig
                                 StringBounds
                                   { stringBoundsMinLength = Nothing
                                   , stringBoundsMaxLength = Nothing
-                                  }))) :|
+                                  })))
+                       (Just _) :|
                        []))
                  (Just _)
                  [ "Greetings" ]
+                 []
                  False
                  (Just "GREETING")
                  (Just "Greeting to use")
@@ -93,6 +96,7 @@ WithConfig
               Nothing
               Nothing
               (Just _)
+              []
               []
               False
               (Just "SUBJECT")
@@ -119,9 +123,11 @@ WithConfig
                  BimapCodec
                  _
                  _
-                 (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing)) :|
+                 (EitherCodec PossiblyJointUnion NullCodec (BoolCodec Nothing))
+                 (Just _) :|
                  []))
            (Just _)
+           []
            []
            False
            (Just "ANY")

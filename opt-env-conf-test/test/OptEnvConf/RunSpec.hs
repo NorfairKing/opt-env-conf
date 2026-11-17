@@ -961,12 +961,37 @@ spec = do
       -- Multiple possible codecs
       confParseSpecs
         ( setting
-            [ confWith "hi" (Left <$> codec),
-              confWith "foo" (Right <$> codec)
+            [ decodeOnlyConfWith "hi" (Left <$> codec),
+              decodeOnlyConfWith "foo" (Right <$> codec)
             ]
         )
         [ (Just [("hi", toJSON (5 :: Int))], Left 5),
           (Just [("foo", "bar")], Right "bar" :: Either Int String)
+        ]
+
+      -- Unprefixed config values ignore subConfig
+      confParseSpecs
+        ( subConfig "sub" $
+            setting
+              [ unprefixedConfWith "hi" codec,
+                confWith "foo" codec
+              ] ::
+            Parser String
+        )
+        [ (Just [("hi", "ho")], "ho"),
+          (Just [("sub", toJSON (KeyMap.fromList [("foo", "bar")] :: JSON.Object))], "bar")
+        ]
+
+      -- Unprefixed decode-only config values ignore subConfig
+      confParseSpecs
+        ( subConfig "sub" $
+            setting
+              [ unprefixedDecodeOnlyConfWith "hi" (Left <$> codec),
+                decodeOnlyConfWith "foo" (Right <$> codec)
+              ]
+        )
+        [ (Just [("hi", toJSON (5 :: Int))], Left 5),
+          (Just [("sub", toJSON (KeyMap.fromList [("foo", "bar")] :: JSON.Object))], Right "bar" :: Either Int String)
         ]
 
       argParseSpecs

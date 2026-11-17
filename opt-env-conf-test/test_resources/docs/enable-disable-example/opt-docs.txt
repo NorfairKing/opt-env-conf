@@ -1,0 +1,32 @@
+AnyDocsAnd
+  [ AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = False
+               , optDocTryOption = True
+               , optDocDasheds = [ DashedLong ('c' :| "onfig-file") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Just "FILE_PATH"
+               , optDocHelp = Just "Path to the configuration file"
+               })
+      ]
+  , AnyDocsOr
+      [ AnyDocsSingle
+          (Just
+             OptDoc
+               { optDocTryArgument = False
+               , optDocTrySwitch = True
+               , optDocTryOption = False
+               , optDocDasheds = [ DashedLong ('(' :| "enable|disable)-example") ]
+               , optDocDefault = Nothing
+               , optDocExamples = []
+               , optDocMetavar = Nothing
+               , optDocHelp =
+                   Just "Example of an enable/disable switch with an example value"
+               })
+      , AnyDocsSingle Nothing
+      ]
+  ]

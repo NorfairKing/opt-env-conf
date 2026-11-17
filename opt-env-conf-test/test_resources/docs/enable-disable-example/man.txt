@@ -1,0 +1,42 @@
+.Dd $Mdocdate$
+.Dt enable-disable-example 1
+.Os
+.Sh NAME
+.Nm enable-disable-example
+.Nd enableDisableSwitch with an example value
+.Sh VERSION
+0.0.0
+.Sh SYNOPSIS
+enable-disable-example [--config-file FILE_PATH] [--(enable|disable)-example]
+.Sh SETTINGS
+  Show this help text
+  switch: -h|--help
+
+  Output version information: 0.0.0
+  switch: --version
+
+  Path to the configuration file
+  option: --config-file FILE_PATH
+  env: CONFIG_FILE FILE_PATH
+
+  Example of an enable/disable switch with an example value
+  switch: --(enable|disable)-example
+  config:
+    example: # or null
+      <boolean>
+
+.Sh OPTIONS
+  -h|--help                  Show this help text                                      
+  --version                  Output version information: 0.0.0                        
+  --config-file              Path to the configuration file                           
+  --(enable|disable)-example Example of an enable/disable switch with an example value
+
+.Sh ENVIRONMENT VARIABLES
+  CONFIG_FILE FILE_PATH   Path to the configuration file
+
+.Sh CONFIGURATION VALUES
+  Example of an enable/disable switch with an example value
+  example:
+    # or null
+    <boolean>
+

@@ -27,14 +27,19 @@ module OptEnvConf.Setting
     conf,
     confWith,
     confWith',
+    decodeOnlyConfWith,
+    decodeOnlyConfWith',
     unprefixedConf,
     unprefixedConfWith,
     unprefixedConfWith',
+    unprefixedDecodeOnlyConfWith,
+    unprefixedDecodeOnlyConfWith',
     name,
     value,
     valueWithShown,
     example,
     shownExample,
+    exampleValue,
     hidden,
     completer,
     Builder (..),
@@ -59,6 +64,7 @@ module OptEnvConf.Setting
 where
 
 import Autodocodec
+import qualified Data.Aeson as JSON
 import Data.Hashable
 import Data.List.NonEmpty (NonEmpty (..), (<|))
 import qualified Data.List.NonEmpty as NE
@@ -102,6 +108,8 @@ data Setting a = Setting
     settingDefaultValue :: !(Maybe (a, String)),
     -- | Example values
     settingExamples :: ![String],
+    -- | Example values, rendered with the 'configValSettingEncoder's
+    settingValueExamples :: ![a],
     -- | Whether to hide docs
     settingHidden :: !Bool,
     -- | Which metavar should be show in documentation
@@ -157,7 +165,10 @@ data ConfigValSetting a
   ConfigValSetting
   { configValSettingPath :: !(NonEmpty String),
     configValSettingAllowPrefix :: !Bool,
-    configValSettingCodec :: !(ValueCodec void (Maybe a))
+    configValSettingCodec :: !(ValueCodec void (Maybe a)),
+    -- | How to render a value as what 'configValSettingCodec' parses, if
+    -- that codec can encode.
+    configValSettingEncoder :: !(Maybe (a -> JSON.Value))
   }
 
 prefixConfigValSetting :: String -> ConfigValSetting a -> ConfigValSetting a
@@ -188,6 +199,7 @@ emptySetting =
       settingMetavar = Nothing,
       settingHelp = Nothing,
       settingExamples = [],
+      settingValueExamples = [],
       settingHidden = False,
       settingDefaultValue = Nothing,
       settingCompleter = Nothing,
@@ -197,7 +209,7 @@ emptySetting =
 -- | Show a 'Setting' as much as possible, for debugging
 showSettingABit :: Setting a -> ShowS
 showSettingABit Setting {..} =
-  let Setting _ _ _ _ _ _ _ _ _ _ _ _ _ _ = undefined
+  let Setting _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ = undefined
    in showParen True $
         showString "Setting "
           . showsPrec 11 settingDasheds
@@ -218,6 +230,8 @@ showSettingABit Setting {..} =
           . showString " "
           . showsPrec 11 settingExamples
           . showString " "
+          . showListWith (\_ -> showString "_") settingValueExamples
+          . showString " "
           . showsPrec 11 settingHidden
           . showString " "
           . showsPrec 11 settingMetavar
@@ -234,6 +248,8 @@ showConfigValSettingABit ConfigValSetting {..} =
     . showsPrec 11 configValSettingPath
     . showString " "
     . showString (showCodecABit configValSettingCodec)
+    . showString " "
+    . showMaybeWith (\_ -> showString "_") configValSettingEncoder
 
 showMaybeWith :: (a -> ShowS) -> Maybe a -> ShowS
 showMaybeWith _ Nothing = showString "Nothing"
@@ -262,6 +278,7 @@ data BuildInstruction a
   | BuildAddConf !(ConfigValSetting a)
   | BuildSetDefault !a !String
   | BuildAddExample !String
+  | BuildAddValueExample !a
   | BuildSetHidden
   | BuildSetCompleter !Completer
   | BuildAddRequiredCapability !Capability
@@ -283,6 +300,7 @@ applyBuildInstruction bi s = case bi of
   BuildAddConf t -> s {settingConfigVals = Just $ maybe (t :| []) (t <|) $ settingConfigVals s}
   BuildSetDefault a shown -> s {settingDefaultValue = Just (a, shown)}
   BuildAddExample e -> s {settingExamples = e : settingExamples s}
+  BuildAddValueExample a -> s {settingValueExamples = a : settingValueExamples s}
   BuildSetHidden -> s {settingHidden = True}
   BuildSetCompleter c -> s {settingCompleter = Just c}
   BuildAddRequiredCapability c -> s {settingRequiredCapabilities = Set.insert c (settingRequiredCapabilities s)}
@@ -385,38 +403,75 @@ conf :: (HasCodec a) => String -> Builder a
 conf k = confWith k codec
 
 -- | Like 'conf' but with a custom 'Codec' for parsing the value.
-confWith :: String -> ValueCodec void a -> Builder a
+--
+-- The codec is also used to render the default value and the
+-- 'exampleValue's in documentation, so it should parse what it renders back
+-- to the same value.
+-- A codec mapped with 'fmap' usually does not, because 'fmap' only changes how
+-- it parses.
+confWith :: String -> JSONCodec a -> Builder a
 confWith k c = confWith' k (maybeCodec c)
 
 -- | Like 'confWith' but allows interpreting 'Null' as a value other than "Not found".
-confWith' :: String -> ValueCodec void (Maybe a) -> Builder a
-confWith' k c =
-  let t =
-        ConfigValSetting
-          { configValSettingPath = k :| [],
-            configValSettingAllowPrefix = True,
-            configValSettingCodec = c
-          }
-   in Builder [BuildAddConf t]
+confWith' :: String -> JSONCodec (Maybe a) -> Builder a
+confWith' = bidirectionalConfigVal True
+
+-- | Like 'confWith' but for a codec that can only parse.
+--
+-- Prefer 'confWith': the default value and the 'exampleValue's of a setting
+-- whose codec cannot encode are not rendered in documentation.
+decodeOnlyConfWith :: String -> ValueCodec void a -> Builder a
+decodeOnlyConfWith k c = decodeOnlyConfWith' k (maybeCodec c)
+
+-- | Like 'confWith'' but for a codec that can only parse.
+--
+-- Prefer 'confWith''; see 'decodeOnlyConfWith'.
+decodeOnlyConfWith' :: String -> ValueCodec void (Maybe a) -> Builder a
+decodeOnlyConfWith' = decodeOnlyConfigVal True
 
 -- | Like 'conf' but ignores any 'subConf', 'subConf_', or 'subAll'.
 unprefixedConf :: (HasCodec a) => String -> Builder a
 unprefixedConf k = unprefixedConfWith k codec
 
 -- | Like 'confWith' but ignores any 'subConf', 'subConf_', or 'subAll'.
-unprefixedConfWith :: String -> ValueCodec void a -> Builder a
+unprefixedConfWith :: String -> JSONCodec a -> Builder a
 unprefixedConfWith k c = unprefixedConfWith' k (maybeCodec c)
 
 -- | Like 'confWith'' but ignores any 'subConf', 'subConf_', or 'subAll'.
-unprefixedConfWith' :: String -> ValueCodec void (Maybe a) -> Builder a
-unprefixedConfWith' k c =
-  let t =
+unprefixedConfWith' :: String -> JSONCodec (Maybe a) -> Builder a
+unprefixedConfWith' = bidirectionalConfigVal False
+
+-- | Like 'decodeOnlyConfWith' but ignores any 'subConf', 'subConf_', or 'subAll'.
+unprefixedDecodeOnlyConfWith :: String -> ValueCodec void a -> Builder a
+unprefixedDecodeOnlyConfWith k c = unprefixedDecodeOnlyConfWith' k (maybeCodec c)
+
+-- | Like 'decodeOnlyConfWith'' but ignores any 'subConf', 'subConf_', or 'subAll'.
+unprefixedDecodeOnlyConfWith' :: String -> ValueCodec void (Maybe a) -> Builder a
+unprefixedDecodeOnlyConfWith' = decodeOnlyConfigVal False
+
+bidirectionalConfigVal :: Bool -> String -> JSONCodec (Maybe a) -> Builder a
+bidirectionalConfigVal allowPrefix k c =
+  Builder
+    [ BuildAddConf
         ConfigValSetting
           { configValSettingPath = k :| [],
-            configValSettingAllowPrefix = False,
-            configValSettingCodec = c
+            configValSettingAllowPrefix = allowPrefix,
+            configValSettingCodec = c,
+            configValSettingEncoder = Just (toJSONVia c . Just)
           }
-   in Builder [BuildAddConf t]
+    ]
+
+decodeOnlyConfigVal :: Bool -> String -> ValueCodec void (Maybe a) -> Builder a
+decodeOnlyConfigVal allowPrefix k c =
+  Builder
+    [ BuildAddConf
+        ConfigValSetting
+          { configValSettingPath = k :| [],
+            configValSettingAllowPrefix = allowPrefix,
+            configValSettingCodec = c,
+            configValSettingEncoder = Nothing
+          }
+    ]
 
 -- | Short-hand function for 'option', 'long', 'env', and 'conf' at the same time.
 --
@@ -456,6 +511,15 @@ example s = Builder [BuildAddExample s]
 -- This only makes sense if you use 'reader' 'auto'.
 shownExample :: (Show a) => a -> Builder a
 shownExample = example . show
+
+-- | Provide an example value for the generated Nix option type.
+--
+-- It is rendered with the codec of each 'conf', so it is not rendered for a
+-- 'decodeOnlyConfWith'.
+-- Only the first 'exampleValue' is rendered, because a Nix option has one
+-- example.
+exampleValue :: a -> Builder a
+exampleValue a = Builder [BuildAddValueExample a]
 
 -- | Don't show this setting in documentation
 --
